@@ -1,0 +1,11 @@
+BarcodeName,FastaName,CoarseCluster,Phase,TotalCoverage,SequenceLength,PredictedAccuracy,ConsensusConverged,NoiseSequence,IsChimera,ChimeraScore,ParentSequenceA,ParentSequenceB,CrossoverPosition
+0,Barcode0_Cluster1_Phase0_NumReads476,Cluster1,Phase0,476,3460,1,True,False,False,NaN,,,-1
+0,Barcode0_Cluster0_Phase3_NumReads344,Cluster0,Phase3,344,3422,1,True,False,False,NaN,,,-1
+0,Barcode0_Cluster2_Phase3_NumReads285,Cluster2,Phase3,285,3403,1,True,False,False,NaN,,,-1
+0,Barcode0_Cluster3_Phase1_NumReads185,Cluster3,Phase1,185,3417,1,True,False,False,NaN,,,-1
+0,Barcode0_Cluster5_Phase0_NumReads158,Cluster5,Phase0,158,3394,1,True,False,False,NaN,,,-1
+0,Barcode0_Cluster4_Phase1_NumReads129,Cluster4,Phase1,129,3447,1,True,False,False,NaN,,,-1
+0,Barcode0_Cluster2_Phase2_NumReads57,Cluster2,Phase2,57,3404,0.9976497,True,True,True,3.208333,Barcode0_Cluster2_Phase3_NumReads285,Barcode0_Cluster0_Phase3_NumReads344,2808
+0,Barcode0_Cluster0_Phase2_NumReads52,Cluster0,Phase2,52,3422,0.9972351,True,True,True,4.75,Barcode0_Cluster0_Phase3_NumReads344,Barcode0_Cluster2_Phase3_NumReads285,2564
+0,Barcode0_Cluster3_Phase0_NumReads45,Cluster3,Phase0,45,3416,0.9792444,True,True,True,15.9375,Barcode0_Cluster3_Phase1_NumReads185,Barcode0_Cluster5_Phase0_NumReads158,2672
+0,Barcode0_Cluster4_Phase0_NumReads40,Cluster4,Phase0,40,3447,0.9882988,True,True,True,72,Barcode0_Cluster1_Phase0_NumReads476,Barcode0_Cluster4_Phase1_NumReads129,1370
