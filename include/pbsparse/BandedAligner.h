@@ -214,6 +214,12 @@ private:  // Private non-modifying functions
     /// is both non-global and significantly faster.  In order to use the former
     /// with the later, it is first necessary to trim such overlaps from the data.
     ///
+    /// Overlaps represent small repeat regions, usually homopolymers, whose
+    /// edges are deliniated by the edges of the overlap.  So by swapping the
+    /// overlapping start/end positions, we are effectively trimming the seeds
+    /// back to the non-repetitive region and allowing the banded aligner to
+    /// find the optimal path through the repeat.
+    ///
     /// \param  chain  A seed-set of kmer matchs between the sequences
     void TrimOverlappingSeeds(TSeedChain& chain)
     {
