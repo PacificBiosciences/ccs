@@ -610,9 +610,9 @@ private:  // User-defined member variables
 private:  // Non-User-defined member variables
     TScoringScheme scoringScheme_;
     TAlignConfig alignConfig_;
-    char gapValue_ = seqan::gapValue<char>();
-    float minAccuracyImprovement_ = 3.0f;
     
+    const char gapValue_ = seqan::gapValue<char>();
+    const float minAccuracyImprovement_ = 3.0f;
 };
 
 } // SparseAlignment
