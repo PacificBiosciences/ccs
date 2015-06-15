@@ -48,15 +48,15 @@
 #include <pbsparse/FindSeedsConfig.h>
 #include <pbsparse/ChainSeeds.h>
 
-namespace SparseAlignment
-{
-
+namespace PacBio {
+namespace SparseAlignment{
+    
 template<typename TAlignConfig, typename TScoring>
-seqan::Align<seqan::DnaString, seqan::ArrayGaps>
+const seqan::Align<seqan::DnaString, seqan::ArrayGaps>
 SeedsToAlignment(const seqan::DnaString& seq1, const seqan::DnaString& seq2,
                  const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds,
                  const TScoring& scoring,
-                 const TAlignConfig& config)
+                 const TAlignConfig& config) const
 {
     using namespace seqan;
 
@@ -74,8 +74,8 @@ SeedsToAlignment(const seqan::DnaString& seq1, const seqan::DnaString& seq2,
 }
 
 template <size_t TSize>
-seqan::String<seqan::Seed<seqan::Simple>>
-SparseAlign(const seqan::DnaString& seq1, const seqan::DnaString& seq2)
+const seqan::String<seqan::Seed<seqan::Simple>>
+SparseAlign(const seqan::DnaString& seq1, const seqan::DnaString& seq2) const
 {
     using namespace seqan;
 
@@ -91,8 +91,8 @@ SparseAlign(const seqan::DnaString& seq1, const seqan::DnaString& seq2)
 }
 
 template <size_t TSize>
-std::vector<std::pair<size_t, size_t>>
-SparseAlign(const std::string& seq1, const std::string& seq2)
+const std::vector<std::pair<size_t, size_t>>
+SparseAlign(const std::string& seq1, const std::string& seq2) const
 {
     using namespace seqan;
     using namespace std;
@@ -108,6 +108,6 @@ SparseAlign(const std::string& seq1, const std::string& seq2)
     }
 
     return result;
-}
 
-} // SparseAlignment
+};
+}} // ::PacBio::SparseAlignment
