@@ -354,7 +354,7 @@ private:  // Private non-modifying functions
     /// \param  pair  An Alignment/Stats pair object
     ///
     /// \return  int  An error flag - 0 if successful, 1 if failure
-    int ClipAlignment(TAlignPair& pair)
+    void ClipAlignment(TAlignPair& pair)
     {
         using namespace seqan;
 
@@ -370,7 +370,7 @@ private:  // Private non-modifying functions
         if (alignStart < 0 || alignEnd < 0)
         {
             computeAlignmentStats(pair.second, pair.first, scoringScheme_);
-            return 1;
+            return;
         }
 
         // Clip the alignment to the ends of the range and compute our stats
@@ -381,9 +381,9 @@ private:  // Private non-modifying functions
         computeAlignmentStats(pair.second, pair.first, scoringScheme_);
 
         // If the initial alignment is short, we succeeded but do not have room
-        //     for refinement.  Exit here with success.
+        //     for refinement - exit here.
         if (LengthInSequence(queryRow, alignStart, alignEnd) <= minQueryLength_)
-            return 0;
+            return;
 
         // Otherwise we need to clear our clipping ahead of refinement
         clearClipping(queryRow);
@@ -451,8 +451,7 @@ private:  // Private non-modifying functions
             }
         }
 
-        // Return success
-        return 0;
+        return;
     }
 
     /// Compare two aligned sequences and, counting in from the left-end, find 
