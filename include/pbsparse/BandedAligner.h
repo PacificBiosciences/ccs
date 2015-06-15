@@ -151,30 +151,22 @@ public:  // non-modifying methods
 
         // If the maximum size allow for the left-side flanks is different
         //    from what we previously calculated, recalculate
-        size_t queryAlignStart;
-        if (startDiff == queryStartDiff)
-            queryAlignStart = queryMinStart;
-        else
-            queryAlignStart = queryMinStart + (queryStartDiff - startDiff);
+        size_t queryAlignStart = queryMinStart;
+        if (startDiff != queryStartDiff)
+            queryAlignStart += queryStartDiff - startDiff;
 
-        size_t refAlignStart;
-        if (startDiff == refStartDiff)
-            refAlignStart = refMinStart;
-        else
-            refAlignStart = refMinStart + (refStartDiff - startDiff);
+        size_t refAlignStart = refMinStart;
+        if (startDiff != refStartDiff)
+            refAlignStart += refStartDiff - startDiff;
 
         // Ditto the right-side flanks
-        size_t queryAlignEnd;
-        if (endDiff == queryEndDiff)
-            queryAlignEnd = queryMaxEnd;
-        else
-            queryAlignEnd = queryMaxEnd - (queryEndDiff - endDiff);
+        size_t queryAlignEnd = queryMaxEnd;
+        if (endDiff != queryEndDiff)
+            queryAlignEnd -= queryEndDiff - endDiff;
 
-        size_t refAlignEnd;
-        if (endDiff == refEndDiff)
-            refAlignEnd = refMaxEnd;
-        else
-            refAlignEnd = refMaxEnd - (refEndDiff - endDiff);
+        size_t refAlignEnd = refMaxEnd;
+        if (endDiff != refEndDiff)
+            refAlignEnd -= refEndDiff - endDiff;
 
         // Extract infixes from sequences and set them as our alignment targets
         const auto queryInfix = infix(query, queryAlignStart, queryAlignEnd);
