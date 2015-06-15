@@ -50,7 +50,9 @@
 
 namespace PacBio {
 namespace SparseAlignment{
-    
+
+namespace {
+
 template<typename TAlignConfig, typename TScoring>
 const seqan::Align<seqan::DnaString, seqan::ArrayGaps>
 SeedsToAlignment(const seqan::DnaString& seq1, const seqan::DnaString& seq2,
@@ -110,4 +112,6 @@ SparseAlign(const std::string& seq1, const std::string& seq2) const
     return result;
 
 };
-}} // ::PacBio::SparseAlignment
+
+}  // Anonymous namespace
+}}  // ::PacBio::SparseAlignment
