@@ -359,9 +359,13 @@ private:  // Private non-modifying functions
         int alignEnd   = FindRightSideMinMatch(queryRow, refRow);   
 
         // If the alignment start or end positions don't make sense,
-        //     abandon this as a garbage alignment
+        //      this is probably a garbage alignment.  Compute the
+        //      alignment stats as-is and abandon clipping.
         if (alignStart < 0 || alignEnd < 0)
+        {
+            computeAlignmentStats(pair.second, pair.first, scoringScheme_);
             return 1;
+        }
 
         // Clip the alignment to the ends of the range and compute our stats
         setClippedBeginPosition(queryRow, alignStart);
