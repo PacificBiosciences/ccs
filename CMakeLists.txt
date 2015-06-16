@@ -25,10 +25,9 @@ link_directories(SeqAn_IncludeDir)
 if (NOT TARGET SPARSE_ALIGNMENT_LIB)
     add_library(SPARSE_ALIGNMENT_LIB INTERFACE)
 
-    target_include_directories(
-        SPARSE_ALIGNMENT_LIB
-	INTERFACE
+    target_include_directories(SPARSE_ALIGNMENT_LIB
+		INTERFACE
         ${SeqAn_IncludeDir}
-	${SparseAlignment_IncludeDir}
+		${SparseAlignment_IncludeDir}
     )
 endif()

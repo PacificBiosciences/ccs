@@ -42,6 +42,7 @@
 
 #include "SeedScorer.h"
 
+namespace PacBio {
 namespace SparseAlignment {
 
 template<typename TConfig>
@@ -224,4 +225,4 @@ private:  // data
     float defaultScore_ = 1.0f;
 };
 
-}  // SparseAlignment
+}}  // ::PacBio::SparseAlignment
