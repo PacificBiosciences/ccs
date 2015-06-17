@@ -540,7 +540,7 @@ void ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHi
     sort(seeds.begin(), seeds.end(), IndexCompare);
 }
 
-} // anonymous namespace
+
 
 /// Search a SeedSet for the best numCandidates sets of locally-chainable 
 /// seeds according to some scoring criteria.  Seed chains are scored based
@@ -773,6 +773,8 @@ void ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::
         --j;
     }
 }
+
+} // anonymous namespace
 
 } // SparseAlignment
 } // PacBio
