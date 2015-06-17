@@ -83,7 +83,7 @@ private:  // Internal class methods
         for (size_t i = 0; i < 4; i++)
         {
             DnaString s = std::string(length(shape), dna[i]);
-            hashes[i] = hash(shape, begin(s));
+            hashes[i] = seqan::hash(shape, begin(s));
         }
     }
 
