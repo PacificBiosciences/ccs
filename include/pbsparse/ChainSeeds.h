@@ -388,7 +388,8 @@ void InitializeSeedsAndScores(const seqan::SeedSet<seqan::Seed<seqan::Simple>>& 
 /// \param  deletion  Penalty for each base along the diagonal that
 ///                   separates two seeds, if the 'upstream' seed is on 
 ///                   a lower diagonal than the 'downstream' seed.
-void ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitCompare>& chainHits,
+void __attribute__((__unused__))
+ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitCompare>& chainHits,
                     std::vector<boost::optional<size_t>>& chainPred,
                     std::vector<SDPHit>& seeds,
                     std::vector<long>& scores,
@@ -564,7 +565,8 @@ void ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHi
 /// \param  deletion  Penalty for each base along the diagonal that
 ///                   separates two seeds, if the 'upstream' seed is on 
 ///                   a lower diagonal than the 'downstream' seed.
-void ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>& chains,
+void __attribute__((__unused__))
+ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>& chains,
                 const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
                 const size_t numCandidates = 10,
                 const long minScore = 18,
@@ -636,7 +638,8 @@ void ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>& chains,
 /// \param  deletion  Penalty for each base along the diagonal that
 ///                   separates two seeds, if the 'upstream' seed is on 
 ///                   a lower diagonal than the 'downstream' seed.
-void ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>& chains,
+void __attribute__((__unused__))
+ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>& chains,
                 const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
                 const size_t numCandidates = 10,
                 const long minScore = 18,
