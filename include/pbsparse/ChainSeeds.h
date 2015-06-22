@@ -350,14 +350,14 @@ public:
 /// \param  seeds    The vector of SDPHit objects that will actually be chained
 /// \param  scores   The vector of scores to initialize with default per-seed scores
 void InitializeSeedsAndScores(const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
-                              std::vector<SDPHit>& seeds,
-                              std::vector<long>& scores)
+                              std::vector<SDPHit>* seeds,
+                              std::vector<long>* scores)
 {
     size_t i = 0;
     for (auto it = begin(seedSet); it != end(seedSet); ++it, ++i)
     {
-        seeds.push_back(SDPHit(*it, i));
-        scores[i] = seedSize(*it);
+        seeds->push_back(SDPHit(*it, i));
+        scores->at(i) = seedSize(*it);
     }
 }
 
@@ -389,9 +389,9 @@ void InitializeSeedsAndScores(const seqan::SeedSet<seqan::Seed<seqan::Simple>>& 
 ///                   separates two seeds, if the 'upstream' seed is on 
 ///                   a lower diagonal than the 'downstream' seed.
 void __attribute__((__unused__))
-ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitCompare>& chainHits,
-                    std::vector<boost::optional<size_t>>& chainPred,
-                    std::vector<SDPHit>& seeds,
+ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitCompare>* chainHits,
+                    std::vector<boost::optional<size_t>>* chainPred,
+                    std::vector<SDPHit>* seeds,
                     std::vector<long>& scores,
                     const size_t seedSetIdx,
                     const size_t numCandidates,
@@ -406,23 +406,23 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
 
     // compute visibility left, requires H-sorted seeds
     std::set<SDPHit> sweepSet;
-    sort(seeds.begin(), seeds.end(), HVCompare);
-    auto visible = ComputeVisibilityLeft(seeds, sweepSet);
+    sort(seeds->begin(), seeds->end(), HVCompare);
+    auto visible = ComputeVisibilityLeft(*seeds, sweepSet);
 
     // compute the visibility above, requires V-sorted seeds
-    sort(seeds.begin(), seeds.end(), VHCompare);
-    auto toRemove = seeds.begin();
+    sort(seeds->begin(), seeds->end(), VHCompare);
+    auto toRemove = seeds->begin();
     std::set<SDPColumn> colSet;
 
     auto zScore = [&scores] (const SDPHit& seed)
                   { return scores[seed.Index] + beginPositionH(seed) + beginPositionV(seed); };
 
-    for (auto it = seeds.begin(); it != seeds.end(); )
+    for (auto it = seeds->begin(); it != seeds->end(); )
     {
         const size_t row = beginPositionV(*it);
         const auto start = it;
 
-        for (; it != seeds.end() && row == beginPositionV(*it); ++it)
+        for (; it != seeds->end() && row == beginPositionV(*it); ++it)
         {
             long bestScore = -numeric_limits<long>::max();
             boost::optional<SDPHit> bestSeed = boost::none;
@@ -477,16 +477,16 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
             if (bestSeed && bestScore >= minScore)
             {
                 scores[it->Index] = bestScore;
-                chainPred[it->Index] = bestSeed->Index;
+                chainPred->at(it->Index) = bestSeed->Index;
 
-                if (chainHits.size() < numCandidates)
+                if (chainHits->size() < numCandidates)
                 {
-                    chainHits.push( {seedSetIdx, it->Index, bestScore} );
+                    chainHits->push( {seedSetIdx, it->Index, bestScore} );
                 }
-                else if (bestScore > chainHits.top().score)
+                else if (bestScore > chainHits->top().score)
                 {
-                    chainHits.pop();
-                    chainHits.push( {seedSetIdx, it->Index, bestScore} );
+                    chainHits->pop();
+                    chainHits->push( {seedSetIdx, it->Index, bestScore} );
                 }
             }
             else if (scores[it->Index] >= minScore)
@@ -496,14 +496,14 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
                 // chainPred[it->Index] = boost::none;
                 //
 
-                if (chainHits.size() < numCandidates)
+                if (chainHits->size() < numCandidates)
                 {
-                    chainHits.push( {seedSetIdx, it->Index, bestScore} );
+                    chainHits->push( {seedSetIdx, it->Index, bestScore} );
                 }
-                else if (bestScore > chainHits.top().score)
+                else if (bestScore > chainHits->top().score)
                 {
-                    chainHits.pop();
-                    chainHits.push( {seedSetIdx, it->Index, bestScore} );
+                    chainHits->pop();
+                    chainHits->push( {seedSetIdx, it->Index, bestScore} );
                 }
             }
         }
@@ -513,7 +513,7 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
         // remove all seeds from the sweepSet with end position less than the current row,
         // and ensure the colSet invariant is kept:
         //   that all columns greater than our current
-        for (; toRemove != seeds.end() && endPositionV(*toRemove) < row; ++toRemove)
+        for (; toRemove != seeds->end() && endPositionV(*toRemove) < row; ++toRemove)
         {
             SDPColumn col(endPositionH(*toRemove), boost::make_optional(*toRemove));
 
@@ -538,10 +538,8 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
     }
 
     // seeds need to be sorted by Index to ... index into it properly
-    sort(seeds.begin(), seeds.end(), IndexCompare);
+    sort(seeds->begin(), seeds->end(), IndexCompare);
 }
-
-
 
 /// Search a SeedSet for the best numCandidates sets of locally-chainable 
 /// seeds according to some scoring criteria.  Seed chains are scored based
@@ -566,7 +564,7 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
 ///                   separates two seeds, if the 'upstream' seed is on 
 ///                   a lower diagonal than the 'downstream' seed.
 void __attribute__((__unused__))
-ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>& chains,
+ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>* chains,
                 const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
                 const size_t numCandidates = 10,
                 const long minScore = 18,
@@ -583,15 +581,15 @@ ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>& chains,
     vector<boost::optional<size_t>> chainPred(length(seedSet), boost::none);
     vector<SDPHit> seeds;
     vector<long> scores(length(seedSet), 0L);
-    InitializeSeedsAndScores(seedSet, seeds, scores);
+    InitializeSeedsAndScores(seedSet, &seeds, &scores);
 
     // Call the main function
-    ChainSeedsImpl(chainHits, chainPred, seeds, scores, 0, numCandidates, 
+    ChainSeedsImpl(&chainHits, &chainPred, &seeds, scores, 0, numCandidates, 
             minScore, match, mismatch, insertion, deletion);
 
     // Empty and resize the result vector
-    chains.clear();
-    chains.resize(chainHits.size());
+    chains->clear();
+    chains->resize(chainHits.size());
 
     // Pop our results from our queue and convert them into Seed Chains / Sets
     int i = chainHits.size() - 1;
@@ -604,12 +602,12 @@ ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>& chains,
         boost::optional<size_t> chainEnd = hit.endIndex;
         while (chainEnd)
         {
-            appendValue(chains[i], seeds[*chainEnd]);
+            appendValue(chains->at(i), seeds[*chainEnd]);
             chainEnd = chainPred[*chainEnd];
         }
         
         // We appended seeds back-to-front, so reverse the current order in place
-        reverse(chains[i]);
+        reverse(chains->at(i));
 
         chainHits.pop();
         --i;
@@ -639,7 +637,7 @@ ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>& chains,
 ///                   separates two seeds, if the 'upstream' seed is on 
 ///                   a lower diagonal than the 'downstream' seed.
 void __attribute__((__unused__))
-ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>& chains,
+ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>* chains,
                 const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
                 const size_t numCandidates = 10,
                 const long minScore = 18,
@@ -656,15 +654,15 @@ ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>& chains,
     vector<boost::optional<size_t>> chainPred(length(seedSet), boost::none);
     vector<SDPHit> seeds;
     vector<long> scores(length(seedSet), 0L);
-    InitializeSeedsAndScores(seedSet, seeds, scores);
+    InitializeSeedsAndScores(seedSet, &seeds, &scores);
 
     // Call the main function
-    ChainSeedsImpl(chainHits, chainPred, seeds, scores, 0, numCandidates, 
+    ChainSeedsImpl(&chainHits, &chainPred, &seeds, scores, 0, numCandidates, 
             minScore, match, mismatch, insertion, deletion);
 
     // Empty and resize the result vector
-    chains.clear();
-    chains.resize(chainHits.size());
+    chains->clear();
+    chains->resize(chainHits.size());
 
     // Pop our results from our queue and convert them into Seed Chains / Sets
     int i = chainHits.size() - 1;
@@ -677,7 +675,7 @@ ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>& chains,
         while (chainEnd)
         {
             Seed<Simple> seed = seeds[*chainEnd];
-            addSeed(chains[i], seed, Single());
+            addSeed(chains->at(i), seed, Single());
             chainEnd = chainPred[*chainEnd];
         }
         
@@ -708,7 +706,7 @@ ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>& chains,
 /// \param  deletion  Penalty for each base along the diagonal that
 ///                   separates two seeds, if the 'upstream' seed is on 
 ///                   a lower diagonal than the 'downstream' seed.
-void ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>>& chains,
+void ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>>* chains,
                 const std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>> seedSets,
                 const size_t numCandidates = 10,
                 const long minScore = 18,
@@ -744,16 +742,16 @@ void ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::
         // Initialize the work-horse vectors we will actually work with
         chainPred[i] = vector<boost::optional<size_t>>(length(seedSet), boost::none);
         vector<long> scores(length(seedSet), 0L);
-        InitializeSeedsAndScores(seedSet, seeds[i], scores);
+        InitializeSeedsAndScores(seedSet, &seeds[i], &scores);
 
         // Call the main function on the current seedSet
-        ChainSeedsImpl(chainHits, chainPred[i], seeds[i], scores, i, numCandidates, 
+        ChainSeedsImpl(&chainHits, &chainPred[i], &seeds[i], scores, i, numCandidates, 
                 minScore, match, mismatch, insertion, deletion);
     }
 
     // Empty and resize the result vector
-    chains.clear();
-    chains.resize(chainHits.size());
+    chains->clear();
+    chains->resize(chainHits.size());
 
     // Pop our results from our queue and convert them into Seed Chains / Sets
     int j = chainHits.size() - 1;
@@ -761,14 +759,14 @@ void ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::
     {
         // Take our next hit and extract the relevant indices ...
         const auto hit = chainHits.top();
-        chains[j].first = references[hit.seedSetIdx];
+        chains->at(j).first = references[hit.seedSetIdx];
 
         // While there are additional links in the chain, append them
         boost::optional<size_t> chainEnd = hit.endIndex;
         while (chainEnd)
         {
             Seed<Simple> seed = seeds[hit.seedSetIdx][*chainEnd];
-            addSeed(chains[j].second, seed, Single());
+            addSeed(chains->at(j).second, seed, Single());
             chainEnd = chainPred[hit.seedSetIdx][*chainEnd];
         }
         
@@ -779,5 +777,4 @@ void ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::
 
 } // anonymous namespace
 
-} // SparseAlignment
-} // PacBio
+}}  // PacBio::SparseAlignment
