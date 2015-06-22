@@ -198,10 +198,10 @@ public:  // non-modifying methods
         }
        
         // Clip the alignment to the region with a good similarity
-        ClipAlignment(pair);
+        ClipAlignment(&pair);
         
         // Now that the edges of the alignment are finalized we can calculate the region
-        SetAlignmentRegion(region, pair.first, queryAlignStart, refAlignStart);
+        SetAlignmentRegion(pair.first, queryAlignStart, refAlignStart, &region);
 
         // Return the final alignment
         return pair;
@@ -221,27 +221,30 @@ private:  // Private non-modifying functions
     /// find the optimal path through the repeat.
     ///
     /// \param  chain  A seed-set of kmer matchs between the sequences
-    void TrimOverlappingSeeds(TSeedChain& chain)
+    void TrimOverlappingSeeds(TSeedChain* chain)
     {
         using namespace seqan;
 
+        // SeqAn doesn't support "->at()", so we de-reference here
+        TSeedChain& chainRef = *chain;
+
         // If each pair of adjacent seeds, I and J ...
-        for (size_t j = 1; j < length(chain); ++j)
+        for (size_t j = 1; j < length(chainRef); ++j)
         {
             size_t i = j - 1;
 
             // ... if they over lap in either dimension ...
-            if (endPositionH(chain[i]) > beginPositionH(chain[j]) ||
-                endPositionV(chain[i]) > beginPositionV(chain[j]))
+            if (endPositionH(chainRef[i]) > beginPositionH(chainRef[j]) ||
+                endPositionV(chainRef[i]) > beginPositionV(chainRef[j]))
             {
                 // ... swap their start and end positions in both dimensions
-                size_t maxPosV = endPositionV(chain[i]);
-                setEndPositionV(chain[i], beginPositionV(chain[j]));
-                setBeginPositionV(chain[j], maxPosV);
+                size_t maxPosV = endPositionV(chainRef[i]);
+                setEndPositionV(chainRef[i], beginPositionV(chainRef[j]));
+                setBeginPositionV(chainRef[j], maxPosV);
 
-                size_t maxPosH = endPositionH(chain[i]);
-                setEndPositionH(chain[i], beginPositionH(chain[j]));
-                setBeginPositionH(chain[j], maxPosH);
+                size_t maxPosH = endPositionH(chainRef[i]);
+                setEndPositionH(chainRef[i], beginPositionH(chainRef[j]));
+                setBeginPositionH(chainRef[j], maxPosH);
             }
         }
     }
@@ -254,30 +257,33 @@ private:  // Private non-modifying functions
     /// \param  chain  A seed-set of kmer matchs between the sequences
     ///
     /// \return  int  The number of seeds so removed
-    int RemoveZeroLengthSeeds(TSeedChain& chain)
+    int RemoveZeroLengthSeeds(TSeedChain* chain)
     {
         using namespace seqan;
 
-        int size = length(chain);
+        // SeqAn doesn't support "->at()", so we de-reference here
+        TSeedChain& chainRef = *chain;
+
+        int size = length(chainRef);
         int curr = 0;
 
         for (int i = 0; i < size; ++i)
         {
             // If end is greater than beginning, its a still-valid seed.
             // Copy it to our current counter-position and increment 
-            if (endPositionH(chain[i]) > beginPositionH(chain[i]))
+            if (endPositionH(chainRef[i]) > beginPositionH(chainRef[i]))
             {
-                chain[curr] = chain[i];
+                chainRef[curr] = chainRef[i];
                 curr++;
             }
         }
 
         // Erase the last "curr" seeds, which are now all duplicates
         for (int i = size - 1; i >= curr; --i)
-            erase(chain, i);
+            erase(chainRef, i);
 
         // Shrink the container to fit the new smaller dataset
-        shrinkToFit(chain);
+        shrinkToFit(chainRef);
         return size - curr;
     }
 
@@ -290,22 +296,25 @@ private:  // Private non-modifying functions
     /// \param  chain  A seed-set of kmer matchs between the sequences
     ///
     /// \return  int  The number of seeds so removed
-    int RemoveContainedSeeds(TSeedChain& chain)
+    int RemoveContainedSeeds(TSeedChain* chain)
     {
         using namespace seqan;
+        
+        // SeqAn doesn't support "->at()", so we de-reference here
+        TSeedChain& chainRef = *chain;
 
-        for (int m = length(chain) - 1; m > 0; --m)
+        for (int m = length(chainRef) - 1; m > 0; --m)
         {
             int n = m - 1;
             bool mergeFound = false;
             while (mergeFound == false && n >= 0)
             {
-                if ((beginPositionH(chain[n]) <  beginPositionH(chain[m]) &&
-                    endPositionH(chain[n])   >= endPositionH(chain[m]))   ||
-                    (beginPositionV(chain[n]) <  beginPositionV(chain[m]) &&
-                    endPositionV(chain[n])   >= endPositionV(chain[m])))
+                if ((beginPositionH(chainRef[n]) <  beginPositionH(chainRef[m]) &&
+                    endPositionH(chainRef[n])   >= endPositionH(chainRef[m]))   ||
+                    (beginPositionV(chainRef[n]) <  beginPositionV(chainRef[m]) &&
+                    endPositionV(chainRef[n])   >= endPositionV(chainRef[m])))
                 {
-                    setEndPositionH(chain[m], beginPositionH(chain[m]));
+                    setEndPositionH(chainRef[m], beginPositionH(chainRef[m]));
                     mergeFound = true;
                 }
                 n--;
@@ -313,7 +322,7 @@ private:  // Private non-modifying functions
         }
 
         // Remove zero-length seeds and return the count
-        int numRemoved = RemoveZeroLengthSeeds(chain);
+        int numRemoved = RemoveZeroLengthSeeds(&chainRef);
         return numRemoved;
     }
 
@@ -354,13 +363,13 @@ private:  // Private non-modifying functions
     /// \param  pair  An Alignment/Stats pair object
     ///
     /// \return  int  An error flag - 0 if successful, 1 if failure
-    void ClipAlignment(TAlignPair& pair)
+    void ClipAlignment(TAlignPair* pair)
     {
         using namespace seqan;
 
         // Traverse the ends of the alignment for minimal match anchors
-        TRow& queryRow = row(pair.first, 0);
-        TRow& refRow   = row(pair.first, 1);
+        TRow& queryRow = row(pair->first, 0);
+        TRow& refRow   = row(pair->first, 1);
         int alignStart = FindLeftSideMinMatch(queryRow, refRow);                
         int alignEnd   = FindRightSideMinMatch(queryRow, refRow);   
 
@@ -369,7 +378,7 @@ private:  // Private non-modifying functions
         //      alignment stats as-is and abandon clipping.
         if (alignStart < 0 || alignEnd < 0)
         {
-            computeAlignmentStats(pair.second, pair.first, scoringScheme_);
+            computeAlignmentStats(pair->second, pair->first, scoringScheme_);
             return;
         }
 
@@ -378,7 +387,7 @@ private:  // Private non-modifying functions
         setClippedEndPosition(queryRow, alignEnd);
         setClippedBeginPosition(refRow, alignStart);
         setClippedEndPosition(refRow, alignEnd);
-        computeAlignmentStats(pair.second, pair.first, scoringScheme_);
+        computeAlignmentStats(pair->second, pair->first, scoringScheme_);
 
         // If the initial alignment is short, we succeeded but do not have room
         //     for refinement - exit here.
@@ -410,7 +419,7 @@ private:  // Private non-modifying functions
                 setClippedEndPosition(queryRow, alignEnd);
                 setClippedBeginPosition(refRow, newAlignStart);
                 setClippedEndPosition(refRow, alignEnd);
-                computeAlignmentStats(newLeftStats, pair.first, scoringScheme_);
+                computeAlignmentStats(newLeftStats, pair->first, scoringScheme_);
                 clearClipping(queryRow);
                 clearClipping(refRow);
             }
@@ -423,23 +432,23 @@ private:  // Private non-modifying functions
                 setClippedEndPosition(queryRow, newAlignEnd);
                 setClippedBeginPosition(refRow, alignStart);
                 setClippedEndPosition(refRow, newAlignEnd);
-                computeAlignmentStats(newRightStats, pair.first, scoringScheme_);
+                computeAlignmentStats(newRightStats, pair->first, scoringScheme_);
                 clearClipping(queryRow);
                 clearClipping(refRow);
             }
 
             if (newLeftStats.alignmentIdentity > newRightStats.alignmentIdentity &&
-                newLeftStats.alignmentIdentity > pair.second.alignmentIdentity + minAccuracyImprovement_) {
+                newLeftStats.alignmentIdentity > pair->second.alignmentIdentity + minAccuracyImprovement_) {
                 // If the new align-start produces a better alignment than the end,
                 //     and the improvement is non-trivial, keep it
                 alignStart = newAlignStart;
-                pair.second = newLeftStats;
+                pair->second = newLeftStats;
             } else if (newRightStats.alignmentIdentity > newLeftStats.alignmentIdentity &&
-                       newRightStats.alignmentIdentity > pair.second.alignmentIdentity + minAccuracyImprovement_) {
+                       newRightStats.alignmentIdentity > pair->second.alignmentIdentity + minAccuracyImprovement_) {
                 // If the new align-end produces a better alignment than the start,
                 //     and the improvement is non-trivial, keep it
                 alignEnd = newAlignEnd;
-                pair.second = newRightStats;
+                pair->second = newRightStats;
             } else {
                 // If both possible new positions are invalid or inferior, we 
                 //    assume that the previous clipping was optimal
@@ -558,16 +567,16 @@ private:  // Private non-modifying functions
     /// \param  refAlignStart  The number of bases trimmed from the infix
     ///                        that became the second alignment row
     ///
-    void SetAlignmentRegion(TSeed& region,
-                            const TAlign& align, 
+    void SetAlignmentRegion(const TAlign& align, 
                             const size_t queryAlignStart, 
-                            const size_t refAlignStart)
+                            const size_t refAlignStart,
+                            TSeed* region)
     {
         using namespace seqan;
-        setBeginPositionH(region, queryAlignStart + beginPosition(row(align, 0)));
-        setEndPositionH(region,   queryAlignStart + endPosition(row(align, 0)));
-        setBeginPositionV(region, refAlignStart + beginPosition(row(align, 1)));
-        setEndPositionV(region,   refAlignStart + endPosition(row(align, 1)));
+        setBeginPositionH(*region, queryAlignStart + beginPosition(row(align, 0)));
+        setEndPositionH(*region,   queryAlignStart + endPosition(row(align, 0)));
+        setBeginPositionV(*region, refAlignStart + beginPosition(row(align, 1)));
+        setEndPositionV(*region,   refAlignStart + endPosition(row(align, 1)));
     }
 
     /// We wish to only consider alignments that cover at least a certain
