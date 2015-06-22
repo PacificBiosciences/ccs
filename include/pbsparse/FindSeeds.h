@@ -104,7 +104,7 @@ size_t SafeSubtract(size_t size, size_t k)
 /// \param  seq1  The first, or query, sequence
 /// \param  seq2  The second, or reference, sequence
 template<typename TConfig>
-void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds,
+void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>* seeds,
                const seqan::DnaString& seq1, 
                const seqan::DnaString& seq2)
 {
@@ -138,10 +138,10 @@ void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds,
             Seed<Simple> seed(hit, i, TConfig::Size);
 
 #ifdef MERGESEEDS
-            if (!addSeed(seeds, seed, 0, Merge()))
+            if (!addSeed(*seeds, seed, 0, Merge()))
 #endif
             {
-                addSeed(seeds, seed, Single());
+                addSeed(*seeds, seed, Single());
             }
         }
     }
@@ -157,7 +157,7 @@ void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds,
 /// \param  index  The index of of the various
 /// \param  seq  The query sequence
 template<typename TConfig>
-void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& seeds,
+void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* seeds,
                const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
                const seqan::DnaString& seq)
 {
@@ -196,10 +196,10 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& see
             Seed<Simple> seed(i, j, TConfig::Size);
 
 #ifdef MERGESEEDS
-            if (!addSeed(seeds[rIdx], seed, 0, Merge()))
+            if (!addSeed(seeds->at(rIdx), seed, 0, Merge()))
 #endif
             {
-                addSeed(seeds[rIdx], seed, Single());
+                addSeed(seeds->at(rIdx), seed, Single());
             }
         }
     }
@@ -218,7 +218,7 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& see
 /// \param  seq  The query sequence
 /// \param  qIdx  The index of the query in the ... index, so it can be ignored
 template<typename TConfig>
-void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& seeds,
+void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* seeds,
                const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
                const seqan::DnaString& seq,
                const size_t qIdx)
@@ -261,10 +261,10 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& see
             Seed<Simple> seed(i, j, TConfig::Size);
 
 #ifdef MERGESEEDS
-            if (!addSeed(seeds[rIdx], seed, 0, Merge()))
+            if (!addSeed(seeds->at(rIdx), seed, 0, Merge()))
 #endif
             {
-                addSeed(seeds[rIdx], seed, Single());
+                addSeed(seeds->at(rIdx), seed, Single());
             }
         }
     }
