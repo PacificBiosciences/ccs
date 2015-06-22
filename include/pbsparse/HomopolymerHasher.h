@@ -74,7 +74,7 @@ private:  // Internal class methods
     /// index and saves them for later used by 
     ///
     /// \param  shape  The Q-gram shape used in the index
-    void Initialize(TShape& shape)
+    void Initialize(const TShape& shape)
     {
         using namespace seqan;
 
