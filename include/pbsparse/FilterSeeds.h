@@ -85,20 +85,20 @@ size_t CountSeeds(const TContainer& seeds)
 ///                of the reference sequence to the seeds found within.
 /// \param  size_t  The number of top hits to retain and report
 template<size_t TSize>
-void FilterSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& seeds,
+void FilterSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* seeds,
                  const size_t nBest)
 {
     using namespace std;
 
     // If we already have fewer
-    if (seeds.size() <= nBest)
+    if (seeds->size() <= nBest)
         return;
 
     // keep a priority queue of the biggest hits,
     // sorted ascendingly. Bump the least value if a new one is bigger.
     priority_queue<size_t, std::vector<size_t>, std::greater<size_t>> best;
 
-    for (const auto& kv : seeds)
+    for (const auto& kv : *seeds)
     {
         size_t nSeeds = CountSeeds<TSize>(kv.second);
 
@@ -116,7 +116,7 @@ void FilterSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& s
     // Erase all SeedSets with fewer seeds that the smallest
     // item that made it into the queue.
     size_t minSize = best.top();
-    for (auto it = seeds.begin(); it != seeds.end(); )
+    for (auto it = seeds->begin(); it != seeds->end(); )
     {
         if (CountSeeds<TSize>(it->second) < minSize)
         {
