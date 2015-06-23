@@ -47,6 +47,8 @@
 #include <seqan/seeds.h>
 #include <seqan/sequence.h>
 
+#include <pbsparse/ChainSeedsConfig.h>
+
 namespace PacBio {
 namespace SparseAlignment {
 
@@ -160,10 +162,7 @@ bool DiagonalCompare(const seqan::Seed<seqan::Simple>& lhs,
 /// \return  long  The score associated with the linkage
 long LinkScore(const seqan::Seed<seqan::Simple>& lhs, 
                const seqan::Seed<seqan::Simple>& rhs, 
-               const int matchScore,
-               const int mismatchScore,
-               const int insertionScore,
-               const int deletionScore)
+               const ChainSeedsConfig config)
 {
     using namespace std;
 
@@ -177,23 +176,23 @@ long LinkScore(const seqan::Seed<seqan::Simple>& lhs,
 
     // matchReward = # of anchor bases * matchScore;
     long matches = k - max(0l, k - fwd);
-    long matchReward = matches * matchScore;
+    long matchReward = matches * config.matchScore;
     
-    // mismatchPenalty = # of non-anchor, on-diagonal bases * mismatchScore
-    long mismatches = fwd - matches;
-    long mismatchPenalty = mismatches * mismatchScore;
+    // nonMatchPenalty = # of non-anchor, on-diagonal bases * nonMatchPenalty
+    long nonMatches = fwd - matches;
+    long nonMatchScorePenalty = nonMatches * config.nonMatchPenalty;
     
     // indelPenalty = difference in the seed diagonals * indelScore
     long diagL = Diagonal(lhs);
     long diagR = Diagonal(rhs);
     long drift = diagL - diagR;
-    long indelPenalty = 0;
+    long indelScorePenalty = 0;
     if (drift > 0)
-        indelPenalty = drift * insertionScore;
+        indelScorePenalty = drift * config.insertionPenalty;
     else if (drift < 0)
-        indelPenalty = -drift * deletionScore;
+        indelScorePenalty = -drift * config.deletionPenalty;
 
-    return matchReward + indelPenalty + mismatchPenalty;
+    return matchReward + indelScorePenalty + nonMatchScorePenalty;
 }
 
 ///
@@ -394,12 +393,7 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
                     std::vector<SDPHit>* seeds,
                     std::vector<long>& scores,
                     const size_t seedSetIdx,
-                    const size_t numCandidates,
-                    const long minScore,
-                    const int match,
-                    const int mismatch,
-                    const int insertion,
-                    const int deletion)
+                    const ChainSeedsConfig& config)
 {
     using namespace std;
     using namespace seqan;
@@ -435,7 +429,7 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
                 if (pred != colSet.begin())
                 {
                     pred = prev(pred);
-                    long s = scores[pred->Seed->Index] + LinkScore(*it, *(pred->Seed), match, mismatch, insertion, deletion);
+                    long s = scores[pred->Seed->Index] + LinkScore(*it, *(pred->Seed), config);
 
                     if (s > bestScore)
                     {
@@ -452,7 +446,7 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
                 if (visa != sweepSet.begin())
                 {
                     visa = prev(visa);
-                    long s = scores[visa->Index] + LinkScore(*it, *visa, match, mismatch, insertion, deletion);
+                    long s = scores[visa->Index] + LinkScore(*it, *visa, config);
 
                     if (s > bestScore)
                     {
@@ -465,7 +459,7 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
             // search visible fragments (left)
             if (auto visl = visible[it->Index])
             {
-                long s = scores[visl->Index] + LinkScore(*it, *visl, match, mismatch, insertion, deletion);
+                long s = scores[visl->Index] + LinkScore(*it, *visl, config);
 
                 if (s > bestScore)
                 {
@@ -474,12 +468,12 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
                 }
             }
 
-            if (bestSeed && bestScore >= minScore)
+            if (bestSeed && bestScore >= config.minScore)
             {
                 scores[it->Index] = bestScore;
                 chainPred->at(it->Index) = bestSeed->Index;
 
-                if (chainHits->size() < numCandidates)
+                if (chainHits->size() < config.numCandidates)
                 {
                     chainHits->push( {seedSetIdx, it->Index, bestScore} );
                 }
@@ -489,14 +483,14 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
                     chainHits->push( {seedSetIdx, it->Index, bestScore} );
                 }
             }
-            else if (scores[it->Index] >= minScore)
+            else if (scores[it->Index] >= config.minScore)
             {
                 // PLEASE NOTE: these have already been done at creation time
                 // scores[it->Index] = seedSize(*it);
                 // chainPred[it->Index] = boost::none;
                 //
 
-                if (chainHits->size() < numCandidates)
+                if (chainHits->size() < config.numCandidates)
                 {
                     chainHits->push( {seedSetIdx, it->Index, bestScore} );
                 }
@@ -566,12 +560,7 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
 void __attribute__((__unused__))
 ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>* chains,
                 const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
-                const size_t numCandidates = 10,
-                const long minScore = 18,
-                const int match = 5,
-                const int mismatch = 0,
-                const int insertion = -4,
-                const int deletion = -8)
+                const ChainSeedsConfig& config)
 {
     using namespace seqan;
     using namespace std;
@@ -584,8 +573,7 @@ ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>* chains,
     InitializeSeedsAndScores(seedSet, &seeds, &scores);
 
     // Call the main function
-    ChainSeedsImpl(&chainHits, &chainPred, &seeds, scores, 0, numCandidates, 
-            minScore, match, mismatch, insertion, deletion);
+    ChainSeedsImpl(&chainHits, &chainPred, &seeds, scores, 0, config);
 
     // Empty and resize the result vector
     chains->clear();
@@ -614,6 +602,7 @@ ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>* chains,
     }
 }
 
+
 /// Search a SeedSet for the best numCandidates sets of locally-chainable 
 /// seeds according to some scoring criteria.  Seed chains are scored based
 /// on their length and penalized according to the distance between them and
@@ -639,12 +628,7 @@ ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>* chains,
 void __attribute__((__unused__))
 ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>* chains,
                 const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
-                const size_t numCandidates = 10,
-                const long minScore = 18,
-                const int match = 5,
-                const int mismatch = 0,
-                const int insertion = -4,
-                const int deletion = -8)
+                const ChainSeedsConfig& config)
 {
     using namespace seqan;
     using namespace std;
@@ -657,8 +641,7 @@ ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>* chains,
     InitializeSeedsAndScores(seedSet, &seeds, &scores);
 
     // Call the main function
-    ChainSeedsImpl(&chainHits, &chainPred, &seeds, scores, 0, numCandidates, 
-            minScore, match, mismatch, insertion, deletion);
+    ChainSeedsImpl(&chainHits, &chainPred, &seeds, scores, 0, config);
 
     // Empty and resize the result vector
     chains->clear();
@@ -708,12 +691,7 @@ ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>* chains,
 ///                   a lower diagonal than the 'downstream' seed.
 void ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>>* chains,
                 const std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>> seedSets,
-                const size_t numCandidates = 10,
-                const long minScore = 18,
-                const int match = 5,
-                const int mismatch = 0,
-                const int insertion = -4,
-                const int deletion = -8)
+                const ChainSeedsConfig config)
 {
     using namespace seqan;
     using namespace std;
@@ -745,8 +723,7 @@ void ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::
         InitializeSeedsAndScores(seedSet, &seeds[i], &scores);
 
         // Call the main function on the current seedSet
-        ChainSeedsImpl(&chainHits, &chainPred[i], &seeds[i], scores, i, numCandidates, 
-                minScore, match, mismatch, insertion, deletion);
+        ChainSeedsImpl(&chainHits, &chainPred[i], &seeds[i], scores, i, config);
     }
 
     // Empty and resize the result vector
