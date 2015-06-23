@@ -196,10 +196,10 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* see
             Seed<Simple> seed(i, j, TConfig::Size);
 
 #ifdef MERGESEEDS
-            if (!addSeed(seeds->at(rIdx), seed, 0, Merge()))
+            if (!addSeed(seeds->operator[](rIdx), seed, 0, Merge()))
 #endif
             {
-                addSeed(seeds->at(rIdx), seed, Single());
+                addSeed(seeds->operator[](rIdx), seed, Single());
             }
         }
     }
@@ -225,7 +225,7 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* see
 {
     using namespace seqan;
     using namespace std;
-
+    
     typedef Shape<Dna, typename TConfig::ShapeType> TShape;
 
     TShape shape = indexShape(index);
@@ -261,10 +261,10 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* see
             Seed<Simple> seed(i, j, TConfig::Size);
 
 #ifdef MERGESEEDS
-            if (!addSeed(seeds->at(rIdx), seed, 0, Merge()))
+            if (!addSeed(seeds->operator[](rIdx), seed, 0, Merge()))
 #endif
             {
-                addSeed(seeds->at(rIdx), seed, Single());
+                addSeed(seeds->operator[](rIdx), seed, Single());
             }
         }
     }
