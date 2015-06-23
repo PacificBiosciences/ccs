@@ -87,7 +87,7 @@ public:  // structors
             throw std::invalid_argument("bandExtension must be >= 1");
 
         // NOTE: BLASR uses inverted scores, i.e. (-5, 6, 4, 5)
-        scoringScheme_ = TScoringScheme(5, -6, -4, -4, -5, -5);
+        //scoringScheme_ = TScoringScheme(5, -6, -4, -4, -5, -5);
     }
 
     // Move constructor
@@ -614,13 +614,15 @@ private:  // User-defined member variables
     const size_t minQueryLength_;
     const size_t minMatchLength_;
     const size_t bandExtension_;
-
-private:  // Non-User-defined member variables
-    TScoringScheme scoringScheme_;
-    TAlignConfig alignConfig_;
+   
+private:  // Class-defined memeber variables
+    static constexpr float minAccuracyImprovement_ = 3.0f;
     
+    // These aren't static since C doesn't allow static function calls
+    const TScoringScheme scoringScheme_ = TScoringScheme(5, -6, -4, -4, -5, -5);
+    const TAlignConfig alignConfig_ = TAlignConfig();
     const char gapValue_ = seqan::gapValue<char>();
-    const float minAccuracyImprovement_ = 3.0f;
+
 };
 
 } // SparseAlignment
