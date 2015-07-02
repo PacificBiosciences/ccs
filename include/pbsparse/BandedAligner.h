@@ -109,9 +109,10 @@ public:  // non-modifying methods
     ///
     /// Roughly equivalent to BLASR's SDPAlign
     ///
-    /// \param  query  The query sequence in which the hits were found
-    /// \param  chain  A seed-set of kmer matchs between the sequences
     /// \param  region  A seed for storing the final alignment region
+    /// \param  query  The query sequence in which the seeds were found
+    /// \param  hit  A pair with the reference sequence index and the
+    ///              chain of seeds
     ///
     /// \return  TAlignPair  an Alignment/Stats pair object
     TAlignPair AlignHit(TSeed& region,
