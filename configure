@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+rm -fr builddir && \
+mkdir builddir && \
+cd builddir && \
+cmake -DBifx_RootDir=$HOME/PacBio/ConsensusTools -DCMAKE_BUILD_TYPE=Release .. && \
+cd ..
