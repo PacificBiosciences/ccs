@@ -1,11 +1,7 @@
 You probably don't have the access necessary to build this just yet, so please move along for now.
 
-For those of you that do, you'll need pbbam from staging/PostPrimary, and ConsensusCore from
-lib/cpp *with* shelved changelist 148562. If you organize these on disk like they are in the depot
-under bioinformatics/..., then you'll just need to pass -DBifx_RootDir=/path/to/bioinformatics to
-cmake to have them automagically picked up.
+For those of you that do, you'll need pbbam from staging/PostPrimary, and ConsensusCore from lib/cpp *with* shelved changelist 148562. If you organize these on disk like they are in the depot under bioinformatics/..., then you'll just need to pass -DBifx_RootDir=/path/to/bioinformatics to cmake to have them automagically picked up.
 
-If you want things to go fast, I highly recommend building both pbbam and pbccs with
--DCMAKE_BUILD_TYPE=Release .
+If you want things to go fast, I highly recommend building both pbbam and pbccs with -DCMAKE_BUILD_TYPE=Release.
 
 Watch this place, things will advance rapidly as features land.
