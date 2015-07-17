@@ -1,0 +1,11 @@
+make/Config.mk
+*.o
+*.d
+build/
+.project
+.cproject
+.settings
+ConsensusCore.xcodeproj
+*~
+bin/
+obj/
