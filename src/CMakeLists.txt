@@ -35,6 +35,7 @@ add_executable(ccs ${CCS_Sources})
 set_target_properties(ccs PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PacBioCCS_BinDir}
 )
+add_dependencies(ccs ConsensusCore)
 target_link_libraries(ccs
     pbccs
     ${CONSENSUSCORE_LIBRARIES}

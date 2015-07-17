@@ -35,9 +35,18 @@ file(MAKE_DIRECTORY             ${PacBioCCS_LibDir})
 set(Bifx_RootDir                ${PacBioCCS_RootDir}/../../../software/smrtanalysis/bioinformatics CACHE PATH "smrtanalysis/bioinformatics root path")
 
 # ConsensusCore
-set(ConsensusCore_RootDir       ${Bifx_RootDir}/lib/cpp/ConsensusCore                              CACHE PATH "ConsensusCore root path")
+#set(ConsensusCore_RootDir       ${Bifx_RootDir}/lib/cpp/ConsensusCore                              CACHE PATH "ConsensusCore root path")
+set(ConsensusCore_RootDir       ${PacBioCCS_RootDir}/ConsensusCore)
 set(ConsensusCore_IncludeDir    ${ConsensusCore_RootDir}/include ${ConsensusCore_RootDir}/external)
 set(ConsensusCore_LibDir        ${ConsensusCore_RootDir}/build/C++)
+set(CONSENSUSCORE_LIBRARIES     ${ConsensusCore_LibDir}/libConsensusCore.a)
+add_custom_target(
+    ConsensusCore
+    "./configure"
+    COMMAND "make"
+    WORKING_DIRECTORY ${ConsensusCore_RootDir}
+    COMMENT "building ConsensusCore"
+    VERBATIM)
 
 # pbbam
 set(PBBam_RootDir               ${Bifx_RootDir}/staging/PostPrimary/pbbam)
@@ -64,10 +73,10 @@ file(GLOB PacBioCCS_CPP         "${PacBioCCS_SourceDir}/*.cpp")
 set(CPPOPTPARSE_CPP             ${CPPOPTPARSE_RootDir}/OptionParser.cpp)
 
 # find (existing) libraries needed by executable and tests
-find_library(CONSENSUSCORE_LIBRARIES
-    NAMES ConsensusCore
-    PATHS ${ConsensusCore_LibDir}
-    NO_DEFAULT_PATH)
+#find_library(CONSENSUSCORE_LIBRARIES
+#    NAMES ConsensusCore
+#    PATHS ${ConsensusCore_LibDir}
+#    NO_DEFAULT_PATH)
 
 find_library(PBBAM_LIBRARY
     NAMES pbbam

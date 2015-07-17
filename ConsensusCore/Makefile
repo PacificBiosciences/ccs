@@ -54,6 +54,9 @@ clean-cxx:
 clean: clean-cxx clean-python clean-csharp
 	-rm -rf $(BUILD_ROOT)
 
+distclean: clean
+	-rm -fr make/Config.mk
+
 #
 # Test targets
 #
@@ -100,7 +103,8 @@ pip-install: $(shell which pip > /dev/null)
           --install-option="--boost=$(BOOST)" \
           ./
 
-.PHONY: all lib clean-cxx clean test tests check python clean-python \
+.PHONY: all lib clean-cxx clean distclean test tests check \
+	python clean-python \
 	csharp clean-csharp echo-python-build-directory \
 	test-python test-csharp pip-uninstall pip-install \
 	lint pre-commit-hook 

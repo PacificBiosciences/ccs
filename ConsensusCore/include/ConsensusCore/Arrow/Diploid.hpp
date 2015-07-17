@@ -36,44 +36,30 @@
 // Author: David Alexander
 
 #pragma once
-#include <xmmintrin.h>
-#include <cfloat>
-#include <ostream>
+
+#include <utility>
+#include <vector>
 
 namespace ConsensusCore {
+namespace Arrow {
 
-    /// \brief A class representing a floating point number on the logarithmic scale
-    struct lfloat
-    {
-        float value;
+    class Mutation;
 
-        lfloat()
-        {
-            value = -FLT_MAX;
-        }
-
-        lfloat(float f)  // NOLINT(runtime/explicit)
-        {
-            value = f;
-        }
-
-        lfloat& operator=(float f)
-        {
-            value = f;
-            return *this;
-        }
-
-        operator const float& () const   { return value; }
-        operator float& ()               { return value; }
-
-        friend std::ostream& operator<<(std::ostream& out, const lfloat& f)
-        {
-            out << f.value;
-            return out;
-        }
+    struct DiploidSite {
+        int Allele0;
+        int Allele1;
+        float LogBayesFactor;
+        std::vector<int> AlleleForRead;
+        DiploidSite(int, int, float, std::vector<int>);
     };
 
-    template<typename T>  const float  Zero()  { return T(); }
-    template<typename T>  const __m128 Zero4() { return _mm_set_ps1(T()); }
+    // NB: The prototype
+    //  (float* siteScores, int dim1, int dim2)
+    // gets transformed to just
+    //  (siteScores)
+    // for Python by SWIG.
+    DiploidSite*
+    IsSiteHeterozygous(const float *siteScores, int dim1, int dim2,
+                       float logPriorRatio);
 }
-
+}
