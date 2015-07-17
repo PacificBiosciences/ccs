@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+
+import os, re, sys
+from glob import glob
+from os.path import join, dirname as up
+
+BOOST_MINIMUM_VERSION = (1,47,0)
+
+def str_version(tpl):
+    return ".".join(map(str, tpl))
+
+def boost_version(boostDir):
+    versionFile = join(boostDir, "boost/version.hpp")
+    try:
+        m = re.search("#define BOOST_VERSION (.*)", open(versionFile).read())
+        if m:
+            versionInt = int(m.group(1))
+            versionTuple = (versionInt // 100000,
+                            (versionInt// 100) % 1000,
+                            versionInt % 100)
+            return versionTuple
+    except:
+        pass
+    return None
+
+def find_boost():
+    """
+    Look for boost in some standard filesystem places.
+    Return the one with the highest version, or None if can't find any.
+    """
+    boost_candidates = \
+        glob("/usr/include/")              + \
+        glob("/usr/include/boost/")        + \
+        glob("/usr/include/boost*/")       + \
+        glob("/usr/local/include/")        + \
+        glob("/usr/local/boost/")          + \
+        glob("/usr/local/boost*/")         + \
+        glob("/opt/local/include/boost/")  + \
+        glob("/opt/local/include/boost*/")
+
+    boosts_found = [ (boost, boost_version(boost))
+                     for boost in boost_candidates ]
+    if boosts_found:
+        best_boost = max(boosts_found, key=lambda t: t[1])[0]
+        return best_boost
+    else:
+        return None
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        boost = sys.argv[1]
+    else:
+        boost = find_boost()
+    if boost_version(boost) < BOOST_MINIMUM_VERSION:
+        print >> sys.stderr, "Boost version at least %s required!" \
+            % str_version(BOOST_MINIMUM_VERSION)
+        print >> sys.stderr, "Use --boost=<path> to specify boost location."
+        sys.exit(1)
+    print(boost)

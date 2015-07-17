@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+import os, re, sys
+from glob import glob
+from os.path import join, dirname as up
+
+SWIG_MINIMUM_VERSION  = (2,0,7)
+
+def str_version(tpl):
+    return ".".join(map(str, tpl))
+
+def find_swig():
+    # return `which swig` or else None
+    which_swig = os.popen("which swig")
+    which_swig_output = which_swig.read()
+    which_swig_status = which_swig.close()
+    if which_swig_status is None:
+        return which_swig_output.strip()
+    else:
+        return None
+
+def swig_version(swigExecutablePath):
+    """
+    Return the version of the swig provided, or None if it is not a
+    valid SWIG.
+    """
+    swig_version_pipe = os.popen(swigExecutablePath + " -version")
+    swig_version_output = swig_version_pipe.read()
+    swig_version_status = swig_version_pipe.close()
+    if swig_version_status == None:
+        m = re.search("SWIG Version (.*)\n", swig_version_output)
+        if m:
+            swig_version_string = m.group(1)
+            return tuple(map(int, swig_version_string.split(".")))
+    else:
+        return None
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        swig = sys.argv[1]
+    else:
+        swig = find_swig()
+
+    if swig is None or swig_version(swig) < SWIG_MINIMUM_VERSION:
+        print >> sys.stderr, "SWIG version at least %s required!" \
+            % str_version(SWIG_MINIMUM_VERSION)
+        print >> sys.stderr, "Use --swig=<path> to specify SWIG location."
+        sys.exit(1)
+    else:
+        print(swig)

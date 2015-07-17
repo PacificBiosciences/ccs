@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+
+CPP_ABI=c++11
+
+usage ()
+{
+    echo ""
+    echo "Usage : "
+    echo "  configure [--boost=BOOST]                    # root of boost install"
+    echo "            [--swig=SWIG]                      # location of swig executable"
+    echo "            [--swig-lib=SWIG_LIB]              # location of swig library"
+    echo "            [--debug]                          # build debug library (1)"
+    echo "            [--c++98]                          # build using C++98 ABI"
+    echo
+    echo "    (Python only:)"
+    echo "            [--python-include=PYTHON_INCLUDE]  # location of Python.h"
+    echo "            [--numpy-include=NUMPY_INCLUDE]    # location of numpy/core/include"
+    echo ""
+    echo
+    echo "  configure --pbi                              # use PacBio perforce locations"
+    echo ""
+    echo "  configure --modules                          # use PacBio GNU modules"
+    echo ""
+    echo
+    echo "  configure --clear                            # delete configuration"
+    echo ""
+
+
+}
+
+configure_pbi ()
+{
+    echo "Configuring based on PacBio P4 depot paths."
+
+    SOFTWARE=$(readlink -f ../../../../..) # Path to //depot/software
+    BOOST=$SOFTWARE/smrtanalysis/prebuilt.out/boost/boost_1_47_0/
+    SWIG=$SOFTWARE/smrtanalysis/prebuilt.out/swig/swig-2.0.10/ubuntu-1004/bin/swig
+    SWIG_LIB=$SOFTWARE/smrtanalysis/prebuilt.out/swig/swig-2.0.10/common/share/swig/2.0.10
+    PYTHON_INCLUDE=
+    NUMPY_INCLUDE=
+    DEBUG=
+}
+
+
+configure_modules ()
+{
+    echo "Configuring based on PacBio GNU modules"
+    echo "(assumes you have already done module load boost, module load swig (selecting your desired versions))"
+    BOOST=$BOOST_ROOT
+    SWIG=`which swig`
+}
+
+
+while test x$1 != x; do
+    case $1 in
+        --pbi)
+            configure_pbi
+            ;;
+        --modules)
+            configure_modules
+            ;;
+        --boost=*)
+            BOOST=`echo $1 | sed 's/--boost=//'`
+            ;;
+        --swig=*)
+            SWIG=`echo $1 | sed 's/--swig=//'`
+            ;;
+        --swig-lib=*)
+            SWIG_LIB=`echo $1 | sed 's/--swig-lib=//'`
+            ;;
+        --debug)
+            DEBUG=1
+            ;;
+        --c++98)
+            CPP_ABI=c++98
+            ;;
+        --python-include=*)
+            PYTHON_INCLUDE=`echo $1 | sed 's/--python-include=//'`
+            ;;
+        --numpy-include=*)
+            NUMPY_INCLUDE=`echo $1 | sed 's/--numpy-include=//'`
+            ;;
+        --help)
+            usage
+            exit
+            ;;
+        --clear)
+            rm -f make/Config.mk
+            exit
+            ;;
+        *)
+            echo Warning: unknown argument $1 >&2
+            usage
+            ;;
+    esac
+    shift
+done
+
+# Find/validate boost and swig
+#set -e
+BOOST=`tools/find_boost $BOOST` || exit
+SWIG=`tools/find_swig $SWIG`  || exit
+
+if [ -z $SWIG_LIB ]; then
+    SWIG_LIB=`swig -swiglib`
+fi
+
+
+echo
+echo ConsensusCore configuration summary
+echo -----------------------------------
+echo "    BOOST          = $BOOST"
+echo "    SWIG           = $SWIG"
+echo "    SWIG_LIB       = $SWIG_LIB"
+echo "    PYTHON_INCLUDE = $PYTHON_INCLUDE"
+echo "    NUMPY_INCLUDE  = $NUMPY_INCLUDE"
+echo "    DEBUG          = $DEBUG"
+echo "    CPP_ABI        = $CPP_ABI"
+echo
+
+echo > make/Config.mk
+echo "BOOST:=$BOOST"                   >> make/Config.mk
+echo "SWIG:=$SWIG"                     >> make/Config.mk
+echo "SWIG_LIB:=$SWIG_LIB"             >> make/Config.mk
+echo "PYTHON_INCLUDE:=$PYTHON_INCLUDE" >> make/Config.mk
+echo "NUMPY_INCLUDE:=$NUMPY_INCLUDE"   >> make/Config.mk
+echo "DEBUG?=$DEBUG"                   >> make/Config.mk
+echo "CPP_ABI:=$CPP_ABI"               >> make/Config.mk
