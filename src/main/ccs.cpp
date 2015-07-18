@@ -187,7 +187,7 @@ int main(int argc, char **argv)
     parser.add_option("--minReadScore").type("float").set_default(0.75).help("Minimum read score of input reads. Default = %default");
     parser.add_option("--minPasses").type("int").set_default(3).help("Minimum number of passes to calculate CCS. Default = %default");
 
-    ConsensusSettings::AddOptions(parser);
+    ConsensusSettings::AddOptions(&parser);
 
     parser.add_option("--zmwStart").type("int").set_default(0).help("Start processing at this ZMW. Default = %default");
     parser.add_option("--numThreads").type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");

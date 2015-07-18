@@ -42,8 +42,9 @@ set(ConsensusCore_LibDir        ${ConsensusCore_RootDir}/build/C++)
 set(CONSENSUSCORE_LIBRARIES     ${ConsensusCore_LibDir}/libConsensusCore.a)
 add_custom_target(
     ConsensusCore
-    "./configure"
-    COMMAND "make"
+    make distclean
+    COMMAND ./configure
+    COMMAND make
     WORKING_DIRECTORY ${ConsensusCore_RootDir}
     COMMENT "building ConsensusCore"
     VERBATIM)

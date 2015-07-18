@@ -76,11 +76,11 @@ struct ConsensusSettings
     ConsensusSettings(const optparse::Values& options);
 
     static
-    void AddOptions(optparse::OptionParser& parser)
+    void AddOptions(optparse::OptionParser * const parser)
     {
-        parser.add_option("--maxPoaCoverage").type("int").set_default(11).help("Maximum number of subreads to use when building POA. Default = %default");
-        parser.add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
-        // parser.add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
+        parser->add_option("--maxPoaCoverage").type("int").set_default(1000).help("Maximum number of subreads to use when building POA. Default = %default");
+        parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
+        // parser->add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
 };
 
