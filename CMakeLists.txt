@@ -68,7 +68,8 @@ set(CPPOPTPARSE_IncludeDir      ${CPPOPTPARSE_RootDir})
 set(SEQAN_IncludeDir            ${PacBioCCS_ThirdPartyDir}/seqan-library-2.0.0/include)
 
 # laa sources
-file(GLOB PacBioCCS_CPP         "${PacBioCCS_SourceDir}/*.cpp")
+file(GLOB         PacBioCCS_CPP "${PacBioCCS_SourceDir}/*.cpp")
+file(GLOB_RECURSE PacBioCCS_H   "${PacBioCCS_IncludeDir}/*.h")
 
 # cpp-optparse sources
 set(CPPOPTPARSE_CPP             ${CPPOPTPARSE_RootDir}/OptionParser.cpp)

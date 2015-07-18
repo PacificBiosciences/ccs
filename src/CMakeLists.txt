@@ -20,7 +20,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # libpbccs.a
-add_library(pbccs STATIC ${PacBioCCS_CPP})
+add_library(pbccs STATIC ${PacBioCCS_CPP} ${PacBioCCS_H})
 set_target_properties(pbccs PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${PacBioCCS_LibDir}
 )
