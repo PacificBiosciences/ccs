@@ -40,6 +40,10 @@ set(ConsensusCore_RootDir       ${PacBioCCS_RootDir}/ConsensusCore)
 set(ConsensusCore_IncludeDir    ${ConsensusCore_RootDir}/include ${ConsensusCore_RootDir}/external)
 set(ConsensusCore_LibDir        ${ConsensusCore_RootDir}/build/C++)
 set(CONSENSUSCORE_LIBRARIES     ${ConsensusCore_LibDir}/libConsensusCore.a)
+
+file(GLOB_RECURSE ConsensusCore_CPP "${ConsensusCore_RootDir}/src/*.cpp")
+file(GLOB_RECURSE ConsensusCore_HPP "${ConsensusCore_RootDir}/include/*.hpp")
+
 add_custom_target(
     ConsensusCore
     make distclean
@@ -47,6 +51,7 @@ add_custom_target(
     COMMAND make
     WORKING_DIRECTORY ${ConsensusCore_RootDir}
     COMMENT "building ConsensusCore"
+    SOURCES ${ConsensusCore_CPP} ${ConsensusCore_HPP}
     VERBATIM)
 
 # pbbam
