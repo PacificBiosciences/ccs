@@ -73,11 +73,16 @@ using optparse::OptionParser;
 typedef ReadType<ReadId>           Subread;
 typedef ChunkType<ReadId, Subread> Chunk;
 typedef ConsensusType<ReadId>      CCS;
+typedef ResultType<CCS>            Results;
+
 
 auto const CircularConsensus = &Consensus<Chunk, CCS>;
 
-void Writer(BamWriter& ccsWriter, vector<CCS>&& results)
+
+void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
 {
+    counts += results;
+
     for (const auto& ccs : results)
     {
         BamRecordImpl record;
@@ -125,10 +130,11 @@ void Writer(BamWriter& ccsWriter, vector<CCS>&& results)
 }
 
 
-int WriterThread(WorkQueue<vector<CCS>>& queue, BamWriter& ccsWriter)
+Results WriterThread(WorkQueue<Results>& queue, BamWriter& ccsWriter)
 {
-    while (queue.Consume(Writer, ref(ccsWriter)));
-    return 0;
+    Results counts;
+    while (queue.ConsumeWith(Writer, ref(ccsWriter), ref(counts)));
+    return counts;
 }
 
 
@@ -170,6 +176,7 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char **argv, const
     return header;
 }
 
+
 size_t ThreadCount(int n)
 {
     const int m = thread::hardware_concurrency();
@@ -179,6 +186,38 @@ size_t ThreadCount(int n)
 
     return min(m, n);
 }
+
+
+void WriteResultsReport(const std::string& fname, const Results& counts)
+{
+    std::fstream report(fname, std::fstream::out);
+
+    size_t total = counts.Total();
+
+    report << fixed << setprecision(2);
+
+    report << "Success -- CCS generated," << counts.Success
+           << "," << 100.0 * counts.Success / total << '%' << std::endl;
+
+    report << "Failed -- Below SNR threshold," << counts.PoorSNR
+           << "," << 100.0 * counts.PoorSNR / total << '%' << std::endl;
+
+    report << "Failed -- No insert regions," << counts.NoSubreads
+           << "," << 100.0 * counts.NoSubreads / total << '%' << std::endl;
+
+    report << "Failed -- Insert size too small," << counts.TooShort
+           << "," << 100.0 * counts.TooShort / total << '%' << std::endl;
+
+    report << "Failed -- Not enough full passes," << counts.TooFewPasses
+           << "," << 100.0 * counts.TooFewPasses / total << '%' << std::endl;
+
+    report << "Failed -- CCS did not converge," << counts.NonConvergent
+           << "," << 100.0 * counts.NonConvergent / total << '%' << std::endl;
+
+    report << "Failed -- CCS below minimum predicted accuracy," << counts.PoorQuality
+           << "," << 100.0 * counts.PoorQuality / total << '%' << std::endl;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -196,6 +235,7 @@ int main(int argc, char **argv)
 
     vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
 
+    parser.add_option("--report").set_default("counts.txt").help("Write result counts to file. Default = %default");
     parser.add_option("--minSnr").type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
     parser.add_option("--minReadScore").type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
 
@@ -253,8 +293,9 @@ int main(int argc, char **argv)
     unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
     map<string, shared_ptr<string>> movieNames;
 
-    WorkQueue<vector<CCS>> workQueue(nThreads);
-    future<int> writer = async(launch::async, WriterThread, ref(workQueue), ref(ccsWriter));
+    WorkQueue<Results> workQueue(nThreads);
+    future<Results> writer = async(launch::async, WriterThread, ref(workQueue), ref(ccsWriter));
+    size_t poorSNR = 0, tooFewPasses = 0;
 
     // skip the first file, it's for output
     for (auto file = ++files.begin(); file != files.end(); ++file)
@@ -286,13 +327,14 @@ int main(int argc, char **argv)
                     PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
                                 << ", insufficient number of passes ("
                                 << chunk->back().Reads.size() << '<' << settings.MinPasses << ')';
+                    tooFewPasses += 1;
                     chunk->pop_back();
                 }
 
                 if (chunk && chunk->size() >= chunkSize)
                 {
                     // Writer(ccsWriter, Consensus(chunk, minLength, maxPoaCov, minPredAcc));
-                    workQueue.Produce(CircularConsensus, move(chunk), settings);
+                    workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
                     chunk.reset(new vector<Chunk>());
                 }
 
@@ -304,8 +346,9 @@ int main(int argc, char **argv)
                 }
                 else if (*min_element(snr.begin(), snr.end()) < minSnr)
                 {
-                    skipping = true;
                     PBLOG_DEBUG << "Skipping ZMW " << movieName << '/' << *holeNumber << ", fails SNR threshold (" << minSnr << ')';
+                    poorSNR += 1;
+                    skipping = true;
                 }
                 else
                 {
@@ -334,13 +377,32 @@ int main(int argc, char **argv)
         }
     }
 
+    // if the last chunk doesn't have enough passes, skip it
+    if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses)
+    {
+        PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
+                    << ", insufficient number of passes ("
+                    << chunk->back().Reads.size() << '<' << settings.MinPasses << ')';
+        tooFewPasses += 1;
+        chunk->pop_back();
+    }
+
+    // run the remaining tasks
     if (chunk && !chunk->empty())
     {
         // Writer(ccsWriter, Consensus(chunk, minLength, maxPoaCov, minPredAcc));
-        workQueue.Produce(CircularConsensus, move(chunk), settings);
+        workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
     }
+
+    // wait for the queue to be done
     workQueue.Finalize();
 
-    return writer.get();
-    // return 0;
+    // wait for the writer thread and get the results counter
+    //   then add in the snr/minPasses counts and write the report
+    auto results = writer.get();
+    results.PoorSNR += poorSNR;
+    results.TooFewPasses += tooFewPasses;
+    WriteResultsReport(std::string(options.get("report")), results);
+
+    return 0;
 }

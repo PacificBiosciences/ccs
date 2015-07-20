@@ -125,6 +125,56 @@ struct ConsensusType
     float ElapsedMilliseconds;
 };
 
+
+template<typename TConsensus>
+class ResultType : public std::vector<TConsensus>
+{
+public:
+    size_t Success;
+    size_t PoorSNR;
+    size_t NoSubreads;
+    size_t TooShort;
+    size_t TooFewPasses;
+    size_t NonConvergent;
+    size_t PoorQuality;
+
+    ResultType()
+        : Success{0}
+        , PoorSNR{0}
+        , NoSubreads{0}
+        , TooShort{0}
+        , TooFewPasses{0}
+        , NonConvergent{0}
+        , PoorQuality{0}
+    { }
+
+    ResultType<TConsensus>&
+    operator+=(const ResultType<TConsensus>& other)
+    {
+        Success       += other.Success;
+        PoorSNR       += other.PoorSNR;
+        NoSubreads    += other.NoSubreads;
+        TooShort      += other.TooShort;
+        TooFewPasses  += other.TooFewPasses;
+        NonConvergent += other.NonConvergent;
+        PoorQuality   += other.PoorQuality;
+        return *this;
+    }
+
+    size_t Total() const
+    {
+        return
+            ( Success
+            + PoorSNR
+            + NoSubreads
+            + TooShort
+            + TooFewPasses
+            + NonConvergent
+            + PoorQuality );
+    }
+};
+
+
 namespace { // anonymous
 
 template<typename T>
@@ -243,13 +293,13 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
 // pass unique_ptr by reference to satisfy finickyness wrt move semantics in <future>
 //   but then take ownership here with a local unique_ptr
 template<typename TChunk, typename TResult>
-std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
-                               const ConsensusSettings& settings)
+ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
+                              const ConsensusSettings& settings)
 {
     using namespace ConsensusCore::Arrow;
 
     auto chunks(std::move(chunksRef));
-    std::vector<TResult> results;
+    ResultType<TResult> results;
 
     if (!chunks)
         return results;
@@ -261,6 +311,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
         if (reads.empty())
         {
+            results.NoSubreads += 1;
             PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
                         << ", no high quality subreads available";
             continue;
@@ -273,6 +324,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
         if (poaConsensus.length() < settings.MinLength)
         {
+            results.TooShort += 1;
             PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
                         << ", initial consensus too short (<"
                         << settings.MinLength << ')';
@@ -316,6 +368,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
         if (nPasses < settings.MinPasses)
         {
+            results.TooFewPasses += 1;
             PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
                         << ", insufficient number of passes ("
                         << nPasses << '<' << settings.MinPasses << ')';
@@ -326,6 +379,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
         size_t nTested = 0, nApplied = 0;
         if (!RefineConsensus(scorer, &nTested, &nApplied))
         {
+            results.NonConvergent += 1;
             PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
                         << ", failed to converge";
             continue;
@@ -342,6 +396,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
         if (predAcc < settings.MinPredictedAccuracy)
         {
+            results.PoorQuality += 1;
             PBLOG_DEBUG << "Skipping read " << chunk.Id
                         << ", failed to meet minimum predicted accuracy (<"
                         << settings.MinPredictedAccuracy << ')';
@@ -349,6 +404,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
         }
 
         // return resulting sequence!!
+        results.Success += 1;
         results.emplace_back(
             TResult
             {
