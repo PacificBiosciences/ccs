@@ -188,10 +188,8 @@ size_t ThreadCount(int n)
 }
 
 
-void WriteResultsReport(const std::string& fname, const Results& counts)
+void WriteResultsReport(ostream& report, const Results& counts)
 {
-    std::fstream report(fname, std::fstream::out);
-
     size_t total = counts.Total();
 
     report << fixed << setprecision(2);
@@ -235,7 +233,7 @@ int main(int argc, char **argv)
 
     vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
 
-    parser.add_option("--report").set_default("counts.txt").help("Write result counts to file. Default = %default");
+    parser.add_option("--report").set_default("-").help("Write results report to a file, instead of STDOUT.");
     parser.add_option("--minSnr").type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
     parser.add_option("--minReadScore").type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
 
@@ -244,7 +242,7 @@ int main(int argc, char **argv)
     parser.add_option("--zmwStart").type("int").set_default(0).help("Start processing at this ZMW. Default = %default");
     parser.add_option("--numThreads").type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
     parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
-    parser.add_option("--logFile").help("Log to a file, instead of STDERR");
+    parser.add_option("--logFile").help("Log to a file, instead of STDERR.");
     parser.add_option("--logLevel").choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
 
     const auto options = parser.parse_args(argc, argv);
@@ -399,10 +397,20 @@ int main(int argc, char **argv)
 
     // wait for the writer thread and get the results counter
     //   then add in the snr/minPasses counts and write the report
-    auto results = writer.get();
-    results.PoorSNR += poorSNR;
-    results.TooFewPasses += tooFewPasses;
-    WriteResultsReport(std::string(options.get("report")), results);
+    auto counts = writer.get();
+    counts.PoorSNR += poorSNR;
+    counts.TooFewPasses += tooFewPasses;
+    const string report(options.get("report"));
+
+    if (report == "-")
+    {
+        WriteResultsReport(cout, counts);
+    }
+    else
+    {
+        fstream stream(report, fstream::out);
+        WriteResultsReport(stream, counts);
+    }
 
     return 0;
 }
