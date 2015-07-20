@@ -71,6 +71,7 @@ struct ConsensusSettings
 {
     size_t MaxPoaCoverage;
     size_t MinLength;
+    size_t MinPasses;
     double MinPredictedAccuracy;
     bool   Directional;
 
@@ -80,6 +81,8 @@ struct ConsensusSettings
     void AddOptions(optparse::OptionParser * const parser)
     {
         parser->add_option("--maxPoaCoverage").type("int").set_default(1000).help("Maximum number of subreads to use when building POA. Default = %default");
+        parser->add_option("--minLength").type("int").set_default(10).help("Minimum length of subreads to use for generating CCS. Default = %default");
+        parser->add_option("--minPasses").type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
         parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
         // parser->add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
@@ -115,6 +118,7 @@ struct ConsensusType
     std::string Qualities;
     size_t NumPasses;
     double PredictedAccuracy;
+    std::vector<int32_t> StatusCounts;
     size_t MutationsTested;
     size_t MutationsApplied;
     SNR SignalToNoise;
@@ -137,6 +141,11 @@ template<typename TRead>
 std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
                                       const size_t minLength)
 {
+    std::vector<const TRead*> results;
+
+    if (reads.empty())
+        return results;
+
     std::vector<size_t> lengths;
 
     for (const auto& read : reads)
@@ -146,8 +155,6 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
 
     const float median = Median(&lengths);
     size_t maxLen = 2 * static_cast<size_t>(median);
-
-    std::vector<const TRead*> results;
 
     // if it's too short, return nothing
     if (median < static_cast<float>(minLength))
@@ -249,9 +256,6 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
     for (const auto& chunk : *chunks)
     {
-        if (chunk.Reads.empty())
-            continue;
-
         Timer timer;
         auto reads = FilterReads(chunk.Reads, settings.MinLength);
 
@@ -280,6 +284,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
         ArrowConfig config(ctxParams, BandingOptions(12.5));
         ArrowMultiReadMutationScorer scorer(config, poaConsensus);
         size_t nPasses = 0;
+        std::vector<int32_t> statusCounts(4, 0);
 
         // add the reads to the scorer
         for (size_t i = 0; i < readKeys.size(); ++i)
@@ -290,8 +295,10 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
             if (auto mr = ExtractMappedRead(*reads[i], summaries[readKeys[i]], settings.MinLength))
             {
-                // TODO: bail if we use more than 50% of the worst-case?
                 auto status = scorer.AddRead(*mr);
+
+                // increment the status count
+                statusCounts[status] += 1;
 
                 if (status == SUCCESS &&
                     reads[i]->Flags & BAM::ADAPTER_BEFORE &&
@@ -305,6 +312,14 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                                 << ", " << AddReadResultNames[status];
                 }
             }
+        }
+
+        if (nPasses < settings.MinPasses)
+        {
+            PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
+                        << ", insufficient number of passes ("
+                        << nPasses << '<' << settings.MinPasses << ')';
+            continue;
         }
 
         // find consensus!!
@@ -342,6 +357,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 QVsToASCII(qvs),
                 nPasses,
                 predAcc,
+                statusCounts,
                 nTested,
                 nApplied,
                 chunk.SignalToNoise,

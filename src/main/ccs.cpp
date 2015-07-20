@@ -113,6 +113,7 @@ void Writer(BamWriter& ccsWriter, vector<CCS>&& results)
         tags["ms"] = ccs.ElapsedMilliseconds;
         tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
+        tags["rs"] = ccs.StatusCounts;
 
         record.Name(name.str())
               .SetSequenceAndQualities(ccs.Sequence, ccs.Qualities)
@@ -195,9 +196,8 @@ int main(int argc, char **argv)
 
     vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
 
-    parser.add_option("--minSnr").type("float").set_default(4).help("Minimum SNR of input reads. Default = %default");
-    parser.add_option("--minReadScore").type("float").set_default(0.75).help("Minimum read score of input reads. Default = %default");
-    parser.add_option("--minPasses").type("int").set_default(3).help("Minimum number of passes to calculate CCS. Default = %default");
+    parser.add_option("--minSnr").type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
+    parser.add_option("--minReadScore").type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
 
     ConsensusSettings::AddOptions(&parser);
 
@@ -214,7 +214,6 @@ int main(int argc, char **argv)
 
     const float minSnr       = options.get("minSnr");
     const float minReadScore = 1000 * static_cast<float>(options.get("minReadScore"));
-    const size_t minPasses   = static_cast<size_t>(options.get("minPasses"));
     const size_t nThreads    = ThreadCount(options.get("numThreads"));
     const size_t chunkSize   = static_cast<size_t>(options.get("chunkSize"));
     const size_t zmwStart    = static_cast<size_t>(options.get("zmwStart"));
@@ -282,8 +281,11 @@ int main(int argc, char **argv)
 
             if (!holeNumber || *holeNumber != read.HoleNumber())
             {
-                if (chunk && !chunk->empty() && chunk->back().Reads.size() < minPasses)
+                if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses)
                 {
+                    PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
+                                << ", insufficient number of passes ("
+                                << chunk->back().Reads.size() << '<' << settings.MinPasses << ')';
                     chunk->pop_back();
                 }
 

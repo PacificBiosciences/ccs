@@ -43,7 +43,8 @@ namespace CCS {
 // TODO(lhepler) fix directional
 ConsensusSettings::ConsensusSettings(const optparse::Values& options)
     : MaxPoaCoverage{options.get("maxPoaCoverage")}
-    , MinLength{10}
+    , MinLength{options.get("minLength")}
+    , MinPasses{options.get("minPasses")}
     , MinPredictedAccuracy{options.get("minPredictedAccuracy")}
     , Directional{false} // options.get("directional")}
 { }
