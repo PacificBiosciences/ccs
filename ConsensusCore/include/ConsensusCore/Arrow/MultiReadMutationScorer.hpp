@@ -54,7 +54,7 @@
 namespace ConsensusCore {
 namespace Arrow {
 
-    enum AddReadResult {SUCCESS, ALPHABETAMISMATCH, MEM_FAIL, OTHER};
+    enum AddReadResult { SUCCESS = 0, ALPHABETAMISMATCH = 1, MEM_FAIL = 2, OTHER = 3 };
     static const char* AddReadResultNames[] = { "SUCCESS", "ALPHA/BETA MISMATCH", "EXCESSIVE MEMORY USAGE", "OTHER" };
 
     namespace detail {
