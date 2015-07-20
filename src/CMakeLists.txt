@@ -20,7 +20,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # libpbccs.a
-add_library(pbccs STATIC ${PacBioCCS_CPP})
+add_library(pbccs STATIC ${PacBioCCS_CPP} ${PacBioCCS_H})
 set_target_properties(pbccs PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${PacBioCCS_LibDir}
 )
@@ -35,6 +35,7 @@ add_executable(ccs ${CCS_Sources})
 set_target_properties(ccs PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PacBioCCS_BinDir}
 )
+add_dependencies(ccs ConsensusCore)
 target_link_libraries(ccs
     pbccs
     ${CONSENSUSCORE_LIBRARIES}

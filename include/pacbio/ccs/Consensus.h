@@ -56,6 +56,7 @@
 
 #include <pacbio/ccs/Logging.h>
 #include <pacbio/ccs/SparsePoa.h>
+#include <pacbio/ccs/Timer.h>
 
 
 namespace PacBio {
@@ -76,11 +77,11 @@ struct ConsensusSettings
     ConsensusSettings(const optparse::Values& options);
 
     static
-    void AddOptions(optparse::OptionParser& parser)
+    void AddOptions(optparse::OptionParser * const parser)
     {
-        parser.add_option("--maxPoaCoverage").type("int").set_default(11).help("Maximum number of subreads to use when building POA. Default = %default");
-        parser.add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
-        // parser.add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
+        parser->add_option("--maxPoaCoverage").type("int").set_default(1000).help("Maximum number of subreads to use when building POA. Default = %default");
+        parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
+        // parser->add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
 };
 
@@ -114,6 +115,10 @@ struct ConsensusType
     std::string Qualities;
     size_t NumPasses;
     double PredictedAccuracy;
+    size_t MutationsTested;
+    size_t MutationsApplied;
+    SNR SignalToNoise;
+    float ElapsedMilliseconds;
 };
 
 namespace { // anonymous
@@ -247,6 +252,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
         if (chunk.Reads.empty())
             continue;
 
+        Timer timer;
         auto reads = FilterReads(chunk.Reads, settings.MinLength);
 
         if (reads.empty())
@@ -302,7 +308,8 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
         }
 
         // find consensus!!
-        if (!RefineConsensus(scorer))
+        size_t nTested = 0, nApplied = 0;
+        if (!RefineConsensus(scorer, &nTested, &nApplied))
         {
             PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
                         << ", failed to converge";
@@ -334,7 +341,11 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 scorer.Template(),
                 QVsToASCII(qvs),
                 nPasses,
-                predAcc
+                predAcc,
+                nTested,
+                nApplied,
+                chunk.SignalToNoise,
+                timer.ElapsedMilliseconds()
             });
     }
 

@@ -97,10 +97,22 @@ void Writer(BamWriter& ccsWriter, vector<CCS>&& results)
 
         name << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs";
 
+        vector<float> snr = {
+            static_cast<float>(ccs.SignalToNoise.A),
+            static_cast<float>(ccs.SignalToNoise.C),
+            static_cast<float>(ccs.SignalToNoise.G),
+            static_cast<float>(ccs.SignalToNoise.T) };
+
         tags["RG"] = MakeReadGroupId(*(ccs.Id.MovieName), "CCS");
         tags["zm"] = static_cast<int32_t>(ccs.Id.HoleNumber);
         tags["np"] = static_cast<int32_t>(ccs.NumPasses);
         tags["rq"] = static_cast<int32_t>(1000 * ccs.PredictedAccuracy);
+        tags["sn"] = snr;
+
+        // TODO(lhepler) remove these before release
+        tags["ms"] = ccs.ElapsedMilliseconds;
+        tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
+        tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
 
         record.Name(name.str())
               .SetSequenceAndQualities(ccs.Sequence, ccs.Qualities)
@@ -187,7 +199,7 @@ int main(int argc, char **argv)
     parser.add_option("--minReadScore").type("float").set_default(0.75).help("Minimum read score of input reads. Default = %default");
     parser.add_option("--minPasses").type("int").set_default(3).help("Minimum number of passes to calculate CCS. Default = %default");
 
-    ConsensusSettings::AddOptions(parser);
+    ConsensusSettings::AddOptions(&parser);
 
     parser.add_option("--zmwStart").type("int").set_default(0).help("Start processing at this ZMW. Default = %default");
     parser.add_option("--numThreads").type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
