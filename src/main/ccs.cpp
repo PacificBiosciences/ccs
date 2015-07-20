@@ -97,10 +97,22 @@ void Writer(BamWriter& ccsWriter, vector<CCS>&& results)
 
         name << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs";
 
+        vector<float> snr = {
+            static_cast<float>(ccs.SignalToNoise.A),
+            static_cast<float>(ccs.SignalToNoise.C),
+            static_cast<float>(ccs.SignalToNoise.G),
+            static_cast<float>(ccs.SignalToNoise.T) };
+
         tags["RG"] = MakeReadGroupId(*(ccs.Id.MovieName), "CCS");
         tags["zm"] = static_cast<int32_t>(ccs.Id.HoleNumber);
         tags["np"] = static_cast<int32_t>(ccs.NumPasses);
         tags["rq"] = static_cast<int32_t>(1000 * ccs.PredictedAccuracy);
+        tags["sn"] = snr;
+
+        // TODO(lhepler) remove these before release
+        tags["ms"] = ccs.ElapsedMilliseconds;
+        tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
+        tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
 
         record.Name(name.str())
               .SetSequenceAndQualities(ccs.Sequence, ccs.Qualities)

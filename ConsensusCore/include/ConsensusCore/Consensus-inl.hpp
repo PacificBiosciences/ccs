@@ -68,10 +68,10 @@ namespace ConsensusCore
     };
 
     std::vector<ScoredMutation>
-    DeleteRange(std::vector<ScoredMutation> input, int rStart, int rEnd)
+    DeleteRange(const std::vector<ScoredMutation>& input, int rStart, int rEnd)
     {
         std::vector<ScoredMutation> output;
-        foreach (ScoredMutation s, input)
+        foreach (const ScoredMutation& s, input)
         {
             int pos = s.Start();
             if (!(rStart <= pos && pos <= rEnd))
@@ -105,8 +105,10 @@ namespace ConsensusCore
 
         while (!input.empty())
         {
-            ScoredMutation& best = *std::max_element(input.begin(), input.end(), ScoreComparer);
+            const ScoredMutation& best = *std::max_element(input.begin(), input.end(), ScoreComparer);
             output.push_back(best);
+            // FIXME: DeleteRange uses nStart and nEnd inclusive -- should fix that and make
+            //   sure the number of positions on the left and on the right are the same
             int nStart = best.Start() - mutationSeparation;
             int nEnd = best.Start() + mutationSeparation;
             input = DeleteRange(input, nStart, nEnd);
@@ -155,7 +157,7 @@ namespace ConsensusCore
     }
 
     template <typename E, typename M, typename O>
-    bool AbstractRefineConsensus(M& mms, const O& opts)
+    bool AbstractRefineConsensus(M& mms, size_t* nTested, size_t* nApplied, const O& opts)
     {
         bool isConverged = false;
         float score = mms.BaselineScore();
@@ -199,6 +201,7 @@ namespace ConsensusCore
             //
             // Screen for favorable mutations.  If none, we are done (converged).
             //
+            (*nTested) += mutationsToTry.size();
             favorableMutsAndScores.clear();
             foreach (const Mutation& m, mutationsToTry)
             {
@@ -239,6 +242,7 @@ namespace ConsensusCore
                 LDEBUG << "\t" << smut;
             }
 
+            (*nApplied) += bestSubset.size();
             tplHistory.insert(hash(mms.Template()));
             mms.ApplyMutations(ProjectDown(bestSubset));
         }
@@ -249,9 +253,12 @@ namespace ConsensusCore
 
 
     template<typename MultiReadScorerType>
-    bool RefineConsensus(MultiReadScorerType& mms, const RefineOptions& opts)
+    bool RefineConsensus(MultiReadScorerType& mms,
+                         size_t* nTested,
+                         size_t* nApplied,
+                         const RefineOptions& opts)
     {
-        return AbstractRefineConsensus<UniqueSingleBaseMutationEnumerator>(mms, opts);
+        return AbstractRefineConsensus<UniqueSingleBaseMutationEnumerator>(mms, nTested, nApplied, opts);
     }
 
 
