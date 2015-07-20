@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,56 +33,38 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: David Alexander, Lance Hepler
+// Author: Lance Hepler
 
-#pragma once
+#include <chrono>
 
-#include <ConsensusCore/Arrow/MultiReadMutationScorer.hpp>
-#include <ConsensusCore/Quiver/MultiReadMutationScorer.hpp>
-#include <ConsensusCore/Mutation.hpp>
+#include <pacbio/ccs/Timer.h>
 
-#include <vector>
+using std::chrono::steady_clock;
+using std::chrono::milliseconds;
 
-namespace ConsensusCore
+namespace PacBio {
+namespace CCS {
+
+Timer::Timer()
 {
-    struct RefineOptions
-    {
-        int MaximumIterations;
-        int MutationSeparation;
-        int MutationNeighborhood;
-    };
-
-    static const RefineOptions DefaultRefineOptions =
-    {
-        40,  // MaximumIterations
-        10,  // MutationSeparation
-        20   // MutationNeighborhood
-    };
-
-
-    template<typename MultiReadScorerType>
-    bool RefineConsensus(MultiReadScorerType& mms,
-                         size_t* nTested,
-                         size_t* nApplied,
-                         const RefineOptions& = DefaultRefineOptions);
-
-    template<typename MultiReadScorerType>
-    void RefineRepeats(MultiReadScorerType& mms,
-                       int repeatLength,
-                       int minRepeatElements = 3);
-
-    template<typename MultiReadScorerType>
-    void RefineDinucleotideRepeats(MultiReadScorerType& mms,
-                                   int minDinucRepeatElements = 3);
-
-    template<typename MultiReadScorerType>
-    std::vector<int> ConsensusQVs(MultiReadScorerType& mms);
-
-    //
-    // Lower priority:
-    //
-    // Matrix<float> MutationScoresMatrix(mms);
-    // Matrix<float> MutationScoresMatrix(mms, mutationsToScore);
+    Restart();
 }
 
-#include "Consensus-inl.hpp"
+float Timer::ElapsedMilliseconds() const
+{
+    auto tock = steady_clock::now();
+    return std::chrono::duration_cast<milliseconds>(tock - tick).count();
+}
+
+float Timer::ElapsedSeconds() const
+{
+    return ElapsedMilliseconds() / 1000;
+}
+
+void Timer::Restart()
+{
+    tick = steady_clock::now();
+}
+
+} // namespace CCS
+} // namespace PacBio

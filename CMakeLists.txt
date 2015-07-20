@@ -44,10 +44,10 @@ set(CONSENSUSCORE_LIBRARIES     ${ConsensusCore_LibDir}/libConsensusCore.a)
 file(GLOB_RECURSE ConsensusCore_CPP "${ConsensusCore_RootDir}/src/*.cpp")
 file(GLOB_RECURSE ConsensusCore_HPP "${ConsensusCore_RootDir}/include/*.hpp")
 
+# make distclean
 add_custom_target(
     ConsensusCore
-    make distclean
-    COMMAND ./configure
+    ./configure
     COMMAND make
     WORKING_DIRECTORY ${ConsensusCore_RootDir}
     COMMENT "building ConsensusCore"

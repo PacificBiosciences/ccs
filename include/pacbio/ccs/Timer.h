@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,56 +33,27 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: David Alexander, Lance Hepler
+// Author: Lance Hepler
 
 #pragma once
 
-#include <ConsensusCore/Arrow/MultiReadMutationScorer.hpp>
-#include <ConsensusCore/Quiver/MultiReadMutationScorer.hpp>
-#include <ConsensusCore/Mutation.hpp>
+#include <chrono>
 
-#include <vector>
+namespace PacBio {
+namespace CCS {
 
-namespace ConsensusCore
+class Timer
 {
-    struct RefineOptions
-    {
-        int MaximumIterations;
-        int MutationSeparation;
-        int MutationNeighborhood;
-    };
+public:
+    Timer();
 
-    static const RefineOptions DefaultRefineOptions =
-    {
-        40,  // MaximumIterations
-        10,  // MutationSeparation
-        20   // MutationNeighborhood
-    };
+    float ElapsedMilliseconds() const;
+    float ElapsedSeconds() const;
+    void Restart();
 
+private:
+    std::chrono::time_point<std::chrono::steady_clock> tick;
+};
 
-    template<typename MultiReadScorerType>
-    bool RefineConsensus(MultiReadScorerType& mms,
-                         size_t* nTested,
-                         size_t* nApplied,
-                         const RefineOptions& = DefaultRefineOptions);
-
-    template<typename MultiReadScorerType>
-    void RefineRepeats(MultiReadScorerType& mms,
-                       int repeatLength,
-                       int minRepeatElements = 3);
-
-    template<typename MultiReadScorerType>
-    void RefineDinucleotideRepeats(MultiReadScorerType& mms,
-                                   int minDinucRepeatElements = 3);
-
-    template<typename MultiReadScorerType>
-    std::vector<int> ConsensusQVs(MultiReadScorerType& mms);
-
-    //
-    // Lower priority:
-    //
-    // Matrix<float> MutationScoresMatrix(mms);
-    // Matrix<float> MutationScoresMatrix(mms, mutationsToScore);
-}
-
-#include "Consensus-inl.hpp"
+} // namespace CCS
+} // namespace PacBio
