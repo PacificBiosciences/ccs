@@ -80,7 +80,8 @@ struct ConsensusSettings
     static
     void AddOptions(optparse::OptionParser * const parser)
     {
-        parser->add_option("--maxPoaCoverage").type("int").set_default(1000).help("Maximum number of subreads to use when building POA. Default = %default");
+        // TODO(lhepler) implement alignment to POA and directional support
+        // parser->add_option("--maxPoaCoverage").type("int").set_default(1024).help("Maximum number of subreads to use when building POA. Default = %default");
         parser->add_option("--minLength").type("int").set_default(10).help("Minimum length of subreads to use for generating CCS. Default = %default");
         parser->add_option("--minPasses").type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
         parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
