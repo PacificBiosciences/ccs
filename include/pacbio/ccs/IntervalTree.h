@@ -39,6 +39,10 @@
 
 #include <algorithm>
 #include <set>
+#include <string>
+#include <vector>
+
+#include <boost/algorithm/string.hpp>
 
 #include <pacbio/ccs/Interval.h>
 
@@ -138,6 +142,23 @@ public:
     }
 
     inline
+    bool Contains(const size_t value) const
+    {
+        const_iterator it = std::lower_bound(begin(), end(), Interval(value, value + 1));
+
+        if (it != begin())
+            it = std::prev(it);
+
+        for (; it != end() && it->Left() <= value; ++it)
+        {
+            if (it->Contains(value))
+                return true;
+        }
+
+        return false;
+    }
+
+    inline
     iterator begin()
     {
         return storage.begin();
@@ -165,6 +186,19 @@ public:
     size_t size() const
     {
         return storage.size();
+    }
+
+    static
+    IntervalTree FromString(const std::string& str)
+    {
+        std::vector<std::string> components;
+        boost::split(components, str, boost::is_any_of(","));
+        IntervalTree tree;
+        for (const auto& component : components)
+        {
+            tree.Insert(Interval::FromString(component));
+        }
+        return tree;
     }
 
 private:

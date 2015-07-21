@@ -287,7 +287,8 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
 
     // at least 50% of the reads should cover
     // TODO(lhepler) revisit this minimum coverage equation
-    return poa.FindConsensus((cov < 6) ? 1 : cov/2 - 1, &(*summaries))->Sequence;
+    const size_t minCov = (cov < 5) ? 1 : (cov + 1) / 2 - 1;
+    return poa.FindConsensus(minCov, &(*summaries))->Sequence;
 }
 
 // pass unique_ptr by reference to satisfy finickyness wrt move semantics in <future>

@@ -44,10 +44,10 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <vector>
 
-// Avoid importing SMRTSequence here, it pollutes everything too much.
-// Since we're just using the SMRTSequence by reference, a fwd decl is enough
-class SMRTSequence;
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace PacBio {
 namespace CCS {
@@ -112,6 +112,12 @@ public:
         // if the left of one is in the range of the other
         return (other.Left() <= left && left <= other.Right()) ||
                (left <= other.Left() && other.Left() <= right);
+    }
+
+    inline
+    bool Contains(const size_t value) const
+    {
+        return (left <= value) && (value < right);
     }
 
     inline
@@ -207,6 +213,30 @@ public:
 
     operator std::string() const;
     friend std::ostream& operator<<(std::ostream& os, const Interval& interval);
+
+    static
+    Interval FromString(const std::string& str)
+    {
+        try
+        {
+            std::vector<std::string> components;
+            boost::split(components, str, boost::is_any_of("-"));
+            if (components.size() == 1)
+            {
+                size_t left = boost::lexical_cast<size_t>(components[0]);
+                return Interval(left, left + 1);
+            }
+            else if (components.size() == 2)
+            {
+                size_t left  = boost::lexical_cast<size_t>(components[0]);
+                size_t right = boost::lexical_cast<size_t>(components[1]);
+                return Interval(left, right + 1);
+            }
+        }
+        catch (...)
+        { }
+        throw std::invalid_argument("invalid Interval specification");
+    }
 
 private:
     size_t left;
