@@ -55,6 +55,7 @@
 #include <pacbio/ccs/Consensus.h>
 #include <pacbio/ccs/ExecUtils.h>
 #include <pacbio/ccs/Interval.h>
+#include <pacbio/ccs/IntervalTree.h>
 #include <pacbio/ccs/Logging.h>
 #include <pacbio/ccs/ReadId.h>
 #include <pacbio/ccs/WorkQueue.h>
@@ -63,6 +64,7 @@ using namespace std;
 using namespace PacBio::BAM;
 using namespace PacBio::CCS;
 
+using boost::none;
 using boost::optional;
 using optparse::OptionParser;
 
@@ -239,7 +241,7 @@ int main(int argc, char **argv)
 
     ConsensusSettings::AddOptions(&parser);
 
-    parser.add_option("--zmwStart").type("int").set_default(0).help("Start processing at this ZMW. Default = %default");
+    parser.add_option("--zmws").set_default("").help("ZMW holenumbers to generate CCS for, give comma-separated ranges. Default = all");
     parser.add_option("--numThreads").type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
     parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
     parser.add_option("--logFile").help("Log to a file, instead of STDERR.");
@@ -254,7 +256,21 @@ int main(int argc, char **argv)
     const float minReadScore = 1000 * static_cast<float>(options.get("minReadScore"));
     const size_t nThreads    = ThreadCount(options.get("numThreads"));
     const size_t chunkSize   = static_cast<size_t>(options.get("chunkSize"));
-    const size_t zmwStart    = static_cast<size_t>(options.get("zmwStart"));
+
+    // handle --zmws
+    //
+    //
+    optional<IntervalTree> whitelist(none);
+    const string wlspec(options.get("zmws"));
+    try
+    {
+        if (!wlspec.empty())
+            whitelist = IntervalTree::FromString(wlspec);
+    }
+    catch (...)
+    {
+        parser.error("option --zmws: invalid specification: '" + wlspec + "'");
+    }
 
     // input validation
     //
@@ -303,7 +319,7 @@ int main(int argc, char **argv)
 
         // use make_optional here to get around spurious warnings from gcc:
         //   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47679
-        optional<int32_t> holeNumber = make_optional(false, 0);
+        optional<int32_t> holeNumber(none);
         bool skipping = false;
 
         for (const auto& read : query)
@@ -338,7 +354,7 @@ int main(int argc, char **argv)
 
                 holeNumber = read.HoleNumber();
                 auto snr = read.SignalToNoise();
-                if (*holeNumber < zmwStart)
+                if (whitelist && !whitelist->Contains(*holeNumber))
                 {
                     skipping = true;
                 }
