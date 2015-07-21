@@ -241,7 +241,7 @@ int main(int argc, char **argv)
 
     ConsensusSettings::AddOptions(&parser);
 
-    parser.add_option("--zmws").set_default("").help("ZMW holenumbers to generate CCS for, give comma-separated ranges. Default = all");
+    parser.add_option("--zmws").set_default("").help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
     parser.add_option("--numThreads").type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
     parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
     parser.add_option("--logFile").help("Log to a file, instead of STDERR.");
