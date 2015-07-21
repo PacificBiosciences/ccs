@@ -271,12 +271,14 @@ std::string QVsToASCII(const std::vector<int>& qvs)
     return res;
 }
 
+#if 0
 template<typename TRead>
 bool ReadAccuracyDescending(const std::pair<size_t, const TRead*>& a,
                             const std::pair<size_t, const TRead*>& b)
 {
     return a.second->ReadAccuracy > b.second->ReadAccuracy;
 }
+#endif
 
 } // namespace anonymous
 
@@ -290,6 +292,7 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
     SparsePoa poa;
     size_t cov = 0;
 
+#if 0
     // create a vector of indices into the original reads vector,
     //   sorted by the ReadAccuracy in descending order
     std::vector<std::pair<size_t, const TRead*>> sorted;
@@ -298,15 +301,18 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
         sorted.emplace_back(std::make_pair(i, reads[i]));
 
     std::sort(sorted.begin(), sorted.end(), ReadAccuracyDescending<TRead>);
+#endif
 
     // initialize readKeys and resize
     readKeys->clear();
-    readKeys->resize(sorted.size());
+    // readKeys->resize(sorted.size());
 
-    for (const auto read : sorted)
+    for (const auto read : reads)
     {
-        SparsePoa::ReadKey key = poa.OrientAndAddRead(read.second->Seq);
-        readKeys->at(read.first) = key;
+        SparsePoa::ReadKey key = poa.OrientAndAddRead(read->Seq);
+        // SparsePoa::ReadKey key = poa.OrientAndAddRead(read.second->Seq);
+        // readKeys->at(read.first) = key;
+        readKeys->emplace_back(key);
         if (key >= 0 && (++cov) >= maxPoaCov)
             break;
     }
