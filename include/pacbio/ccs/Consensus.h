@@ -51,6 +51,7 @@
 #include <ConsensusCore/Poa/PoaConsensus.hpp>
 #include <ConsensusCore/Consensus.hpp>
 
+#include <pbbam/Accuracy.h>
 #include <pbbam/QualityValues.h>
 #include <pbbam/LocalContextFlags.h>
 
@@ -62,9 +63,11 @@
 namespace PacBio {
 namespace CCS {
 
+
 using SNR = ConsensusCore::Arrow::SNR;
 using QualityValues = PacBio::BAM::QualityValues;
 using LocalContextFlags = PacBio::BAM::LocalContextFlags;
+using Accuracy = PacBio::BAM::Accuracy;
 
 
 struct ConsensusSettings
@@ -97,6 +100,7 @@ struct ReadType
     std::string Seq;
     QualityValues Cov;
     LocalContextFlags Flags;
+    Accuracy ReadAccuracy;
     // TODO (move SNR here, eventually)
     // SNR SignalToNoise;
 };
@@ -267,7 +271,15 @@ std::string QVsToASCII(const std::vector<int>& qvs)
     return res;
 }
 
+template<typename TRead>
+bool ReadAccuracyDescending(const std::pair<size_t, const TRead*>& a,
+                            const std::pair<size_t, const TRead*>& b)
+{
+    return a.second->ReadAccuracy > b.second->ReadAccuracy;
+}
+
 } // namespace anonymous
+
 
 template<typename TRead>
 std::string PoaConsensus(const std::vector<const TRead*>& reads,
@@ -278,10 +290,23 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
     SparsePoa poa;
     size_t cov = 0;
 
-    for (const auto read : reads)
+    // create a vector of indices into the original reads vector,
+    //   sorted by the ReadAccuracy in descending order
+    std::vector<std::pair<size_t, const TRead*>> sorted;
+
+    for (size_t i = 0; i < reads.size(); ++i)
+        sorted.emplace_back(std::make_pair(i, reads[i]));
+
+    std::sort(sorted.begin(), sorted.end(), ReadAccuracyDescending<TRead>);
+
+    // initialize readKeys and resize
+    readKeys->clear();
+    readKeys->resize(sorted.size());
+
+    for (const auto read : sorted)
     {
-        SparsePoa::ReadKey key = poa.OrientAndAddRead(read->Seq);
-        readKeys->push_back(key);
+        SparsePoa::ReadKey key = poa.OrientAndAddRead(read.second->Seq);
+        readKeys->at(read.first) = key;
         if (key >= 0 && (++cov) >= maxPoaCov)
             break;
     }
@@ -291,6 +316,7 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
     const size_t minCov = (cov < 5) ? 1 : (cov + 1) / 2 - 1;
     return poa.FindConsensus(minCov, &(*summaries))->Sequence;
 }
+
 
 // pass unique_ptr by reference to satisfy finickyness wrt move semantics in <future>
 //   but then take ownership here with a local unique_ptr

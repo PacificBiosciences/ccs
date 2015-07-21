@@ -78,7 +78,7 @@ typedef ConsensusType<ReadId>      CCS;
 typedef ResultType<CCS>            Results;
 
 
-auto const CircularConsensus = &Consensus<Chunk, CCS>;
+const auto CircularConsensus = &Consensus<Chunk, CCS>;
 
 
 void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
@@ -385,7 +385,8 @@ int main(int argc, char **argv)
                         ReadId(movieNames[movieName], *holeNumber, Interval(read.QueryStart(), read.QueryEnd())),
                         read.Sequence(),
                         read.InsertionQV(),
-                        read.LocalContextFlags()
+                        read.LocalContextFlags(),
+                        read.ReadAccuracy()
                     });
             }
         }
