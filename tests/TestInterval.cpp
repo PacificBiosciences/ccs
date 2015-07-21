@@ -36,6 +36,7 @@
 // Author: Lance Hepler
 
 #include <iostream>
+#include <stdexcept>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -222,6 +223,10 @@ TEST(IntervalTest, FromString)
         l = 3;
         r = 5;
     }
+
+    EXPECT_THROW({
+        IntervalTree tree2 = IntervalTree::FromString("A,15-22");
+    }, std::invalid_argument);
 }
 
 TEST(IntervalTest, Contains)
