@@ -35,6 +35,8 @@
 
 // Author: Lance Hepler
 
+#include <limits>
+
 #include <pacbio/ccs/Consensus.h>
 
 namespace PacBio {
@@ -42,7 +44,8 @@ namespace CCS {
 
 // TODO(lhepler) fix directional
 ConsensusSettings::ConsensusSettings(const optparse::Values& options)
-    : MaxPoaCoverage{options.get("maxPoaCoverage")}
+    // : MaxPoaCoverage{options.get("maxPoaCoverage")}
+    : MaxPoaCoverage{std::numeric_limits<size_t>::max()}
     , MinLength{options.get("minLength")}
     , MinPasses{options.get("minPasses")}
     , MinPredictedAccuracy{options.get("minPredictedAccuracy")}

@@ -371,6 +371,15 @@ namespace Arrow {
     std::vector<double>
     MultiReadMutationScorer<R>::Scores(const Mutation& m, double unscoredValue)
     {
+        // Apply virtual mutations
+        // First to virtually apply the mutation to the underlying type
+        fwdTemplate_.ApplyVirtualMutation(m, arrConfig_.CtxParams);
+        // Now create and apply the reverse complement mutation.
+        int end   = (int)fwdTemplate_.tpl.length() - m.Start(); //Used to be int end   = mr.TemplateEnd - cmut.Start();
+        int start = (int)fwdTemplate_.tpl.length() - m.End();
+        auto rc_m = Mutation(m.Type(), start, end, ReverseComplement(m.NewBases()));
+        revTemplate_.ApplyVirtualMutation(rc_m, arrConfig_.CtxParams);
+
         std::vector<double> scoreByRead;
         foreach (const ReadStateType& rs, reads_)
         {
@@ -385,6 +394,11 @@ namespace Arrow {
                 scoreByRead.push_back(unscoredValue);
             }
         }
+
+        // Clear the virtual mutation
+        fwdTemplate_.ClearVirtualMutation();
+        revTemplate_.ClearVirtualMutation();
+        assert(!fwdTemplate_.VirtualMutationActive() && !revTemplate_.VirtualMutationActive());
         return scoreByRead;
     }
 

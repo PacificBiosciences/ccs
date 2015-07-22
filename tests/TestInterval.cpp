@@ -36,6 +36,7 @@
 // Author: Lance Hepler
 
 #include <iostream>
+#include <stdexcept>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -202,4 +203,49 @@ TEST(IntervalTest, ZMW25300)
         EXPECT_EQ(i.Left(),  252);
         EXPECT_EQ(i.Right(), 338);
     }
+}
+
+TEST(IntervalTest, FromString)
+{
+    Interval a = Interval::FromString("1");
+
+    EXPECT_EQ(a.Left(),  1);
+    EXPECT_EQ(a.Right(), 2);
+
+    IntervalTree tree = IntervalTree::FromString("1,3-4");
+
+    size_t l = 1, r = 2;
+
+    for (const auto& i : tree)
+    {
+        EXPECT_EQ(i.Left(),  l);
+        EXPECT_EQ(i.Right(), r);
+        l = 3;
+        r = 5;
+    }
+
+    EXPECT_THROW({
+        IntervalTree tree2 = IntervalTree::FromString("A,15-22");
+    }, std::invalid_argument);
+}
+
+TEST(IntervalTest, Contains)
+{
+    Interval a = Interval::FromString("2");
+
+    EXPECT_FALSE(a.Contains(1));
+    EXPECT_TRUE(a.Contains(2));
+    EXPECT_FALSE(a.Contains(3));
+
+    IntervalTree tree = IntervalTree::FromString("5,8-10");
+
+    EXPECT_FALSE(tree.Contains(4));
+    EXPECT_TRUE(tree.Contains(5));
+    EXPECT_FALSE(tree.Contains(6));
+
+    EXPECT_FALSE(tree.Contains(7));
+    EXPECT_TRUE(tree.Contains(8));
+    EXPECT_TRUE(tree.Contains(9));
+    EXPECT_TRUE(tree.Contains(10));
+    EXPECT_FALSE(tree.Contains(11));
 }

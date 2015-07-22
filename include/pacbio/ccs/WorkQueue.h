@@ -101,7 +101,7 @@ public:
     }
 
     template<typename F, typename... Args>
-    void Produce(F&& f, Args&&... args)
+    void ProduceWith(F&& f, Args&&... args)
     {
         std::packaged_task<T(void)> task{std::bind(std::forward<F>(f), std::forward<Args>(args)...)};
 
@@ -126,7 +126,7 @@ public:
     }
 
     template<typename F, typename... Args>
-    bool Consume(F&& cont, Args&&... args)
+    bool ConsumeWith(F&& cont, Args&&... args)
     {
         TFuture fut(boost::none);
 
@@ -152,7 +152,7 @@ public:
             if (!fut)
                 return false;
 
-            std::bind(std::forward<F>(cont), std::forward<Args>(args)..., std::placeholders::_1)(std::move(fut->get()));
+            cont(std::forward<Args>(args)..., std::move(fut->get()));
             return true;
         }
         catch (...)

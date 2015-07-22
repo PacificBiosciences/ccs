@@ -55,6 +55,7 @@
 #include <pacbio/ccs/Consensus.h>
 #include <pacbio/ccs/ExecUtils.h>
 #include <pacbio/ccs/Interval.h>
+#include <pacbio/ccs/IntervalTree.h>
 #include <pacbio/ccs/Logging.h>
 #include <pacbio/ccs/ReadId.h>
 #include <pacbio/ccs/WorkQueue.h>
@@ -63,6 +64,7 @@ using namespace std;
 using namespace PacBio::BAM;
 using namespace PacBio::CCS;
 
+using boost::none;
 using boost::optional;
 using optparse::OptionParser;
 
@@ -73,11 +75,16 @@ using optparse::OptionParser;
 typedef ReadType<ReadId>           Subread;
 typedef ChunkType<ReadId, Subread> Chunk;
 typedef ConsensusType<ReadId>      CCS;
+typedef ResultType<CCS>            Results;
 
-auto const CircularConsensus = &Consensus<Chunk, CCS>;
 
-void Writer(BamWriter& ccsWriter, vector<CCS>&& results)
+const auto CircularConsensus = &Consensus<Chunk, CCS>;
+
+
+void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
 {
+    counts += results;
+
     for (const auto& ccs : results)
     {
         BamRecordImpl record;
@@ -125,10 +132,11 @@ void Writer(BamWriter& ccsWriter, vector<CCS>&& results)
 }
 
 
-int WriterThread(WorkQueue<vector<CCS>>& queue, BamWriter& ccsWriter)
+Results WriterThread(WorkQueue<Results>& queue, BamWriter& ccsWriter)
 {
-    while (queue.Consume(Writer, ref(ccsWriter)));
-    return 0;
+    Results counts;
+    while (queue.ConsumeWith(Writer, ref(ccsWriter), ref(counts)));
+    return counts;
 }
 
 
@@ -170,6 +178,7 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char **argv, const
     return header;
 }
 
+
 size_t ThreadCount(int n)
 {
     const int m = thread::hardware_concurrency();
@@ -179,6 +188,36 @@ size_t ThreadCount(int n)
 
     return min(m, n);
 }
+
+
+void WriteResultsReport(ostream& report, const Results& counts)
+{
+    size_t total = counts.Total();
+
+    report << fixed << setprecision(2);
+
+    report << "Success -- CCS generated," << counts.Success
+           << "," << 100.0 * counts.Success / total << '%' << std::endl;
+
+    report << "Failed -- Below SNR threshold," << counts.PoorSNR
+           << "," << 100.0 * counts.PoorSNR / total << '%' << std::endl;
+
+    report << "Failed -- No insert regions," << counts.NoSubreads
+           << "," << 100.0 * counts.NoSubreads / total << '%' << std::endl;
+
+    report << "Failed -- Insert size too small," << counts.TooShort
+           << "," << 100.0 * counts.TooShort / total << '%' << std::endl;
+
+    report << "Failed -- Not enough full passes," << counts.TooFewPasses
+           << "," << 100.0 * counts.TooFewPasses / total << '%' << std::endl;
+
+    report << "Failed -- CCS did not converge," << counts.NonConvergent
+           << "," << 100.0 * counts.NonConvergent / total << '%' << std::endl;
+
+    report << "Failed -- CCS below minimum predicted accuracy," << counts.PoorQuality
+           << "," << 100.0 * counts.PoorQuality / total << '%' << std::endl;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -196,15 +235,16 @@ int main(int argc, char **argv)
 
     vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
 
+    parser.add_option("--report").set_default("-").help("Write results report to a file, instead of STDOUT.");
     parser.add_option("--minSnr").type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
     parser.add_option("--minReadScore").type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
 
     ConsensusSettings::AddOptions(&parser);
 
-    parser.add_option("--zmwStart").type("int").set_default(0).help("Start processing at this ZMW. Default = %default");
+    parser.add_option("--zmws").set_default("").help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
     parser.add_option("--numThreads").type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
     parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
-    parser.add_option("--logFile").help("Log to a file, instead of STDERR");
+    parser.add_option("--logFile").help("Log to a file, instead of STDERR.");
     parser.add_option("--logLevel").choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
 
     const auto options = parser.parse_args(argc, argv);
@@ -216,7 +256,21 @@ int main(int argc, char **argv)
     const float minReadScore = 1000 * static_cast<float>(options.get("minReadScore"));
     const size_t nThreads    = ThreadCount(options.get("numThreads"));
     const size_t chunkSize   = static_cast<size_t>(options.get("chunkSize"));
-    const size_t zmwStart    = static_cast<size_t>(options.get("zmwStart"));
+
+    // handle --zmws
+    //
+    //
+    optional<IntervalTree> whitelist(none);
+    const string wlspec(options.get("zmws"));
+    try
+    {
+        if (!wlspec.empty())
+            whitelist = IntervalTree::FromString(wlspec);
+    }
+    catch (...)
+    {
+        parser.error("option --zmws: invalid specification: '" + wlspec + "'");
+    }
 
     // input validation
     //
@@ -253,8 +307,9 @@ int main(int argc, char **argv)
     unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
     map<string, shared_ptr<string>> movieNames;
 
-    WorkQueue<vector<CCS>> workQueue(nThreads);
-    future<int> writer = async(launch::async, WriterThread, ref(workQueue), ref(ccsWriter));
+    WorkQueue<Results> workQueue(nThreads);
+    future<Results> writer = async(launch::async, WriterThread, ref(workQueue), ref(ccsWriter));
+    size_t poorSNR = 0, tooFewPasses = 0;
 
     // skip the first file, it's for output
     for (auto file = ++files.begin(); file != files.end(); ++file)
@@ -264,7 +319,7 @@ int main(int argc, char **argv)
 
         // use make_optional here to get around spurious warnings from gcc:
         //   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47679
-        optional<int32_t> holeNumber = make_optional(false, 0);
+        optional<int32_t> holeNumber(none);
         bool skipping = false;
 
         for (const auto& read : query)
@@ -286,26 +341,28 @@ int main(int argc, char **argv)
                     PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
                                 << ", insufficient number of passes ("
                                 << chunk->back().Reads.size() << '<' << settings.MinPasses << ')';
+                    tooFewPasses += 1;
                     chunk->pop_back();
                 }
 
                 if (chunk && chunk->size() >= chunkSize)
                 {
                     // Writer(ccsWriter, Consensus(chunk, minLength, maxPoaCov, minPredAcc));
-                    workQueue.Produce(CircularConsensus, move(chunk), settings);
+                    workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
                     chunk.reset(new vector<Chunk>());
                 }
 
                 holeNumber = read.HoleNumber();
                 auto snr = read.SignalToNoise();
-                if (*holeNumber < zmwStart)
+                if (whitelist && !whitelist->Contains(*holeNumber))
                 {
                     skipping = true;
                 }
                 else if (*min_element(snr.begin(), snr.end()) < minSnr)
                 {
-                    skipping = true;
                     PBLOG_DEBUG << "Skipping ZMW " << movieName << '/' << *holeNumber << ", fails SNR threshold (" << minSnr << ')';
+                    poorSNR += 1;
+                    skipping = true;
                 }
                 else
                 {
@@ -328,19 +385,49 @@ int main(int argc, char **argv)
                         ReadId(movieNames[movieName], *holeNumber, Interval(read.QueryStart(), read.QueryEnd())),
                         read.Sequence(),
                         read.InsertionQV(),
-                        read.LocalContextFlags()
+                        read.LocalContextFlags(),
+                        read.ReadAccuracy()
                     });
             }
         }
     }
 
+    // if the last chunk doesn't have enough passes, skip it
+    if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses)
+    {
+        PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
+                    << ", insufficient number of passes ("
+                    << chunk->back().Reads.size() << '<' << settings.MinPasses << ')';
+        tooFewPasses += 1;
+        chunk->pop_back();
+    }
+
+    // run the remaining tasks
     if (chunk && !chunk->empty())
     {
         // Writer(ccsWriter, Consensus(chunk, minLength, maxPoaCov, minPredAcc));
-        workQueue.Produce(CircularConsensus, move(chunk), settings);
+        workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
     }
+
+    // wait for the queue to be done
     workQueue.Finalize();
 
-    return writer.get();
-    // return 0;
+    // wait for the writer thread and get the results counter
+    //   then add in the snr/minPasses counts and write the report
+    auto counts = writer.get();
+    counts.PoorSNR += poorSNR;
+    counts.TooFewPasses += tooFewPasses;
+    const string report(options.get("report"));
+
+    if (report == "-")
+    {
+        WriteResultsReport(cout, counts);
+    }
+    else
+    {
+        fstream stream(report, fstream::out);
+        WriteResultsReport(stream, counts);
+    }
+
+    return 0;
 }

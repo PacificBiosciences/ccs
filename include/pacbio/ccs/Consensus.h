@@ -51,6 +51,7 @@
 #include <ConsensusCore/Poa/PoaConsensus.hpp>
 #include <ConsensusCore/Consensus.hpp>
 
+#include <pbbam/Accuracy.h>
 #include <pbbam/QualityValues.h>
 #include <pbbam/LocalContextFlags.h>
 
@@ -62,9 +63,11 @@
 namespace PacBio {
 namespace CCS {
 
+
 using SNR = ConsensusCore::Arrow::SNR;
 using QualityValues = PacBio::BAM::QualityValues;
 using LocalContextFlags = PacBio::BAM::LocalContextFlags;
+using Accuracy = PacBio::BAM::Accuracy;
 
 
 struct ConsensusSettings
@@ -80,7 +83,8 @@ struct ConsensusSettings
     static
     void AddOptions(optparse::OptionParser * const parser)
     {
-        parser->add_option("--maxPoaCoverage").type("int").set_default(1000).help("Maximum number of subreads to use when building POA. Default = %default");
+        // TODO(lhepler) implement alignment to POA and directional support
+        // parser->add_option("--maxPoaCoverage").type("int").set_default(1024).help("Maximum number of subreads to use when building POA. Default = %default");
         parser->add_option("--minLength").type("int").set_default(10).help("Minimum length of subreads to use for generating CCS. Default = %default");
         parser->add_option("--minPasses").type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
         parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
@@ -96,6 +100,7 @@ struct ReadType
     std::string Seq;
     QualityValues Cov;
     LocalContextFlags Flags;
+    Accuracy ReadAccuracy;
     // TODO (move SNR here, eventually)
     // SNR SignalToNoise;
 };
@@ -124,6 +129,56 @@ struct ConsensusType
     SNR SignalToNoise;
     float ElapsedMilliseconds;
 };
+
+
+template<typename TConsensus>
+class ResultType : public std::vector<TConsensus>
+{
+public:
+    size_t Success;
+    size_t PoorSNR;
+    size_t NoSubreads;
+    size_t TooShort;
+    size_t TooFewPasses;
+    size_t NonConvergent;
+    size_t PoorQuality;
+
+    ResultType()
+        : Success{0}
+        , PoorSNR{0}
+        , NoSubreads{0}
+        , TooShort{0}
+        , TooFewPasses{0}
+        , NonConvergent{0}
+        , PoorQuality{0}
+    { }
+
+    ResultType<TConsensus>&
+    operator+=(const ResultType<TConsensus>& other)
+    {
+        Success       += other.Success;
+        PoorSNR       += other.PoorSNR;
+        NoSubreads    += other.NoSubreads;
+        TooShort      += other.TooShort;
+        TooFewPasses  += other.TooFewPasses;
+        NonConvergent += other.NonConvergent;
+        PoorQuality   += other.PoorQuality;
+        return *this;
+    }
+
+    size_t Total() const
+    {
+        return
+            ( Success
+            + PoorSNR
+            + NoSubreads
+            + TooShort
+            + TooFewPasses
+            + NonConvergent
+            + PoorQuality );
+    }
+};
+
 
 namespace { // anonymous
 
@@ -216,7 +271,15 @@ std::string QVsToASCII(const std::vector<int>& qvs)
     return res;
 }
 
+template<typename TRead>
+bool ReadAccuracyDescending(const std::pair<size_t, const TRead*>& a,
+                            const std::pair<size_t, const TRead*>& b)
+{
+    return a.second->ReadAccuracy > b.second->ReadAccuracy;
+}
+
 } // namespace anonymous
+
 
 template<typename TRead>
 std::string PoaConsensus(const std::vector<const TRead*>& reads,
@@ -227,29 +290,44 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
     SparsePoa poa;
     size_t cov = 0;
 
-    for (const auto read : reads)
+    // create a vector of indices into the original reads vector,
+    //   sorted by the ReadAccuracy in descending order
+    std::vector<std::pair<size_t, const TRead*>> sorted;
+
+    for (size_t i = 0; i < reads.size(); ++i)
+        sorted.emplace_back(std::make_pair(i, reads[i]));
+
+    std::sort(sorted.begin(), sorted.end(), ReadAccuracyDescending<TRead>);
+
+    // initialize readKeys and resize
+    readKeys->clear();
+    readKeys->resize(sorted.size());
+
+    for (const auto read : sorted)
     {
-        SparsePoa::ReadKey key = poa.OrientAndAddRead(read->Seq);
-        readKeys->push_back(key);
+        SparsePoa::ReadKey key = poa.OrientAndAddRead(read.second->Seq);
+        readKeys->at(read.first) = key;
         if (key >= 0 && (++cov) >= maxPoaCov)
             break;
     }
 
     // at least 50% of the reads should cover
     // TODO(lhepler) revisit this minimum coverage equation
-    return poa.FindConsensus((cov < 6) ? 1 : cov/2 - 1, &(*summaries))->Sequence;
+    const size_t minCov = (cov < 5) ? 1 : (cov + 1) / 2 - 1;
+    return poa.FindConsensus(minCov, &(*summaries))->Sequence;
 }
+
 
 // pass unique_ptr by reference to satisfy finickyness wrt move semantics in <future>
 //   but then take ownership here with a local unique_ptr
 template<typename TChunk, typename TResult>
-std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
-                               const ConsensusSettings& settings)
+ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
+                              const ConsensusSettings& settings)
 {
     using namespace ConsensusCore::Arrow;
 
     auto chunks(std::move(chunksRef));
-    std::vector<TResult> results;
+    ResultType<TResult> results;
 
     if (!chunks)
         return results;
@@ -261,6 +339,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
         if (reads.empty())
         {
+            results.NoSubreads += 1;
             PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
                         << ", no high quality subreads available";
             continue;
@@ -273,6 +352,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
         if (poaConsensus.length() < settings.MinLength)
         {
+            results.TooShort += 1;
             PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
                         << ", initial consensus too short (<"
                         << settings.MinLength << ')';
@@ -316,6 +396,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
         if (nPasses < settings.MinPasses)
         {
+            results.TooFewPasses += 1;
             PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
                         << ", insufficient number of passes ("
                         << nPasses << '<' << settings.MinPasses << ')';
@@ -326,6 +407,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
         size_t nTested = 0, nApplied = 0;
         if (!RefineConsensus(scorer, &nTested, &nApplied))
         {
+            results.NonConvergent += 1;
             PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
                         << ", failed to converge";
             continue;
@@ -342,6 +424,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
         if (predAcc < settings.MinPredictedAccuracy)
         {
+            results.PoorQuality += 1;
             PBLOG_DEBUG << "Skipping read " << chunk.Id
                         << ", failed to meet minimum predicted accuracy (<"
                         << settings.MinPredictedAccuracy << ')';
@@ -349,6 +432,7 @@ std::vector<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
         }
 
         // return resulting sequence!!
+        results.Success += 1;
         results.emplace_back(
             TResult
             {
