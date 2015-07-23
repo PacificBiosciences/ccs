@@ -102,7 +102,7 @@ add_definitions(-DSEQAN_NO_GLOBAL_EXCEPTION_HANDLER)
 
 # shared CXX flags for src & tests
 include(CheckCXXCompilerFlag)
-set(PacBioCCS_CXX_FLAGS "-std=c++11 -Wall -pedantic")
+set(PacBioCCS_CXX_FLAGS "-std=c++11 -Wall -pedantic -msse3")
 
 # silence gmock warning
 check_cxx_compiler_flag("-Wno-unused-variable" HAS_NO_UNUSED_VARIABLE)
