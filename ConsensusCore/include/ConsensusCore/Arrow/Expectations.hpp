@@ -18,7 +18,7 @@ std::pair<double, double> ExpectedContextLL(const TransitionParameters& params, 
     const double p_s = params.Stick,     l_s = std::log(p_s),  l2_s = l_s * l_s;
 
     const double lgThird = -std::log(3.0);
-    const double E_M = (1.0 - eps) * 0.0 + eps * lgThird,  E2_M = E_M * E_M;
+    const double E_M = (1.0 - eps) * 0.0 + eps * lgThird,  E2_M = eps * lgThird * lgThird;
     const double E_D = 0.0,                                E2_D = E_D * E_D;
     const double E_B = 0.0,                                E2_B = E_B * E_B;
     const double E_S = lgThird,                            E2_S = E_S * E_S;
