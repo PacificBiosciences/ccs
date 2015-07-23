@@ -392,7 +392,7 @@ int main(int argc, char **argv)
                 //   TODO(lhepler) remove this in favor of actual chemistry decoding
                 else if (!VerifyChemistry(read.ReadGroup()))
                 {
-                    PBLOG_DEBUG << "Skipping ZMW " << movieName << '/' << *holeNumber << ", invalid chemistry (not P6/C4)";
+                    PBLOG_NOTICE << "Skipping ZMW " << movieName << '/' << *holeNumber << ", invalid chemistry (not P6/C4)";
                     skipping = true;
                 }
                 else if (*min_element(snr.begin(), snr.end()) < minSnr)
