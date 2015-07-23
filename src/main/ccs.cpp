@@ -121,7 +121,8 @@ void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
         tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
         tags["rs"] = ccs.StatusCounts;
-        tags["zg"] = static_cast<float>(ccs.ZScore);
+        tags["zg"] = static_cast<float>(ccs.GlobalZScore);
+        tags["za"] = static_cast<float>(ccs.AvgZScore);
         vector<float> zScores;
         for (const double z : ccs.ZScores)
             zScores.emplace_back(static_cast<float>(z));

@@ -125,7 +125,8 @@ struct ConsensusType
     std::string Qualities;
     size_t NumPasses;
     double PredictedAccuracy;
-    double ZScore;
+    double GlobalZScore;
+    double AvgZScore;
     std::vector<double> ZScores;
     std::vector<int32_t> StatusCounts;
     size_t MutationsTested;
@@ -454,7 +455,8 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 QVsToASCII(qvs),
                 nPasses,
                 predAcc,
-                zdata.first,
+                zdata.first.first,
+                zdata.first.second,
                 zdata.second,
                 statusCounts,
                 nTested,

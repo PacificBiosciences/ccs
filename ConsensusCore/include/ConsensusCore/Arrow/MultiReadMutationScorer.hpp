@@ -206,13 +206,14 @@ namespace Arrow {
             }
 
             inline
-            std::pair<double, std::vector<double>> ZScores() const
+            std::pair<std::pair<double, double>, std::vector<double>> ZScores() const
             {
                 const double eps    = arrConfig_.MdlParams.PrMiscall;
                 auto fwdMeanAndVars = PerBaseMeanAndVariance(fwdTemplate_, eps);
                 auto revMeanAndVars = PerBaseMeanAndVariance(revTemplate_, eps);
                 std::vector<double> zScores;
-                double gmu = 0.0, gvar = 0.0;
+                double gmean = 0.0, gvar = 0.0;
+                size_t nreads = 0;
 
                 for (const auto& read : reads_)
                 {
@@ -222,6 +223,7 @@ namespace Arrow {
                         continue;
                     }
 
+                    nreads += 1;
                     double ll = read.Scorer->Score();
                     double mu = 0.0, var = 0.0;
                     int start = read.Read->TemplateStart,
@@ -243,15 +245,17 @@ namespace Arrow {
                         var += mvs[i].second;
                     }
 
-                    gmu  += mu;
-                    gvar += var;
+                    gmean += mu;
+                    gvar  += var;
 
                     zScores.emplace_back((ll - mu) / std::sqrt(var));
                 }
 
-                double gz = (BaselineScore() - gmu) / std::sqrt(gvar);
+                const double gs = BaselineScore();
+                const double zg = (gs - gmean) / std::sqrt(gvar);
+                const double za = (gs/nreads - gmean/nreads) / std::sqrt(gvar/nreads);
 
-                return std::make_pair(gz, zScores);
+                return std::make_pair(std::make_pair(zg, za), zScores);
             }
 
         public:
