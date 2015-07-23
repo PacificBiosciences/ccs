@@ -76,6 +76,7 @@ struct ConsensusSettings
     size_t MinLength;
     size_t MinPasses;
     double MinPredictedAccuracy;
+    double MinZScore;
     bool   Directional;
 
     ConsensusSettings(const optparse::Values& options);
@@ -88,6 +89,7 @@ struct ConsensusSettings
         parser->add_option("--minLength").type("int").set_default(10).help("Minimum length of subreads to use for generating CCS. Default = %default");
         parser->add_option("--minPasses").type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
         parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
+        parser->add_option("--minZScore").type("float").set_default(-2.0).help("Minimum z-score to use a subread. Default = %default");
         // parser->add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
 };
@@ -383,7 +385,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
             if (auto mr = ExtractMappedRead(*reads[i], summaries[readKeys[i]], settings.MinLength))
             {
-                auto status = scorer.AddRead(*mr);
+                auto status = scorer.AddRead(*mr, settings.MinZScore);
 
                 // increment the status count
                 statusCounts[status] += 1;
