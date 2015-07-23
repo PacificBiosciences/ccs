@@ -34,6 +34,7 @@
 // SUCH DAMAGE.
 
 
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -64,6 +65,8 @@ namespace Arrow {
             extendBuffer_ = new MatrixType(I, EXTEND_BUFFER_COLUMNS);
             // Initial alpha and beta
             numFlipFlops_ = recursor.FillAlphaBeta(*alpha_, *beta_);
+            if (std::isinf(Score()))
+                throw AlphaBetaMismatchException();
         }
         catch(AlphaBetaMismatchException e) {
             delete alpha_;

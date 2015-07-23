@@ -38,8 +38,9 @@ set_target_properties(ccs PROPERTIES
 add_dependencies(ccs ConsensusCore)
 target_link_libraries(ccs
     pbccs
+    pbbam
     ${CONSENSUSCORE_LIBRARIES}
-    ${PBBAM_LIBRARIES}
+    ${HTSLIB_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS}

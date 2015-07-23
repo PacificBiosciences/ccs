@@ -147,6 +147,7 @@ public:
     size_t TooFewPasses;
     size_t NonConvergent;
     size_t PoorQuality;
+    size_t Other;
 
     ResultType()
         : Success{0}
@@ -156,6 +157,7 @@ public:
         , TooFewPasses{0}
         , NonConvergent{0}
         , PoorQuality{0}
+        , Other{0}
     { }
 
     ResultType<TConsensus>&
@@ -168,6 +170,7 @@ public:
         TooFewPasses  += other.TooFewPasses;
         NonConvergent += other.NonConvergent;
         PoorQuality   += other.PoorQuality;
+        Other         += other.Other;
         return *this;
     }
 
@@ -180,7 +183,8 @@ public:
             + TooShort
             + TooFewPasses
             + NonConvergent
-            + PoorQuality );
+            + PoorQuality
+            + Other );
     }
 };
 
@@ -246,7 +250,7 @@ ExtractMappedRead(const TRead& read,
     if (readStart > readEnd || readEnd - readStart < minLength)
     {
         PBLOG_DEBUG << "Skipping read " << read.Id
-                    << ", it's too short (<" << minLength << ')';
+                    << ", too short (<" << minLength << ')';
         return boost::none;
     }
 
@@ -345,125 +349,134 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
     for (const auto& chunk : *chunks)
     {
-        Timer timer;
-        auto reads = FilterReads(chunk.Reads, settings.MinLength);
-
-        if (reads.empty())
+        try
         {
-            results.NoSubreads += 1;
-            PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
-                        << ", no high quality subreads available";
-            continue;
-        }
+            Timer timer;
+            auto reads = FilterReads(chunk.Reads, settings.MinLength);
 
-        std::vector<SparsePoa::ReadKey> readKeys;
-        std::vector<PoaAlignmentSummary> summaries;
-        std::string poaConsensus = PoaConsensus(reads, &readKeys, &summaries,
-                                                settings.MaxPoaCoverage);
-
-        if (poaConsensus.length() < settings.MinLength)
-        {
-            results.TooShort += 1;
-            PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
-                        << ", initial consensus too short (<"
-                        << settings.MinLength << ')';
-            continue;
-        }
-
-        // setup the arrow scorer
-        ContextParameters ctxParams(chunk.SignalToNoise);
-        ArrowConfig config(ctxParams, BandingOptions(12.5));
-        ArrowMultiReadMutationScorer scorer(config, poaConsensus);
-        size_t nPasses = 0;
-        std::vector<int32_t> statusCounts(OTHER + 1, 0);
-
-        // add the reads to the scorer
-        for (size_t i = 0; i < readKeys.size(); ++i)
-        {
-            // skip unadded reads
-            if (readKeys[i] < 0)
-                continue;
-
-            if (auto mr = ExtractMappedRead(*reads[i], summaries[readKeys[i]], settings.MinLength))
+            if (reads.empty())
             {
-                auto status = scorer.AddRead(*mr, settings.MinZScore);
+                results.NoSubreads += 1;
+                PBLOG_DEBUG << "Skipping " << chunk.Id
+                            << ", no high quality subreads available";
+                continue;
+            }
 
-                // increment the status count
-                statusCounts[status] += 1;
+            std::vector<SparsePoa::ReadKey> readKeys;
+            std::vector<PoaAlignmentSummary> summaries;
+            std::string poaConsensus = PoaConsensus(reads, &readKeys, &summaries,
+                                                    settings.MaxPoaCoverage);
 
-                if (status == SUCCESS &&
-                    reads[i]->Flags & BAM::ADAPTER_BEFORE &&
-                    reads[i]->Flags & BAM::ADAPTER_AFTER)
+            if (poaConsensus.length() < settings.MinLength)
+            {
+                results.TooShort += 1;
+                PBLOG_DEBUG << "Skipping " << chunk.Id
+                            << ", initial consensus too short (<"
+                            << settings.MinLength << ')';
+                continue;
+            }
+
+            // setup the arrow scorer
+            ContextParameters ctxParams(chunk.SignalToNoise);
+            ArrowConfig config(ctxParams, BandingOptions(12.5));
+            ArrowMultiReadMutationScorer scorer(config, poaConsensus);
+            size_t nPasses = 0;
+            std::vector<int32_t> statusCounts(OTHER + 1, 0);
+
+            // add the reads to the scorer
+            for (size_t i = 0; i < readKeys.size(); ++i)
+            {
+                // skip unadded reads
+                if (readKeys[i] < 0)
+                    continue;
+
+                if (auto mr = ExtractMappedRead(*reads[i], summaries[readKeys[i]], settings.MinLength))
                 {
-                    ++nPasses;
-                }
-                else if (status != SUCCESS)
-                {
-                    PBLOG_DEBUG << "Skipping read " << mr->Name
-                                << ", " << AddReadResultNames[status];
+                    auto status = scorer.AddRead(*mr, settings.MinZScore);
+
+                    // increment the status count
+                    statusCounts[status] += 1;
+
+                    if (status == SUCCESS &&
+                        reads[i]->Flags & BAM::ADAPTER_BEFORE &&
+                        reads[i]->Flags & BAM::ADAPTER_AFTER)
+                    {
+                        ++nPasses;
+                    }
+                    else if (status != SUCCESS)
+                    {
+                        PBLOG_DEBUG << "Skipping read " << mr->Name
+                                    << ", " << AddReadResultNames[status];
+                    }
                 }
             }
-        }
 
-        if (nPasses < settings.MinPasses)
-        {
-            results.TooFewPasses += 1;
-            PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
-                        << ", insufficient number of passes ("
-                        << nPasses << '<' << settings.MinPasses << ')';
-            continue;
-        }
-
-        // get the original zscores
-        const auto zdata = scorer.ZScores();
-
-        // find consensus!!
-        size_t nTested = 0, nApplied = 0;
-        if (!RefineConsensus(scorer, &nTested, &nApplied))
-        {
-            results.NonConvergent += 1;
-            PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
-                        << ", failed to converge";
-            continue;
-        }
-
-        // compute predicted accuracy
-        double predAcc = 0.0;
-        std::vector<int> qvs = ConsensusQVs(scorer);
-        for (const int qv : qvs)
-        {
-            predAcc += pow(10.0, static_cast<double>(qv) / -10.0);
-        }
-        predAcc = 1.0 - predAcc / qvs.size();
-
-        if (predAcc < settings.MinPredictedAccuracy)
-        {
-            results.PoorQuality += 1;
-            PBLOG_DEBUG << "Skipping read " << chunk.Id
-                        << ", failed to meet minimum predicted accuracy (<"
-                        << settings.MinPredictedAccuracy << ')';
-            continue;
-        }
-
-        // return resulting sequence!!
-        results.Success += 1;
-        results.emplace_back(
-            TResult
+            if (nPasses < settings.MinPasses)
             {
-                chunk.Id,
-                scorer.Template(),
-                QVsToASCII(qvs),
-                nPasses,
-                predAcc,
-                zdata.first.first,
-                zdata.first.second,
-                zdata.second,
-                statusCounts,
-                nTested,
-                nApplied,
-                chunk.SignalToNoise,
-                timer.ElapsedMilliseconds()
-            });
+                results.TooFewPasses += 1;
+                PBLOG_DEBUG << "Skipping " << chunk.Id
+                            << ", insufficient number of passes ("
+                            << nPasses << '<' << settings.MinPasses << ')';
+                continue;
+            }
+
+            // get the original zscores
+            const auto zdata = scorer.ZScores();
+
+            // find consensus!!
+            size_t nTested = 0, nApplied = 0;
+            if (!RefineConsensus(scorer, &nTested, &nApplied))
+            {
+                results.NonConvergent += 1;
+                PBLOG_DEBUG << "Skipping " << chunk.Id
+                            << ", failed to converge";
+                continue;
+            }
+
+            // compute predicted accuracy
+            double predAcc = 0.0;
+            std::vector<int> qvs = ConsensusQVs(scorer);
+            for (const int qv : qvs)
+            {
+                predAcc += pow(10.0, static_cast<double>(qv) / -10.0);
+            }
+            predAcc = 1.0 - predAcc / qvs.size();
+
+            if (predAcc < settings.MinPredictedAccuracy)
+            {
+                results.PoorQuality += 1;
+                PBLOG_DEBUG << "Skipping " << chunk.Id
+                            << ", failed to meet minimum predicted accuracy (<"
+                            << settings.MinPredictedAccuracy << ')';
+                continue;
+            }
+
+            // return resulting sequence!!
+            results.Success += 1;
+            results.emplace_back(
+                TResult
+                {
+                    chunk.Id,
+                    scorer.Template(),
+                    QVsToASCII(qvs),
+                    nPasses,
+                    predAcc,
+                    zdata.first.first,
+                    zdata.first.second,
+                    zdata.second,
+                    statusCounts,
+                    nTested,
+                    nApplied,
+                    chunk.SignalToNoise,
+                    timer.ElapsedMilliseconds()
+                });
+        }
+        catch (...)
+        {
+            results.Other += 1;
+            PBLOG_ERROR << "Skipping " << chunk.Id
+                        << ", caught exception during processing";
+        }
     }
 
     return results;

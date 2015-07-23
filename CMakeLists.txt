@@ -6,7 +6,7 @@ project(PacBioCCS CXX C)
 cmake_minimum_required(VERSION 2.8)
 
 # required packages
-find_package(Boost REQUIRED)
+find_package(Boost 1.58.0 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 
@@ -57,12 +57,12 @@ add_custom_target(
 # pbbam
 set(PBBam_RootDir               ${Bifx_RootDir}/staging/PostPrimary/pbbam)
 set(PBBam_IncludeDir            ${PBBam_RootDir}/include)
-set(PBBam_LibDir                ${PBBam_RootDir}/lib)
+#set(PBBam_LibDir                ${PBBam_RootDir}/lib)
 
 # htslib
 set(HTS_RootDir                 ${Bifx_RootDir}/staging/PostPrimary/htslib)
-set(HTS_IncludeDir              ${HTS_RootDir}) 
-set(HTS_LibDir                  ${HTS_RootDir}) 
+set(HTS_IncludeDir              ${HTS_RootDir})
+#set(HTS_LibDir                  ${HTS_RootDir})
 
 # prebuilt libraries
 set(PreBuilt_OutDir             ${Bifx_RootDir}/../prebuilt.out                                    CACHE PATH "smrtanalysis/prebuilt.out root path")
@@ -85,15 +85,15 @@ set(CPPOPTPARSE_CPP             ${CPPOPTPARSE_RootDir}/OptionParser.cpp)
 #    PATHS ${ConsensusCore_LibDir}
 #    NO_DEFAULT_PATH)
 
-find_library(PBBAM_LIBRARY
-    NAMES pbbam
-    PATHS ${PBBam_LibDir} ${HTS_LibDir}
-    NO_DEFAULT_PATH)
-
-find_library(HTS_LIBRARY
-    NAMES hts
-    PATHS ${HTS_LibDir}
-    NO_DEFAULT_PATH)
+#find_library(PBBAM_LIBRARY
+#    NAMES pbbam
+#    PATHS ${PBBam_LibDir} ${HTS_LibDir}
+#    NO_DEFAULT_PATH)
+#
+#find_library(HTS_LIBRARY
+#    NAMES hts
+#    PATHS ${HTS_LibDir}
+#    NO_DEFAULT_PATH)
 
 set(PBBAM_LIBRARIES ${PBBAM_LIBRARY} ${HTS_LIBRARY})
 
@@ -111,6 +111,7 @@ if(HAS_NO_UNUSED_VARIABLE)
 endif(HAS_NO_UNUSED_VARIABLE)
 
 # main exe src
+add_subdirectory(${PBBam_RootDir} external/pbbam/build)
 add_subdirectory(src)
 
 # testing
