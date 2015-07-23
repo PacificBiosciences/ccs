@@ -374,7 +374,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
         ArrowConfig config(ctxParams, BandingOptions(12.5));
         ArrowMultiReadMutationScorer scorer(config, poaConsensus);
         size_t nPasses = 0;
-        std::vector<int32_t> statusCounts(4, 0);
+        std::vector<int32_t> statusCounts(OTHER + 1, 0);
 
         // add the reads to the scorer
         for (size_t i = 0; i < readKeys.size(); ++i)

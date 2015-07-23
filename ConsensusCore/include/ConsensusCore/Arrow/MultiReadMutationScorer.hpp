@@ -57,8 +57,8 @@
 namespace ConsensusCore {
 namespace Arrow {
 
-    enum AddReadResult { SUCCESS = 0, ALPHABETAMISMATCH = 1, MEM_FAIL = 2, OTHER = 3 };
-    static const char* AddReadResultNames[] = { "SUCCESS", "ALPHA/BETA MISMATCH", "EXCESSIVE MEMORY USAGE", "OTHER" };
+    enum AddReadResult { SUCCESS = 0, ALPHABETAMISMATCH = 1, MEM_FAIL = 2, POOR_ZSCORE = 3, OTHER = 4 };
+    static const char* AddReadResultNames[] = { "SUCCESS", "ALPHA/BETA MISMATCH", "EXCESSIVE MEMORY USAGE", "POOR Z-SCORE", "OTHER" };
 
     namespace detail {
         template<typename ScorerType>

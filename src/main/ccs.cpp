@@ -224,6 +224,25 @@ void WriteResultsReport(ostream& report, const Results& counts)
 }
 
 
+// TODO(lhepler) remove in favor of decoding, only accept P6/C4 data for now
+bool VerifyChemistry(const ReadGroupInfo& readGroup)
+{
+    string bcVer = readGroup.BasecallerVersion().substr(0, 3);
+
+    if (readGroup.BindingKit() == "100356300" &&
+        readGroup.SequencingKit() == "100356200" &&
+        (bcVer == "2.1" || bcVer == "2.3"))
+        return true;
+
+    if (readGroup.BindingKit() == "100372700" &&
+        readGroup.SequencingKit() == "100356200" &&
+        (bcVer == "2.1" || bcVer == "2.3"))
+        return true;
+
+    return false;
+}
+
+
 int main(int argc, char **argv)
 {
     using boost::make_optional;
@@ -236,7 +255,7 @@ int main(int argc, char **argv)
     auto parser = OptionParser()
         .usage("usage: %prog [OPTIONS] OUTPUT FILES...")
         .version(string("%prog ") + VERSION + "\nCopyright (c) 2014 Pacific Biosciences, Inc.\nLicense: 3-BSD")
-        .description("A poor man's CCS workflow.");
+        .description("Generate circular consensus sequences (ccs) from subreads.");
 
     vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
 
@@ -330,7 +349,12 @@ int main(int argc, char **argv)
         for (const auto& read : query)
         {
             if (static_cast<float>(read.ReadAccuracy()) < minReadScore)
+            {
+                PBLOG_DEBUG << "Skipping read " << read.FullName()
+                            << ", insufficient read accuracy ("
+                            << read.ReadAccuracy() << '<' << minReadScore << ')';
                 continue;
+            }
 
             string movieName = read.MovieName();
 
@@ -361,6 +385,13 @@ int main(int argc, char **argv)
                 auto snr = read.SignalToNoise();
                 if (whitelist && !whitelist->Contains(*holeNumber))
                 {
+                    skipping = true;
+                }
+                // test chemistry here, we only accept P6/C4 for now
+                //   TODO(lhepler) remove this in favor of actual chemistry decoding
+                else if (!VerifyChemistry(read.ReadGroup()))
+                {
+                    PBLOG_DEBUG << "Skipping ZMW " << movieName << '/' << *holeNumber << ", invalid chemistry (not P6/C4)";
                     skipping = true;
                 }
                 else if (*min_element(snr.begin(), snr.end()) < minSnr)

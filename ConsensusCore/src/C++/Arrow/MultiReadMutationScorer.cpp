@@ -312,7 +312,7 @@ namespace Arrow {
 
             if (isinf(ll) || zscore < threshold)
             {
-                res = AddReadResult::OTHER;
+                res = AddReadResult::POOR_ZSCORE;
                 delete scorer;
                 scorer = NULL;
             }
