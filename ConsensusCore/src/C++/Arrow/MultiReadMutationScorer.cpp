@@ -274,6 +274,8 @@ namespace Arrow {
     template<typename R>
     AddReadResult MultiReadMutationScorer<R>::AddRead(const MappedArrowRead& mr, double threshold)
     {
+        // TODO(lhepler) look at this function and how we might not copy things onto the heap when
+        //   it's not necessary
         AddReadResult res = SUCCESS;
         DEBUG_ONLY(CheckInvariants());
         RecursorType recursor(arrConfig_.MdlParams, mr, Template(mr.Strand, mr.TemplateStart, mr.TemplateEnd), arrConfig_.Banding);

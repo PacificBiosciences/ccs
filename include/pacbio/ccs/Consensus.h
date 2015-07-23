@@ -123,6 +123,8 @@ struct ConsensusType
     std::string Qualities;
     size_t NumPasses;
     double PredictedAccuracy;
+    double ZScore;
+    std::vector<double> ZScores;
     std::vector<int32_t> StatusCounts;
     size_t MutationsTested;
     size_t MutationsApplied;
@@ -409,6 +411,9 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             continue;
         }
 
+        // get the original zscores
+        const auto zdata = scorer.ZScores();
+
         // find consensus!!
         size_t nTested = 0, nApplied = 0;
         if (!RefineConsensus(scorer, &nTested, &nApplied))
@@ -447,6 +452,8 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 QVsToASCII(qvs),
                 nPasses,
                 predAcc,
+                zdata.first,
+                zdata.second,
                 statusCounts,
                 nTested,
                 nApplied,

@@ -35,20 +35,23 @@
 
 #pragma once
 
-#include <boost/noncopyable.hpp>
+#include <cfloat>
+#include <limits>
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
-#include <map>
-#include <cfloat>
+
+#include <boost/noncopyable.hpp>
 
 #include <ConsensusCore/Read.hpp>
 #include <ConsensusCore/Types.hpp>
 #include <ConsensusCore/Matrix/AbstractMatrix.hpp>
 #include <ConsensusCore/Matrix/ScaledMatrix.hpp>
 #include <ConsensusCore/Matrix/SparseMatrix.hpp>
-#include <ConsensusCore/Arrow/MutationScorer.hpp>
 #include <ConsensusCore/Arrow/ArrowConfig.hpp>
+#include <ConsensusCore/Arrow/Expectations.hpp>
+#include <ConsensusCore/Arrow/MutationScorer.hpp>
 #include <ConsensusCore/Arrow/detail/Combiner.hpp>
 
 namespace ConsensusCore {
@@ -162,6 +165,94 @@ namespace Arrow {
             double BaselineScore() const;
             std::vector<double> BaselineScores() const;
             void DumpAlphas();
+
+            inline
+            std::pair<std::pair<double, double>, std::pair<double, double>>
+            NormalParameters() const
+            {
+                const double eps = arrConfig_.MdlParams.PrMiscall;
+                double fwdMean = 0.0, fwdVar = 0.0;
+                size_t fwdSize = fwdTemplate_.Length();
+
+                for (const auto& mv : PerBaseMeanAndVariance(fwdTemplate_, eps))
+                {
+                    fwdMean += mv.first;
+                    fwdVar  += mv.second;
+                }
+
+                if (fwdSize > 0)
+                {
+                    fwdMean /= fwdSize;
+                    fwdVar  /= fwdSize;
+                }
+
+                double revMean = 0.0, revVar = 0.0;
+                size_t revSize = revTemplate_.Length();
+
+                for (const auto& mv : PerBaseMeanAndVariance(revTemplate_, eps))
+                {
+                    revMean += mv.first;
+                    revVar  += mv.second;
+                }
+
+                if (revSize > 0)
+                {
+                    revMean /= revSize;
+                    revVar  /= revSize;
+                }
+
+                return std::make_pair(std::make_pair(fwdMean, fwdVar),
+                                      std::make_pair(revMean, revVar));
+            }
+
+            inline
+            std::pair<double, std::vector<double>> ZScores() const
+            {
+                const double eps    = arrConfig_.MdlParams.PrMiscall;
+                auto fwdMeanAndVars = PerBaseMeanAndVariance(fwdTemplate_, eps);
+                auto revMeanAndVars = PerBaseMeanAndVariance(revTemplate_, eps);
+                std::vector<double> zScores;
+                double gmu = 0.0, gvar = 0.0;
+
+                for (const auto& read : reads_)
+                {
+                    if (!read.IsActive)
+                    {
+                        zScores.emplace_back(std::numeric_limits<double>::quiet_NaN());
+                        continue;
+                    }
+
+                    double ll = read.Scorer->Score();
+                    double mu = 0.0, var = 0.0;
+                    int start = read.Read->TemplateStart,
+                        end   = read.Read->TemplateEnd - 1,
+                        len   = end - start;
+
+                    if (len < 1)
+                    {
+                        zScores.emplace_back(std::numeric_limits<double>::quiet_NaN());
+                        continue;
+                    }
+
+                    auto& mvs = (read.Read->Strand == FORWARD_STRAND) ? fwdMeanAndVars
+                                                                      : revMeanAndVars;
+
+                    for (int i = start; i < end; ++i)
+                    {
+                        mu  += mvs[i].first;
+                        var += mvs[i].second;
+                    }
+
+                    gmu  += mu;
+                    gvar += var;
+
+                    zScores.emplace_back((ll - mu) / std::sqrt(var));
+                }
+
+                double gz = (BaselineScore() - gmu) / std::sqrt(gvar);
+
+                return std::make_pair(gz, zScores);
+            }
 
         public:
             std::string ToString() const;
