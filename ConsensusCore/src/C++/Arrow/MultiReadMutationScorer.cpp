@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <cfloat>
+#include <cmath>
 #include <map>
 #include <string>
 #include <vector>
@@ -274,6 +275,8 @@ namespace Arrow {
     template<typename R>
     AddReadResult MultiReadMutationScorer<R>::AddRead(const MappedArrowRead& mr, double threshold)
     {
+        // TODO(lhepler) look at this function and how we might not copy things onto the heap when
+        //   it's not necessary
         AddReadResult res = SUCCESS;
         DEBUG_ONLY(CheckInvariants());
         RecursorType recursor(arrConfig_.MdlParams, mr, Template(mr.Strand, mr.TemplateStart, mr.TemplateEnd), arrConfig_.Banding);
@@ -289,16 +292,27 @@ namespace Arrow {
             res = ALPHABETAMISMATCH;
         }
 
-        if (scorer != NULL && threshold < 1.0f)
+        if (scorer != NULL && threshold < 0.0)
         {
-            int I = recursor.read_.Length();
-            int J = recursor.tpl_.Length();
-            int maxSize = static_cast<int>(0.5 + threshold * (I + 1) * (J + 1));
-            
-            if (scorer->Alpha()->AllocatedEntries() >= maxSize ||
-                scorer->Beta()->AllocatedEntries() >= maxSize)
+            const double ll = scorer->Score();
+            double mean = 0.0, var = 0.0;
+            const int start = mr.TemplateStart,
+                      end   = mr.TemplateEnd - 1;
+
+            const auto& tpl = (mr.Strand == FORWARD_STRAND) ? fwdTemplate_ : revTemplate_;
+            const auto  mvs = PerBaseMeanAndVariance(tpl, arrConfig_.MdlParams.PrMiscall);
+
+            for (int i = start; i < end; ++i)
             {
-                res = AddReadResult::MEM_FAIL;
+                mean += mvs[i].first;
+                var  += mvs[i].second;
+            }
+
+            const double zscore = (ll - mean) / std::sqrt(var);
+
+            if (isinf(ll) || zscore < threshold)
+            {
+                res = AddReadResult::POOR_ZSCORE;
                 delete scorer;
                 scorer = NULL;
             }
