@@ -76,6 +76,7 @@ struct ConsensusSettings
     size_t MinLength;
     size_t MinPasses;
     double MinPredictedAccuracy;
+    double MinZScore;
     bool   Directional;
 
     ConsensusSettings(const optparse::Values& options);
@@ -88,6 +89,7 @@ struct ConsensusSettings
         parser->add_option("--minLength").type("int").set_default(10).help("Minimum length of subreads to use for generating CCS. Default = %default");
         parser->add_option("--minPasses").type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
         parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
+        parser->add_option("--minZScore").type("float").set_default(-2.0).help("Minimum z-score to use a subread. Default = %default");
         // parser->add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
 };
@@ -123,6 +125,9 @@ struct ConsensusType
     std::string Qualities;
     size_t NumPasses;
     double PredictedAccuracy;
+    double GlobalZScore;
+    double AvgZScore;
+    std::vector<double> ZScores;
     std::vector<int32_t> StatusCounts;
     size_t MutationsTested;
     size_t MutationsApplied;
@@ -271,12 +276,14 @@ std::string QVsToASCII(const std::vector<int>& qvs)
     return res;
 }
 
+#if 0
 template<typename TRead>
 bool ReadAccuracyDescending(const std::pair<size_t, const TRead*>& a,
                             const std::pair<size_t, const TRead*>& b)
 {
     return a.second->ReadAccuracy > b.second->ReadAccuracy;
 }
+#endif
 
 } // namespace anonymous
 
@@ -290,6 +297,7 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
     SparsePoa poa;
     size_t cov = 0;
 
+#if 0
     // create a vector of indices into the original reads vector,
     //   sorted by the ReadAccuracy in descending order
     std::vector<std::pair<size_t, const TRead*>> sorted;
@@ -298,15 +306,18 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
         sorted.emplace_back(std::make_pair(i, reads[i]));
 
     std::sort(sorted.begin(), sorted.end(), ReadAccuracyDescending<TRead>);
+#endif
 
     // initialize readKeys and resize
     readKeys->clear();
-    readKeys->resize(sorted.size());
+    // readKeys->resize(sorted.size());
 
-    for (const auto read : sorted)
+    for (const auto read : reads)
     {
-        SparsePoa::ReadKey key = poa.OrientAndAddRead(read.second->Seq);
-        readKeys->at(read.first) = key;
+        SparsePoa::ReadKey key = poa.OrientAndAddRead(read->Seq);
+        // SparsePoa::ReadKey key = poa.OrientAndAddRead(read.second->Seq);
+        // readKeys->at(read.first) = key;
+        readKeys->emplace_back(key);
         if (key >= 0 && (++cov) >= maxPoaCov)
             break;
     }
@@ -364,7 +375,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
         ArrowConfig config(ctxParams, BandingOptions(12.5));
         ArrowMultiReadMutationScorer scorer(config, poaConsensus);
         size_t nPasses = 0;
-        std::vector<int32_t> statusCounts(4, 0);
+        std::vector<int32_t> statusCounts(OTHER + 1, 0);
 
         // add the reads to the scorer
         for (size_t i = 0; i < readKeys.size(); ++i)
@@ -375,7 +386,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
             if (auto mr = ExtractMappedRead(*reads[i], summaries[readKeys[i]], settings.MinLength))
             {
-                auto status = scorer.AddRead(*mr);
+                auto status = scorer.AddRead(*mr, settings.MinZScore);
 
                 // increment the status count
                 statusCounts[status] += 1;
@@ -402,6 +413,9 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                         << nPasses << '<' << settings.MinPasses << ')';
             continue;
         }
+
+        // get the original zscores
+        const auto zdata = scorer.ZScores();
 
         // find consensus!!
         size_t nTested = 0, nApplied = 0;
@@ -441,6 +455,9 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 QVsToASCII(qvs),
                 nPasses,
                 predAcc,
+                zdata.first.first,
+                zdata.first.second,
+                zdata.second,
                 statusCounts,
                 nTested,
                 nApplied,
