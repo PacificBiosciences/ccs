@@ -231,6 +231,14 @@ TEST(IntervalTest, FromString)
     EXPECT_THROW({
         IntervalTree tree = IntervalTree::FromString("15-2");
     }, std::invalid_argument);
+
+    tree = IntervalTree::FromString("2-2");
+
+    for (const auto& i : tree)
+    {
+        EXPECT_EQ(i.Left(),  2);
+        EXPECT_EQ(i.Right(), 3);
+    }
 }
 
 TEST(IntervalTest, Contains)

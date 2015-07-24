@@ -230,8 +230,8 @@ public:
             {
                 size_t left  = boost::lexical_cast<size_t>(components[0]);
                 size_t right = boost::lexical_cast<size_t>(components[1]);
-                // if right <= left, we have an invalid interval, fall through
-                if (left < right)
+                // if right < left, we have an invalid interval, fall through
+                if (left <= right)
                     return Interval(left, right + 1);
             }
         }
