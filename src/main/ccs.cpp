@@ -59,6 +59,7 @@
 #include <pacbio/ccs/Logging.h>
 #include <pacbio/ccs/ReadId.h>
 #include <pacbio/ccs/WorkQueue.h>
+#include <pacbio/ccs/Utility.h>
 
 using namespace std;
 using namespace PacBio::BAM;
@@ -306,10 +307,8 @@ int main(int argc, char **argv)
         parser.error("missing FILES...");
         
     // Verify output file does not already exist
-    auto outFileName = *files.begin();
-    if (std::ifstream(outFileName)) {
-           parser.error("The output file already exists it, please delete it before continuing");
-    }
+    if (FileExists(files.front()))
+        parser.error("The output file already exists it, please delete it before continuing");
 
     // logging
     //
