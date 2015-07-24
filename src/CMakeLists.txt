@@ -1,6 +1,5 @@
 
-include_directories(.)
-
+include_directories(. ${PacBioCCS_IncludeDir})
 include_directories(SYSTEM
     ${Boost_INCLUDE_DIRS}
     ${ConsensusCore_IncludeDir}
@@ -8,7 +7,6 @@ include_directories(SYSTEM
     ${PBBam_IncludeDir}
     ${CPPOPTPARSE_IncludeDir}
     ${SEQAN_IncludeDir}
-    ${PacBioCCS_IncludeDir}
 )
 
 # flags
@@ -35,11 +33,10 @@ add_executable(ccs ${CCS_Sources})
 set_target_properties(ccs PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PacBioCCS_BinDir}
 )
-add_dependencies(ccs ConsensusCore)
 target_link_libraries(ccs
     pbccs
+    ConsensusCore
     pbbam
-    ${CONSENSUSCORE_LIBRARIES}
     ${HTSLIB_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}

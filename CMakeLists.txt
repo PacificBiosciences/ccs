@@ -38,21 +38,6 @@ set(Bifx_RootDir                ${PacBioCCS_RootDir}/../../../software/smrtanaly
 #set(ConsensusCore_RootDir       ${Bifx_RootDir}/lib/cpp/ConsensusCore                              CACHE PATH "ConsensusCore root path")
 set(ConsensusCore_RootDir       ${PacBioCCS_RootDir}/ConsensusCore)
 set(ConsensusCore_IncludeDir    ${ConsensusCore_RootDir}/include ${ConsensusCore_RootDir}/external)
-set(ConsensusCore_LibDir        ${ConsensusCore_RootDir}/build/C++)
-set(CONSENSUSCORE_LIBRARIES     ${ConsensusCore_LibDir}/libConsensusCore.a)
-
-file(GLOB_RECURSE ConsensusCore_CPP "${ConsensusCore_RootDir}/src/*.cpp")
-file(GLOB_RECURSE ConsensusCore_HPP "${ConsensusCore_RootDir}/include/*.hpp")
-
-# make distclean
-add_custom_target(
-    ConsensusCore
-    ./configure --boost=${Boost_INCLUDE_DIR}
-    COMMAND make
-    WORKING_DIRECTORY ${ConsensusCore_RootDir}
-    COMMENT "building ConsensusCore"
-    SOURCES ${ConsensusCore_CPP} ${ConsensusCore_HPP}
-    VERBATIM)
 
 # pbbam
 set(PBBam_RootDir               ${Bifx_RootDir}/staging/PostPrimary/pbbam)
@@ -111,7 +96,8 @@ if(HAS_NO_UNUSED_VARIABLE)
 endif(HAS_NO_UNUSED_VARIABLE)
 
 # main exe src
-add_subdirectory(${PBBam_RootDir} external/pbbam/build)
+add_subdirectory(${ConsensusCore_RootDir} external/ConsensusCore/build)
+add_subdirectory(${PBBam_RootDir}         external/pbbam/build)
 add_subdirectory(src)
 
 # testing
