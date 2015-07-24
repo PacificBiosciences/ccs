@@ -420,7 +420,6 @@ int main(int argc, char **argv)
                     {
                         ReadId(movieNames[movieName], *holeNumber, Interval(read.QueryStart(), read.QueryEnd())),
                         read.Sequence(),
-                        read.InsertionQV(),
                         read.LocalContextFlags(),
                         read.ReadAccuracy()
                     });

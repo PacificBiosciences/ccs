@@ -100,7 +100,6 @@ struct ReadType
 {
     TId Id;
     std::string Seq;
-    QualityValues Cov;
     LocalContextFlags Flags;
     Accuracy ReadAccuracy;
     // TODO (move SNR here, eventually)
@@ -255,8 +254,7 @@ ExtractMappedRead(const TRead& read,
     }
 
     ConsensusCore::ArrowSequenceFeatures features(
-            read.Seq.substr(readStart, readEnd - readStart),
-            std::vector<unsigned char>(read.Cov.begin() + readStart, read.Cov.begin() + readEnd));
+            read.Seq.substr(readStart, readEnd - readStart));
 
     ConsensusCore::MappedArrowRead mappedRead(
             ConsensusCore::ArrowRead(features, read.Id, "N/A"),
