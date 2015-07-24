@@ -339,9 +339,7 @@ int main(int argc, char **argv)
     // skip the first file, it's for output
     for (auto file = ++files.begin(); file != files.end(); ++file)
     {
-        BamFile bam(*file);
-        DataSet dataSet(bam);
-        EntireFileQuery query(dataSet);
+        EntireFileQuery query(*file);
 
         // use make_optional here to get around spurious warnings from gcc:
         //   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47679
