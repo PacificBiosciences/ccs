@@ -45,9 +45,10 @@ file(GLOB_RECURSE ConsensusCore_CPP "${ConsensusCore_RootDir}/src/*.cpp")
 file(GLOB_RECURSE ConsensusCore_HPP "${ConsensusCore_RootDir}/include/*.hpp")
 
 # make distclean
+get_filename_component(__BOOST_ROOT__ ${Boost_INCLUDE_DIR} DIRECTORY)
 add_custom_target(
     ConsensusCore
-    ./configure --boost=${BOOST_ROOT}
+    ./configure --boost=${__BOOST_ROOT__}
     COMMAND make
     WORKING_DIRECTORY ${ConsensusCore_RootDir}
     COMMENT "building ConsensusCore"
