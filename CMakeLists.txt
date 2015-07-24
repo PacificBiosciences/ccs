@@ -47,7 +47,7 @@ file(GLOB_RECURSE ConsensusCore_HPP "${ConsensusCore_RootDir}/include/*.hpp")
 # make distclean
 add_custom_target(
     ConsensusCore
-    ./configure
+    ./configure --boost=${BOOST_ROOT}
     COMMAND make
     WORKING_DIRECTORY ${ConsensusCore_RootDir}
     COMMENT "building ConsensusCore"
