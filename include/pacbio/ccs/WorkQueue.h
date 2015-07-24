@@ -48,6 +48,7 @@
 namespace PacBio {
 namespace CCS {
 
+
 template<typename T>
 class WorkQueue
 {
@@ -137,7 +138,7 @@ public:
                     if (tail.empty())
                         return false;
 
-                    if (fut = std::move(tail.front()))
+                    if ((fut = std::move(tail.front())))
                     {
                         tail.pop();
                     }
@@ -187,7 +188,7 @@ private:
                     if (head.empty())
                         return false;
 
-                    if (task = std::move(head.front()))
+                    if ((task = std::move(head.front())))
                     {
                         head.pop();
                         tail.emplace(task->get_future());

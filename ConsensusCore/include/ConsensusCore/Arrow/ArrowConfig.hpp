@@ -50,7 +50,7 @@
 
 /* Hard coded mismatch probability for now.
    This is derived as the mean in PlotBinnedTraining.R */
-#define MISMATCH_PROBABILITY 0.002671256
+#define MISMATCH_PROBABILITY 0.00505052456472967
 
 namespace ConsensusCore {
 namespace Arrow {

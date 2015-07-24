@@ -25,7 +25,7 @@
     auto d = fabs(1 - (o) / (e)); \
     /* std::cout << dif <<std::endl; */ \
     if (!(d < 1e-5)) \
-        std::cerr << "failed assert at " __FILE__ ":" << __LINE__ << "! o = " << (o) << ", e = " << (e) << ", d = " << d << std::endl; \
+        std::cerr << "failed assert at " __FILE__ ":" << __LINE__ << std::setprecision(15) << "! o = " << (o) << ", e = " << (e) << ", d = " << d << std::endl; \
     else \
         std::cerr << "passed test at " __FILE__ ":" << __LINE__ << std::endl; \
 }
@@ -49,7 +49,7 @@ namespace ConsensusCore {
 //    void assert(double o, double e) {
 //        double dif = fabs(1- o/e);
 //        if (!(dif < 1e-5))
-//            std::cerr << "failed assert at " __FILE__ ":" << __LINE__ << "! o = " << o << ", e = " << e << std::endl; \
+//            std::cerr << "failed assert at " __FILE__ ":" << __LINE__ << "! o = " << setprecision(15) << o << ", e = " << e << std::endl; \
 //        else
 //            std::cerr << "passed test at " __FILE__ ":" << __LINE__ << std::endl;
 //    }
@@ -85,7 +85,7 @@ namespace ConsensusCore {
 
         double score = t.BaselineScore();
         t.DumpAlphas();
-        double t_baseline = -4.94222030733063;
+        double t_baseline = -4.74517984808494;
         ASSERT_EQ(score, t_baseline); //-4.99600615471328
 
         //Test a giant version
@@ -137,14 +137,14 @@ namespace ConsensusCore {
         for(; i< 1;i++) {
             Mutation mL(MutationType::DELETION, 755, '-');
             score = scorer.Score(mL) / nsamp;
-            ASSERT_EQ(score, -4.039538);
+            ASSERT_EQ(score, -3.80891683862648);
         }
 
         // Check the CC Context
         ScorerType t2 = createScorer(tpl, snr);
         AddReadToScorer("ACCTCGT", t2);
         double score2 = t2.BaselineScore();
-        ASSERT_EQ(score2, -6.17329812914413);
+        ASSERT_EQ(score2, -5.79237005993877);
 
 
         i=0;
@@ -152,23 +152,23 @@ namespace ConsensusCore {
         // Test an insertion mutation
         Mutation m(MutationType::INSERTION, 4, 'A');
         auto new_score = t.Score(m);
-        ASSERT_EQ(new_score, (-0.584415070238446 - t_baseline));
+        ASSERT_EQ(new_score, 4.00250386364592);
 
 
         // Now get the same value by mutating the original template
         Mutation m2(MutationType::SUBSTITUTION, 2, 'C');
         auto new_score2 = t.Score(m2);
-        ASSERT_EQ(new_score2, (-10.4362503093273 - t_baseline));
+        ASSERT_EQ(new_score2, -5.19526526492876);
 
         // Test deletion near the end (goes through link/alpha beta path).
         Mutation m3(MutationType::DELETION, 4,'-');
         auto score3 = t.Score(m3);
-        ASSERT_EQ(score3, (-9.89216068954291 - t_baseline));
+        ASSERT_EQ(score3, -4.33430539094949);
 
         // Test a deletion of the very last base.
         Mutation m4(MutationType::DELETION, 6, '-');
         auto score4 = t.Score(m4);
-        ASSERT_EQ(score4, (-15.6788158527151 - t_baseline));
+        ASSERT_EQ(score4, -9.70299447206563);
 
         // Test an insertion at the very last base
         // This is very poorly defined behavior so I am ditching this.
@@ -179,7 +179,7 @@ namespace ConsensusCore {
         // Test a deletion of the first base
         Mutation m6(MutationType::DELETION, 0, '-');
         auto score6 = t.Score(m6);
-        ASSERT_EQ(score6, (-16.6208180854335 - t_baseline));
+        ASSERT_EQ(score6, -10.5597017942167);
 
         //return 0;
        // Test an insertion at the first base
@@ -192,12 +192,12 @@ namespace ConsensusCore {
         // Substitution in middle mutations to test link alpha-beta
         Mutation m8(MutationType::SUBSTITUTION, 4, 'A');
         auto score8 = t.Score(m8);
-        ASSERT_EQ(score8, (-5.23558996122357 - t_baseline));
+        ASSERT_EQ(score8, -0.166992912601578);
 
         // Insertion in middle to test link alpha-beta
         Mutation m9(MutationType::INSERTION, 4, 'G');
         auto score9 = t.Score(m9);
-        ASSERT_EQ(score9, (-6.71553495654471 - t_baseline));
+        ASSERT_EQ(score9, -1.60697112438296);
         }
         std::cout << "Finished!" << i << std::endl;
         return 0;
