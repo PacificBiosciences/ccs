@@ -308,7 +308,7 @@ int main(int argc, char **argv)
         
     // Verify output file does not already exist
     if (FileExists(files.front()))
-        parser.error("The output file already exists it, please delete it before continuing");
+        parser.error("OUTPUT: file already exists: '" + files.front() + "'");
 
     // logging
     //

@@ -95,7 +95,7 @@ set(CPPOPTPARSE_CPP             ${CPPOPTPARSE_RootDir}/OptionParser.cpp)
 #    PATHS ${HTS_LibDir}
 #    NO_DEFAULT_PATH)
 
-set(PBBAM_LIBRARIES ${PBBAM_LIBRARY} ${HTS_LIBRARY})
+#set(PBBAM_LIBRARIES ${PBBAM_LIBRARY} ${HTS_LIBRARY})
 
 # set this compiler definition to prevent unhygenic seqan behavior
 add_definitions(-DSEQAN_NO_GLOBAL_EXCEPTION_HANDLER)

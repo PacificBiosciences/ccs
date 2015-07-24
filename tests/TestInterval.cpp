@@ -225,7 +225,11 @@ TEST(IntervalTest, FromString)
     }
 
     EXPECT_THROW({
-        IntervalTree tree2 = IntervalTree::FromString("A,15-22");
+        IntervalTree tree = IntervalTree::FromString("A,15-22");
+    }, std::invalid_argument);
+
+    EXPECT_THROW({
+        IntervalTree tree = IntervalTree::FromString("15-2");
     }, std::invalid_argument);
 }
 

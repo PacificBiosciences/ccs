@@ -14,8 +14,8 @@ namespace Arrow {
 
     TemplateParameterPair::TemplateParameterPair(const std::string& tpl_,
                                                  const std::vector<TransitionParameters>& trans_probs_)
-        : mutantPosition( NO_MUTATION_SET_FLAG )
-        , mutationOffset( NO_MUTATION_SET_FLAG )
+        : mutantPosition(NO_MUTATION_SET_FLAG)
+        , mutationOffset(0)
         , tpl(tpl_)
         , trans_probs(trans_probs_)
     {
@@ -23,16 +23,16 @@ namespace Arrow {
     }
 
     TemplateParameterPair::TemplateParameterPair()
-        : mutantPosition( NO_MUTATION_SET_FLAG )
-        , mutationOffset( NO_MUTATION_SET_FLAG )
+        : mutantPosition(NO_MUTATION_SET_FLAG)
+        , mutationOffset(0)
         , tpl()
         , trans_probs()
     {}
 
 #if 0
     TemplateParameterPair::TemplateParameterPair(const TemplateParameterPair& other)
-        : mutantPosition( NO_MUTATION_SET_FLAG )
-        , mutationOffset( NO_MUTATION_SET_FLAG )
+        : mutantPosition(NO_MUTATION_SET_FLAG)
+        , mutationOffset(0)
         , tpl(other.tpl)
         , trans_probs(other.trans_probs)
     {
@@ -41,8 +41,8 @@ namespace Arrow {
 #endif
 
     TemplateParameterPair::TemplateParameterPair(const std::string& tpl_, const ContextParameters& ctx)
-        : mutantPosition( NO_MUTATION_SET_FLAG )
-        , mutationOffset( NO_MUTATION_SET_FLAG )
+        : mutantPosition(NO_MUTATION_SET_FLAG)
+        , mutationOffset(0)
         , tpl(tpl_)
         , trans_probs(tpl_.size())
     {
@@ -60,7 +60,7 @@ namespace Arrow {
 
     void TemplateParameterPair::ClearVirtualMutation() {
         mutantPosition = NO_MUTATION_SET_FLAG;
-        mutationOffset = NO_MUTATION_SET_FLAG;
+        mutationOffset = 0;
         mutantBP[0] = '0';
         mutantBP[1] = '0';
         mutantParameters[0] = TransitionParameters();
@@ -122,7 +122,7 @@ namespace Arrow {
         else if (mut.IsInsertion()) {
             // Insertions indicate the position to place the base in (so if at X, what was at X is now at X+1).
             assert(mut.NewBases().length() == 1);
-            mutationOffset = - 1;
+            mutationOffset = -1;
             char newBP = mut.NewBases()[0];
             mutantBP[1] = newBP;
             // Need to update two parameters, the ones for this base and the one
