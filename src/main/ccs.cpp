@@ -340,7 +340,8 @@ int main(int argc, char **argv)
     for (auto file = ++files.begin(); file != files.end(); ++file)
     {
         BamFile bam(*file);
-        EntireFileQuery query(bam);
+        DataSet dataSet(bam);
+        EntireFileQuery query(dataSet);
 
         // use make_optional here to get around spurious warnings from gcc:
         //   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47679
