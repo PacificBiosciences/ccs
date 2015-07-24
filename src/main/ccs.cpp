@@ -304,6 +304,12 @@ int main(int argc, char **argv)
         parser.error("missing OUTPUT");
     else if (files.size() < 2)
         parser.error("missing FILES...");
+        
+    // Verify output file does not already exist
+    auto outFileName = *files.begin();
+    if (std::ifstream(outFileName)) {
+           parser.error("The output file already exists it, please delete it before continuing");
+    }
 
     // logging
     //
