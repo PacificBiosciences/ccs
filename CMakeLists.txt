@@ -19,12 +19,17 @@ set(PacBioCCS_VERSION
 # main project paths
 set(PacBioCCS_RootDir           ${PacBioCCS_SOURCE_DIR})
 set(PacBioCCS_IncludeDir        ${PacBioCCS_RootDir}/include)
-set(PacBioCCS_BinDir            ${PacBioCCS_RootDir}/bin)
 set(PacBioCCS_DocsDir           ${PacBioCCS_RootDir}/docs)
-set(PacBioCCS_LibDir            ${PacBioCCS_RootDir}/lib)
 set(PacBioCCS_SourceDir         ${PacBioCCS_RootDir}/src)
 set(PacBioCCS_TestsDir          ${PacBioCCS_RootDir}/tests)
 set(PacBioCCS_ThirdPartyDir     ${PacBioCCS_RootDir}/third-party)
+
+if(NOT PacBioCCS_OutputDir)
+    set(PacBioCCS_OutputDir ${PacBioCCS_RootDir})
+endif()
+
+set(PacBioCCS_BinDir            ${PacBioCCS_OutputDir}/bin)
+set(PacBioCCS_LibDir            ${PacBioCCS_OutputDir}/lib)
 
 file(MAKE_DIRECTORY             ${PacBioCCS_BinDir})
 file(MAKE_DIRECTORY             ${PacBioCCS_LibDir})
