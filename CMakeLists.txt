@@ -2,8 +2,9 @@
 # CMake build script for PacBioCCS executable.
 ########################################################################
 
-project(PacBioCCS CXX C)
-cmake_minimum_required(VERSION 2.8)
+cmake_policy(SET CMP0048 NEW)  # lets us set the version in project()
+project(PacBioCCS VERSION 0.0.1 LANGUAGES CXX C)
+cmake_minimum_required(VERSION 3.0)
 
 # required packages
 find_package(Boost 1.58.0 REQUIRED)
@@ -11,11 +12,8 @@ find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 
 # project version
-set(PacBioCCS_MAJOR_VERSION 0)
-set(PacBioCCS_MINOR_VERSION 0)
-set(PacBioCCS_PATCH_VERSION 1)
 set(PacBioCCS_VERSION
-  "${PacBioCCS_MAJOR_VERSION}.${PacBioCCS_MINOR_VERSION}.${PacBioCCS_PATCH_VERSION}"
+    "${PacBioCCS_VERSION_MAJOR}.${PacBioCCS_VERSION_MINOR}.${PacBioCCS_VERSION_PATCH}"
 )
 
 # main project paths
@@ -40,7 +38,7 @@ set(ConsensusCore_RootDir       ${PacBioCCS_RootDir}/ConsensusCore)
 set(ConsensusCore_IncludeDir    ${ConsensusCore_RootDir}/include ${ConsensusCore_RootDir}/external)
 
 # pbbam
-set(PBBam_RootDir               ${Bifx_RootDir}/staging/PostPrimary/pbbam)
+set(PBBam_RootDir               ${Bifx_RootDir}/staging/PostPrimary/pbbam                          CACHE PATH "pbbam source path")
 set(PBBam_IncludeDir            ${PBBam_RootDir}/include)
 #set(PBBam_LibDir                ${PBBam_RootDir}/lib)
 
