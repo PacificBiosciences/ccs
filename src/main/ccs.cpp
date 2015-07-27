@@ -114,6 +114,7 @@ void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
         tags["RG"] = MakeReadGroupId(*(ccs.Id.MovieName), "CCS");
         tags["zm"] = static_cast<int32_t>(ccs.Id.HoleNumber);
         tags["np"] = static_cast<int32_t>(ccs.NumPasses);
+        tags["pq"] = static_cast<float>(ccs.PredictedAccuracy);
         tags["rq"] = static_cast<int32_t>(1000 * ccs.PredictedAccuracy);
         tags["sn"] = snr;
 
@@ -122,6 +123,8 @@ void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
         tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
         tags["rs"] = ccs.StatusCounts;
+        
+        // These are SUPER valuable for filtering, let's leave em in for now.
         tags["zg"] = static_cast<float>(ccs.GlobalZScore);
         tags["za"] = static_cast<float>(ccs.AvgZScore);
         vector<float> zScores;
