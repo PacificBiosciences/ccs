@@ -7,9 +7,16 @@ project(PacBioCCS VERSION 0.0.1 LANGUAGES CXX C)
 cmake_minimum_required(VERSION 3.0)
 
 # required packages
-find_package(Boost 1.58.0 REQUIRED)
+if (NOT Boost_INCLUDE_DIRS)
+    find_package(Boost 1.58.0 REQUIRED)
+endif()
+
 find_package(Threads REQUIRED)
-find_package(ZLIB REQUIRED)
+
+if (NOT ZLIB_INCLUDE_DIRS OR
+    NOT ZLIB_LIBRARIES)
+    find_package(ZLIB REQUIRED)
+endif()
 
 # project version
 set(PacBioCCS_VERSION
@@ -25,7 +32,7 @@ set(PacBioCCS_TestsDir          ${PacBioCCS_RootDir}/tests)
 set(PacBioCCS_ThirdPartyDir     ${PacBioCCS_RootDir}/third-party)
 
 if(NOT PacBioCCS_OutputDir)
-    set(PacBioCCS_OutputDir ${PacBioCCS_RootDir})
+    set(PacBioCCS_OutputDir     ${PacBioCCS_RootDir})
 endif()
 
 set(PacBioCCS_BinDir            ${PacBioCCS_OutputDir}/bin)
@@ -43,14 +50,13 @@ set(ConsensusCore_RootDir       ${PacBioCCS_RootDir}/ConsensusCore)
 set(ConsensusCore_IncludeDir    ${ConsensusCore_RootDir}/include ${ConsensusCore_RootDir}/external)
 
 # pbbam
-set(PBBam_RootDir               ${Bifx_RootDir}/staging/PostPrimary/pbbam                          CACHE PATH "pbbam source path")
-set(PBBam_IncludeDir            ${PBBam_RootDir}/include)
-#set(PBBam_LibDir                ${PBBam_RootDir}/lib)
+set(PacBioBAM_RootDir           ${Bifx_RootDir}/staging/PostPrimary/pbbam                          CACHE PATH "pbbam source path")
+set(PacBioBAM_IncludeDir        ${PacBioBAM_RootDir}/include)
+#set(PacBioBAM_LibDir            ${PacBioBAM_RootDir}/lib)
 
 # htslib
-set(HTS_RootDir                 ${Bifx_RootDir}/staging/PostPrimary/htslib)
-set(HTS_IncludeDir              ${HTS_RootDir})
-#set(HTS_LibDir                  ${HTS_RootDir})
+set(HTSLIB_ROOTDIR              ${Bifx_RootDir}/staging/PostPrimary/htslib)
+#set(HTSLIB_LibDir               ${HTSLIB_RootDir})
 
 # prebuilt libraries
 set(PreBuilt_OutDir             ${Bifx_RootDir}/../prebuilt.out                                    CACHE PATH "smrtanalysis/prebuilt.out root path")
@@ -75,15 +81,15 @@ set(CPPOPTPARSE_CPP             ${CPPOPTPARSE_RootDir}/OptionParser.cpp)
 
 #find_library(PBBAM_LIBRARY
 #    NAMES pbbam
-#    PATHS ${PBBam_LibDir} ${HTS_LibDir}
+#    PATHS ${PacBioBAM_LibDir} ${HTSLIB_LibDir}
 #    NO_DEFAULT_PATH)
 #
-#find_library(HTS_LIBRARY
+#find_library(HTSLIB_LIBRARY
 #    NAMES hts
-#    PATHS ${HTS_LibDir}
+#    PATHS ${HTSLIB_LibDir}
 #    NO_DEFAULT_PATH)
 
-#set(PBBAM_LIBRARIES ${PBBAM_LIBRARY} ${HTS_LIBRARY})
+#set(PBBAM_LIBRARIES ${PBBAM_LIBRARY} ${HTSLIB_LIBRARY})
 
 # set this compiler definition to prevent unhygenic seqan behavior
 add_definitions(-DSEQAN_NO_GLOBAL_EXCEPTION_HANDLER)
@@ -100,7 +106,7 @@ endif(HAS_NO_UNUSED_VARIABLE)
 
 # main exe src
 add_subdirectory(${ConsensusCore_RootDir} external/ConsensusCore/build)
-add_subdirectory(${PBBam_RootDir}         external/pbbam/build)
+add_subdirectory(${PacBioBAM_RootDir}     external/pbbam/build)
 add_subdirectory(src)
 
 # testing

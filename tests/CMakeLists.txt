@@ -21,8 +21,8 @@ configure_file(
 include_directories(SYSTEM
     ${Boost_INCLUDE_DIRS}
     ${ConsensusCore_IncludeDir}
-    ${HTS_IncludeDir}
-    ${PBBam_IncludeDir}
+    ${HTSLIB_INCLUDE_DIRS}
+    ${PacBioBAM_IncludeDir}
     ${CPPOPTPARSE_IncludeDir}
     ${SEQAN_IncludeDir}
     ${GMOCK_IncludeDir}
