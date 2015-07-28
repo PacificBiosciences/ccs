@@ -6,9 +6,16 @@ project(ConsensusCore CXX C)
 cmake_minimum_required(VERSION 2.8)
 
 # required packages
-find_package(Boost 1.58.0 REQUIRED)
+if (NOT Boost_INCLUDE_DIRS)
+    find_package(Boost 1.58.0 REQUIRED)
+endif()
+
 find_package(Threads REQUIRED)
-find_package(ZLIB REQUIRED)
+
+if (NOT ZLIB_INCLUDE_DIRS OR
+    NOT ZLIB_LIBRARIES)
+    find_package(ZLIB REQUIRED)
+endif()
 
 # project version
 set(ConsensusCore_MAJOR_VERSION 1)
