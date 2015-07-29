@@ -54,8 +54,12 @@ set(PacBioBAM_RootDir           ${Bifx_RootDir}/staging/PostPrimary/pbbam       
 set(PacBioBAM_IncludeDir        ${PacBioBAM_RootDir}/include)
 #set(PacBioBAM_LibDir            ${PacBioBAM_RootDir}/lib)
 
+# disable extra pbbam stuff for now
+set(PacBioBAM_build_docs        OFF)
+set(PacBioBAM_build_tests       OFF)
+
 # htslib
-set(HTSLIB_ROOTDIR              ${Bifx_RootDir}/staging/PostPrimary/htslib)
+set(HTSLIB_ROOTDIR              ${Bifx_RootDir}/staging/PostPrimary/htslib                         CACHE PATH "htslib source path")
 #set(HTSLIB_LibDir               ${HTSLIB_RootDir})
 
 # prebuilt libraries

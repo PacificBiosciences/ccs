@@ -2,8 +2,9 @@
 # CMake build script for ConsensusCore library.
 ########################################################################
 
-project(ConsensusCore CXX C)
-cmake_minimum_required(VERSION 2.8)
+cmake_policy(SET CMP0048 NEW)  # lets us set the version in project()
+project(ConsensusCore VERSION 1.0.1 LANGUAGES CXX C)
+cmake_minimum_required(VERSION 3.0)
 
 # required packages
 if (NOT Boost_INCLUDE_DIRS)
@@ -18,11 +19,8 @@ if (NOT ZLIB_INCLUDE_DIRS OR
 endif()
 
 # project version
-set(ConsensusCore_MAJOR_VERSION 1)
-set(ConsensusCore_MINOR_VERSION 0)
-set(ConsensusCore_PATCH_VERSION 1)
 set(ConsensusCore_VERSION
-  "${ConsensusCore_MAJOR_VERSION}.${ConsensusCore_MINOR_VERSION}.${ConsensusCore_PATCH_VERSION}"
+  "${ConsensusCore_VERSION_MAJOR}.${ConsensusCore_VERSION_MINOR}.${ConsensusCore_VERSION_PATCH}"
 )
 
 # main project paths

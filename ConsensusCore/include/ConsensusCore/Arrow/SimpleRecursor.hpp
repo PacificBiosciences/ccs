@@ -138,7 +138,6 @@ namespace Arrow {
                        const WrappedTemplateParameterPair& wtpp,
                        const BandingOptions& banding);
         
-#pragma mark Row guide functions for banding optimizations.
     private:
         Interval RowRange(int j, const M& matrix, double scoreDiff) const;
         

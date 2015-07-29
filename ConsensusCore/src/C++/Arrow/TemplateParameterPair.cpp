@@ -47,7 +47,7 @@ namespace Arrow {
         , trans_probs(tpl_.size())
     {
         // Initialize the dinucleotide context values.
-        for(int i = 0; i < (tpl.size() -1); i ++)
+        for(int i = 0; i < (int)(tpl.size()-1); ++i)
         {
             auto ps = ctx.GetParametersForContext(tpl.at(i), tpl.at(i+1));
             trans_probs[i] = ps;
@@ -90,14 +90,14 @@ namespace Arrow {
                 mutantBP[0] = this->tpl[start - 1];
                 mutantParameters[0] = ctx_params.GetParametersForContext(tpl.at(start - 1), newBP);
             }
-            if ((start + 1) < tpl.length()) {
+            if ((start + 1) < (int)tpl.length()) {
                 mutantParameters[1] = ctx_params.GetParametersForContext(newBP, tpl.at(start+1));
             }
         }
         else if (mut.IsDeletion()) {
             assert( (mut.End() - mut.Start()) == 1);
             mutationOffset = 1;
-            auto org_length = tpl.length() - 1;
+            int org_length = tpl.length() - 1;
             // Three cases, at start, at end, and in middle.
             // If in middle, we update the prior position and ignore the removed position
             // If at the start, we only remove that position
@@ -132,7 +132,7 @@ namespace Arrow {
                 mutantBP[0] = prevBP;
                 mutantParameters[0] = ctx_params.GetParametersForContext(prevBP, newBP);
             }
-            if (start < tpl.length()) {
+            if (start < (int)tpl.length()) {
                 char oldBP = tpl.at(start);
                 mutantParameters[1] = ctx_params.GetParametersForContext(newBP, oldBP);
             }
@@ -153,7 +153,7 @@ namespace Arrow {
         if (mut.IsSubstitution())
         {
             tpl.replace(start, mut.End() - mut.Start(), mut.NewBases());
-            if ((start + 1) < tpl.length()) {
+            if ((start + 1) < (int)tpl.length()) {
                 trans_probs[start] = ctx_params.GetParametersForContext(tpl.at(start), tpl.at(start+1));
             }
             if (start > 0) {
@@ -163,7 +163,7 @@ namespace Arrow {
         else if (mut.IsDeletion())
         {
             assert( (mut.End() - mut.Start()) == 1);
-            auto org_length = tpl.length() - 1;
+            int org_length = tpl.length() - 1;
             assert(start >=0 && start <= org_length);
             tpl.erase(start, mut.End() - mut.Start());
             // Three cases, at start, at end, and in middle.
@@ -185,7 +185,7 @@ namespace Arrow {
             // Add template base
             assert(tpl.size() == trans_probs.size());
             tpl.insert(start, mut.NewBases());
-            if (start > trans_probs.size())
+            if (start > (int)trans_probs.size())
             {
                 trans_probs.push_back(TransitionParameters());
             }
@@ -200,7 +200,7 @@ namespace Arrow {
                 trans_probs[start - 1] = ctx_params.GetParametersForContext(tpl.at(start-1), tpl.at(start));
             }
             // If inserted at the end, there is no "current" probabilities to update
-            if (start < trans_probs.size()) {
+            if (start < (int)trans_probs.size()) {
                 auto new_params = ctx_params.GetParametersForContext(tpl.at(start), tpl.at(start+1));
                 trans_probs[start] = new_params;
             }

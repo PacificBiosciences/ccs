@@ -46,7 +46,7 @@ std::vector<std::pair<double, double>> PerBaseMeanAndVariance(const TemplatePara
 {
     std::vector<std::pair<double, double>> meanVars;
 
-    for (size_t i = 0; i < tpl.Length(); ++i)
+    for (int i = 0; i < tpl.Length(); ++i)
     {
         meanVars.emplace_back(ExpectedContextLL(tpl.GetTemplatePosition(i).second, eps));
     }

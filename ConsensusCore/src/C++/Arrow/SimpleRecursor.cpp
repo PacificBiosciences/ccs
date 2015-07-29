@@ -426,7 +426,7 @@ namespace Arrow {
             ext.StartEditingColumn(extCol, beginRow, endRow);
 
             int i;
-            double score;
+            double score = 0.0;
 
             // Grab values that will be useful for the whole column
             auto currentTplPos = tpl_.GetTemplatePosition(j - 1);
