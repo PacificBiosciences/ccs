@@ -56,6 +56,7 @@ set(PacBioBAM_IncludeDir        ${PacBioBAM_RootDir}/include)
 
 # disable extra pbbam stuff for now
 set(PacBioBAM_build_docs        OFF)
+set(PacBioBAM_build_pbindex     OFF)
 set(PacBioBAM_build_tests       OFF)
 
 # htslib
