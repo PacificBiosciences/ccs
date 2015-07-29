@@ -55,9 +55,9 @@ set(PacBioBAM_IncludeDir        ${PacBioBAM_RootDir}/include)
 #set(PacBioBAM_LibDir            ${PacBioBAM_RootDir}/lib)
 
 # disable extra pbbam stuff for now
-set(PacBioBAM_build_docs        OFF)
-set(PacBioBAM_build_pbindex     OFF)
-set(PacBioBAM_build_tests       OFF)
+set(PacBioBAM_build_docs        OFF CACHE BOOL "build pbbam docs" FORCE)
+set(PacBioBAM_build_pbindex     OFF CACHE BOOL "build pbbam pbindex" FORCE)
+set(PacBioBAM_build_tests       OFF CACHE BOOL "build pbbam tests" FORCE)
 
 # htslib
 set(HTSLIB_ROOTDIR              ${Bifx_RootDir}/staging/PostPrimary/htslib                         CACHE PATH "htslib source path")
