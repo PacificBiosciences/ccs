@@ -690,7 +690,6 @@ namespace Arrow {
         return flipflops;
     }
 
-#pragma mark Row guide functions for banding optimizations.
     template<typename M, typename C>
     inline Interval SimpleRecursor<M, C>::RowRange(int j, const M& matrix,  double scoreDiff) const
     {
