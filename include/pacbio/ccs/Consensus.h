@@ -79,7 +79,7 @@ struct ConsensusSettings
     double MinZScore;
     double MaxDroppedFrac;
     bool   Directional;
-    
+
     ConsensusSettings(const optparse::Values& options);
 
     static
@@ -91,7 +91,7 @@ struct ConsensusSettings
         parser->add_option("--minPasses").type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
         parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
         parser->add_option("--minZScore").type("float").set_default(-5.0).help("Minimum z-score to use a subread. Default = %default");
-        parser->add_option("--maxDropFrac").type("float").set_default(0.33333).help("Maximum fraction of subreads that can be dropped due to Z-score. Default = %default");
+        parser->add_option("--maxDropFrac").type("float").set_default(0.33).help("Maximum fraction of subreads that can be dropped. Default = %default");
         // parser->add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
 };
@@ -384,11 +384,12 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             ContextParameters ctxParams(chunk.SignalToNoise);
             ArrowConfig config(ctxParams, BandingOptions(12.5));
             ArrowMultiReadMutationScorer scorer(config, poaConsensus);
-            size_t nPasses = 0;
             std::vector<int32_t> statusCounts(OTHER + 1, 0);
+            const size_t nReads = readKeys.size();
+            size_t nPasses = 0, nDropped = 0;
 
             // add the reads to the scorer
-            for (size_t i = 0; i < readKeys.size(); ++i)
+            for (size_t i = 0; i < nReads; ++i)
             {
                 // skip unadded reads
                 if (readKeys[i] < 0)
@@ -409,6 +410,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                     }
                     else if (status != SUCCESS)
                     {
+                        ++nDropped;
                         PBLOG_DEBUG << "Skipping read " << mr->Name
                                     << ", " << AddReadResultNames[status];
                     }
@@ -424,25 +426,16 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 continue;
             }
 
-            // get the original zscores
-            const auto zdata = scorer.ZScores();
-            const auto total = zdata.second.size();
-            auto dropped = 0;
-            for(auto zs : zdata.second) {
-                if (zs == std::numeric_limits<double>::quiet_NaN())
-                {
-                    dropped++;
-                }
-            }
-            auto frac = static_cast<double>(dropped) / static_cast<double>(total);
-            if (frac >= settings.MaxDroppedFrac) {
+            if ((static_cast<double>(nDropped) / nReads) > settings.MaxDroppedFrac)
+            {
                 results.TooManyLowZ += 1;
                 PBLOG_DEBUG << "Skipping " << chunk.Id
                             << ", too high a fraction of subreads below Z threshold.";
                 continue;
-
             }
-            
+
+            // get the original zscores
+            const auto zdata = scorer.ZScores();
 
             // find consensus!!
             size_t nTested = 0, nApplied = 0;

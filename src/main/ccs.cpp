@@ -123,7 +123,7 @@ void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
         tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
         tags["rs"] = ccs.StatusCounts;
-        
+
         // These are SUPER valuable for filtering, let's leave em in for now.
         tags["zg"] = static_cast<float>(ccs.GlobalZScore);
         tags["za"] = static_cast<float>(ccs.AvgZScore);
@@ -220,10 +220,10 @@ void WriteResultsReport(ostream& report, const Results& counts)
 
     report << "Failed -- Not enough full passes," << counts.TooFewPasses
            << "," << 100.0 * counts.TooFewPasses / total << '%' << std::endl;
-    
+
     report << "Failed -- Too many failed Z-score," << counts.TooManyLowZ
            << "," << 100.0 * counts.TooManyLowZ / total << '%' << std::endl;
-    
+
     report << "Failed -- CCS did not converge," << counts.NonConvergent
            << "," << 100.0 * counts.NonConvergent / total << '%' << std::endl;
 
@@ -267,13 +267,13 @@ int main(int argc, char **argv)
 
     vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
 
-    parser.add_option("--report").set_default("-").help("Write results report to a file, instead of STDOUT.");
+    parser.add_option("--zmws").set_default("").help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
     parser.add_option("--minSnr").type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
     parser.add_option("--minReadScore").type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
 
     ConsensusSettings::AddOptions(&parser);
 
-    parser.add_option("--zmws").set_default("").help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
+    parser.add_option("--reportFile").set_default("ccs_report.csv").help("Where to write the results report. Default = %default");
     parser.add_option("--numThreads").type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
     parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
     parser.add_option("--logFile").help("Log to a file, instead of STDERR.");
@@ -311,7 +311,7 @@ int main(int argc, char **argv)
         parser.error("missing OUTPUT");
     else if (files.size() < 2)
         parser.error("missing FILES...");
-        
+
     // Verify output file does not already exist
     if (FileExists(files.front()))
         parser.error("OUTPUT: file already exists: '" + files.front() + "'");
@@ -463,15 +463,15 @@ int main(int argc, char **argv)
     auto counts = writer.get();
     counts.PoorSNR += poorSNR;
     counts.TooFewPasses += tooFewPasses;
-    const string report(options.get("report"));
+    const string reportFile(options.get("reportFile"));
 
-    if (report == "-")
+    if (reportFile == "-")
     {
         WriteResultsReport(cout, counts);
     }
     else
     {
-        fstream stream(report, fstream::out);
+        fstream stream(reportFile, fstream::out);
         WriteResultsReport(stream, counts);
     }
 
