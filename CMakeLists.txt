@@ -14,20 +14,25 @@ set(SparseAlignment_VERSION
 )
 
 # Main project paths
-set(SparseAlignment_RootDir       ${SparseAlignment_SOURCE_DIR})
-set(SparseAlignment_IncludeDir    ${SparseAlignment_RootDir}/include)
-set(Bioinformatics_ThirdPartyDir  ${SparseAlignment_RootDir}/../../third-party/cpp)
+set(PacBioSparse_RootDir        ${PacBioSparse_SOURCE_DIR})
+set(PacBioSparse_IncludeDir     ${PacBioSparse_RootDir}/include)
+
+# ccs
+set(PacBioCCS_RootDir           ${PacBioLAA_RootDir}/../pbccs                                      CACHE PATH "pbccs root path")
+set(PacBioCCS_ThirdPartyDir     ${PacBioCCS_RootDir}/third-party)
+
+# third-party libraries (from pbccs)
+set(SeqAn_IncludeDir            ${PacBioCCS_ThirdPartyDir}/seqan-library-2.0.0/include)
 
 # Third-party paths
-set(SeqAn_IncludeDir              ${Bioinformatics_ThirdPartyDir}/seqan-library-2.0.0/include)
 link_directories(SeqAn_IncludeDir)
 
-if (NOT TARGET SPARSE_ALIGNMENT_LIB)
-    add_library(SPARSE_ALIGNMENT_LIB INTERFACE)
+if (NOT TARGET PBSPARSE_LIB)
+    add_library(PBSPARSE_LIB INTERFACE)
 
-    target_include_directories(SPARSE_ALIGNMENT_LIB
-		INTERFACE
+    target_include_directories(PBSPARSE_LIB
+		    INTERFACE
         ${SeqAn_IncludeDir}
-		${SparseAlignment_IncludeDir}
+        ${PacBioSparse_IncludeDir}
     )
 endif()

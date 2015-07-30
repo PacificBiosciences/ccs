@@ -45,9 +45,9 @@
 #include <seqan/seeds.h>
 #include <seqan/sequence.h>
 
-#include <pbsparse/FindSeedsConfig.h>
-#include <pbsparse/ChainSeeds.h>
-#include <pbsparse/HomopolymerHasher.h>
+#include <pacbio/sparse/FindSeedsConfig.h>
+#include <pacbio/sparse/ChainSeeds.h>
+#include <pacbio/sparse/HomopolymerHasher.h>
 
 /* 
  * This file contains a few minimal wrapper functions around the index types

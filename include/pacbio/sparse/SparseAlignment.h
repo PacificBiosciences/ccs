@@ -45,8 +45,8 @@
 #include <seqan/seeds.h>
 #include <seqan/sequence.h>
 
-#include <pbsparse/FindSeedsConfig.h>
-#include <pbsparse/ChainSeeds.h>
+#include <pacbio/sparse/FindSeedsConfig.h>
+#include <pacbio/sparse/ChainSeeds.h>
 
 namespace PacBio {
 namespace SparseAlignment{
