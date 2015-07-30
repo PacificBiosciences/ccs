@@ -91,7 +91,7 @@ struct ConsensusSettings
         parser->add_option("--minPasses").type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
         parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
         parser->add_option("--minZScore").type("float").set_default(-5.0).help("Minimum z-score to use a subread. Default = %default");
-        parser->add_option("--maxDropFrac").type("float").set_default(0.33).help("Maximum fraction of subreads that can be dropped. Default = %default");
+        parser->add_option("--maxDropFrac").type("float").set_default(0.33).help("Maximum fraction of subreads that can be dropped before giving up. Default = %default");
         // parser->add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
 };
@@ -146,7 +146,7 @@ public:
     size_t NoSubreads;
     size_t TooShort;
     size_t TooFewPasses;
-    size_t TooManyLowZ;
+    size_t TooManyUnusable;
     size_t NonConvergent;
     size_t PoorQuality;
     size_t Other;
@@ -157,7 +157,7 @@ public:
         , NoSubreads{0}
         , TooShort{0}
         , TooFewPasses{0}
-        , TooManyLowZ {0}
+        , TooManyUnusable{0}
         , NonConvergent{0}
         , PoorQuality{0}
         , Other{0}
@@ -166,15 +166,15 @@ public:
     ResultType<TConsensus>&
     operator+=(const ResultType<TConsensus>& other)
     {
-        Success       += other.Success;
-        PoorSNR       += other.PoorSNR;
-        NoSubreads    += other.NoSubreads;
-        TooShort      += other.TooShort;
-        TooManyLowZ   += other.TooManyLowZ;
-        TooFewPasses  += other.TooFewPasses;
-        NonConvergent += other.NonConvergent;
-        PoorQuality   += other.PoorQuality;
-        Other         += other.Other;
+        Success         += other.Success;
+        PoorSNR         += other.PoorSNR;
+        NoSubreads      += other.NoSubreads;
+        TooShort        += other.TooShort;
+        TooManyUnusable += other.TooManyUnusable;
+        TooFewPasses    += other.TooFewPasses;
+        NonConvergent   += other.NonConvergent;
+        PoorQuality     += other.PoorQuality;
+        Other           += other.Other;
         return *this;
     }
 
@@ -185,7 +185,7 @@ public:
             + PoorSNR
             + NoSubreads
             + TooShort
-            + TooManyLowZ
+            + TooManyUnusable
             + TooFewPasses
             + NonConvergent
             + PoorQuality
@@ -426,11 +426,13 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 continue;
             }
 
-            if ((static_cast<double>(nDropped) / nReads) > settings.MaxDroppedFrac)
+            const double fracDropped = static_cast<double>(nDropped) / nReads;
+            if (fracDropped > settings.MaxDroppedFrac)
             {
-                results.TooManyLowZ += 1;
+                results.TooManyUnusable += 1;
                 PBLOG_DEBUG << "Skipping " << chunk.Id
-                            << ", too high a fraction of subreads below Z threshold.";
+                            << ", too high a fraction of unusable subreads ("
+                            << fracDropped << '>' << settings.MaxDroppedFrac << ')';
                 continue;
             }
 
@@ -460,8 +462,8 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             {
                 results.PoorQuality += 1;
                 PBLOG_DEBUG << "Skipping " << chunk.Id
-                            << ", failed to meet minimum predicted accuracy (<"
-                            << settings.MinPredictedAccuracy << ')';
+                            << ", failed to meet minimum predicted accuracy ("
+                            << predAcc << '<' << settings.MinPredictedAccuracy << ')';
                 continue;
             }
 

@@ -212,7 +212,7 @@ void WriteResultsReport(ostream& report, const Results& counts)
     report << "Failed -- Below SNR threshold," << counts.PoorSNR
            << "," << 100.0 * counts.PoorSNR / total << '%' << std::endl;
 
-    report << "Failed -- No insert regions," << counts.NoSubreads
+    report << "Failed -- No usable subreads," << counts.NoSubreads
            << "," << 100.0 * counts.NoSubreads / total << '%' << std::endl;
 
     report << "Failed -- Insert size too small," << counts.TooShort
@@ -221,8 +221,8 @@ void WriteResultsReport(ostream& report, const Results& counts)
     report << "Failed -- Not enough full passes," << counts.TooFewPasses
            << "," << 100.0 * counts.TooFewPasses / total << '%' << std::endl;
 
-    report << "Failed -- Too many failed Z-score," << counts.TooManyLowZ
-           << "," << 100.0 * counts.TooManyLowZ / total << '%' << std::endl;
+    report << "Failed -- Too many unusable subreads," << counts.TooManyUnusable
+           << "," << 100.0 * counts.TooManyUnusable / total << '%' << std::endl;
 
     report << "Failed -- CCS did not converge," << counts.NonConvergent
            << "," << 100.0 * counts.NonConvergent / total << '%' << std::endl;
