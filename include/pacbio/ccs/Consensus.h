@@ -77,8 +77,9 @@ struct ConsensusSettings
     size_t MinPasses;
     double MinPredictedAccuracy;
     double MinZScore;
+    double MaxDroppedFrac;
     bool   Directional;
-
+    
     ConsensusSettings(const optparse::Values& options);
 
     static
@@ -90,6 +91,7 @@ struct ConsensusSettings
         parser->add_option("--minPasses").type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
         parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
         parser->add_option("--minZScore").type("float").set_default(-2.0).help("Minimum z-score to use a subread. Default = %default");
+        parser->add_option("--maxDropFrac").type("float").set_default(0.33333).help("Maximum fraction of subreads that can be dropped due to Z-score. Default = %default");
         // parser->add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
 };
@@ -144,6 +146,7 @@ public:
     size_t NoSubreads;
     size_t TooShort;
     size_t TooFewPasses;
+    size_t TooManyLowZ;
     size_t NonConvergent;
     size_t PoorQuality;
     size_t Other;
@@ -154,6 +157,7 @@ public:
         , NoSubreads{0}
         , TooShort{0}
         , TooFewPasses{0}
+        , TooManyLowZ {0}
         , NonConvergent{0}
         , PoorQuality{0}
         , Other{0}
@@ -166,6 +170,7 @@ public:
         PoorSNR       += other.PoorSNR;
         NoSubreads    += other.NoSubreads;
         TooShort      += other.TooShort;
+        TooManyLowZ   += other.TooManyLowZ;
         TooFewPasses  += other.TooFewPasses;
         NonConvergent += other.NonConvergent;
         PoorQuality   += other.PoorQuality;
@@ -180,6 +185,7 @@ public:
             + PoorSNR
             + NoSubreads
             + TooShort
+            + TooManyLowZ
             + TooFewPasses
             + NonConvergent
             + PoorQuality
@@ -420,6 +426,23 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
             // get the original zscores
             const auto zdata = scorer.ZScores();
+            const auto total = zdata.second.size();
+            auto dropped = 0;
+            for(auto zs : zdata.second) {
+                if (zs == std::numeric_limits<double>::quiet_NaN())
+                {
+                    dropped++;
+                }
+            }
+            auto frac = static_cast<double>(dropped) / static_cast<double>(total);
+            if (frac >= settings.MaxDroppedFrac) {
+                results.TooManyLowZ += 1;
+                PBLOG_DEBUG << "Skipping " << chunk.Id
+                            << ", too high a fraction of subreads below Z threshold.";
+                continue;
+
+            }
+            
 
             // find consensus!!
             size_t nTested = 0, nApplied = 0;

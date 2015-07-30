@@ -50,6 +50,7 @@ ConsensusSettings::ConsensusSettings(const optparse::Values& options)
     , MinPasses{options.get("minPasses")}
     , MinPredictedAccuracy{options.get("minPredictedAccuracy")}
     , MinZScore{options.get("minZScore")}
+    , MaxDroppedFrac{options.get("maxDroppedFrac")}
     , Directional{false} // options.get("directional")}
 { }
 

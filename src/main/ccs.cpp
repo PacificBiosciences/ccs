@@ -220,7 +220,10 @@ void WriteResultsReport(ostream& report, const Results& counts)
 
     report << "Failed -- Not enough full passes," << counts.TooFewPasses
            << "," << 100.0 * counts.TooFewPasses / total << '%' << std::endl;
-
+    
+    report << "Failed -- Too many failed Z-score," << counts.TooManyLowZ
+           << "," << 100.0 * counts.TooManyLowZ / total << '%' << std::endl;
+    
     report << "Failed -- CCS did not converge," << counts.NonConvergent
            << "," << 100.0 * counts.NonConvergent / total << '%' << std::endl;
 
