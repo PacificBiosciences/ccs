@@ -90,7 +90,7 @@ struct ConsensusSettings
         parser->add_option("--minLength").type("int").set_default(10).help("Minimum length of subreads to use for generating CCS. Default = %default");
         parser->add_option("--minPasses").type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
         parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
-        parser->add_option("--minZScore").type("float").set_default(-2.0).help("Minimum z-score to use a subread. Default = %default");
+        parser->add_option("--minZScore").type("float").set_default(-5.0).help("Minimum z-score to use a subread. Default = %default");
         parser->add_option("--maxDropFrac").type("float").set_default(0.33333).help("Maximum fraction of subreads that can be dropped due to Z-score. Default = %default");
         // parser->add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
