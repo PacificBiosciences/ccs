@@ -114,10 +114,14 @@ void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
         tags["RG"] = MakeReadGroupId(*(ccs.Id.MovieName), "CCS");
         tags["zm"] = static_cast<int32_t>(ccs.Id.HoleNumber);
         tags["np"] = static_cast<int32_t>(ccs.NumPasses);
-        tags["pq"] = static_cast<float>(ccs.PredictedAccuracy);
         tags["rq"] = static_cast<int32_t>(1000 * ccs.PredictedAccuracy);
         tags["sn"] = snr;
 
+        // TODO(lhepler) maybe remove one day
+        tags["pq"] = static_cast<float>(ccs.PredictedAccuracy);
+        tags["za"] = static_cast<float>(ccs.AvgZScore);
+
+#if 0
         // TODO(lhepler) remove these before release
         tags["ms"] = ccs.ElapsedMilliseconds;
         tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
@@ -126,11 +130,11 @@ void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
 
         // These are SUPER valuable for filtering, let's leave em in for now.
         tags["zg"] = static_cast<float>(ccs.GlobalZScore);
-        tags["za"] = static_cast<float>(ccs.AvgZScore);
         vector<float> zScores;
         for (const double z : ccs.ZScores)
             zScores.emplace_back(static_cast<float>(z));
         tags["zs"] = zScores;
+#endif
 
         record.Name(name.str())
               .SetSequenceAndQualities(ccs.Sequence, ccs.Qualities)
