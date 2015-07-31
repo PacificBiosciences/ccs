@@ -33,7 +33,6 @@ file(GLOB Test_CPP "*.cpp")
 set(SOURCES
     ${CPPOPTPARSE_CPP}
     ${GMOCK_CC}
-    ${PacBioCCS_CPP}
     ${Test_CPP}
 )
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioCCS_CXX_FLAGS}")
@@ -43,6 +42,7 @@ set_target_properties(test_pbccs PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PacBioCCS_TestsDir}/bin
 )
 target_link_libraries(test_pbccs
+    pbccs
     ConsensusCore
     ${ZLIB_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}

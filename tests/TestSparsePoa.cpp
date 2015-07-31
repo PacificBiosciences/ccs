@@ -152,7 +152,7 @@ TEST(SparsePoa, TestZmw6251)
     using std::cout;
     using std::endl;
 
-    std::string fastaFname = tests::Data_Dir + "/m140905_042212_sidney_c100564852550000001823085912221377_s1_X0.fasta";
+    std::string fastaFname = tests::DataDir + "/m140905_042212_sidney_c100564852550000001823085912221377_s1_X0.fasta";
     vector<string> ids, seqs;
     LoadFastaSequences(fastaFname, ids, seqs);
 

@@ -279,7 +279,7 @@ int main(int argc, char **argv)
 
     parser.add_option("--reportFile").set_default("ccs_report.csv").help("Where to write the results report. Default = %default");
     parser.add_option("--numThreads").type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
-    parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
+    // parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
     parser.add_option("--logFile").help("Log to a file, instead of STDERR.");
     parser.add_option("--logLevel").choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
 
@@ -291,7 +291,7 @@ int main(int argc, char **argv)
     const float minSnr       = options.get("minSnr");
     const float minReadScore = 1000 * static_cast<float>(options.get("minReadScore"));
     const size_t nThreads    = ThreadCount(options.get("numThreads"));
-    const size_t chunkSize   = static_cast<size_t>(options.get("chunkSize"));
+    const size_t chunkSize   = 1;  // static_cast<size_t>(options.get("chunkSize"));
 
     // handle --zmws
     //
