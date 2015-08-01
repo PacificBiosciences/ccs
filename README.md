@@ -2,7 +2,7 @@
 
 ![Image of SMRTbell](http://www.evolvedmicrobe.com/smrtbell.png)
 
-The ccs program takes multiple reads of the same SMRTbell sequence run and combines them to produce one high quality consensus sequence.
+The ccs program takes multiple reads of the same SMRTbell sequence and combines them to produce one high quality consensus sequence.
 
 ## Quick Start
 
@@ -134,7 +134,7 @@ Indels should always be left-aligned and the error probability is only given for
 
 Z-score filtering is a way to remove outliers and contaminating data from the CCS dataset prior to consensus generation, a crucial step for any analysis.  For example, in the second world war the U.S. Navy tried to gauge the accuracy of a newly developed optical range finder by having a few hundred sailors practice on a known target.  The mean accuracy was quite poor, but after realizing that 20% of people cannot view sterotypically, these individuals could be excluded, leading to much higher overall accuracy.
 
-The Z-score for a subread is a metric which quantifies how well it doesn't fit the model or assumptions of CCS scoring.  In CCS, an initial template sequence is proposed, and then further refined using using data in the templates.  The initial template is usually quite close to the final consensus sequence, and at this stage ccs will evaluate how likely each read is based on the candidate template.  The likelihood of a read for a template is summarized by it's Z-score, which asymptotically is normally distributed with a mean near 0.
+The Z-score for a subread is a metric which quantifies how well it doesn't fit the model or assumptions of CCS scoring.  In CCS, an initial template sequence is proposed, and then further refined using data in the templates.  The initial template is usually quite close to the final consensus sequence, and at this stage ccs will evaluate how likely each read is based on the candidate template.  The likelihood of a read for a template is summarized by it's Z-score, which asymptotically is normally distributed with a mean near 0.
 
 Subreads with very low Z-scores are very unlikely to have been produced according to the CCS model, and so represent outliers.  For example, the plot below shows the Z-scores for several subreads.  With a -5 cutoff, we can see that one subread is excluded from the data.
 
