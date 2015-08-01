@@ -16,7 +16,7 @@ ccs myresults.bam mynewbam.subreads.bam
 
 ### Input
 
-The ccs program needs a .subreads.bam file containing the subreads for each SMRTbell sequenced.  Older versions of the PacBio RS software outputted data in bas.h5 files, while the new software outputs BAM files.  If you have a bas.h5 file from the older software, you will need to convert it into a BAM.  This can be done with the tool bax2bam which simply needs the name of any bas.h5 files to convert and the prefix of the output file.  Assuming your originalle is named mydata.bas.h5, you can produce a file mynewbam.subreads.bam with the following command.
+The ccs program needs a .subreads.bam file containing the subreads for each SMRTbell sequenced.  Older versions of the PacBio RS software outputted data in bas.h5 files, while the new software outputs BAM files.  If you have a bas.h5 file from the older software, you will need to convert it into a BAM.  This can be done with the tool bax2bam which simply needs the name of any bas.h5 files to convert and the prefix of the output file.  Assuming your original file is named mydata.bas.h5, you can produce a file mynewbam.subreads.bam with the following command.
 
     bax2bam -o mynewbam mydata.bas.h5
     
