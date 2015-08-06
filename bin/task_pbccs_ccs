@@ -32,6 +32,10 @@ class Constants(object):
     MIN_LENGTH_DEFAULT = 10
     MIN_PASSES_ID = "pbccs.task_options.min_passes"
     MIN_PASSES_DEFAULT = 3
+    MIN_ZSCORE_ID = "pbccs.task_options.min_zscore"
+    MIN_ZSCORE_DEFAULT = -5
+    MAX_DROP_FRAC_ID = "pbccs.task_options.max_drop_frac"
+    MAX_DROP_FRAC_DEFAULT = 0.33
 
 def args_runner(args):
     raise NotImplementedError("Please call 'ccs' directly.")
@@ -46,6 +50,8 @@ def resolved_tool_contract_runner(rtc):
         "--minReadScore=%g" % rtc.task.options[Constants.MIN_READ_SCORE_ID],
         "--minLength=%d" % rtc.task.options[Constants.MIN_LENGTH_ID],
         "--minPasses=%d" % rtc.task.options[Constants.MIN_PASSES_ID],
+        "--minZScore=%g" % rtc.task.options[Constants.MIN_ZSCORE_ID],
+        "--maxDropFrac=%g" % rtc.task.options[Constants.MAX_DROP_FRAC_ID],
         rtc.task.output_files[0],
     ] + ds.toExternalFiles()
     logging.info(" ".join(args))
@@ -89,6 +95,15 @@ def get_parser():
         default=Constants.MIN_PASSES_DEFAULT,
         name="Minimum passes",
         description="Minimum number of subreads required to generate CCS")
+    p.add_float(Constants.MIN_ZSCORE_ID, "minZScore",
+        default=Constants.MIN_ZSCORE_DEFAULT,
+        name="Min. Z-score",
+        description="Minimum z-score to use a subread")
+    p.add_float(Constants.MAX_DROP_FRAC_ID, "maxDropFrac",
+        default=Constants.MAX_DROP_FRAC_DEFAULT,
+        name="Max. dropped fraction",
+        description="Maximum fraction of subreads that can be dropped before "+
+                    "giving up")
     return p
 
 def main(argv=sys.argv):

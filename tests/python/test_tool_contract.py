@@ -26,6 +26,8 @@ class CCSTestApp(pbcommand.testkit.PbTestApp):
         "pbccs.task_options.min_read_score": 0.75,
         "pbccs.task_options.min_length": 10,
         "pbccs.task_options.min_passes": 4,
+        "pbccs.task_options.min_zscore": -5,
+        "pbccs.task_options.max_drop_frac": 0.33,
     }
 
 
