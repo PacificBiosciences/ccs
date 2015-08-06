@@ -1,0 +1,121 @@
+#!/usr/bin/env python
+
+# TODO replace this with native C++ implementation.
+
+"""
+Wrapper for 'ccs' executable to provide tool contract interface support (and
+incidentally, using DataSet XML as input).  Note that this will *not* currently
+support chunking, since it access the individual .bam files en masse.
+"""
+
+import logging
+import sys
+
+from pbcommand.models import FileTypes, SymbolTypes, get_pbparser
+from pbcommand.cli import pbparser_runner
+from pbcommand.utils import setup_log
+from pbcommand.engine import run_cmd
+from pbcore.io import SubreadSet
+
+__version__ = "0.1"
+
+class Constants(object):
+    TOOL_ID = "pbccs.tasks.ccs"
+    TOOL_NAME = "ccs"
+    DRIVER_EXE = "task_pbccs_ccs --resolved_tool_contract "
+    #
+    MIN_SNR_ID = "pbccs.task_options.min_snr"
+    MIN_SNR_DEFAULT = 4
+    MIN_READ_SCORE_ID = "pbccs.task_options.min_read_score"
+    MIN_READ_SCORE_DEFAULT = 0.75
+    MIN_LENGTH_ID = "pbccs.task_options.min_length"
+    MIN_LENGTH_DEFAULT = 10
+    MIN_PASSES_ID = "pbccs.task_options.min_passes"
+    MIN_PASSES_DEFAULT = 3
+    MIN_ZSCORE_ID = "pbccs.task_options.min_zscore"
+    MIN_ZSCORE_DEFAULT = -5
+    MAX_DROP_FRAC_ID = "pbccs.task_options.max_drop_frac"
+    MAX_DROP_FRAC_DEFAULT = 0.33
+
+def args_runner(args):
+    raise NotImplementedError("Please call 'ccs' directly.")
+
+def resolved_tool_contract_runner(rtc):
+    ds = SubreadSet(rtc.task.input_files[0])
+    args = [
+        "ccs",
+        "--reportFile=%s" % rtc.task.output_files[1],
+        "--numThreads=%d" % rtc.task.nproc,
+        "--minSnr=%g" % rtc.task.options[Constants.MIN_SNR_ID],
+        "--minReadScore=%g" % rtc.task.options[Constants.MIN_READ_SCORE_ID],
+        "--minLength=%d" % rtc.task.options[Constants.MIN_LENGTH_ID],
+        "--minPasses=%d" % rtc.task.options[Constants.MIN_PASSES_ID],
+        "--minZScore=%g" % rtc.task.options[Constants.MIN_ZSCORE_ID],
+        "--maxDropFrac=%g" % rtc.task.options[Constants.MAX_DROP_FRAC_ID],
+        rtc.task.output_files[0],
+    ] + ds.toExternalFiles()
+    logging.info(" ".join(args))
+    result = run_cmd(
+        cmd=" ".join(args),
+        stdout_fh=sys.stdout,
+        stderr_fh=sys.stderr)
+    return result.exit_code
+
+def get_parser():
+    p = get_pbparser(
+        tool_id=Constants.TOOL_ID,
+        version=__version__,
+        name=Constants.TOOL_NAME,
+        description=__doc__,
+        driver_exe=Constants.DRIVER_EXE,
+        nproc=SymbolTypes.MAX_NPROC)
+    p.add_input_file_type(FileTypes.DS_SUBREADS, "subread_set",
+        "SubreadSet", "Subread DataSet or .bam file")
+    p.add_output_file_type(FileTypes.DS_CCS, "bam_output",
+        name=".bam file",
+        description="Output .bam file",
+        default_name="ccs.bam")
+    p.add_output_file_type(FileTypes.CSV, "report_csv",
+        name="CSV report",
+        description="CSV report",
+        default_name="ccs_report.csv")
+    p.add_float(Constants.MIN_SNR_ID, "minSnr",
+        default=Constants.MIN_SNR_DEFAULT,
+        name="Minimum SNR",
+        description="Minimum SNR of input subreads")  
+    p.add_float(Constants.MIN_READ_SCORE_ID, "minReadScore",
+        default=Constants.MIN_READ_SCORE_DEFAULT,
+        name="Minimum read score",
+        description="Minimum read score of input subreads")
+    p.add_int(Constants.MIN_LENGTH_ID, "minLength",
+        default=Constants.MIN_LENGTH_DEFAULT,
+        name="Minimum length",
+        description="Minimum length of subreads to use for generating CCS")
+    p.add_int(Constants.MIN_PASSES_ID, "minPasses",
+        default=Constants.MIN_PASSES_DEFAULT,
+        name="Minimum passes",
+        description="Minimum number of subreads required to generate CCS")
+    p.add_float(Constants.MIN_ZSCORE_ID, "minZScore",
+        default=Constants.MIN_ZSCORE_DEFAULT,
+        name="Min. Z-score",
+        description="Minimum z-score to use a subread")
+    p.add_float(Constants.MAX_DROP_FRAC_ID, "maxDropFrac",
+        default=Constants.MAX_DROP_FRAC_DEFAULT,
+        name="Max. dropped fraction",
+        description="Maximum fraction of subreads that can be dropped before "+
+                    "giving up")
+    return p
+
+def main(argv=sys.argv):
+    logging.basicConfig(level=logging.INFO)
+    log = logging.getLogger()
+    return pbparser_runner(
+        argv=argv[1:],
+        parser=get_parser(),
+        args_runner_func=args_runner,
+        contract_runner_func=resolved_tool_contract_runner,
+        alog=log,
+        setup_log_func=setup_log)
+
+if __name__ == "__main__":
+    sys.exit(main())
