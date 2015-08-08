@@ -9,20 +9,22 @@ support chunking, since it access the individual .bam files en masse.
 """
 
 import logging
+import re
+import os
 import sys
 
 from pbcommand.models import FileTypes, SymbolTypes, get_pbparser
 from pbcommand.cli import pbparser_runner
 from pbcommand.utils import setup_log
 from pbcommand.engine import run_cmd
-from pbcore.io import SubreadSet
+from pbcore.io import SubreadSet, ConsensusReadSet
 
 __version__ = "0.1"
 
 class Constants(object):
     TOOL_ID = "pbccs.tasks.ccs"
     TOOL_NAME = "ccs"
-    DRIVER_EXE = "task_pbccs_ccs --resolved_tool_contract "
+    DRIVER_EXE = "task_pbccs_ccs --resolved-tool-contract "
     #
     MIN_SNR_ID = "pbccs.task_options.min_snr"
     MIN_SNR_DEFAULT = 4
@@ -41,7 +43,15 @@ def args_runner(args):
     raise NotImplementedError("Please call 'ccs' directly.")
 
 def resolved_tool_contract_runner(rtc):
+    """
+    Run the ccs binary from the resolved tool contract, and generate an XML
+    dataset around the resulting .bam file.
+    """
     ds = SubreadSet(rtc.task.input_files[0])
+    output_file = rtc.task.output_files[0]
+    if output_file.endswith(".dataset.xml"):
+        output_file = re.sub(".dataset.xml", ".bam", output_file)
+    assert output_file.endswith(".bam")
     args = [
         "ccs",
         "--reportFile=%s" % rtc.task.output_files[1],
@@ -52,14 +62,21 @@ def resolved_tool_contract_runner(rtc):
         "--minPasses=%d" % rtc.task.options[Constants.MIN_PASSES_ID],
         "--minZScore=%g" % rtc.task.options[Constants.MIN_ZSCORE_ID],
         "--maxDropFrac=%g" % rtc.task.options[Constants.MAX_DROP_FRAC_ID],
-        rtc.task.output_files[0],
+        output_file,
     ] + ds.toExternalFiles()
+    ds.close()
     logging.info(" ".join(args))
     result = run_cmd(
         cmd=" ".join(args),
         stdout_fh=sys.stdout,
         stderr_fh=sys.stderr)
-    return result.exit_code
+    if result.exit_code != 0:
+        return result.exit_code
+    assert os.path.isfile(output_file)
+    ccs = ConsensusReadSet(output_file)
+    ccs.write(rtc.task.output_files[0])
+    ccs.close()
+    return 0
 
 def get_parser():
     p = get_pbparser(
