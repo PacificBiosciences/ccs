@@ -33,27 +33,34 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+#pragma once
 
-#include <limits>
-
-#include <pacbio/ccs/Consensus.h>
-#include <pacbio/ccs/OptionNames.h>
+#include <string>
 
 namespace PacBio {
 namespace CCS {
-
-// TODO(lhepler) fix directional
-ConsensusSettings::ConsensusSettings(const optparse::Values& options)
-    // : MaxPoaCoverage{options.get("maxPoaCoverage")}
-    : MaxPoaCoverage{std::numeric_limits<size_t>::max()}
-    , MinLength{options.get(OPTION_NAMES::MIN_LENGTH)}
-    , MinPasses{options.get(OPTION_NAMES::MIN_PASSES)}
-    , MinPredictedAccuracy{options.get(OPTION_NAMES::MIN_PREDICTED_ACCURACY)}
-    , MinZScore{options.get(OPTION_NAMES::MIN_Z_SCORE)}
-    , MaxDroppedFrac{options.get(OPTION_NAMES::MAX_DROP_FRAC)}
-    , Directional{false} // options.get("directional")}
-{ }
-
-} // namespace CCS
-} // namespace PacBio
+    // A class to store the option names for reading/writing the parser.
+    class OPTION_NAMES {
+    public:
+        static const std::string ZMWS;
+        static const std::string MIN_SNR;
+        static const std::string MIN_READ_SCORE;
+        static const std::string REPORT_FILE;
+        static const std::string NUM_THREADS;
+        static const std::string LOG_FILE;
+        static const std::string LOG_LEVEL;
+        static const std::string MIN_LENGTH;
+        static const std::string MIN_PASSES;
+        static const std::string MIN_PREDICTED_ACCURACY;
+        static const std::string MIN_Z_SCORE;
+        static const std::string MAX_DROP_FRAC;
+        /* Add the "--" prefix to the option name, 
+         * options are usually set with the prefix and read without it.
+         */
+        inline
+        static const std::string getOptionWithPrefix(const std::string optionName) {
+            return "--" + optionName;
+        };
+    };
+}
+}

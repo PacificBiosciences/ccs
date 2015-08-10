@@ -33,27 +33,27 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
 
-#include <limits>
-
-#include <pacbio/ccs/Consensus.h>
 #include <pacbio/ccs/OptionNames.h>
+
+using namespace PacBio::CCS;
 
 namespace PacBio {
 namespace CCS {
 
-// TODO(lhepler) fix directional
-ConsensusSettings::ConsensusSettings(const optparse::Values& options)
-    // : MaxPoaCoverage{options.get("maxPoaCoverage")}
-    : MaxPoaCoverage{std::numeric_limits<size_t>::max()}
-    , MinLength{options.get(OPTION_NAMES::MIN_LENGTH)}
-    , MinPasses{options.get(OPTION_NAMES::MIN_PASSES)}
-    , MinPredictedAccuracy{options.get(OPTION_NAMES::MIN_PREDICTED_ACCURACY)}
-    , MinZScore{options.get(OPTION_NAMES::MIN_Z_SCORE)}
-    , MaxDroppedFrac{options.get(OPTION_NAMES::MAX_DROP_FRAC)}
-    , Directional{false} // options.get("directional")}
-{ }
+	const std::string OPTION_NAMES::ZMWS = "zmws";
+	const std::string OPTION_NAMES::MIN_SNR = "minSnr";
+	const std::string OPTION_NAMES::MIN_READ_SCORE ="minReadScore";
+	const std::string OPTION_NAMES::REPORT_FILE = "reportFile";
+	const std::string OPTION_NAMES::NUM_THREADS = "numThreads";
+	const std::string OPTION_NAMES::LOG_FILE = "logFile";
+	const std::string OPTION_NAMES::LOG_LEVEL = "logLevel";
+	const std::string OPTION_NAMES::MIN_LENGTH = "minLength";
+	const std::string OPTION_NAMES::MIN_PASSES = "minPasses";
+	const std::string OPTION_NAMES::MIN_PREDICTED_ACCURACY = "minPredictedAccuracy";
+	const std::string OPTION_NAMES::MIN_Z_SCORE = "minZScore";
+	const std::string OPTION_NAMES::MAX_DROP_FRAC = "maxDropFrac";
+
 
 } // namespace CCS
 } // namespace PacBio

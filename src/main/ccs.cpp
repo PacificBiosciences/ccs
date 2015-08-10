@@ -60,6 +60,7 @@
 #include <pacbio/ccs/ReadId.h>
 #include <pacbio/ccs/WorkQueue.h>
 #include <pacbio/ccs/Utility.h>
+#include <pacbio/ccs/OptionNames.h>
 
 using namespace std;
 using namespace PacBio::BAM;
@@ -81,6 +82,7 @@ typedef ResultType<CCS>            Results;
 
 const auto CircularConsensus = &Consensus<Chunk, CCS>;
 
+inline string swp(const string name) { return OPTION_NAMES::getOptionWithPrefix(name);};
 
 void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
 {
@@ -273,33 +275,33 @@ int main(int argc, char **argv)
 
     vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
 
-    parser.add_option("--zmws").set_default("").help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
-    parser.add_option("--minSnr").type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
-    parser.add_option("--minReadScore").type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
+    parser.add_option(swp(OPTION_NAMES::ZMWS)).set_default("").help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
+    parser.add_option(swp(OPTION_NAMES::MIN_SNR)).type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
+    parser.add_option(swp(OPTION_NAMES::MIN_READ_SCORE)).type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
 
     ConsensusSettings::AddOptions(&parser);
 
-    parser.add_option("--reportFile").set_default("ccs_report.csv").help("Where to write the results report. Default = %default");
-    parser.add_option("--numThreads").type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
+    parser.add_option(swp(OPTION_NAMES::REPORT_FILE)).set_default("ccs_report.csv").help("Where to write the results report. Default = %default");
+    parser.add_option(swp(OPTION_NAMES::NUM_THREADS)).type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
     // parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
-    parser.add_option("--logFile").help("Log to a file, instead of STDERR.");
-    parser.add_option("--logLevel").choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
+    parser.add_option(swp(OPTION_NAMES::LOG_FILE)).help("Log to a file, instead of STDERR.");
+    parser.add_option(swp(OPTION_NAMES::LOG_LEVEL)).choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
 
     const auto options = parser.parse_args(argc, argv);
     const auto files   = parser.args();
 
     const ConsensusSettings settings(options);
 
-    const float minSnr       = options.get("minSnr");
-    const float minReadScore = 1000 * static_cast<float>(options.get("minReadScore"));
-    const size_t nThreads    = ThreadCount(options.get("numThreads"));
+    const float minSnr       = options.get(OPTION_NAMES::MIN_SNR);
+    const float minReadScore = 1000 * static_cast<float>(options.get(OPTION_NAMES::MIN_READ_SCORE));
+    const size_t nThreads    = ThreadCount(options.get(OPTION_NAMES::NUM_THREADS));
     const size_t chunkSize   = 1;  // static_cast<size_t>(options.get("chunkSize"));
 
     // handle --zmws
     //
     //
     optional<IntervalTree> whitelist(none);
-    const string wlspec(options.get("zmws"));
+    const string wlspec(options.get(OPTION_NAMES::ZMWS));
     try
     {
         if (!wlspec.empty())
@@ -327,8 +329,8 @@ int main(int argc, char **argv)
     //
     fstream logStream;
     {
-        string logLevel(options.get("logLevel"));
-        string logFile(options.get("logFile"));
+        string logLevel(options.get(OPTION_NAMES::LOG_LEVEL));
+        string logFile(options.get(OPTION_NAMES::LOG_FILE));
 
         if (!logFile.empty())
         {
@@ -469,7 +471,7 @@ int main(int argc, char **argv)
     auto counts = writer.get();
     counts.PoorSNR += poorSNR;
     counts.TooFewPasses += tooFewPasses;
-    const string reportFile(options.get("reportFile"));
+    const string reportFile(options.get(OPTION_NAMES::REPORT_FILE));
 
     if (reportFile == "-")
     {
