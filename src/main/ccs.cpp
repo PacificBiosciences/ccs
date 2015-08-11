@@ -74,6 +74,21 @@ using optparse::OptionParser;
 #define VERSION "0.0.1"
 
 
+namespace PacBio {
+namespace CCS {
+namespace OptionNames {
+    constexpr auto Zmws         = "zmws";
+    constexpr auto MinSnr       = "minSnr";
+    constexpr auto MinReadScore = "minReadScore";
+    constexpr auto ReportFile   = "reportFile";
+    constexpr auto NumThreads   = "numThreads";
+    constexpr auto LogFile      = "logFile";
+    constexpr auto LogLevel     = "logLevel";
+} // namespace OptionNames
+} // namespace CCS
+} // namespace PacBio
+
+
 typedef ReadType<ReadId>           Subread;
 typedef ChunkType<ReadId, Subread> Chunk;
 typedef ConsensusType<ReadId>      CCS;
@@ -82,7 +97,6 @@ typedef ResultType<CCS>            Results;
 
 const auto CircularConsensus = &Consensus<Chunk, CCS>;
 
-inline string swp(const string name) { return OPTION_NAMES::getOptionWithPrefix(name);};
 
 void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
 {
@@ -133,7 +147,7 @@ void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
         tags["ms"] = ccs.ElapsedMilliseconds;
         tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
-        
+
 
         // These are SUPER valuable for filtering, let's leave em in for now.
         tags["zg"] = static_cast<float>(ccs.GlobalZScore);
@@ -273,35 +287,36 @@ int main(int argc, char **argv)
         .version(string("%prog ") + VERSION + "\nCopyright (c) 2014 Pacific Biosciences, Inc.\nLicense: 3-BSD")
         .description("Generate circular consensus sequences (ccs) from subreads.");
 
-    vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
+    const vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
+    const string em = "--";
 
-    parser.add_option(swp(OPTION_NAMES::ZMWS)).set_default("").help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
-    parser.add_option(swp(OPTION_NAMES::MIN_SNR)).type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
-    parser.add_option(swp(OPTION_NAMES::MIN_READ_SCORE)).type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
+    parser.add_option(em + OptionNames::Zmws).help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
+    parser.add_option(em + OptionNames::MinSnr).type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
+    parser.add_option(em + OptionNames::MinReadScore).type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
 
     ConsensusSettings::AddOptions(&parser);
 
-    parser.add_option(swp(OPTION_NAMES::REPORT_FILE)).set_default("ccs_report.csv").help("Where to write the results report. Default = %default");
-    parser.add_option(swp(OPTION_NAMES::NUM_THREADS)).type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
+    parser.add_option(em + OptionNames::ReportFile).set_default("ccs_report.csv").help("Where to write the results report. Default = %default");
+    parser.add_option(em + OptionNames::NumThreads).type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
     // parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
-    parser.add_option(swp(OPTION_NAMES::LOG_FILE)).help("Log to a file, instead of STDERR.");
-    parser.add_option(swp(OPTION_NAMES::LOG_LEVEL)).choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
+    parser.add_option(em + OptionNames::LogFile).help("Log to a file, instead of STDERR.");
+    parser.add_option(em + OptionNames::LogLevel).choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
 
     const auto options = parser.parse_args(argc, argv);
     const auto files   = parser.args();
 
     const ConsensusSettings settings(options);
 
-    const float minSnr       = options.get(OPTION_NAMES::MIN_SNR);
-    const float minReadScore = 1000 * static_cast<float>(options.get(OPTION_NAMES::MIN_READ_SCORE));
-    const size_t nThreads    = ThreadCount(options.get(OPTION_NAMES::NUM_THREADS));
+    const float minSnr       = options.get(OptionNames::MinSnr);
+    const float minReadScore = 1000 * static_cast<float>(options.get(OptionNames::MinReadScore));
+    const size_t nThreads    = ThreadCount(options.get(OptionNames::NumThreads));
     const size_t chunkSize   = 1;  // static_cast<size_t>(options.get("chunkSize"));
 
     // handle --zmws
     //
     //
     optional<IntervalTree> whitelist(none);
-    const string wlspec(options.get(OPTION_NAMES::ZMWS));
+    const string wlspec(options.get(OptionNames::Zmws));
     try
     {
         if (!wlspec.empty())
@@ -329,8 +344,8 @@ int main(int argc, char **argv)
     //
     fstream logStream;
     {
-        string logLevel(options.get(OPTION_NAMES::LOG_LEVEL));
-        string logFile(options.get(OPTION_NAMES::LOG_FILE));
+        string logLevel(options.get(OptionNames::LogLevel));
+        string logFile(options.get(OptionNames::LogFile));
 
         if (!logFile.empty())
         {
@@ -471,7 +486,7 @@ int main(int argc, char **argv)
     auto counts = writer.get();
     counts.PoorSNR += poorSNR;
     counts.TooFewPasses += tooFewPasses;
-    const string reportFile(options.get(OPTION_NAMES::REPORT_FILE));
+    const string reportFile(options.get(OptionNames::ReportFile));
 
     if (reportFile == "-")
     {

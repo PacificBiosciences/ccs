@@ -27,6 +27,7 @@ set_target_properties(pbccs PROPERTIES
 set(CCS_Sources
     main/ccs.cpp
     ${CPPOPTPARSE_CPP}
+    ${CPPOPTPARSE_H}
 )
 
 add_executable(ccs ${CCS_Sources})

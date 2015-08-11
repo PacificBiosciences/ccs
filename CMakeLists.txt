@@ -77,6 +77,7 @@ file(GLOB_RECURSE PacBioCCS_H   "${PacBioCCS_IncludeDir}/*.h")
 
 # cpp-optparse sources
 set(CPPOPTPARSE_CPP             ${CPPOPTPARSE_RootDir}/OptionParser.cpp)
+set(CPPOPTPARSE_H               ${CPPOPTPARSE_RootDir}/OptionParser.h)
 
 # find (existing) libraries needed by executable and tests
 #find_library(CONSENSUSCORE_LIBRARIES

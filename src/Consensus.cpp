@@ -38,20 +38,18 @@
 #include <limits>
 
 #include <pacbio/ccs/Consensus.h>
-#include <pacbio/ccs/OptionNames.h>
 
 namespace PacBio {
 namespace CCS {
 
 // TODO(lhepler) fix directional
 ConsensusSettings::ConsensusSettings(const optparse::Values& options)
-    // : MaxPoaCoverage{options.get("maxPoaCoverage")}
     : MaxPoaCoverage{std::numeric_limits<size_t>::max()}
-    , MinLength{options.get(OPTION_NAMES::MIN_LENGTH)}
-    , MinPasses{options.get(OPTION_NAMES::MIN_PASSES)}
-    , MinPredictedAccuracy{options.get(OPTION_NAMES::MIN_PREDICTED_ACCURACY)}
-    , MinZScore{options.get(OPTION_NAMES::MIN_Z_SCORE)}
-    , MaxDroppedFrac{options.get(OPTION_NAMES::MAX_DROP_FRAC)}
+    , MinLength{options.get(OptionNames::MinLength)}
+    , MinPasses{options.get(OptionNames::MinPasses)}
+    , MinPredictedAccuracy{options.get(OptionNames::MinPredictedAccuracy)}
+    , MinZScore{options.get(OptionNames::MinZScore)}
+    , MaxDropFraction{options.get(OptionNames::MaxDropFraction)}
     , Directional{false} // options.get("directional")}
 { }
 

@@ -3,7 +3,8 @@
 set(GMOCK_RootDir    ${ConsensusCore_RootDir}/external/gmock-1.7.0)
 set(GMOCK_IncludeDir ${GMOCK_RootDir})
 
-file(GLOB GMOCK_CC   "${GMOCK_RootDir}/*.cc")
+file(GLOB           GMOCK_CC    "${GMOCK_RootDir}/*.cc")
+file(GLOB_RECURSE   GMOCK_H     "${GMOCK_RootDir}/*.h")
 
 # output directory
 file(MAKE_DIRECTORY  ${PacBioCCS_TestsDir}/bin)
@@ -31,9 +32,11 @@ include_directories(SYSTEM
 file(GLOB Test_CPP "*.cpp")
 
 set(SOURCES
-    ${CPPOPTPARSE_CPP}
-    ${GMOCK_CC}
     ${Test_CPP}
+    ${CPPOPTPARSE_CPP}
+    ${CPPOPTPARSE_H}
+    ${GMOCK_CC}
+    ${GMOCK_H}
 )
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioCCS_CXX_FLAGS}")
 

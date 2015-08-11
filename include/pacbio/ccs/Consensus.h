@@ -70,6 +70,17 @@ using LocalContextFlags = PacBio::BAM::LocalContextFlags;
 using Accuracy = PacBio::BAM::Accuracy;
 
 
+namespace OptionNames {
+    // constexpr auto MaxPoaCoverage       = "maxPoaCoverage";
+    constexpr auto MinLength            = "minLength";
+    constexpr auto MinPasses            = "minPasses";
+    constexpr auto MinPredictedAccuracy = "minPredictedAccuracy";
+    constexpr auto MinZScore            = "minZScore";
+    constexpr auto MaxDropFraction      = "maxDropFraction";
+    // constexpr auto Directional          = "directional";
+} // namespace OptionNames
+
+
 struct ConsensusSettings
 {
     size_t MaxPoaCoverage;
@@ -77,7 +88,7 @@ struct ConsensusSettings
     size_t MinPasses;
     double MinPredictedAccuracy;
     double MinZScore;
-    double MaxDroppedFrac;
+    double MaxDropFraction;
     bool   Directional;
 
     ConsensusSettings(const optparse::Values& options);
@@ -85,14 +96,15 @@ struct ConsensusSettings
     static
     void AddOptions(optparse::OptionParser * const parser)
     {
+        const std::string em = "--";
         // TODO(lhepler) implement alignment to POA and directional support
-        // parser->add_option("--maxPoaCoverage").type("int").set_default(1024).help("Maximum number of subreads to use when building POA. Default = %default");
-        parser->add_option("--minLength").type("int").set_default(10).help("Minimum length of subreads to use for generating CCS. Default = %default");
-        parser->add_option("--minPasses").type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
-        parser->add_option("--minPredictedAccuracy").type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
-        parser->add_option("--minZScore").type("float").set_default(-5.0).help("Minimum z-score to use a subread. Default = %default");
-        parser->add_option("--maxDropFrac").type("float").set_default(0.33).help("Maximum fraction of subreads that can be dropped before giving up. Default = %default");
-        // parser->add_option("--directional").action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
+        // parser->add_option(em + OptionNames::MaxPoaCoverage).type("int").set_default(1024).help("Maximum number of subreads to use when building POA. Default = %default");
+        parser->add_option(em + OptionNames::MinLength).type("int").set_default(10).help("Minimum length of subreads to use for generating CCS. Default = %default");
+        parser->add_option(em + OptionNames::MinPasses).type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
+        parser->add_option(em + OptionNames::MinPredictedAccuracy).type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
+        parser->add_option(em + OptionNames::MinZScore).type("float").set_default(-5.0).help("Minimum z-score to use a subread. Default = %default");
+        parser->add_option(em + OptionNames::MaxDropFraction).type("float").set_default(0.33).help("Maximum fraction of subreads that can be dropped before giving up. Default = %default");
+        // parser->add_option(em + OptionNames::Directional).action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
 };
 
@@ -427,12 +439,12 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             }
 
             const double fracDropped = static_cast<double>(nDropped) / nReads;
-            if (fracDropped > settings.MaxDroppedFrac)
+            if (fracDropped > settings.MaxDropFraction)
             {
                 results.TooManyUnusable += 1;
                 PBLOG_DEBUG << "Skipping " << chunk.Id
                             << ", too high a fraction of unusable subreads ("
-                            << fracDropped << '>' << settings.MaxDroppedFrac << ')';
+                            << fracDropped << '>' << settings.MaxDropFraction << ')';
                 continue;
             }
 
