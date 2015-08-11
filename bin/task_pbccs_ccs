@@ -36,7 +36,7 @@ class Constants(object):
     MIN_PASSES_DEFAULT = 3
     MIN_ZSCORE_ID = "pbccs.task_options.min_zscore"
     MIN_ZSCORE_DEFAULT = -5
-    MAX_DROP_FRAC_ID = "pbccs.task_options.max_drop_frac"
+    MAX_DROP_FRAC_ID = "pbccs.task_options.max_drop_fraction"
     MAX_DROP_FRAC_DEFAULT = 0.33
 
 def args_runner(args):
@@ -61,7 +61,7 @@ def resolved_tool_contract_runner(rtc):
         "--minLength=%d" % rtc.task.options[Constants.MIN_LENGTH_ID],
         "--minPasses=%d" % rtc.task.options[Constants.MIN_PASSES_ID],
         "--minZScore=%g" % rtc.task.options[Constants.MIN_ZSCORE_ID],
-        "--maxDropFrac=%g" % rtc.task.options[Constants.MAX_DROP_FRAC_ID],
+        "--maxDropFraction=%g" % rtc.task.options[Constants.MAX_DROP_FRAC_ID],
         output_file,
     ] + ds.toExternalFiles()
     ds.close()
@@ -116,7 +116,7 @@ def get_parser():
         default=Constants.MIN_ZSCORE_DEFAULT,
         name="Min. Z-score",
         description="Minimum z-score to use a subread")
-    p.add_float(Constants.MAX_DROP_FRAC_ID, "maxDropFrac",
+    p.add_float(Constants.MAX_DROP_FRAC_ID, "maxDropFraction",
         default=Constants.MAX_DROP_FRAC_DEFAULT,
         name="Max. dropped fraction",
         description="Maximum fraction of subreads that can be dropped before "+
