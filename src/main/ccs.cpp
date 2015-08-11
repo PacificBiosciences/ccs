@@ -60,7 +60,6 @@
 #include <pacbio/ccs/ReadId.h>
 #include <pacbio/ccs/WorkQueue.h>
 #include <pacbio/ccs/Utility.h>
-#include <pacbio/ccs/OptionNames.h>
 
 using namespace std;
 using namespace PacBio::BAM;
