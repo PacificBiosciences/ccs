@@ -37,11 +37,12 @@
 
 #pragma once
 
+#include <cmath>
+#include <limits>
 #include <list>
 #include <string>
 #include <utility>
 #include <vector>
-#include <math.h>
 
 #include <ConsensusCore/Utils.hpp>
 #include <ConsensusCore/Arrow/MathUtils.hpp>
@@ -123,7 +124,7 @@ namespace Arrow {
             ArrowConfig(const ContextParameters& ctxParams,
                         const BandingOptions& bandingOptions,
                         double fastScoreThreshold = -12.5,
-                        double addThreshold = 1.0f);
+                        double addThreshold = std::numeric_limits<double>::quiet_NaN());
 
             ArrowConfig(const ArrowConfig& qvConfig);
         

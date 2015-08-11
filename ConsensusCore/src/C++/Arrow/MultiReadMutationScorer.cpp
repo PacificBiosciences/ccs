@@ -268,7 +268,7 @@ namespace Arrow {
     /**
      Add a read to the multi read mutation scorer
      @param mr A mapped read to addd
-     @param threshold A criteria to ensure that not so much memory is used. If the read consumes more than threshold * (I+1)*(J+1) memory while filling the forward and backwards matrices, the read is not added to the scorer.
+     @param threshold If the read's z-score under the Arrow sequencing model is less than this critera, it is not added
      @returns If the read was added to the scorer.
      @exception <#throws#>
      */
@@ -292,7 +292,7 @@ namespace Arrow {
             res = ALPHABETAMISMATCH;
         }
 
-        if (scorer != NULL && threshold < 0.0)
+        if (scorer != NULL && !isnan(threshold))
         {
             const double ll = scorer->Score();
             double mean = 0.0, var = 0.0;
