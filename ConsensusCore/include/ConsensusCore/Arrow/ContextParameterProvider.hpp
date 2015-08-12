@@ -27,7 +27,7 @@ namespace Arrow {
      */
     class SNR {
     public:
-        const double A, C, G, T;
+        double A, C, G, T;
         SNR(double A, double C, double G, double T);
 
         // support arbitrary loading from vector
@@ -38,6 +38,17 @@ namespace Arrow {
             , G{snrs[2]}
             , T{snrs[3]}
         { }
+
+        // Move constructor 
+        SNR(SNR&&) = default;
+        // Copy constructor 
+        SNR(const SNR&) = default;
+        // Move assignment constructor
+        SNR& operator=(SNR&&) = default;
+        // Copy assignment constructor
+        SNR& operator=(const SNR&) = default;
+        // Destructor
+        ~SNR() = default;
     };
     
     /**
