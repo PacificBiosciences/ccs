@@ -311,6 +311,9 @@ int main(int argc, char **argv)
     const size_t nThreads    = ThreadCount(options.get(OptionNames::NumThreads));
     const size_t chunkSize   = 1;  // static_cast<size_t>(options.get("chunkSize"));
 
+    if (static_cast<int>(options.get(OptionNames::MinPasses)) < 1)
+        parser.error("option --minPasses: invalid value: must be >= 1");
+
     // handle --zmws
     //
     //
