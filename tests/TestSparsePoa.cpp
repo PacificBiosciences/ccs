@@ -36,6 +36,7 @@
 // Author: David Alexander
 
 #include <iostream>
+#include <random>
 
 #include <boost/assign.hpp>
 #include <boost/assign/std/vector.hpp>
@@ -147,7 +148,7 @@ TEST(SparsePoaTest, TestOrientation)
 }
 
 
-TEST(SparsePoa, TestZmw6251)
+TEST(SparsePoaTest, TestZmw6251)
 {
     using std::cout;
     using std::endl;
@@ -191,4 +192,102 @@ TEST(SparsePoa, TestZmw6251)
     for (int i=1; i <= 8; i++)
         EXPECT_TRUE(summaries[1].ExtentOnConsensus.Covers(Interval(5, 595)));
     EXPECT_TRUE(summaries[0].ExtentOnConsensus.Covers(Interval(300, 595)));
+}
+
+
+std::string rc(const std::string& a)
+{
+    const size_t len = a.length();
+    std::string b;
+
+    b.reserve(len);
+
+    for (size_t i = 0; i < len; ++i)
+    {
+        char c = a[len - 1 - i];
+        switch (c) {
+        case 'A': c = 'T'; break;
+        case 'C': c = 'G'; break;
+        case 'G': c = 'C'; break;
+        case 'T': c = 'A'; break;
+        }
+        b.push_back(c);
+    }
+
+    return b;
+}
+
+
+TEST(SparsePoaTest, SingleReadx100)
+{
+    std::mt19937 gen(42);
+    std::uniform_int_distribution<size_t> d(2000, 20000);
+    std::uniform_int_distribution<size_t> b(0,3);
+
+    const std::string bases = "ACGT";
+
+    for (size_t i = 0; i < 100; ++i)
+    {
+        size_t len = 0;
+        std::string seq;
+
+        while (len < 300) len = d(gen);
+
+        seq.reserve(len);
+
+        for (size_t j = 0; j < len; ++j)
+            seq.push_back(bases[b(gen)]);
+
+        SparsePoa sp;
+        SparsePoa::ReadKey id = sp.OrientAndAddRead(seq);
+
+        vector<PoaAlignmentSummary> summaries;
+        std::string poa = sp.FindConsensus(1, &summaries)->Sequence;
+
+        EXPECT_EQ(seq, poa);
+        EXPECT_EQ(Interval(0, len), summaries[id].ExtentOnRead);
+        EXPECT_EQ(Interval(0, len), summaries[id].ExtentOnConsensus);
+        EXPECT_FALSE(summaries[id].ReverseComplementedRead);
+    }
+}
+
+
+TEST(SparsePoaTest, SingleAndHalfx100)
+{
+    std::mt19937 gen(42);
+    std::uniform_int_distribution<size_t> d(1000, 5000);
+    std::uniform_int_distribution<size_t> b(0, 3);
+
+    const std::string bases = "ACGT";
+
+    for (size_t i = 0; i < 100; ++i)
+    {
+        size_t len = 0;
+        std::string seq1, seq2;
+
+        while (len < 300) len = d(gen);
+
+        seq1.reserve(len);
+        seq2.reserve(len/3);
+
+        for (size_t j = 0; j < len; ++j)
+            seq1.push_back(bases[b(gen)]);
+
+        seq2 = rc(seq1).substr(0, len/3);
+
+        SparsePoa sp;
+        SparsePoa::ReadKey id1 = sp.OrientAndAddRead(seq1);
+        SparsePoa::ReadKey id2 = sp.OrientAndAddRead(seq2);
+
+        vector<PoaAlignmentSummary> summaries;
+        std::string poa = sp.FindConsensus(1, &summaries)->Sequence;
+
+        EXPECT_EQ(seq1, poa);
+        EXPECT_EQ(Interval(0, len), summaries[id1].ExtentOnRead);
+        EXPECT_EQ(Interval(0, len), summaries[id1].ExtentOnConsensus);
+        EXPECT_FALSE(summaries[id1].ReverseComplementedRead);
+        EXPECT_EQ(Interval(0, len/3), summaries[id2].ExtentOnRead);
+        EXPECT_EQ(Interval(len - len/3, len), summaries[id2].ExtentOnConsensus);
+        EXPECT_TRUE(summaries[id2].ReverseComplementedRead);
+    }
 }
