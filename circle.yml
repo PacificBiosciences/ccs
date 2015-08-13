@@ -9,6 +9,6 @@ dependencies:
 test:
     pre:
         - mkdir _build
-        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=../_deps/pbbam -DBOOSTROOT=../_deps/boost_1_58_0 .. ; make
+        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=../_deps/pbbam -DBoost_INCLUDE_DIRS=../_deps/boost_1_58_0 .. ; make
     override:
         - pushd _build ; make check
