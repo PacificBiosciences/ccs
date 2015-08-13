@@ -228,28 +228,28 @@ void WriteResultsReport(ostream& report, const Results& counts)
     report << fixed << setprecision(2);
 
     report << "Success -- CCS generated," << counts.Success
-           << "," << 100.0 * counts.Success / total << '%' << std::endl;
+           << "," << 100.0 * counts.Success / total << '%' << endl;
 
     report << "Failed -- Below SNR threshold," << counts.PoorSNR
-           << "," << 100.0 * counts.PoorSNR / total << '%' << std::endl;
+           << "," << 100.0 * counts.PoorSNR / total << '%' << endl;
 
     report << "Failed -- No usable subreads," << counts.NoSubreads
-           << "," << 100.0 * counts.NoSubreads / total << '%' << std::endl;
+           << "," << 100.0 * counts.NoSubreads / total << '%' << endl;
 
     report << "Failed -- Insert size too small," << counts.TooShort
-           << "," << 100.0 * counts.TooShort / total << '%' << std::endl;
+           << "," << 100.0 * counts.TooShort / total << '%' << endl;
 
     report << "Failed -- Not enough full passes," << counts.TooFewPasses
-           << "," << 100.0 * counts.TooFewPasses / total << '%' << std::endl;
+           << "," << 100.0 * counts.TooFewPasses / total << '%' << endl;
 
     report << "Failed -- Too many unusable subreads," << counts.TooManyUnusable
-           << "," << 100.0 * counts.TooManyUnusable / total << '%' << std::endl;
+           << "," << 100.0 * counts.TooManyUnusable / total << '%' << endl;
 
     report << "Failed -- CCS did not converge," << counts.NonConvergent
-           << "," << 100.0 * counts.NonConvergent / total << '%' << std::endl;
+           << "," << 100.0 * counts.NonConvergent / total << '%' << endl;
 
     report << "Failed -- CCS below minimum predicted accuracy," << counts.PoorQuality
-           << "," << 100.0 * counts.PoorQuality / total << '%' << std::endl;
+           << "," << 100.0 * counts.PoorQuality / total << '%' << endl;
 }
 
 
@@ -380,18 +380,10 @@ int main(int argc, char **argv)
         // use make_optional here to get around spurious warnings from gcc:
         //   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47679
         optional<int32_t> holeNumber(none);
-        bool skipping = false;
+        bool skipZmw = false;
 
         for (const auto& read : query)
         {
-            if (static_cast<float>(read.ReadAccuracy()) < minReadScore)
-            {
-                PBLOG_DEBUG << "Skipping read " << read.FullName()
-                            << ", insufficient read accuracy ("
-                            << read.ReadAccuracy() << '<' << minReadScore << ')';
-                continue;
-            }
-
             string movieName = read.MovieName();
 
             if (movieNames.find(movieName) == movieNames.end())
@@ -421,24 +413,24 @@ int main(int argc, char **argv)
                 auto snr = read.SignalToNoise();
                 if (whitelist && !whitelist->Contains(*holeNumber))
                 {
-                    skipping = true;
+                    skipZmw = true;
                 }
                 // test chemistry here, we only accept P6/C4 for now
                 //   TODO(lhepler) remove this in favor of actual chemistry decoding
                 else if (!VerifyChemistry(read.ReadGroup()))
                 {
                     PBLOG_NOTICE << "Skipping ZMW " << movieName << '/' << *holeNumber << ", invalid chemistry (not P6/C4)";
-                    skipping = true;
+                    skipZmw = true;
                 }
                 else if (*min_element(snr.begin(), snr.end()) < minSnr)
                 {
                     PBLOG_DEBUG << "Skipping ZMW " << movieName << '/' << *holeNumber << ", fails SNR threshold (" << minSnr << ')';
                     poorSNR += 1;
-                    skipping = true;
+                    skipZmw = true;
                 }
                 else
                 {
-                    skipping = false;
+                    skipZmw = false;
                     chunk->emplace_back(
                         Chunk
                         {
@@ -449,17 +441,25 @@ int main(int argc, char **argv)
                 }
             }
 
-            if (!skipping)
+            if (skipZmw)
+                continue;
+
+            if (static_cast<float>(read.ReadAccuracy()) < minReadScore)
             {
-                chunk->back().Reads.emplace_back(
-                    Subread
-                    {
-                        ReadId(movieNames[movieName], *holeNumber, Interval(read.QueryStart(), read.QueryEnd())),
-                        read.Sequence(),
-                        read.LocalContextFlags(),
-                        read.ReadAccuracy()
-                    });
+                PBLOG_DEBUG << "Skipping read " << read.FullName()
+                            << ", insufficient read accuracy ("
+                            << read.ReadAccuracy() << '<' << minReadScore << ')';
+                continue;
             }
+
+            chunk->back().Reads.emplace_back(
+                Subread
+                {
+                    ReadId(movieNames[movieName], *holeNumber, Interval(read.QueryStart(), read.QueryEnd())),
+                    read.Sequence(),
+                    read.LocalContextFlags(),
+                    read.ReadAccuracy()
+                });
         }
     }
 
