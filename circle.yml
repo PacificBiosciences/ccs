@@ -2,13 +2,13 @@ dependencies:
     pre:
         - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test ; sudo apt-get install g++-4.8
         - mkdir _deps
-        - pushd _deps ; wget http://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xvzf cmake-3.3.0-Linux-x86_64.tar.gz
-        - pushd _deps ; wget http://superb-dca2.dl.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 ; tar xvjf boost_1_58_0.tar.bz2
+        - pushd _deps ; wget http://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xzf cmake-3.3.0-Linux-x86_64.tar.gz
+        - pushd _deps ; wget http://superb-dca2.dl.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 ; tar xjf boost_1_58_0.tar.bz2
         - pushd _deps ; git clone https://github.com/PacificBiosciences/htslib.git
         - pushd _deps ; git clone https://github.com/PacificBiosciences/pbbam.git
 test:
     pre:
         - mkdir _build
-        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=../_deps/pbbam -DBOOST_ROOT=../_deps/boost_1_58_0 .. ; make
+        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=../_deps/pbbam -DBOOSTROOT=../_deps/boost_1_58_0 .. ; make
     override:
         - pushd _build ; make check
