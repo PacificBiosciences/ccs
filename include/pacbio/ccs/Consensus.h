@@ -39,7 +39,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <memory>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -103,7 +105,7 @@ struct ConsensusSettings
         parser->add_option(em + OptionNames::MinPasses).type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
         parser->add_option(em + OptionNames::MinPredictedAccuracy).type("float").set_default(0.90).help("Minimum predicted accuracy in percent. Default = %default");
         parser->add_option(em + OptionNames::MinZScore).type("float").set_default(-5.0).help("Minimum z-score to use a subread. NaN disables this filter. Default = %default");
-        parser->add_option(em + OptionNames::MaxDropFraction).type("float").set_default(0.33).help("Maximum fraction of subreads that can be dropped before giving up. Default = %default");
+        parser->add_option(em + OptionNames::MaxDropFraction).type("float").set_default(0.34).help("Maximum fraction of subreads that can be dropped before giving up. Default = %default");
         // parser->add_option(em + OptionNames::Directional).action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
     }
 };
@@ -228,24 +230,63 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
         return results;
 
     std::vector<size_t> lengths;
+    size_t longest = 0;
 
+    // get the lengths for all full-length subreads
     for (const auto& read : reads)
     {
-        lengths.push_back(read.Seq.length());
+        longest = std::max(longest, read.Seq.length());
+        if (read.Flags & BAM::ADAPTER_BEFORE &&
+            read.Flags & BAM::ADAPTER_AFTER)
+            lengths.emplace_back(read.Seq.length());
     }
 
-    const float median = Median(&lengths);
+    // nonexistent median is just the greatest observed length
+    const float median = lengths.empty() ? static_cast<float>(longest) : Median(&lengths);
     size_t maxLen = 2 * static_cast<size_t>(median);
 
     // if it's too short, return nothing
     if (median < static_cast<float>(minLength))
         return results;
 
+    results.reserve(reads.size());
+
     for (const auto& read : reads)
     {
+        // if the median exists, then this filters stuff,
+        //   otherwise it's twice the longest read and is always true
         if (read.Seq.length() < maxLen)
-            results.push_back(&read);
+            results.emplace_back(&read);
+        else
+            results.emplace_back(nullptr);
     }
+
+    // TODO(lhepler): incorporate per-subread quality here
+    // End-to-end reads take priority, hence the lexicographical sort;
+    //   always take the read with the least deviation from the median.
+    //   In the case of no median, longer reads are prioritized.
+    const auto lexForm =
+        [median] (const TRead* read)
+        {
+            const float l = static_cast<float>(read->Seq.length());
+            const float v = std::min(l / median, median / l);
+
+            if (r->Flags & BAM::ADAPTER_BEFORE &&
+                r->Flags & BAM::ADAPTER_AFTER)
+                return std::make_tuple(v, 0.0f);
+
+            return std::make_tuple(0.0f, v);
+        };
+
+    std::stable_sort(results.begin(),
+                     results.end(),
+                     [&lexForm] (const TRead* lhs, const TRead* rhs)
+                     {
+                        if (lhs == nullptr) return false;
+                        else if (rhs == nullptr) return true;
+
+                        return lexForm(lhs) > lexForm(b);
+                     });
 
     return results;
 }
@@ -334,7 +375,7 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
 
     for (const auto read : reads)
     {
-        SparsePoa::ReadKey key = poa.OrientAndAddRead(read->Seq);
+        SparsePoa::ReadKey key = (read == nullptr) ? -1 : poa.OrientAndAddRead(read->Seq);
         // SparsePoa::ReadKey key = poa.OrientAndAddRead(read.second->Seq);
         // readKeys->at(read.first) = key;
         readKeys->emplace_back(key);
@@ -370,7 +411,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             Timer timer;
             auto reads = FilterReads(chunk.Reads, settings.MinLength);
 
-            if (reads.empty())
+            if (reads.empty() || std::accumulate(reads.begin(), reads.end(), 0, std::plus<bool>()) == 0)
             {
                 results.NoSubreads += 1;
                 PBLOG_DEBUG << "Skipping " << chunk.Id
