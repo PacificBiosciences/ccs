@@ -1,4 +1,4 @@
-# pbccs - Generate Accurate Consensus Sequences from a Single SMRTbell
+# pbccs - Generate Accurate Consensus Sequences from a Single SMRTbell [![Circle CI](https://circleci.com/gh/PacificBiosciences/pbccs.svg?style=svg)](https://circleci.com/gh/PacificBiosciences/pbccs)
 
 ![Image of SMRTbell](http://www.evolvedmicrobe.com/CCS.png)
 
