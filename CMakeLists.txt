@@ -60,7 +60,7 @@ set(PacBioBAM_build_pbindex     OFF CACHE BOOL "build pbbam pbindex" FORCE)
 set(PacBioBAM_build_tests       OFF CACHE BOOL "build pbbam tests" FORCE)
 
 # htslib
-set(HTSLIB_ROOTDIR              ${Bifx_RootDir}/staging/PostPrimary/htslib                         CACHE PATH "htslib source path")
+#set(HTSLIB_ROOTDIR              ${Bifx_RootDir}/staging/PostPrimary/htslib                         CACHE PATH "htslib source path")
 #set(HTSLIB_LibDir               ${HTSLIB_RootDir})
 
 # prebuilt libraries
