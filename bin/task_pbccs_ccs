@@ -20,6 +20,7 @@ from pbcommand.engine import run_cmd
 from pbcore.io import SubreadSet, ConsensusReadSet
 
 __version__ = "0.1"
+_INDEX_FILES = True
 
 class Constants(object):
     TOOL_ID = "pbccs.tasks.ccs"
@@ -63,7 +64,12 @@ def resolved_tool_contract_runner(rtc):
         "--minZScore=%g" % rtc.task.options[Constants.MIN_ZSCORE_ID],
         "--maxDropFraction=%g" % rtc.task.options[Constants.MAX_DROP_FRAC_ID],
         output_file,
-    ] + ds.toExternalFiles()
+    ]
+    zmwRanges = ds.zmwRanges
+    if len(zmwRanges) > 0:
+        args.append("--zmws=" +
+                    ",".join([ "%d-%d" % (s,e) for (m,s,e) in zmwRanges ]))
+    args.extend(ds.toExternalFiles())
     ds.close()
     logging.info(" ".join(args))
     result = run_cmd(
@@ -73,6 +79,19 @@ def resolved_tool_contract_runner(rtc):
     if result.exit_code != 0:
         return result.exit_code
     assert os.path.isfile(output_file)
+    if _INDEX_FILES:
+        result = run_cmd(
+            cmd=" ".join(["samtools", "index", output_file]),
+            stdout_fh=sys.stdout,
+            stderr_fh=sys.stderr)
+        if result.exit_code != 0:
+            return result.exit_code
+        result = run_cmd(
+            cmd=" ".join(["pbindex", output_file]),
+            stdout_fh=sys.stdout,
+            stderr_fh=sys.stderr)
+        if result.exit_code != 0:
+            return result.exit_code
     ccs = ConsensusReadSet(output_file)
     ccs.write(rtc.task.output_files[0])
     ccs.close()
