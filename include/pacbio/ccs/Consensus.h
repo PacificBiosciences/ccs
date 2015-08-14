@@ -271,8 +271,8 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
             const float l = static_cast<float>(read->Seq.length());
             const float v = std::min(l / median, median / l);
 
-            if (r->Flags & BAM::ADAPTER_BEFORE &&
-                r->Flags & BAM::ADAPTER_AFTER)
+            if (read->Flags & BAM::ADAPTER_BEFORE &&
+                read->Flags & BAM::ADAPTER_AFTER)
                 return std::make_tuple(v, 0.0f);
 
             return std::make_tuple(0.0f, v);
@@ -285,7 +285,7 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
                         if (lhs == nullptr) return false;
                         else if (rhs == nullptr) return true;
 
-                        return lexForm(lhs) > lexForm(b);
+                        return lexForm(lhs) > lexForm(rhs);
                      });
 
     return results;
