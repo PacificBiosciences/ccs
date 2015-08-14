@@ -284,7 +284,7 @@ int main(int argc, char **argv)
     auto parser = OptionParser()
         .usage("usage: %prog [OPTIONS] OUTPUT FILES...")
         .version(string("%prog ") + VERSION + "\nCopyright (c) 2014 Pacific Biosciences, Inc.\nLicense: 3-BSD")
-        .description("Generate circular consensus sequences (ccs) from subreads.");
+        .description("Generate circular consensus sequences (ccs) from subreads.\nAdditional Documentation: http://github.com/PacificBiosciences/pbccs");
 
     const vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
     const string em = "--";
