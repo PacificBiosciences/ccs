@@ -63,7 +63,12 @@ def resolved_tool_contract_runner(rtc):
         "--minZScore=%g" % rtc.task.options[Constants.MIN_ZSCORE_ID],
         "--maxDropFraction=%g" % rtc.task.options[Constants.MAX_DROP_FRAC_ID],
         output_file,
-    ] + ds.toExternalFiles()
+    ]
+    zmwRanges = ds.zmwRanges
+    if len(zmwRanges) > 0:
+        args.append("--zmws=" +
+                    ",".join([ "%d-%d" % (s,e) for (m,s,e) in zmwRanges ]))
+    args.extend(ds.toExternalFiles())
     ds.close()
     logging.info(" ".join(args))
     result = run_cmd(
