@@ -83,7 +83,7 @@ SparsePoa::~SparsePoa()
 
 SparsePoa::ReadKey
 SparsePoa::AddRead
-  (std::string readSequence, const PoaAlignmentOptions& alnOptions, float minScoreToAdd)
+  (const std::string& readSequence, const PoaAlignmentOptions& alnOptions, float minScoreToAdd)
 {
     AlignConfig config = DefaultPoaConfig(LOCAL);
     Path outputPath;
@@ -94,7 +94,7 @@ SparsePoa::AddRead
 
 SparsePoa::ReadKey
 SparsePoa::OrientAndAddRead
-  (std::string readSequence, const PoaAlignmentOptions& alnOptions, float minScoreToAdd)
+  (const std::string& readSequence, const PoaAlignmentOptions& alnOptions, float minScoreToAdd)
 {
     AlignConfig config = DefaultPoaConfig(LOCAL);
     Path outputPath;

@@ -108,7 +108,7 @@ namespace ConsensusCore
         std::string ToGraphViz(int flags = 0,
                                const PoaConsensus* pc = NULL) const;
 
-        void WriteGraphVizFile(std::string filename,
+        void WriteGraphVizFile(const std::string& filename,
                                int flags = 0,
                                const PoaConsensus* pc = NULL) const;
 

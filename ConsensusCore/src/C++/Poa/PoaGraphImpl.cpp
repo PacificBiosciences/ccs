@@ -462,7 +462,7 @@ namespace detail {
     }
 
    void
-   PoaGraphImpl::WriteGraphVizFile(string filename, int flags, const PoaConsensus* pc) const
+   PoaGraphImpl::WriteGraphVizFile(const string& filename, int flags, const PoaConsensus* pc) const
    {
        std::ofstream outfile(filename.c_str());
        outfile << ToGraphViz(flags, pc);

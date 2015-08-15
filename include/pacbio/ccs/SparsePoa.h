@@ -110,14 +110,14 @@ public:
     // Add read, which must already have been oriented to be in the
     // "forward" convention
     //
-    ReadKey AddRead(std::string readSequence,
+    ReadKey AddRead(const std::string& readSequence,
                     const PoaAlignmentOptions& alnOptions=PoaAlignmentOptions(),
                     float minScoreToAdd=0);
 
     //
     // Find better orientation, (fwd or RC) and add as such
     //
-    ReadKey OrientAndAddRead(std::string readSequence,
+    ReadKey OrientAndAddRead(const std::string& readSequence,
                              const PoaAlignmentOptions& alnOptions=PoaAlignmentOptions(),
                              float minScoreToAdd=0);
 

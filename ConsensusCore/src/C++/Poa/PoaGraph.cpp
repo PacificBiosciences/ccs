@@ -95,7 +95,7 @@ namespace ConsensusCore
     }
 
     void
-    PoaGraph::WriteGraphVizFile(string filename, int flags, const PoaConsensus* pc) const
+    PoaGraph::WriteGraphVizFile(const string& filename, int flags, const PoaConsensus* pc) const
     {
         impl->WriteGraphVizFile(filename, flags, pc);
     }

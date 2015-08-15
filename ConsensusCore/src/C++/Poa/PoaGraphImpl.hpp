@@ -294,7 +294,7 @@ namespace detail {
 
         size_t NumReads() const;
         string ToGraphViz(int flags, const PoaConsensus* pc) const;
-        void WriteGraphVizFile(string filename, int flags, const PoaConsensus* pc) const;
+        void WriteGraphVizFile(const string& filename, int flags, const PoaConsensus* pc) const;
     };
 
     // free functions, we should put these all in traversals
