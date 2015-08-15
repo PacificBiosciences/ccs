@@ -128,6 +128,19 @@ public:
     FindConsensus(int minCoverage, std::vector<PoaAlignmentSummary>* summaries=NULL) const;
 
     //
+    // Serialize the POA graph to std::string
+    //
+    std::string ToGraphViz(int flags = 0,
+                           const ConsensusCore::PoaConsensus* pc = nullptr) const;
+
+    //
+    // Serialize the POA graph to a file
+    //
+    void WriteGraphVizFile(const std::string& filename,
+                           int flags = 0,
+                           const ConsensusCore::PoaConsensus* pc = nullptr) const;
+
+    //
     // Clean up the POA graph, pruning minority paths, to speed up
     // successive AddRead operations.
     //

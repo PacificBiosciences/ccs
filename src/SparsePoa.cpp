@@ -200,6 +200,18 @@ SparsePoa::FindConsensus(int minCoverage,
     return pc;
 }
 
+std::string
+SparsePoa::ToGraphViz(int flags, const PoaConsensus* pc) const
+{
+    return graph_->ToGraphViz(flags, pc);
+}
+
+void
+SparsePoa::WriteGraphVizFile(const std::string& filename, int flags, const PoaConsensus* pc) const
+{
+    graph_->WriteGraphVizFile(filename, flags, pc);
+}
+
 void
 SparsePoa::PruneGraph(float minCoverageFraction)
 {}
