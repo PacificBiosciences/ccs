@@ -113,7 +113,7 @@ namespace detail {
         EdgeComparator(const BoostGraph& g) : g_(g) {}
 
         // want lex. comparison... just using pair to get it..
-        bool operator() (ED e1, ED e2)
+        bool operator() (ED e1, ED e2) const
         {
             std::pair<int, int> vt1, vt2;
             vt1 = std::make_pair(get(vertex_index, g_, source(e1, g_)),
@@ -256,6 +256,8 @@ namespace detail {
         //
         // Graph traversal functions, defined in PoaGraphTraversals
         //
+        void tagSpan(VD start, VD end);
+
         std::vector<VD> consensusPath(AlignMode mode, int minCoverage=-INT_MAX) const;
 
         void threadFirstRead(std::string sequence, std::vector<Vertex>* readPathOutput=NULL);

@@ -57,8 +57,8 @@ namespace boost
             else
             {
                 out <<  format("[shape=Mrecord,%s label=\"{ "
-                               "{ %d | %c } |"
-                               "{ %d | %d } |"
+                               "{ %d | %c } | "
+                               "{ %d | %d } | "
                                "{ %0.2f | %0.2f } }\"]")
                     % nodeColoringAttribute
                     % vertexId % map_[v].Base

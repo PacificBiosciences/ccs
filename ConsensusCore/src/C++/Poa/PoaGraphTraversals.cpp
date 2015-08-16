@@ -40,6 +40,7 @@
 #include <ConsensusCore/Utils.hpp>
 
 #include <boost/graph/topological_sort.hpp>
+#include <boost/unordered_set.hpp>
 
 #include "PoaGraphImpl.hpp"
 
@@ -56,6 +57,60 @@ namespace detail {
             ss << vertexInfoMap[v].Base;
         }
         return ss.str();
+    }
+
+    boost::unordered_set<VD>
+    SpanningDFS(const VD start, const VD end, const BoostGraph& g)
+    {
+        std::vector<VD> stack;
+        boost::unordered_set<VD> fwd;
+        boost::unordered_set<VD> rev;
+        // find all vertices fwd from start
+        stack.push_back(start);
+        do
+        {
+            VD v = stack.back();
+            stack.pop_back();
+            if (fwd.find(v) != fwd.end()) continue;
+            fwd.insert(v);
+            foreach (ED e, out_edges(v, g))
+            {
+                stack.push_back(target(e, g));
+            }
+        }
+        while (!stack.empty());
+        // find all vertices rev from end
+        stack.push_back(end);
+        do
+        {
+            VD v = stack.back();
+            stack.pop_back();
+            if (fwd.find(v) == fwd.end() ||
+                rev.find(v) != rev.end())
+                continue;
+            rev.insert(v);
+            foreach (ED e, in_edges(v, g))
+            {
+                stack.push_back(source(e, g));
+            }
+        }
+        while (!stack.empty());
+        // find the intersection
+        return rev;
+    }
+
+    void PoaGraphImpl::tagSpan(VD start, VD end)
+    {
+        boost::unordered_set<VD> vertices = SpanningDFS(start, end, g_);
+        // std::cout << "start, end: " << get(vertex_index, g_, start) << ", " << get(vertex_index, g_, end) << std::endl;
+        // vertices.erase(end);
+        // std::cout << "tagSpan:";
+        foreach (VD v, vertices)
+        {
+            // std::cout << ' ' << get(vertex_index, g_, v);
+            vertexInfoMap_[v].SpanningReads++;
+        }
+        // std::cout << std::endl;
     }
 
     std::vector<VD>
@@ -136,6 +191,7 @@ namespace detail {
     {
         // first sequence in the alignment
         VD u = null_vertex, v;
+        VD startSpanVertex = null_vertex, endSpanVertex;
         int readPos = 0;
 
         if (outputPath) { outputPath->clear(); }
@@ -147,17 +203,20 @@ namespace detail {
             if (readPos == 0)
             {
                 add_edge(enterVertex_, v, g_);
+                startSpanVertex = v;
             }
             else
             {
                 add_edge(u, v, g_);
             }
-            vertexInfoMap_[v].SpanningReads++;
             u = v;
             readPos++;
         }
+        assert(startSpanVertex != null_vertex);
         assert(u != null_vertex);
+        endSpanVertex = u;
         add_edge(u, exitVertex_, g_);  // terminus -> $
+        tagSpan(startSpanVertex, endSpanVertex);
     }
 
     void PoaGraphImpl::tracebackAndThread
@@ -174,6 +233,8 @@ namespace detail {
         const AlignmentColumn* curCol;
         VD v = null_vertex, forkVertex = null_vertex;
         VD u = exitVertex_;
+        VD startSpanVertex;
+        VD endSpanVertex = alignmentColumnForVertex.at(exitVertex_)->PreviousVertex[I];
 
         if (outputPath) {
             outputPath->resize(I);
@@ -202,7 +263,6 @@ namespace detail {
                 if (forkVertex == null_vertex)
                 {
                     forkVertex = v;
-                    vertexInfoMap_[forkVertex].SpanningReads++;
                 }
                 // In local model thread read bases, adjusting i (should stop at 0)
                 while (i > 0)
@@ -212,7 +272,6 @@ namespace detail {
                     add_edge(newForkVertex, forkVertex, g_);
                     VERTEX_ON_PATH(READPOS, newForkVertex);
                     forkVertex = newForkVertex;
-                    vertexInfoMap_[forkVertex].SpanningReads++;
                     i--;
                 }
             }
@@ -235,7 +294,6 @@ namespace detail {
                         add_edge(newForkVertex, forkVertex, g_);
                         VERTEX_ON_PATH(READPOS, newForkVertex);
                         forkVertex = newForkVertex;
-                        vertexInfoMap_[forkVertex].SpanningReads++;
                         i--;
                     }
                 }
@@ -251,7 +309,6 @@ namespace detail {
                 }
                 // add to existing node
                 curNodeInfo.Reads++;
-                curNodeInfo.SpanningReads++;
                 i--;
             }
             else if (reachingMove == DeleteMove)
@@ -259,7 +316,6 @@ namespace detail {
                 if (forkVertex == null_vertex)
                 {
                     forkVertex = v;
-                    vertexInfoMap_[forkVertex].SpanningReads++;
                 }
             }
             else if (reachingMove == ExtraMove ||
@@ -270,12 +326,10 @@ namespace detail {
                 if (forkVertex == null_vertex)
                 {
                     forkVertex = v;
-                    vertexInfoMap_[forkVertex].SpanningReads++;
                 }
                 add_edge(newForkVertex, forkVertex, g_);
                 VERTEX_ON_PATH(READPOS, newForkVertex);
                 forkVertex = newForkVertex;
-                vertexInfoMap_[forkVertex].SpanningReads++;
                 i--;
             }
             else
@@ -285,6 +339,11 @@ namespace detail {
 
             v = u;
             u = prevVertex;
+        }
+        startSpanVertex = v;
+        if (startSpanVertex != exitVertex_)
+        {
+            tagSpan(startSpanVertex, endSpanVertex);
         }
 
         // if there is an extant forkVertex, join it to enterVertex
