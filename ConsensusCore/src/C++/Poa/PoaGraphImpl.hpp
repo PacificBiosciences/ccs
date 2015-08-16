@@ -256,8 +256,6 @@ namespace detail {
         //
         // Graph traversal functions, defined in PoaGraphTraversals
         //
-        void tagSpan(VD start, VD end);
-
         std::vector<VD> consensusPath(AlignMode mode, int minCoverage=-INT_MAX) const;
 
         void threadFirstRead(std::string sequence, std::vector<Vertex>* readPathOutput=NULL);

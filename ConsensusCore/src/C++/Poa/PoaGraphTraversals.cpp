@@ -58,29 +58,6 @@ namespace detail {
         return ss.str();
     }
 
-    void PoaGraphImpl::tagSpan(VD start, VD end)
-    {
-        // cout << "Tagging span " << start << " to " << end << endl;
-        std::list<VD> sortedVertices(num_vertices(g_));
-        topological_sort(g_, sortedVertices.rbegin());
-        bool spanning = false;
-        foreach (VD v, sortedVertices)
-        {
-            if (v == start)
-            {
-                spanning = true;
-            }
-            if (v == end)
-            {
-                break;
-            }
-            if (spanning)
-            {
-                vertexInfoMap_[v].SpanningReads++;
-            }
-        }
-    }
-
     std::vector<VD>
     PoaGraphImpl::consensusPath(AlignMode mode, int minCoverage) const
     {
@@ -138,6 +115,8 @@ namespace detail {
                     bestVertex = v;
                     bestReachingScore = rsc;
                 }
+                // TODO(lhepler): can there be equiv scores?
+                //   If so, possible nondeterminism lurks
             }
         }
         assert(bestVertex != null_vertex);
@@ -157,7 +136,6 @@ namespace detail {
     {
         // first sequence in the alignment
         VD u = null_vertex, v;
-        VD startSpanVertex = null_vertex, endSpanVertex;
         int readPos = 0;
 
         if (outputPath) { outputPath->clear(); }
@@ -169,20 +147,17 @@ namespace detail {
             if (readPos == 0)
             {
                 add_edge(enterVertex_, v, g_);
-                startSpanVertex = v;
             }
             else
             {
                 add_edge(u, v, g_);
             }
+            vertexInfoMap_[v].SpanningReads++;
             u = v;
             readPos++;
         }
-        assert(startSpanVertex != null_vertex);
         assert(u != null_vertex);
-        endSpanVertex = u;
         add_edge(u, exitVertex_, g_);  // terminus -> $
-        tagSpan(startSpanVertex, endSpanVertex);
     }
 
     void PoaGraphImpl::tracebackAndThread
@@ -199,8 +174,6 @@ namespace detail {
         const AlignmentColumn* curCol;
         VD v = null_vertex, forkVertex = null_vertex;
         VD u = exitVertex_;
-        VD startSpanVertex;
-        VD endSpanVertex = alignmentColumnForVertex.at(exitVertex_)->PreviousVertex[I];
 
         if (outputPath) {
             outputPath->resize(I);
@@ -229,6 +202,7 @@ namespace detail {
                 if (forkVertex == null_vertex)
                 {
                     forkVertex = v;
+                    vertexInfoMap_[forkVertex].SpanningReads++;
                 }
                 // In local model thread read bases, adjusting i (should stop at 0)
                 while (i > 0)
@@ -238,6 +212,7 @@ namespace detail {
                     add_edge(newForkVertex, forkVertex, g_);
                     VERTEX_ON_PATH(READPOS, newForkVertex);
                     forkVertex = newForkVertex;
+                    vertexInfoMap_[forkVertex].SpanningReads++;
                     i--;
                 }
             }
@@ -260,6 +235,7 @@ namespace detail {
                         add_edge(newForkVertex, forkVertex, g_);
                         VERTEX_ON_PATH(READPOS, newForkVertex);
                         forkVertex = newForkVertex;
+                        vertexInfoMap_[forkVertex].SpanningReads++;
                         i--;
                     }
                 }
@@ -275,6 +251,7 @@ namespace detail {
                 }
                 // add to existing node
                 curNodeInfo.Reads++;
+                curNodeInfo.SpanningReads++;
                 i--;
             }
             else if (reachingMove == DeleteMove)
@@ -282,6 +259,7 @@ namespace detail {
                 if (forkVertex == null_vertex)
                 {
                     forkVertex = v;
+                    vertexInfoMap_[forkVertex].SpanningReads++;
                 }
             }
             else if (reachingMove == ExtraMove ||
@@ -292,10 +270,12 @@ namespace detail {
                 if (forkVertex == null_vertex)
                 {
                     forkVertex = v;
+                    vertexInfoMap_[forkVertex].SpanningReads++;
                 }
                 add_edge(newForkVertex, forkVertex, g_);
                 VERTEX_ON_PATH(READPOS, newForkVertex);
                 forkVertex = newForkVertex;
+                vertexInfoMap_[forkVertex].SpanningReads++;
                 i--;
             }
             else
@@ -305,11 +285,6 @@ namespace detail {
 
             v = u;
             u = prevVertex;
-        }
-        startSpanVertex = v;
-        if (startSpanVertex != exitVertex_)
-        {
-            tagSpan(startSpanVertex, endSpanVertex);
         }
 
         // if there is an extant forkVertex, join it to enterVertex
@@ -397,6 +372,8 @@ namespace detail {
                         bestInsertScore = score;
                         bestInsertVertex = *found;
                     }
+                    // TODO(lhepler): can there be equiv scores?
+                    //   If so, possible nondeterminism lurks
                 }
             }
 
@@ -429,6 +406,8 @@ namespace detail {
                         bestMismatchScore = score;
                         bestMismatchVertex = *found;
                     }
+                    // TODO(lhepler): can there be equiv scores?
+                    //   If so, possible nondeterminism lurks
                 }
             }
 
