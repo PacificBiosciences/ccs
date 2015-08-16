@@ -29,18 +29,18 @@ include_directories(SYSTEM
     ${GMOCK_IncludeDir}
 )
 
-file(GLOB Test_CPP "*.cpp")
+file(GLOB PacBioCCSTests_CPP "*.cpp")
 
-set(SOURCES
-    ${Test_CPP}
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioCCS_CXX_FLAGS}")
+
+add_executable(test_pbccs EXCLUDE_FROM_ALL
+    ${PacBioCCSTests_CPP}
+    ${ConsensusCoreTests_SOURCES}
     ${CPPOPTPARSE_CPP}
     ${CPPOPTPARSE_H}
     ${GMOCK_CC}
     ${GMOCK_H}
 )
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioCCS_CXX_FLAGS}")
-
-add_executable(test_pbccs EXCLUDE_FROM_ALL ${SOURCES})
 set_target_properties(test_pbccs PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PacBioCCS_TestsDir}/bin
 )

@@ -36,6 +36,10 @@ file(MAKE_DIRECTORY                 ${ConsensusCore_LibDir})
 file(GLOB_RECURSE ConsensusCore_CPP "${ConsensusCore_RootDir}/src/C++/*.cpp")
 file(GLOB_RECURSE ConsensusCore_HPP "${ConsensusCore_RootDir}/include/*.hpp")
 
+file(GLOB_RECURSE ConsensusCoreTests_CPP "${ConsensusCore_RootDir}/src/Tests/*.cpp")
+file(GLOB_RECURSE ConsensusCoreTests_HPP "${ConsensusCore_RootDir}/src/Tests/*.hpp")
+set(ConsensusCoreTests_SOURCES ${ConsensusCoreTests_CPP} ${ConsensusCoreTests_HPP} PARENT_SCOPE)
+
 # third-party libraries
 set(CPPOPTPARSE_RootDir         ${ConsensusCore_ThirdPartyDir}/cpp-optparse)
 set(CPPOPTPARSE_IncludeDir      ${CPPOPTPARSE_RootDir})
@@ -68,7 +72,10 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # libpbccs.a
-add_library(ConsensusCore STATIC ${ConsensusCore_CPP} ${ConsensusCore_HPP})
+add_library(ConsensusCore STATIC
+    ${ConsensusCore_CPP}
+    ${ConsensusCore_HPP}
+)
 set_target_properties(ConsensusCore PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${ConsensusCore_LibDir}
 )
