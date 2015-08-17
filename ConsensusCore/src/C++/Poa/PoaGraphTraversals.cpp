@@ -351,7 +351,6 @@ namespace detail {
         if (forkVertex != null_vertex)
         {
             add_edge(enterVertex_, forkVertex, g_);
-            // TODO(dalexander): lhepler asks you to make sure the following line is correct
             startSpanVertex = forkVertex;
             forkVertex = null_vertex;
         }
