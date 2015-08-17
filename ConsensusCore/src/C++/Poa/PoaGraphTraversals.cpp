@@ -65,12 +65,14 @@ namespace detail {
         std::vector<VD> stack;
         boost::unordered_set<VD> fwd;
         boost::unordered_set<VD> rev;
-        // find all vertices fwd from start
+        // find all vertices reachable from start
         stack.push_back(start);
         do
         {
             VD v = stack.back();
             stack.pop_back();
+            // mark those we've already visited,
+            //   if so, skip
             if (fwd.find(v) != fwd.end()) continue;
             fwd.insert(v);
             foreach (ED e, out_edges(v, g))
@@ -79,12 +81,15 @@ namespace detail {
             }
         }
         while (!stack.empty());
-        // find all vertices rev from end
+        // find all vertices that can reach end
+        //   FROM start
         stack.push_back(end);
         do
         {
             VD v = stack.back();
             stack.pop_back();
+            // if it's not been visited in the forward pass,
+            //   or we've already visited it here, skip
             if (fwd.find(v) == fwd.end() ||
                 rev.find(v) != rev.end())
                 continue;
@@ -164,6 +169,8 @@ namespace detail {
                     bestVertex = v;
                     bestReachingScore = rsc;
                 }
+                // if the score is the same, the order we've encountered vertices
+                //   might not be deterministic. Fix this by comparing on vertex_index
                 else if (rsc == bestReachingScore)
                 {
                     if (get(vertex_index, g_, v) <
