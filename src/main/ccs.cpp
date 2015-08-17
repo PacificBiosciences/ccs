@@ -70,7 +70,9 @@ using boost::optional;
 using optparse::OptionParser;
 
 
+// these strings are part of the BAM header, they CANNOT contain newlines
 #define VERSION "0.0.1"
+#define DESCRIPTION "Generate circular consensus sequences (ccs) from subreads."
 
 
 namespace PacBio {
@@ -178,7 +180,7 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char **argv, const
     ProgramInfo program(parser.prog() + "-" + VERSION);
     program.Name(parser.prog())
            .CommandLine(parser.prog() + " " + join(vector<string>(argv + 1, argv + argc), " "))
-           .Description(parser.description())
+           .Description(DESCRIPTION)
            .Version(VERSION);
 
     BamHeader header;
@@ -283,8 +285,8 @@ int main(int argc, char **argv)
     //
     auto parser = OptionParser()
         .usage("usage: %prog [OPTIONS] OUTPUT FILES...")
-        .version(string("%prog ") + VERSION + "\nCopyright (c) 2014 Pacific Biosciences, Inc.\nLicense: 3-BSD")
-        .description("Generate circular consensus sequences (ccs) from subreads.\nAdditional Documentation: http://github.com/PacificBiosciences/pbccs");
+        .version("%prog " VERSION "\nCopyright (c) 2014 Pacific Biosciences, Inc.\nLicense: 3-BSD")
+        .description(DESCRIPTION "\nAdditional documentation: http://github.com/PacificBiosciences/pbccs");
 
     const vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
     const string em = "--";
