@@ -95,22 +95,16 @@ namespace detail {
             }
         }
         while (!stack.empty());
-        // find the intersection
         return rev;
     }
 
     void PoaGraphImpl::tagSpan(VD start, VD end)
     {
         boost::unordered_set<VD> vertices = SpanningDFS(start, end, g_);
-        // std::cout << "start, end: " << get(vertex_index, g_, start) << ", " << get(vertex_index, g_, end) << std::endl;
-        // vertices.erase(end);
-        // std::cout << "tagSpan:";
         foreach (VD v, vertices)
         {
-            // std::cout << ' ' << get(vertex_index, g_, v);
             vertexInfoMap_[v].SpanningReads++;
         }
-        // std::cout << std::endl;
     }
 
     std::vector<VD>
@@ -170,8 +164,12 @@ namespace detail {
                     bestVertex = v;
                     bestReachingScore = rsc;
                 }
-                // TODO(lhepler): can there be equiv scores?
-                //   If so, possible nondeterminism lurks
+                else if (rsc == bestReachingScore)
+                {
+                    if (get(vertex_index, g_, v) <
+                        get(vertex_index, g_, bestVertex))
+                        bestVertex = v;
+                }
             }
         }
         assert(bestVertex != null_vertex);
@@ -431,8 +429,12 @@ namespace detail {
                         bestInsertScore = score;
                         bestInsertVertex = *found;
                     }
-                    // TODO(lhepler): can there be equiv scores?
-                    //   If so, possible nondeterminism lurks
+                    else if (score == bestInsertScore)
+                    {
+                        if (get(vertex_index, g_, *found) <
+                            get(vertex_index, g_, bestInsertVertex))
+                            bestInsertVertex = *found;
+                    }
                 }
             }
 
@@ -465,8 +467,12 @@ namespace detail {
                         bestMismatchScore = score;
                         bestMismatchVertex = *found;
                     }
-                    // TODO(lhepler): can there be equiv scores?
-                    //   If so, possible nondeterminism lurks
+                    else if (score == bestMismatchScore)
+                    {
+                        if (get(vertex_index, g_, *found) <
+                            get(vertex_index, g_, bestMismatchVertex))
+                            bestMismatchVertex = *found;
+                    }
                 }
             }
 
