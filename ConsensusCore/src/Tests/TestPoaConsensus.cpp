@@ -445,7 +445,7 @@ TEST(PoaConsensus, TestVerboseGraphVizOutput)
 
     string expectedDot = \
                         "digraph G {"
-                        "0[shape=Mrecord, label=\"{ { 0 | ^ } | { 0 | 1 } | { 0.00 | 0.00 } }\"];"
+                        "0[shape=Mrecord, label=\"{ { 0 | ^ } | { 0 | 0 } | { 0.00 | 0.00 } }\"];"
                         "1[shape=Mrecord, label=\"{ { 1 | $ } | { 0 | 0 } | { 0.00 | 0.00 } }\"];"
                         "2[shape=Mrecord, style=\"filled\", fillcolor=\"lightblue\" ,"
                                           " label=\"{ { 2 | G } | { 2 | 2 } | { 2.00 | 2.00 } }\"];"
@@ -453,7 +453,7 @@ TEST(PoaConsensus, TestVerboseGraphVizOutput)
                                           " label=\"{ { 3 | G } | { 2 | 2 } | { 2.00 | 4.00 } }\"];"
                         "4[shape=Mrecord, style=\"filled\", fillcolor=\"lightblue\" ,"
                                           " label=\"{ { 4 | G } | { 2 | 2 } | { 2.00 | 6.00 } }\"];"
-                        "5[shape=Mrecord, label=\"{ { 5 | T } | { 1 | 0 } | { -0.00 | -0.00 } }\"];"
+                        "5[shape=Mrecord, label=\"{ { 5 | T } | { 1 | 1 } | { -0.00 | -0.00 } }\"];"
                         "0->2 ;"
                         "2->3 ;"
                         "3->4 ;"
