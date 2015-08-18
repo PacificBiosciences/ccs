@@ -82,6 +82,7 @@ namespace OptionNames {
     constexpr auto ReportFile   = "reportFile";
     constexpr auto NumThreads   = "numThreads";
     constexpr auto LogFile      = "logFile";
+    constexpr auto ForceOutput  = "force";
     constexpr auto LogLevel     = "logLevel";
 } // namespace OptionNames
 } // namespace CCS
@@ -300,6 +301,7 @@ int main(int argc, char **argv)
     // parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
     parser.add_option(em + OptionNames::LogFile).help("Log to a file, instead of STDERR.");
     parser.add_option(em + OptionNames::LogLevel).choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
+    parser.add_option(em + OptionNames::ForceOutput).action("store_true").help("Overwrite output file if present");
 
     const auto options = parser.parse_args(argc, argv);
     const auto files   = parser.args();
@@ -338,7 +340,7 @@ int main(int argc, char **argv)
         parser.error("missing FILES...");
 
     // Verify output file does not already exist
-    if (FileExists(files.front()))
+    if (FileExists(files.front()) && (! options.get(OptionNames::ForceOutput)))
         parser.error("OUTPUT: file already exists: '" + files.front() + "'");
 
     // logging
