@@ -2,15 +2,15 @@
 # CMake build script for Sparse Alignment library.
 ########################################################################
 
-project(SparseAlignment CXX C)
+project(PacBioSparse CXX C)
 cmake_minimum_required(VERSION 3.2)
 
 # project version
-set(SparseAlignment_MAJOR_VERSION 0)
-set(SparseAlignment_MINOR_VERSION 0)
-set(SparseAlignment_PATCH_VERSION 1)
-set(SparseAlignment_VERSION
-  "${SparseAlignment_MAJOR_VERSION}.${SparseAlignment_MINOR_VERSION}.${SparseAlignment_PATCH_VERSION}"
+set(PacBioSparse_MAJOR_VERSION 0)
+set(PacBioSparse_MINOR_VERSION 0)
+set(PacBioSparse_PATCH_VERSION 1)
+set(PacBioSparse_VERSION
+  "${PacBioSparse_MAJOR_VERSION}.${PacBioSparse_MINOR_VERSION}.${PacBioSparse_PATCH_VERSION}"
 )
 
 # Main project paths
