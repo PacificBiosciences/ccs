@@ -1,5 +1,6 @@
 Recent Program Changes:
 
+	*  Fix BAM output broken by newline in command-line description  Aug-17 979204
 	*  Added CHANGELOG  Aug-14 720a51
 
 
