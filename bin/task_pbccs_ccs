@@ -37,7 +37,7 @@ class Constants(object):
     MIN_ZSCORE_ID = "pbccs.task_options.min_zscore"
     MIN_ZSCORE_DEFAULT = -5
     MAX_DROP_FRAC_ID = "pbccs.task_options.max_drop_fraction"
-    MAX_DROP_FRAC_DEFAULT = 0.33
+    MAX_DROP_FRAC_DEFAULT = 0.34
 
 def args_runner(args):
     raise NotImplementedError("Please call 'ccs' directly.")
