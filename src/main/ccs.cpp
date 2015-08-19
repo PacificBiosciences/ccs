@@ -51,6 +51,7 @@
 
 #include <pbbam/BamWriter.h>
 #include <pbbam/EntireFileQuery.h>
+#include <pbbam/PbiBuilder.h>
 
 #include <pacbio/ccs/Consensus.h>
 #include <pacbio/ccs/ExecUtils.h>
@@ -81,6 +82,7 @@ namespace OptionNames {
     constexpr auto Zmws         = "zmws";
     constexpr auto MinSnr       = "minSnr";
     constexpr auto MinReadScore = "minReadScore";
+    constexpr auto PbIndex      = "pbi";
     constexpr auto ReportFile   = "reportFile";
     constexpr auto NumThreads   = "numThreads";
     constexpr auto LogFile      = "logFile";
@@ -99,7 +101,7 @@ typedef ResultType<CCS>            Results;
 const auto CircularConsensus = &Consensus<Chunk, CCS>;
 
 
-void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
+void Writer(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts, Results&& results)
 {
     counts += results;
 
@@ -159,16 +161,20 @@ void Writer(BamWriter& ccsWriter, Results& counts, Results&& results)
               .SetSequenceAndQualities(ccs.Sequence, ccs.Qualities)
               .Tags(tags);
 
-        ccsWriter.Write(record);
+        int64_t vOffset;
+        ccsBam.Write(record, &vOffset);
+
+        if (ccsPbi)
+            ccsPbi->AddRecord(record, vOffset);
     }
-    ccsWriter.TryFlush();
+    ccsBam.TryFlush();
 }
 
 
-Results WriterThread(WorkQueue<Results>& queue, BamWriter& ccsWriter)
+Results WriterThread(WorkQueue<Results>& queue, BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi)
 {
     Results counts;
-    while (queue.ConsumeWith(Writer, ref(ccsWriter), ref(counts)));
+    while (queue.ConsumeWith(Writer, ref(ccsBam), ref(ccsPbi), ref(counts)));
     return counts;
 }
 
@@ -297,6 +303,7 @@ int main(int argc, char **argv)
 
     ConsensusSettings::AddOptions(&parser);
 
+    parser.add_option(em + OptionNames::PbIndex).action("store_true").help("Generate a .pbi file for the OUTPUT file. Default = false");
     parser.add_option(em + OptionNames::ReportFile).set_default("ccs_report.csv").help("Where to write the results report. Default = %default");
     parser.add_option(em + OptionNames::NumThreads).type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
     // parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
@@ -308,6 +315,7 @@ int main(int argc, char **argv)
 
     const ConsensusSettings settings(options);
 
+    const bool pbIndex       = options.get(OptionNames::PbIndex);
     const float minSnr       = options.get(OptionNames::MinSnr);
     const float minReadScore = 1000 * static_cast<float>(options.get(OptionNames::MinReadScore));
     const size_t nThreads    = ThreadCount(options.get(OptionNames::NumThreads));
@@ -366,12 +374,16 @@ int main(int argc, char **argv)
     // start processing chunks!
     //
     //
-    BamWriter ccsWriter(files.front(), PrepareHeader(parser, argc, argv, files));
+    BamWriter ccsBam(files.front(), PrepareHeader(parser, argc, argv, files));
+    unique_ptr<PbiBuilder> ccsPbi(nullptr);
     unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
     map<string, shared_ptr<string>> movieNames;
 
+    if (pbIndex)
+        ccsPbi.reset(new PbiBuilder(files.front() + ".pbi"));
+
     WorkQueue<Results> workQueue(nThreads);
-    future<Results> writer = async(launch::async, WriterThread, ref(workQueue), ref(ccsWriter));
+    future<Results> writer = async(launch::async, WriterThread, ref(workQueue), ref(ccsBam), ref(ccsPbi));
     size_t poorSNR = 0, tooFewPasses = 0;
 
     // skip the first file, it's for output
