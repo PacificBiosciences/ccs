@@ -291,7 +291,7 @@ int main(int argc, char **argv)
     //
     auto parser = OptionParser()
         .usage("usage: %prog [OPTIONS] OUTPUT FILES...")
-        .version("%prog " VERSION "\nCopyright (c) 2014 Pacific Biosciences, Inc.\nLicense: 3-BSD")
+        .version("%prog " VERSION "\nCopyright (c) 2014-2015 Pacific Biosciences, Inc.\nLicense: 3-BSD")
         .description(DESCRIPTION "\nAdditional documentation: http://github.com/PacificBiosciences/pbccs");
 
     const vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
@@ -418,7 +418,6 @@ int main(int argc, char **argv)
 
                 if (chunk && chunk->size() >= chunkSize)
                 {
-                    // Writer(ccsWriter, Consensus(chunk, minLength, maxPoaCov, minPredAcc));
                     workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
                     chunk.reset(new vector<Chunk>());
                 }
@@ -490,7 +489,6 @@ int main(int argc, char **argv)
     // run the remaining tasks
     if (chunk && !chunk->empty())
     {
-        // Writer(ccsWriter, Consensus(chunk, minLength, maxPoaCov, minPredAcc));
         workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
     }
 
