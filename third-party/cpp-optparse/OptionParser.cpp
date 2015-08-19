@@ -541,9 +541,20 @@ string Option::format_help(unsigned int indent /* = 2 */) const {
 
 Option& Option::action(const string& a) {
   _action = a;
-  if (a == "store_const" || a == "store_true" || a == "store_false" ||
-      a == "append_const" || a == "count" || a == "help" || a == "version")
+  if (a == "store_true")
+  {
+    _default = "0";
     nargs(0);
+  }
+  else if (a == "store_false")
+  {
+    _default = "1";
+    nargs(0);
+  }
+  else if (a == "store_const" || a == "append_const" || a == "count" || a == "help" || a == "version")
+  {
+    nargs(0);
+  }
   return *this;
 }
 ////////// } class Option //////////

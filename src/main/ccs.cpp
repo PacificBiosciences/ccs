@@ -298,8 +298,8 @@ int main(int argc, char **argv)
     const vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
     const string em = "--";
 
-    parser.add_option(em + OptionNames::ForceOutput).action("store_true").set_default("0").help("Overwrite OUTPUT file if present.");
-    parser.add_option(em + OptionNames::PbIndex).action("store_true").set_default("0").help("Generate a .pbi file for the OUTPUT file.");
+    parser.add_option(em + OptionNames::ForceOutput).action("store_true").help("Overwrite OUTPUT file if present.");
+    parser.add_option(em + OptionNames::PbIndex).action("store_true").help("Generate a .pbi file for the OUTPUT file.");
     parser.add_option(em + OptionNames::Zmws).help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
     parser.add_option(em + OptionNames::MinSnr).type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
     parser.add_option(em + OptionNames::MinReadScore).type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
