@@ -54,6 +54,7 @@ def resolved_tool_contract_runner(rtc):
     assert output_file.endswith(".bam")
     args = [
         "ccs",
+        "--pbi",
         "--force",
         "--reportFile=%s" % rtc.task.output_files[1],
         "--numThreads=%d" % rtc.task.nproc,
