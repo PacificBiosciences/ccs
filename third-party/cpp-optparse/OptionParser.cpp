@@ -262,11 +262,11 @@ Values& OptionParser::parse_args(const vector<string>& v) {
   _remaining.assign(v.begin(), v.end());
 
   if (add_version_option() and version() != "") {
-    add_option("--version") .action("version") .help(_("show program's version number and exit"));
+    add_option("--version") .action("version") .help(_("Show program's version number and exit."));
     _opts.splice(_opts.begin(), _opts, --(_opts.end()));
   }
   if (add_help_option()) {
-    add_option("-h", "--help") .action("help") .help(_("show this help message and exit"));
+    add_option("-h", "--help") .action("help") .help(_("Show this help message and exit."));
     _opts.splice(_opts.begin(), _opts, --(_opts.end()));
   }
 

@@ -298,25 +298,26 @@ int main(int argc, char **argv)
     const vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
     const string em = "--";
 
+    parser.add_option(em + OptionNames::ForceOutput).action("store_true").help("Overwrite OUTPUT file if present.");
+    parser.add_option(em + OptionNames::PbIndex).action("store_true").help("Generate a .pbi file for the OUTPUT file.");
     parser.add_option(em + OptionNames::Zmws).help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
     parser.add_option(em + OptionNames::MinSnr).type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
     parser.add_option(em + OptionNames::MinReadScore).type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
 
     ConsensusSettings::AddOptions(&parser);
 
-    parser.add_option(em + OptionNames::PbIndex).action("store_true").help("Generate a .pbi file for the OUTPUT file. Default = false");
     parser.add_option(em + OptionNames::ReportFile).set_default("ccs_report.csv").help("Where to write the results report. Default = %default");
     parser.add_option(em + OptionNames::NumThreads).type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
     // parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
     parser.add_option(em + OptionNames::LogFile).help("Log to a file, instead of STDERR.");
     parser.add_option(em + OptionNames::LogLevel).choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
-    parser.add_option(em + OptionNames::ForceOutput).action("store_true").help("Overwrite output file if present");
 
     const auto options = parser.parse_args(argc, argv);
     const auto files   = parser.args();
 
     const ConsensusSettings settings(options);
 
+    const bool forceOutput   = options.get(OptionNames::ForceOutput);
     const bool pbIndex       = options.get(OptionNames::PbIndex);
     const float minSnr       = options.get(OptionNames::MinSnr);
     const float minReadScore = 1000 * static_cast<float>(options.get(OptionNames::MinReadScore));
@@ -350,7 +351,7 @@ int main(int argc, char **argv)
         parser.error("missing FILES...");
 
     // Verify output file does not already exist
-    if (FileExists(files.front()) && (! options.get(OptionNames::ForceOutput)))
+    if (FileExists(files.front()) && !forceOutput)
         parser.error("OUTPUT: file already exists: '" + files.front() + "'");
 
     // logging
