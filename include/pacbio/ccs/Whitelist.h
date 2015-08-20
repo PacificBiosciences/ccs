@@ -110,7 +110,7 @@ public:
         }
     }
 
-    bool Contains(const std::string& movieName, int32_t holeNumber)
+    bool Contains(const std::string& movieName, int32_t holeNumber) const
     {
         if (all)
             return true;
