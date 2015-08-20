@@ -56,9 +56,9 @@
 #include <pacbio/ccs/Consensus.h>
 #include <pacbio/ccs/ExecUtils.h>
 #include <pacbio/ccs/Interval.h>
-#include <pacbio/ccs/IntervalTree.h>
 #include <pacbio/ccs/Logging.h>
 #include <pacbio/ccs/ReadId.h>
+#include <pacbio/ccs/Whitelist.h>
 #include <pacbio/ccs/WorkQueue.h>
 #include <pacbio/ccs/Utility.h>
 
@@ -79,14 +79,14 @@ using optparse::OptionParser;
 namespace PacBio {
 namespace CCS {
 namespace OptionNames {
+    constexpr auto ForceOutput  = "force";
+    constexpr auto PbIndex      = "pbi";
     constexpr auto Zmws         = "zmws";
     constexpr auto MinSnr       = "minSnr";
     constexpr auto MinReadScore = "minReadScore";
-    constexpr auto PbIndex      = "pbi";
     constexpr auto ReportFile   = "reportFile";
     constexpr auto NumThreads   = "numThreads";
     constexpr auto LogFile      = "logFile";
-    constexpr auto ForceOutput  = "force";
     constexpr auto LogLevel     = "logLevel";
 } // namespace OptionNames
 } // namespace CCS
@@ -162,11 +162,11 @@ void Writer(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts, 
               .SetSequenceAndQualities(ccs.Sequence, ccs.Qualities)
               .Tags(tags);
 
-        int64_t vOffset;
-        ccsBam.Write(record, &vOffset);
+        int64_t offset;
+        ccsBam.Write(record, &offset);
 
         if (ccsPbi)
-            ccsPbi->AddRecord(record, vOffset);
+            ccsPbi->AddRecord(record, offset);
     }
     ccsBam.TryFlush();
 }
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
 
     parser.add_option(em + OptionNames::ForceOutput).action("store_true").help("Overwrite OUTPUT file if present.");
     parser.add_option(em + OptionNames::PbIndex).action("store_true").help("Generate a .pbi file for the OUTPUT file.");
-    parser.add_option(em + OptionNames::Zmws).help("Generate CCS for the provided comma-separated holenumber ranges. Default = all");
+    parser.add_option(em + OptionNames::Zmws).help("Generate CCS for the provided comma-separated holenumber ranges only. Default = all");
     parser.add_option(em + OptionNames::MinSnr).type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
     parser.add_option(em + OptionNames::MinReadScore).type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
 
@@ -330,12 +330,12 @@ int main(int argc, char **argv)
     // handle --zmws
     //
     //
-    optional<IntervalTree> whitelist(none);
+    optional<Whitelist> whitelist(none);
     const string wlspec(options.get(OptionNames::Zmws));
     try
     {
         if (!wlspec.empty())
-            whitelist = IntervalTree::FromString(wlspec);
+            whitelist = Whitelist(wlspec);
     }
     catch (...)
     {
@@ -401,7 +401,7 @@ int main(int argc, char **argv)
 
         for (const auto& read : query)
         {
-            string movieName = read.MovieName();
+            const string movieName = read.MovieName();
 
             if (movieNames.find(movieName) == movieNames.end())
             {
@@ -427,7 +427,7 @@ int main(int argc, char **argv)
 
                 holeNumber = read.HoleNumber();
                 auto snr = read.SignalToNoise();
-                if (whitelist && !whitelist->Contains(*holeNumber))
+                if (whitelist && !whitelist->Contains(movieName, *holeNumber))
                 {
                     skipZmw = true;
                 }
