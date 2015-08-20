@@ -1,5 +1,6 @@
 Recent Program Changes:
 
+	*  Expand whitelist functionality to include movie:zmwRange specifications  Aug-20 9b9ca9
 	*  Add ability generate pbi for output BAM  Aug-19 2fc5cd
 	*  Fix BAM output broken by newline in command-line description  Aug-17 979204
 	*  Added CHANGELOG  Aug-14 720a51

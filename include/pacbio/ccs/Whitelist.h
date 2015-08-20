@@ -38,6 +38,7 @@
 #pragma once
 
 #include <map>
+#include <stdexcept>
 #include <string>
 
 #include <boost/algorithm/string.hpp>
@@ -68,21 +69,29 @@ public:
         for (const auto& mspec : mspecs)
         {
             // no craziness policy
-            if (mspec == "all" || mspec == "*:*")
+            if (mspec == "all" || mspec == "*:*" || globalZmws)
                 throw std::invalid_argument("invalid whitelist specification");
 
             std::vector<std::string> parts;
             boost::split(parts, mspec, boost::is_any_of(":"));
 
             // only 1 part, it's a ZMW range
-            if (parts.size() == 1 && !globalZmws)
+            if (parts.size() == 1)
             {
-                globalZmws = IntervalTree::FromString(parts[0]);
+                if (movieZmws.empty())
+                {
+                    globalZmws = IntervalTree::FromString(parts[0]);
+                    continue;
+                }
             }
             // two parts, but *:_? again, it's just a ZMW range
-            else if (parts.size() == 2 && parts[0] == "*" && !globalZmws)
+            else if (parts.size() == 2 && parts[0] == "*")
             {
-                globalZmws = IntervalTree::FromString(parts[1]);
+                if (movieZmws.empty())
+                {
+                    globalZmws = IntervalTree::FromString(parts[1]);
+                    continue;
+                }
             }
             // two parts, either _:_ or _:*?
             //   either grab a range from the movie or everything, respectively
@@ -92,17 +101,22 @@ public:
                     movieZmws[parts[0]] = boost::none;
                 else
                     movieZmws[parts[0]] = IntervalTree::FromString(parts[1]);
+
+                continue;
             }
+
             // anything else is bad, including resetting any range
-            else
-                throw std::invalid_argument("invalid whitelist specification");
+            throw std::invalid_argument("invalid whitelist specification");
         }
     }
 
     bool Contains(const std::string& movieName, int32_t holeNumber)
     {
-        if (all || (globalZmws && globalZmws->Contains(holeNumber)))
+        if (all)
             return true;
+
+        if (globalZmws)
+            return globalZmws->Contains(holeNumber);
 
         auto it = movieZmws.find(movieName);
         if (it != movieZmws.end())
@@ -113,8 +127,8 @@ public:
 
 private:
     bool all;
-    std::map<std::string, boost::optional<IntervalTree>> movieZmws;
     boost::optional<IntervalTree> globalZmws;
+    std::map<std::string, boost::optional<IntervalTree>> movieZmws;
 };
 
 } // namespace CCS
