@@ -68,9 +68,26 @@ def resolved_tool_contract_runner(rtc):
     ]
     zmwRanges = ds.zmwRanges
     if len(zmwRanges) > 0:
+        movie_ids = set([ m for (m,s,e) in zmwRanges ])
+        # XXX this restriction could go away in the future but in practice it
+        # will probably always be satisfied anyway
+        assert len(movie_ids) == 1, \
+            "ZMW ranges restricted to a single movie at present."
         args.append("--zmws=" +
                     ",".join([ "%d-%d" % (s,e) for (m,s,e) in zmwRanges ]))
-    args.extend(ds.toExternalFiles())
+        # TODO let the C++ side handle some of this
+        #args.append("--zmws=" + zmwRanges[0][0] + ":" +
+        #            ",".join([ "%d-%d" % (s,e) for (m,s,e) in zmwRanges ]))
+        # XXX hack to make sure we only pass the names of files that contain
+        # reads from the specified movie
+        movie_id = list(movie_ids)[0]
+        for bam in ds.resourceReaders():
+            for rg in bam.readGroupTable:
+                if rg.MovieName == movie_id:
+                    args.append(bam.filename)
+                    break
+    else:
+        args.extend(ds.toExternalFiles())
     ds.close()
     logging.info(" ".join(args))
     result = run_cmd(
