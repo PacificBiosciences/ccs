@@ -123,13 +123,13 @@ class VirtualTemplate : public AbstractTemplate
 
     void Mutate(const Mutation& m)
     {
-        if (!master_.IsMutated())
+        if (master_.IsMutated())
             throw std::runtime_error("virtual template badness");
     }
 
     void Reset()
     {
-        if (master_.IsMutated())
+        if (!master_.IsMutated())
             throw std::runtime_error("virtual template badness");
     }
 
