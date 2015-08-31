@@ -81,7 +81,7 @@ AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
         return OTHER;
   
     return AbstractIntegrator::AddRead(Evaluator(
-                std::unique_ptr<AbstractTemplate>(new VirtualTemplate(tpl_)),
+                std::unique_ptr<AbstractTemplate>(new VirtualTemplate(tpl_, read.TemplateStart, read.TemplateEnd)),
                 read));
 }
 
