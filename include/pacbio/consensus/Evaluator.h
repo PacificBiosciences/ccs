@@ -1,14 +1,21 @@
 
 #pragma once
 
+#include <cmath>
+#include <memory>
+#include <vector>
+
+#include <pacbio/consensus/Read.h>
+#include <pacbio/consensus/Template.h>
+
 namespace PacBio {
 namespace Consensus {
 
 class Evaluator
 {
 public:
-    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, MappedRead& mr)
-        : tpl_{tpl}
+    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr)
+        : tpl_(std::forward<std::unique_ptr<AbstractTemplate>>(tpl))
         , mr_{mr}
     {
         if (tpl_.get() == nullptr)
@@ -20,16 +27,17 @@ public:
         tpl_->Mutate(mut);
         // do JoinAlphaBeta thingys
         tpl_->Reset();
+        return 0.0;
     }
 
     double LL() const
     {
-        return beta_(0, 0);
+        return 0.0;
     }
 
     std::tuple<double, double> NormalParameters() const
     {
-        return tpl_->NormalParameters(mr.TemplateStart, mr.TemplateEnd);
+        return tpl_->NormalParameters(mr_.TemplateStart, mr_.TemplateEnd);
     }
 
     double ZScore() const
@@ -42,15 +50,12 @@ public:
     void ApplyMutation(const Mutation& mut);
     void ApplyMutations(const std::vector<Mutation>& muts);
 
+    /*
     Matrix* AlphaMatrix();
     Matrix* BetaMatrix();
+    */
 
 private:
-
-    class EvaluatorImpl;
-   
-    std::unique_ptr<EvaluatorImpl> impl_;
-    // todo store smart ptr here instead
     std::unique_ptr<AbstractTemplate> tpl_;
     MappedRead mr_;
 };

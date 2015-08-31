@@ -1,10 +1,13 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+
 namespace PacBio {
 namespace Consensus {
 
-enum MutationType
+enum struct MutationType : uint8_t
 {
     DELETION,
     INSERTION,

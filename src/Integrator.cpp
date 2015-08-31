@@ -1,6 +1,4 @@
 
-#pragma once
-
 #include <utility>
 
 #include <pacbio/consensus/Integrator.h>
@@ -37,7 +35,7 @@ AddReadResult AbstractIntegrator::AddRead(Evaluator&& eval)
 double AbstractIntegrator::LL(const Mutation& mut)
 {
     double ll = 0.0;
-    for (const auto& eval : evals_)
+    for (auto& eval : evals_)
     {
         ll += eval.LL(mut);
     }
@@ -72,10 +70,9 @@ MonoMolecularIntegrator::MonoMolecularIntegrator(const std::string& tpl,
                                                  const IntegratorConfig& cfg,
                                                  const SNR& snr,
                                                  const std::string& model)
-    : cfg_{cfg}
+    : AbstractIntegrator(cfg)
     , mdl_{model}
-    , snr_{snr}
-    , tpl_(tpl, cfg_.ParamTable.At(mdl_), snr)
+    , tpl_(tpl, cfg_.ParamTable->At(mdl_, snr))
 { }
 
 AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
@@ -90,15 +87,15 @@ AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
 
 double MonoMolecularIntegrator::LL(const Mutation& mut)
 {
-    tpl_->Mutation(mut);
+    tpl_.Mutate(mut);
     const double ll = AbstractIntegrator::LL(mut);
-    tpl_->Reset();
+    tpl_.Reset();
     return ll;
 }
 
 MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
                                                    const IntegratorConfig& cfg)
-    : cfg_{cfg}
+    : AbstractIntegrator(cfg)
     , tpl_{tpl}
 { }
 
@@ -106,8 +103,8 @@ AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read, const SN
 {
     return AbstractIntegrator::AddRead(Evaluator(
                 std::unique_ptr<AbstractTemplate>(
-                    new Template(tpl_, cfg_.ParamTable.At(read.Model), snr)),
-                read),
+                    new Template(tpl_, cfg_.ParamTable->At(read.Model, snr))),
+                read));
 }
 
 } // namespace Consensus

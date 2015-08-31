@@ -1,17 +1,8 @@
 
-#pragma once
+#include <pacbio/consensus/Mutation.h>
 
 namespace PacBio {
 namespace Consensus {
-
-enum MutationType
-{
-    DELETION,
-    INSERTION,
-    SUBSTITUTION,
-    ANY_INSERTION,
-    ANY_SUBSTITUTION
-};
 
 Mutation::Mutation(MutationType type, size_t start, char base)
     : base_{base}
@@ -21,27 +12,27 @@ Mutation::Mutation(MutationType type, size_t start, char base)
 
 bool Mutation::IsDeletion() const
 {
-    return type_ == DELETION;
+    return type_ == MutationType::DELETION;
 }
 
 bool Mutation::IsInsertion() const
 {
-    return type_ == INSERTION;
+    return type_ == MutationType::INSERTION;
 }
 
 bool Mutation::IsSubstitution() const
 {
-    return type_ == SUBSTITUTION;
+    return type_ == MutationType::SUBSTITUTION;
 }
 
 bool Mutation::IsAnyInsertion() const
 {
-    return type_ == ANY_INSERTION;
+    return type_ == MutationType::ANY_INSERTION;
 }
 
 bool Mutation::IsAnySubstitution() const
 {
-    return type_ == ANY_SUBSTITUTION;
+    return type_ == MutationType::ANY_SUBSTITUTION;
 }
 
 char Mutation::Base() const
@@ -56,24 +47,29 @@ size_t Mutation::Start() const
 
 size_t Mutation::End() const
 {
-    if (type_ == INSERTION || type_ == ANY_INSERTION)
+    if (type_ == MutationType::INSERTION ||
+        type_ == MutationType::ANY_INSERTION)
         return start_;
     
-    //if (type_ == SUBSTITUTION || type_ == ANY_SUBSTITUTION || type_ == DELETION)
+    // if (type_ == MutationType::SUBSTITUTION ||
+    //     type_ == MutationType::ANY_SUBSTITUTION ||
+    //     type_ == MutationType::DELETION)
     return start_ + 1;
 }
 
-MutationType Type() const
+MutationType Mutation::Type() const
 {
     return type_;
 }
 
 int Mutation::LengthDiff() const
 {
-    if (type_ == SUBSTITUTION || type_ == ANY_SUBSTITUTION)
+    if (type_ == MutationType::SUBSTITUTION ||
+        type_ == MutationType::ANY_SUBSTITUTION)
         return 0;
 
-    if (type_ == INSERTION || type_ == ANY_INSERTION)
+    if (type_ == MutationType::INSERTION ||
+        type_ == MutationType::ANY_INSERTION)
         return 1;
 
     // type_ == deletion

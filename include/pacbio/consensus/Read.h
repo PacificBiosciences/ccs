@@ -1,45 +1,34 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 namespace PacBio {
 namespace Consensus {
 
-class Read
+struct Read
 {
-public:
     Read(const std::string& name,
          const std::string& seq,
-#ifndef NO_COVARIATES
          const std::vector<uint8_t>& cov,
-#endif // NO_COVARIATES
          const std::string& model);
 
-    // TODO(lhepler): inlines?
-    const std::string& Name() const;
-    const std::string& Seq() const;
-#ifndef NO_COVARIATES
-    const std::vector<uint8_t>& Cov() const;
-#endif // NO_COVARIATES
-    const std::string& Model() const;
-
-private:
-    std::string name_;
-    std::string seq_;
-#ifndef NO_COVARIATES
-    std::vector<uint8_t> cov_;
-#endif // NO_COVARIATES
-    std::string mdl_;
+    std::string Name;
+    std::string Seq;
+    std::vector<uint8_t> Cov;
+    std::string Model;
 };
 
-enum StrandEnum
+enum struct StrandEnum : uint8_t
 {
     FORWARD,
     REVERSE
 };
 
-class MappedRead : public Read
+struct MappedRead : public Read
 {
-public:
     MappedRead(const Read& read,
                StrandEnum strand,
                size_t templateStart,
@@ -47,19 +36,11 @@ public:
                bool pinStart = false,
                bool pinEnd = false);
 
-    // TODO(lhepler): inlines?
-    StrandEnum Strand() const;
-    size_t TemplateStart() const;
-    size_t TemplateEnd() const;
-    bool PinStart() const;
-    bool PinEnd() const;
-
-private:
-    StrandEnum strand_;
-    size_t tplStart_;
-    size_t tplEnd_;
-    bool pinStart_;
-    bool pinEnd_;
+    StrandEnum Strand;
+    size_t TemplateStart;
+    size_t TemplateEnd;
+    bool PinStart;
+    bool PinEnd;
 };
 
 } // namespace Consensus

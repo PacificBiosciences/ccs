@@ -1,12 +1,22 @@
 
 #pragma once
 
+#include <pacbio/consensus/Evaluator.h>
+#include <pacbio/consensus/Exceptions.h>
+#include <pacbio/consensus/Mutation.h>
+#include <pacbio/consensus/ParameterTable.h>
+
 namespace PacBio {
 namespace Consensus {
 
-struct IntegratorConfig
+class IntegratorConfig
 {
-    ParameterTable ParamTable;
+public:
+    IntegratorConfig(const ParameterTable& pt = ParameterTable::Default(),
+                     double minZScore = -5.0);
+    IntegratorConfig(double minZScore = -5.0);
+
+    ParameterTable const* ParamTable;
     double MinZScore;
 };
 
@@ -30,7 +40,7 @@ public:
     virtual void ApplyMutations(const std::vector<Mutation>& muts) = 0;
 
 protected:
-    IntegratorBase(const IntegratorConfig& cfg)
+    AbstractIntegrator(const IntegratorConfig& cfg)
         : cfg_{cfg}
     { }
 
@@ -54,7 +64,6 @@ public:
 
 private:
     std::string mdl_;
-    SNR snr_;
     Template tpl_;
 };
 

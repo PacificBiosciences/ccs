@@ -1,0 +1,73 @@
+########################################################################
+# CMake build script for PacBioConsensus library.
+########################################################################
+
+cmake_policy(SET CMP0048 NEW)  # lets us set the version in project()
+project(PacBioConsensus VERSION 0.0.1 LANGUAGES CXX C)
+cmake_minimum_required(VERSION 3.0)
+
+# required packages
+if (NOT Boost_INCLUDE_DIRS)
+    find_package(Boost 1.58.0 REQUIRED)
+endif()
+
+find_package(Threads REQUIRED)
+
+if (NOT ZLIB_INCLUDE_DIRS OR
+    NOT ZLIB_LIBRARIES)
+    find_package(ZLIB REQUIRED)
+endif()
+
+# project version
+set(PacBioConsensus_VERSION
+  "${PacBioConsensus_VERSION_MAJOR}.${PacBioConsensus_VERSION_MINOR}.${PacBioConsensus_VERSION_PATCH}"
+)
+
+# main project paths
+set(PacBioConsensus_RootDir           ${PacBioConsensus_SOURCE_DIR})
+set(PacBioConsensus_IncludeDir        ${PacBioConsensus_RootDir}/include)
+set(PacBioConsensus_LibDir            ${PacBioConsensus_RootDir}/lib)
+set(PacBioConsensus_SourceDir         ${PacBioConsensus_RootDir}/src)
+set(PacBioConsensus_TestsDir          ${PacBioConsensus_RootDir}/tests)
+
+file(MAKE_DIRECTORY                 ${PacBioConsensus_LibDir})
+
+file(GLOB_RECURSE PacBioConsensus_CPP "${PacBioConsensus_SourceDir}/*.cpp")
+file(GLOB_RECURSE PacBioConsensus_HPP "${PacBioConsensus_IncludeDir}/*.hpp")
+
+# shared CXX flags for src & tests
+include(CheckCXXCompilerFlag)
+set(PacBioConsensus_CXX_FLAGS "-std=c++11 -Wall -pedantic -msse3 -ferror-limit=5")
+
+# silence gmock warning
+check_cxx_compiler_flag("-Wno-unused-variable" HAS_NO_UNUSED_VARIABLE)
+if(HAS_NO_UNUSED_VARIABLE)
+    set(PacBioConsensus_CXX_FLAGS "${PacBioConsensus_CXX_FLAGS} -Wno-unused-variable")
+endif(HAS_NO_UNUSED_VARIABLE)
+
+# includes
+include_directories(. ${PacBioConsensus_IncludeDir})
+include_directories(SYSTEM
+    ${Boost_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIRS}
+)
+
+# flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioConsensus_CXX_FLAGS}")
+
+# gperftools support
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_EXE_LINKER_FLAGS "-Wl,-no_pie")
+endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
+# libpbccs.a
+add_library(PacBioConsensus STATIC
+    ${PacBioConsensus_CPP}
+    ${PacBioConsensus_HPP}
+)
+set_target_properties(PacBioConsensus PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${PacBioConsensus_LibDir}
+)
+
+# testing
+#add_subdirectory(${PacBioConsensus_TestsDir})

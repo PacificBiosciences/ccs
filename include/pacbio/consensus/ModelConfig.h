@@ -2,15 +2,21 @@
 #pragma once
 
 #include <array>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include <pacbio/consensus/ParameterTable.h>
+
 namespace PacBio {
 namespace Consensus {
+namespace detail {
 
-typedef std::array<double, 4> SNR;
+extern uint8_t TranslationTable[256];
+
+} // namespace detail
 
 struct TemplatePosition
 {
@@ -21,7 +27,7 @@ struct TemplatePosition
     double Deletion;
 };
 
-enum MoveType
+enum struct MoveType : uint8_t
 {
     MATCH    = 0,
     BRANCH   = 1,
@@ -32,26 +38,21 @@ enum MoveType
 class ModelConfig
 {
 public:
-    virtual std::vector<TemplatePosition> Populate(
-            const std::string& tpl) const = 0;
-    virtual double CovariatePr(MoveType move, uint8_t cov) const = 0;
-    virtual double MiscallPr(char from, char to) const = 0;
-};
+    virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
+    virtual double BaseEmissionPr(char from, char to) const = 0;
+    virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
 
-class ParameterTable
-{
-public:
-    bool Contains(const std::string& name) const;
-    std::unique_ptr<ModelConfig> At(const std::string& name, const SNR& snr) const;
-
-    static const ParameterTable& Default();
-
-private:
-    static ParameterTable& Default_();
-
-    std::map<std::string, std::function<ModelConfig(const SNR&)>> tbl_;
-
-    friend class ModelConfig;
+protected:
+    template<typename T>
+    static bool Register()
+    {
+        auto& tbl = ParameterTable::Default_();
+        tbl.tbl_[T::Name()] = [] (const SNR& snr)
+        {
+            return std::unique_ptr<ModelConfig>(new T(snr));
+        };
+        return true;
+    }
 };
 
 } // namespace Consensus
