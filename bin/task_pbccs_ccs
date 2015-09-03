@@ -49,8 +49,8 @@ def resolved_tool_contract_runner(rtc):
     """
     ds = SubreadSet(rtc.task.input_files[0])
     output_file = rtc.task.output_files[0]
-    if output_file.endswith(".dataset.xml"):
-        output_file = re.sub(".dataset.xml", ".bam", output_file)
+    if output_file.endswith(".consensusreadset.xml"):
+        output_file = re.sub(".consensusreadset.xml", ".bam", output_file)
     assert output_file.endswith(".bam")
     args = [
         "ccs",
