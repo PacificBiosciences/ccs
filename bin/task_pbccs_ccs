@@ -56,6 +56,7 @@ def resolved_tool_contract_runner(rtc):
         "ccs",
         "--pbi",
         "--force",
+        "--logLevel=DEBUG",
         "--reportFile=%s" % rtc.task.output_files[1],
         "--numThreads=%d" % rtc.task.nproc,
         "--minSnr=%g" % rtc.task.options[Constants.MIN_SNR_ID],
