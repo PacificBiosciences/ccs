@@ -252,8 +252,12 @@ namespace Arrow {
                 }
 
                 const double gs = BaselineScore();
-                const double zg = (gs - gmean) / std::sqrt(gvar);
-                const double za = (gs/nreads - gmean/nreads) / std::sqrt(gvar/nreads);
+                const double zg = (gvar == 0.0)
+                    ? std::numeric_limits<double>::quiet_NaN()
+                    : (gs - gmean) / std::sqrt(gvar);
+                const double za = (nreads == 0 || gvar == 0.0)
+                    ? std::numeric_limits<double>::quiet_NaN()
+                    : (gs/nreads - gmean/nreads) / std::sqrt(gvar/nreads);
 
                 return std::make_pair(std::make_pair(zg, za), zScores);
             }

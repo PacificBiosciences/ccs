@@ -310,7 +310,7 @@ namespace Arrow {
 
             const double zscore = (ll - mean) / std::sqrt(var);
 
-            if (isinf(ll) || zscore < threshold)
+            if (!std::isfinite(ll) || !std::isfinite(zscore) || zscore < threshold)
             {
                 res = AddReadResult::POOR_ZSCORE;
                 delete scorer;
