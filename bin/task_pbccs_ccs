@@ -14,12 +14,14 @@ import os
 import sys
 
 from pbcommand.models import FileTypes, SymbolTypes, get_pbparser
+from pbcommand.models.report import Report, Attribute
 from pbcommand.cli import pbparser_runner
 from pbcommand.utils import setup_log
 from pbcommand.engine import run_cmd
 from pbcore.io import SubreadSet, ConsensusReadSet
 
 __version__ = "0.1"
+
 
 class Constants(object):
     TOOL_ID = "pbccs.tasks.ccs"
@@ -38,9 +40,22 @@ class Constants(object):
     MIN_ZSCORE_DEFAULT = -5
     MAX_DROP_FRAC_ID = "pbccs.task_options.max_drop_fraction"
     MAX_DROP_FRAC_DEFAULT = 0.34
+    #
+    REPORT_FIELDS = {
+        "CCS generated": "num_ccs_reads",
+        "Below SNR threshold": "num_below_snr_threshold",
+        "No usable subreads": "num_no_usable_subreads",
+        "Insert size too small": "num_insert_size_too_small",
+        "Not enough full passes": "num_not_enough_full_passes",
+        "Too many unusable subreads": "num_too_many_unusable_subreads",
+        "CCS did not converge": "num_not_converged",
+        "CCS below minimum predicted accuracy": "num_below_min_accuracy",
+    }
+
 
 def args_runner(args):
     raise NotImplementedError("Please call 'ccs' directly.")
+
 
 def resolved_tool_contract_runner(rtc):
     """
@@ -52,12 +67,14 @@ def resolved_tool_contract_runner(rtc):
     if output_file.endswith(".consensusreadset.xml"):
         output_file = re.sub(".consensusreadset.xml", ".bam", output_file)
     assert output_file.endswith(".bam")
+    report_file = rtc.task.output_files[1]
+    csv_file = os.path.splitext(report_file)[0] + ".csv"
     args = [
         "ccs",
         "--pbi",
         "--force",
         "--logLevel=DEBUG",
-        "--reportFile=%s" % rtc.task.output_files[1],
+        "--reportFile=%s" % csv_file,
         "--numThreads=%d" % rtc.task.nproc,
         "--minSnr=%g" % rtc.task.options[Constants.MIN_SNR_ID],
         "--minReadScore=%g" % rtc.task.options[Constants.MIN_READ_SCORE_ID],
@@ -69,15 +86,15 @@ def resolved_tool_contract_runner(rtc):
     ]
     zmwRanges = ds.zmwRanges
     if len(zmwRanges) > 0:
-        movie_ids = set([ m for (m,s,e) in zmwRanges ])
+        movie_ids = set([m for (m, s, e) in zmwRanges])
         # XXX this restriction could go away in the future but in practice it
         # will probably always be satisfied anyway
         assert len(movie_ids) == 1, \
             "ZMW ranges restricted to a single movie at present."
         args.append("--zmws=" +
-                    ",".join([ "%d-%d" % (s,e) for (m,s,e) in zmwRanges ]))
+                    ",".join(["%d-%d" % (s, e) for (m, s, e) in zmwRanges]))
         # TODO let the C++ side handle some of this
-        #args.append("--zmws=" + zmwRanges[0][0] + ":" +
+        # args.append("--zmws=" + zmwRanges[0][0] + ":" +
         #            ",".join([ "%d-%d" % (s,e) for (m,s,e) in zmwRanges ]))
         # XXX hack to make sure we only pass the names of files that contain
         # reads from the specified movie
@@ -101,7 +118,25 @@ def resolved_tool_contract_runner(rtc):
     ccs = ConsensusReadSet(output_file)
     ccs.write(rtc.task.output_files[0])
     ccs.close()
+    _process_csv(csv_file, report_file)
     return 0
+
+
+def _process_csv(csv_file, report_file):
+    logging.info("reading attributes from %s" % csv_file)
+    attributes = []
+    with open(csv_file) as f:
+        for line in f.read().splitlines():
+            fields = line.split(",")
+            label = re.sub(".*\ \-\-\ ", "", fields[0])
+            a = Attribute(Constants.REPORT_FIELDS[label], int(fields[1]),
+                          name=label)
+            attributes.append(a)
+    r = Report("pbccs_tasks_ccs", attributes=attributes)
+    r.write_json(report_file)
+    logging.info("wrote %s" % report_file)
+    return r
+
 
 def get_parser():
     p = get_pbparser(
@@ -112,41 +147,42 @@ def get_parser():
         driver_exe=Constants.DRIVER_EXE,
         nproc=SymbolTypes.MAX_NPROC)
     p.add_input_file_type(FileTypes.DS_SUBREADS, "subread_set",
-        "SubreadSet", "Subread DataSet or .bam file")
+                          "SubreadSet", "Subread DataSet or .bam file")
     p.add_output_file_type(FileTypes.DS_CCS, "bam_output",
-        name=".bam file",
-        description="Output .bam file",
-        default_name="ccs.bam")
-    p.add_output_file_type(FileTypes.CSV, "report_csv",
-        name="CSV report",
-        description="CSV report",
-        default_name="ccs_report.csv")
+                           name=".bam file",
+                           description="Output .bam file",
+                           default_name="ccs.bam")
+    p.add_output_file_type(FileTypes.REPORT, "report_json",
+                           name="JSON report",
+                           description="JSON report",
+                           default_name="ccs_report.json")
     p.add_float(Constants.MIN_SNR_ID, "minSnr",
-        default=Constants.MIN_SNR_DEFAULT,
-        name="Minimum SNR",
-        description="Minimum SNR of input subreads")  
+                default=Constants.MIN_SNR_DEFAULT,
+                name="Minimum SNR",
+                description="Minimum SNR of input subreads")
     p.add_float(Constants.MIN_READ_SCORE_ID, "minReadScore",
-        default=Constants.MIN_READ_SCORE_DEFAULT,
-        name="Minimum read score",
-        description="Minimum read score of input subreads")
+                default=Constants.MIN_READ_SCORE_DEFAULT,
+                name="Minimum read score",
+                description="Minimum read score of input subreads")
     p.add_int(Constants.MIN_LENGTH_ID, "minLength",
-        default=Constants.MIN_LENGTH_DEFAULT,
-        name="Minimum length",
-        description="Minimum length of subreads to use for generating CCS")
+              default=Constants.MIN_LENGTH_DEFAULT,
+              name="Minimum length",
+              description="Minimum length of subreads to use for generating CCS")
     p.add_int(Constants.MIN_PASSES_ID, "minPasses",
-        default=Constants.MIN_PASSES_DEFAULT,
-        name="Minimum passes",
-        description="Minimum number of subreads required to generate CCS")
+              default=Constants.MIN_PASSES_DEFAULT,
+              name="Minimum passes",
+              description="Minimum number of subreads required to generate CCS")
     p.add_float(Constants.MIN_ZSCORE_ID, "minZScore",
-        default=Constants.MIN_ZSCORE_DEFAULT,
-        name="Min. Z-score",
-        description="Minimum z-score to use a subread")
+                default=Constants.MIN_ZSCORE_DEFAULT,
+                name="Min. Z-score",
+                description="Minimum z-score to use a subread")
     p.add_float(Constants.MAX_DROP_FRAC_ID, "maxDropFraction",
-        default=Constants.MAX_DROP_FRAC_DEFAULT,
-        name="Max. dropped fraction",
-        description="Maximum fraction of subreads that can be dropped before "+
-                    "giving up")
+                default=Constants.MAX_DROP_FRAC_DEFAULT,
+                name="Max. dropped fraction",
+                description="Maximum fraction of subreads that can be dropped before " +
+                "giving up")
     return p
+
 
 def main(argv=sys.argv):
     logging.basicConfig(level=logging.INFO)
