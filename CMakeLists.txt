@@ -30,7 +30,7 @@ set(PacBioConsensus_LibDir            ${PacBioConsensus_RootDir}/lib)
 set(PacBioConsensus_SourceDir         ${PacBioConsensus_RootDir}/src)
 set(PacBioConsensus_TestsDir          ${PacBioConsensus_RootDir}/tests)
 
-file(MAKE_DIRECTORY                 ${PacBioConsensus_LibDir})
+file(MAKE_DIRECTORY                   ${PacBioConsensus_LibDir})
 
 file(GLOB_RECURSE PacBioConsensus_CPP "${PacBioConsensus_SourceDir}/*.cpp")
 file(GLOB_RECURSE PacBioConsensus_HPP "${PacBioConsensus_IncludeDir}/*.hpp")
@@ -61,13 +61,13 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # libpbccs.a
-add_library(PacBioConsensus STATIC
+add_library(pbconsensus STATIC
     ${PacBioConsensus_CPP}
     ${PacBioConsensus_HPP}
 )
-set_target_properties(PacBioConsensus PROPERTIES
+set_target_properties(pbconsensus PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${PacBioConsensus_LibDir}
 )
 
 # testing
-#add_subdirectory(${PacBioConsensus_TestsDir})
+add_subdirectory(${PacBioConsensus_TestsDir})

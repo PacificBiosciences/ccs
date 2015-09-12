@@ -1,10 +1,11 @@
 
 #pragma once
 
+#include <functional>
+
 #include <pacbio/consensus/Evaluator.h>
 #include <pacbio/consensus/Exceptions.h>
 #include <pacbio/consensus/Mutation.h>
-#include <pacbio/consensus/ParameterTable.h>
 
 namespace PacBio {
 namespace Consensus {
@@ -12,12 +13,11 @@ namespace Consensus {
 class IntegratorConfig
 {
 public:
-    IntegratorConfig(const ParameterTable& pt = ParameterTable::Default(),
-                     double minZScore = -5.0);
-    IntegratorConfig(double minZScore = -5.0);
+    IntegratorConfig(double minZScore = -5.0,
+                     double scoreDiff = 12.5);
 
-    ParameterTable const* ParamTable;
     double MinZScore;
+    double ScoreDiff;
 };
 
 enum AddReadResult
@@ -31,18 +31,25 @@ enum AddReadResult
 class AbstractIntegrator
 {
 public:
+    virtual ~AbstractIntegrator();
+
+    virtual size_t Length() const = 0;
+    virtual char operator[](size_t i) const = 0;
+    virtual operator std::string() const = 0;
+
     virtual double LL(const Mutation& mut);
     
     double LL() const;
     double AvgZScore() const;
 
     virtual void ApplyMutation(const Mutation& mut) = 0;
-    virtual void ApplyMutations(const std::vector<Mutation>& muts) = 0;
+    virtual void ApplyMutations(std::vector<Mutation>* muts) = 0;
 
 protected:
-    AbstractIntegrator(const IntegratorConfig& cfg)
-        : cfg_{cfg}
-    { }
+    AbstractIntegrator(const IntegratorConfig& cfg);
+
+    // move constructor
+    AbstractIntegrator(AbstractIntegrator&&);
 
     AddReadResult AddRead(Evaluator&& eval); 
     
@@ -58,9 +65,23 @@ public:
                             const SNR& snr,
                             const std::string& model);
 
-    AddReadResult AddRead(const MappedRead& read);
+    // move constructor
+    MonoMolecularIntegrator(MonoMolecularIntegrator&&);
+
+    size_t Length() const;
+    char operator[](size_t i) const;
+    operator std::string() const;
 
     double LL(const Mutation& mut);
+
+    inline
+    double LL() const
+    { return AbstractIntegrator::LL(); }
+
+    void ApplyMutation(const Mutation& mut);
+    void ApplyMutations(std::vector<Mutation>* muts);
+
+    AddReadResult AddRead(const MappedRead& read);
 
 private:
     std::string mdl_;
@@ -73,9 +94,18 @@ public:
     MultiMolecularIntegrator(const std::string& tpl,
                              const IntegratorConfig& cfg);
 
+    size_t Length() const;
+    char operator[](size_t i) const;
+    operator std::string() const;
+
+    void ApplyMutation(const Mutation& mut);
+    void ApplyMutations(std::vector<Mutation>* muts);
+
     AddReadResult AddRead(const MappedRead& read, const SNR& snr);
 
 private:
+    friend struct std::hash<MultiMolecularIntegrator>;
+
     std::string tpl_;
 };
 

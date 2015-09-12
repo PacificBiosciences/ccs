@@ -7,7 +7,7 @@
 #include <utility>
 
 #include <pacbio/consensus/poa/PoaGraph.h>
-#include <pacbio/consensus/Interval.h>
+
 
 namespace PacBio {
 namespace Consensus {
@@ -19,8 +19,7 @@ typedef std::vector<SdpAnchor> SdpAnchorVector;
 
 class PoaGraphImpl;
 
-using ConsensusCore::PoaGraph;
-using ConsensusCore::Interval;
+// using PacBio::Consensus::PoaGraph;
 
 //
 // SdpRangeFinder objects are responsible for identifying the range
@@ -37,7 +36,7 @@ using ConsensusCore::Interval;
 class SdpRangeFinder
 {
 private:
-    std::map<PoaGraph::Vertex, Interval> alignableReadIntervalByVertex_;
+    std::map<PoaGraph::Vertex, std::tuple<size_t, size_t>> alignableReadIntervalByVertex_;
 
 public:
     virtual ~SdpRangeFinder();
@@ -47,7 +46,7 @@ public:
                          const std::string& consensusSequence,
                          const std::string& readSequence);
 
-    Interval FindAlignableRange(PoaGraph::Vertex v);
+    std::tuple<size_t, size_t> FindAlignableRange(PoaGraph::Vertex v);
 
 protected:
     virtual SdpAnchorVector FindAnchors(const std::string& consensusSequence,

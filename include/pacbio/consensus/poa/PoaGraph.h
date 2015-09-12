@@ -47,13 +47,16 @@
 
 namespace PacBio {
 namespace Consensus {
-    
+
+// some forward declaration
 struct PoaConsensus;
 
-namespace detail
-{
-    class PoaGraphImpl;
-}
+namespace detail {
+
+class PoaGraphImpl;
+class SdpRangeFinder;
+
+}  // namespace detail
 
 class PoaAlignmentMatrix
 {

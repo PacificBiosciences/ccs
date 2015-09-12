@@ -15,10 +15,18 @@ struct Read
          const std::vector<uint8_t>& cov,
          const std::string& model);
 
+    Read(const std::string& name,
+         const std::string& seq,
+         const std::string& model);
+
     std::string Name;
     std::string Seq;
     std::vector<uint8_t> Cov;
     std::string Model;
+
+    inline
+    size_t Length() const
+    { return Seq.length(); }
 };
 
 enum struct StrandEnum : uint8_t

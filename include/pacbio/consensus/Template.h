@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <cassert>
-#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -17,6 +15,9 @@ namespace Consensus {
 class AbstractTemplate
 {
 public:
+    virtual ~AbstractTemplate();
+
+    virtual size_t Length() const = 0;
     virtual const TemplatePosition& operator[](size_t i) const = 0;
 
     // virtual mutations (for mutation testing purposes)
@@ -26,11 +27,11 @@ public:
 
     // actually apply mutations
     virtual void ApplyMutation(const Mutation& mut) = 0;
-    virtual void ApplyMutations(const std::vector<Mutation>& muts) = 0;
+    virtual void ApplyMutations(std::vector<Mutation>* muts);
 
     // access model configuration
-    virtual double BaseEmissionPr(char from, char to) const;
-    virtual double CovEmissionPr(MoveType move, uint8_t cov) const;
+    virtual double BaseEmissionPr(char from, char to) const = 0;
+    virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
 
     std::tuple<double, double> NormalParameters(size_t start, size_t end) const;
 
@@ -41,36 +42,32 @@ private:
 class Template : public AbstractTemplate
 {
 public:
-    Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg)
-        : cfg_(std::forward<std::unique_ptr<ModelConfig>>(cfg))
-        , tpl_{cfg_->Populate(tpl)}
-    { }
+    Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg);
 
-    const TemplatePosition& operator[](size_t i) const
-    { return tpl_[i]; }
+    size_t Length() const;
+    const TemplatePosition& operator[](size_t i) const;
 
     bool IsMutated() const;
     void Mutate(const Mutation& mut);
     void Reset();
 
     void ApplyMutation(const Mutation& mut);
-    void ApplyMutations(const std::vector<Mutation>& muts);
 
     inline
     double BaseEmissionPr(char from, char to) const
-    {
-        return cfg_->BaseEmissionPr(from, to);
-    }
+    { return cfg_->BaseEmissionPr(from, to); }
 
     inline
     double CovEmissionPr(MoveType move, uint8_t cov) const
-    {
-        return cfg_->CovEmissionPr(move, cov);        
-    }
+    { return cfg_->CovEmissionPr(move, cov); }
 
 private:
     std::unique_ptr<ModelConfig> cfg_;
     std::vector<TemplatePosition> tpl_;
+    bool mutated_;
+    size_t mutPos_;
+    int mutOff_;
+    TemplatePosition mutTpl_[2];
 
     friend class VirtualTemplate;
 };
@@ -78,58 +75,43 @@ private:
 class VirtualTemplate : public AbstractTemplate
 {
 public:
-    VirtualTemplate(const Template& master, size_t start, size_t end)
-        : master_{&master}
-        , start_{start}
-        , end_{end}
-    { assert(start_ < end_); }
+    VirtualTemplate(const Template& master, size_t start, size_t end);
+
+    inline
+    size_t Length() const
+    { return end_ - start_ + master_.mutOff_; }
 
     inline
     const TemplatePosition& operator[](size_t i) const
-    { return (*master_)[i - start_]; }
+    { return master_[i - start_]; }
 
     inline
     bool IsMutated() const
-    {
-        return master_->IsMutated();
-    }
+    { return master_.IsMutated(); }
 
     inline
     void Mutate(const Mutation& m)
-    {
-        if (!master_->IsMutated())
-            throw std::runtime_error("virtual template badness");
-    }
+    { if (!master_.IsMutated()) throw std::runtime_error("virtual template badness"); }
 
     inline
     void Reset()
-    {
-        if (master_->IsMutated())
-            throw std::runtime_error("virtual template badness");
-    }
-
-    inline
-    void ApplyMutation(const Mutation& mut)
     { }
+    // I would like to do the following, but I don't reset the master
+    //   before resetting the children
+    // { if (master_->IsMutated()) throw std::runtime_error("virtual template badness"); }
 
-    inline
-    void ApplyMutations(const std::vector<Mutation>& muts)
-    { }
+    void ApplyMutation(const Mutation& mut);
 
     inline
     double BaseEmissionPr(char from, char to) const
-    {
-        return master_->cfg_->BaseEmissionPr(from, to);
-    }
+    { return master_.cfg_->BaseEmissionPr(from, to); }
 
     inline
     double CovEmissionPr(MoveType move, uint8_t cov) const
-    {
-        return master_->cfg_->CovEmissionPr(move, cov);
-    }
+    { return master_.cfg_->CovEmissionPr(move, cov); }
 
 private:
-    Template const* master_;
+    Template const& master_;
     size_t start_;
     size_t end_;
 };

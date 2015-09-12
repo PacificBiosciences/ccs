@@ -3,6 +3,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <ostream>
+#include <string>
+#include <vector>
 
 namespace PacBio {
 namespace Consensus {
@@ -22,8 +25,11 @@ class ScoredMutation;
 class Mutation
 {
 public:
+    char Base;
+    MutationType Type;
+
     Mutation(MutationType type, size_t start, char base = '-');
-   
+
     // TODO(lhepler): do we *really* need these?
     bool IsDeletion() const;
     bool IsInsertion() const;
@@ -31,34 +37,53 @@ public:
     bool IsAnyInsertion() const;
     bool IsAnySubstitution() const;
 
-    char Base() const;
     size_t Start() const;
     size_t End() const;
-    MutationType Type() const;
 
     int LengthDiff() const;
 
+    bool operator==(const Mutation& other) const;
+    operator std::string() const;
+
     ScoredMutation WithScore(double score) const;
 
+    static
+    bool SiteComparer(const Mutation& lhs, const Mutation& rhs)
+    {
+        if (lhs.End() < rhs.End())
+            return true;
+
+        else if (lhs.End() == rhs.End() && lhs.Start() < rhs.Start())
+            return true;
+
+        return false;
+    }
+
 private:
-    char base_;
     size_t start_;
-    MutationType type_;
 };
 
 class ScoredMutation : public Mutation
 {
 public:
-    double Score() const;
+    double Score;
+
+    static
+    bool ScoreComparer(const ScoredMutation& lhs, const ScoredMutation& rhs)
+    { return lhs.Score < rhs.Score; }
 
 private:
     ScoredMutation(const Mutation& mut, double score);
 
-    double score_;
-
     // so Mutation can access the constructor
     friend class Mutation;
 };
+
+std::ostream& operator<<(std::ostream& out, MutationType type);
+std::ostream& operator<<(std::ostream& out, const Mutation& mut);
+std::ostream& operator<<(std::ostream& out, const ScoredMutation& smut);
+
+std::string ApplyMutations(const std::string& tpl, std::vector<Mutation>* muts);
 
 } // namespace Consensus
 } // namespace PacBio

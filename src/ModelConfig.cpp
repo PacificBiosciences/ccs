@@ -1,7 +1,5 @@
 
-#include <cmath>
-#include <stdexcept>
-#include <vector>
+#include <cstdint>
 
 #include <pacbio/consensus/ModelConfig.h>
 
@@ -29,28 +27,16 @@ uint8_t TranslationTable[256] = {
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
 };
 
-} // namespace detail
+}  // namespace detail
 
-bool ParameterTable::Contains(const std::string& name) const
+std::ostream& operator<<(std::ostream& out, const TemplatePosition& pos)
 {
-    return tbl_.find(name) != tbl_.end();
+    return out << "TemplatePosition(" << pos.Base <<
+                                 ", " << pos.Match <<
+                                 ", " << pos.Branch <<
+                                 ", " << pos.Stick <<
+                                 ", " << pos.Deletion << ')';
 }
 
-std::unique_ptr<ModelConfig> ParameterTable::At(const std::string& name, const SNR& snr) const
-{
-    return tbl_.at(name)(snr);
-}
-
-ParameterTable& ParameterTable::Default_()
-{
-    static ParameterTable tbl;
-    return tbl;
-}
-
-const ParameterTable& ParameterTable::Default()
-{
-    return Default_();
-}
-
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

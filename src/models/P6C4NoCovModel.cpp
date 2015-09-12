@@ -3,7 +3,8 @@
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
-#include <pacbio/consensus/ParameterTable.h>
+
+#include "../ModelFactory.h"
 
 namespace PacBio {
 namespace Consensus {
@@ -11,6 +12,8 @@ namespace detail {
 
 class P6C4NoCovModel : public ModelConfig
 {
+    REGISTER_MODEL(P6C4NoCovModel);
+
 public:
     P6C4NoCovModel(const SNR& snr);
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
@@ -21,10 +24,10 @@ public:
     { return "P6/C4"; }
 
 private:
-    static bool IsRegistered;
-
     SNR snr_;
 };
+
+REGISTER_MODEL_IMPL(P6C4NoCovModel);
 
 namespace { // anonymous
 
@@ -85,8 +88,7 @@ P6C4NoCovModel::P6C4NoCovModel(const SNR& snr)
     : snr_(snr)
 { }
 
-std::vector<TemplatePosition>
-P6C4NoCovModel::Populate(const std::string& tpl) const
+std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) const
 {
     std::vector<TemplatePosition> result;
 
@@ -103,7 +105,7 @@ P6C4NoCovModel::Populate(const std::string& tpl) const
         const auto params = P6C4NoCovParams[b][hp];
         const double snr = snr_[b], snr2 = snr * snr, snr3 = snr2 * snr;
         double tprobs[3];
-        double sum = 0.0;
+        double sum = 1.0;
 
         for (size_t j = 0; j < 3; ++j)
         {
@@ -116,14 +118,17 @@ P6C4NoCovModel::Populate(const std::string& tpl) const
             sum += xb;
         }
 
+        for (size_t j = 0; j < 3; ++j)
+            tprobs[j] /= sum;
+
         result.emplace_back(
             TemplatePosition
             {
                 tpl[i - 1],
-                tprobs[1], // match
-                1.0 / sum, // branch
-                tprobs[2], // stick
-                tprobs[0]  // deletion
+                tprobs[1],  // match
+                1.0 / sum,  // branch
+                tprobs[2],  // stick
+                tprobs[0]   // deletion
             });
     }
 
@@ -157,8 +162,6 @@ double P6C4NoCovModel::BaseEmissionPr(char from, char to) const
 
     return pr / 3.0;
 }
-
-bool P6C4NoCovModel::IsRegistered = ModelConfig::Register<P6C4NoCovModel>();
 
 } // namespace detail
 } // namespace Consensus

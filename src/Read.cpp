@@ -14,6 +14,15 @@ Read::Read(const std::string& name,
     , Model{model}
 { }
 
+Read::Read(const std::string& name,
+           const std::string& seq,
+           const std::string& model)
+    : Name{name}
+    , Seq{seq}
+    , Cov(seq.length(), 0)
+    , Model{model}
+{ }
+
 MappedRead::MappedRead(const Read& read,
                        StrandEnum strand,
                        size_t templateStart,

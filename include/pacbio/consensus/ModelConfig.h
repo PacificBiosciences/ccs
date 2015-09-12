@@ -5,10 +5,9 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
-
-#include <pacbio/consensus/ParameterTable.h>
 
 namespace PacBio {
 namespace Consensus {
@@ -18,6 +17,8 @@ extern uint8_t TranslationTable[256];
 
 } // namespace detail
 
+typedef std::array<double, 4> SNR;
+
 struct TemplatePosition
 {
     char Base;
@@ -26,6 +27,8 @@ struct TemplatePosition
     double Stick;
     double Deletion;
 };
+
+std::ostream& operator<<(std::ostream&, const TemplatePosition&);
 
 enum struct MoveType : uint8_t
 {
@@ -38,21 +41,10 @@ enum struct MoveType : uint8_t
 class ModelConfig
 {
 public:
+    virtual ~ModelConfig() { }
     virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
     virtual double BaseEmissionPr(char from, char to) const = 0;
     virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
-
-protected:
-    template<typename T>
-    static bool Register()
-    {
-        auto& tbl = ParameterTable::Default_();
-        tbl.tbl_[T::Name()] = [] (const SNR& snr)
-        {
-            return std::unique_ptr<ModelConfig>(new T(snr));
-        };
-        return true;
-    }
 };
 
 } // namespace Consensus

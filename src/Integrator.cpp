@@ -1,16 +1,37 @@
 
+#include <cmath>
 #include <utility>
 
 #include <pacbio/consensus/Integrator.h>
 
+#include "ModelFactory.h"
+
 namespace PacBio {
 namespace Consensus {
+
+IntegratorConfig::IntegratorConfig(const double minZScore,
+                                   const double scoreDiff)
+    : MinZScore{minZScore}
+    , ScoreDiff{scoreDiff}
+{ }
+
+AbstractIntegrator::AbstractIntegrator(const IntegratorConfig& cfg)
+    : cfg_{cfg}
+{ }
+
+AbstractIntegrator::AbstractIntegrator(AbstractIntegrator&& ai)
+    : cfg_{ai.cfg_}
+    , evals_{std::move(ai.evals_)}
+{ }
+
+AbstractIntegrator::~AbstractIntegrator()
+{ }
 
 AddReadResult AbstractIntegrator::AddRead(Evaluator&& eval)
 {
     try
     {
-        evals_.emplace_back(std::forward<Evaluator>(eval));
+        evals_.emplace_back(std::move(eval));
     }
     catch (AlphaBetaMismatch& e)
     {
@@ -72,7 +93,13 @@ MonoMolecularIntegrator::MonoMolecularIntegrator(const std::string& tpl,
                                                  const std::string& model)
     : AbstractIntegrator(cfg)
     , mdl_{model}
-    , tpl_(tpl, cfg_.ParamTable->At(mdl_, snr))
+    , tpl_(tpl, ModelFactory::Create(mdl_, snr))
+{ }
+
+MonoMolecularIntegrator::MonoMolecularIntegrator(MonoMolecularIntegrator&& mmi)
+    : AbstractIntegrator(std::move(mmi))
+    , mdl_{mmi.mdl_}
+    , tpl_{std::move(mmi.tpl_)}
 { }
 
 AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
@@ -81,8 +108,34 @@ AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
         return OTHER;
   
     return AbstractIntegrator::AddRead(Evaluator(
-                std::unique_ptr<AbstractTemplate>(new VirtualTemplate(tpl_, read.TemplateStart, read.TemplateEnd)),
-                read));
+                std::unique_ptr<AbstractTemplate>(
+                    new VirtualTemplate(tpl_, read.TemplateStart, read.TemplateEnd)),
+                read,
+                cfg_.ScoreDiff));
+}
+
+size_t MonoMolecularIntegrator::Length() const
+{
+    return tpl_.Length();
+}
+
+char MonoMolecularIntegrator::operator[](const size_t i) const
+{
+    return tpl_[i].Base;
+}
+
+MonoMolecularIntegrator::operator std::string() const
+{
+    std::string result;
+    
+    result.resize(tpl_.Length());
+
+    for (size_t i = 0; i < tpl_.Length(); ++i)
+    {
+        result[i] = tpl_[i].Base;
+    }
+
+    return result;
 }
 
 double MonoMolecularIntegrator::LL(const Mutation& mut)
@@ -91,6 +144,20 @@ double MonoMolecularIntegrator::LL(const Mutation& mut)
     const double ll = AbstractIntegrator::LL(mut);
     tpl_.Reset();
     return ll;
+}
+
+void MonoMolecularIntegrator::ApplyMutation(const Mutation& mut)
+{
+    tpl_.ApplyMutation(mut);
+    for (auto& eval : evals_)
+        eval.ApplyMutation(mut);
+}
+
+void MonoMolecularIntegrator::ApplyMutations(std::vector<Mutation>* muts)
+{
+    tpl_.ApplyMutations(muts);
+    for (auto& eval : evals_)
+        eval.ApplyMutations(muts);
 }
 
 MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
@@ -103,8 +170,39 @@ AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read, const SN
 {
     return AbstractIntegrator::AddRead(Evaluator(
                 std::unique_ptr<AbstractTemplate>(
-                    new Template(tpl_, cfg_.ParamTable->At(read.Model, snr))),
-                read));
+                    new Template(tpl_, ModelFactory::Create(read.Model, snr))),
+                read,
+                cfg_.ScoreDiff));
+}
+
+size_t MultiMolecularIntegrator::Length() const
+{
+    return tpl_.length();
+}
+
+char MultiMolecularIntegrator::operator[](const size_t i) const
+{
+    return tpl_[i];
+}
+
+MultiMolecularIntegrator::operator std::string() const
+{
+    return tpl_;
+}
+
+void MultiMolecularIntegrator::ApplyMutation(const Mutation& mut)
+{
+    std::vector<Mutation> muts(1, mut);
+    tpl_ = ::PacBio::Consensus::ApplyMutations(tpl_, &muts);
+    for (auto& eval : evals_)
+        eval.ApplyMutation(mut);
+}
+
+void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* muts)
+{
+    tpl_ = ::PacBio::Consensus::ApplyMutations(tpl_, muts);
+    for (auto& eval : evals_)
+        eval.ApplyMutations(muts);
 }
 
 } // namespace Consensus

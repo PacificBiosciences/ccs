@@ -1,19 +1,22 @@
 
 #pragma once
 
+#include <pacbio/consensus/Mutation.h>
+
 namespace PacBio {
 namespace Consensus {
 
-enum PolishResult
+// forward declaration
+class AbstractIntegrator;
+
+struct PolishConfig
 {
-    SUCCESS
+    size_t MaximumIterations;
+    size_t MutationSeparation;
+    size_t MutationNeighborhood;
 };
 
-PolishResult Polish(AbstractIntegrator* ai)
-{
-
-    return SUCCESS;
-}
+bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
 
 } // namespace Consensus
 } // namespace PacBio
