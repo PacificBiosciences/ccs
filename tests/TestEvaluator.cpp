@@ -54,22 +54,40 @@ using std::vector;
 using std::cout;
 using std::endl;
 
-namespace PacBio {
-namespace Consensus {
-
-vector<Mutation> Mutations(
-        const AbstractIntegrator& ai,
-        const size_t start,
-        const size_t end);
-
-vector<Mutation> Mutations(const AbstractIntegrator& ai);
-
-}
-}
-
 using namespace PacBio::Consensus;  // NOLINT
 
 using ::testing::UnorderedElementsAreArray;
+
+namespace {
+
+vector<Mutation> Mutations(const string& tpl, const size_t start, const size_t end)
+{
+    constexpr auto bases = "ACGT";
+
+    vector<Mutation> result;
+
+    for (size_t i = start; i < end; ++i)
+    {
+        for (size_t j = 0; j < 4; ++j)
+            result.push_back(Mutation(MutationType::INSERTION, i, bases[j]));
+
+        result.push_back(Mutation(MutationType::DELETION, i));
+
+        for (size_t j = 0; j < 4; ++j)
+            if (bases[j] != tpl[i])
+                result.push_back(Mutation(MutationType::SUBSTITUTION, i, bases[j]));
+    }
+
+    for (size_t j = 0; j < 4; ++j)
+        result.push_back(Mutation(MutationType::INSERTION, tpl.length(), bases[j]));
+
+    return result;
+}
+
+vector<Mutation> Mutations(const string& tpl)
+{ return Mutations(tpl, 0, tpl.length()); }
+
+}  // namespace anonymous
 
 const double prec = 0.001;  // alpha/beta mismatch tolerance
 const SNR snr = {{ 10.0, 7.0, 5.0, 11.0 }};
@@ -114,7 +132,6 @@ std::string Mutate(const std::string& tpl, const size_t nmut, std::mt19937* cons
     if (nmut == 0)
         return tpl;
 
-    MultiMolecularIntegrator ai(tpl, cfg);
     std::vector<Mutation> muts;
     std::uniform_int_distribution<size_t> rand(0, tpl.length() - 1);
     std::set<size_t> sites;
@@ -124,7 +141,7 @@ std::string Mutate(const std::string& tpl, const size_t nmut, std::mt19937* cons
 
     for (const size_t site : sites)
     {
-        vector<Mutation> possible = Mutations(ai, site, site + 1);
+        vector<Mutation> possible = Mutations(tpl, site, site + 1);
         std::uniform_int_distribution<size_t> rand2(0, possible.size() - 1);
         muts.push_back(possible[rand2(*gen)]);
     }
@@ -150,8 +167,7 @@ void MutationEquivalence(const size_t nsamp,
     for (size_t i = 0; i < nsamp; ++i)
     {
         const string tpl = RandomDNA(rand(gen), &gen);
-        auto ai = makeIntegrator(tpl);
-        vector<Mutation> mutations = Mutations(ai);
+        vector<Mutation> mutations = Mutations(tpl);
         for (const auto& mut : mutations)
         {
             vector<Mutation> muts { mut };
