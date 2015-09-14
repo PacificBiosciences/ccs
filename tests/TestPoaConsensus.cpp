@@ -73,7 +73,7 @@ static void plotConsensus(const PoaConsensus* pc, string description, bool REALL
         pc->Graph.WriteGraphVizFile(description + ".dot",
                                     (PoaGraph::COLOR_NODES | PoaGraph::VERBOSE_NODES),
                                     pc);
-        cout << cmd << endl;
+        // cout << cmd << endl;
         system(cmd.c_str());
     }
 }

@@ -203,10 +203,8 @@ void MutationEquivalence(const size_t nsamp,
         }
     }
 
-    EXPECT_LT(nerror, ntests / 1000);
-    std::cerr << "error rate: " << static_cast<double>(nerror) / ntests
-              << " ( " << nerror << " / " << ntests << " )" << std::endl;
-
+    EXPECT_EQ(nerror, 0);
+    // EXPECT_LT(nerror, ntests / 1000);
 }
 
 TEST(EvaluatorTest, TestMonoMutationEquivalence)

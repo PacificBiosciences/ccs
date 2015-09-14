@@ -53,30 +53,6 @@ namespace PacBio {
 namespace Consensus {
 namespace {  // anonymous
 
-/*
-std::ostream& operator<<(std::ostream& out, const Interval& x)
-{
-    return out << '(' << std::get<0>(x) << ", " << std::get<1>(x) << ')';
-}
-*/
-
-void WriteMatrix(const ScaledMatrix& mat)
-{
-/*
-    for (size_t i = 0; i < mat.Columns(); ++i)
-        std::cerr << mat.UsedRowRange(i) << std::endl;
-
-    for (size_t i = 0; i < mat.Rows(); ++i)
-    {
-        for (size_t j = 0; j < mat.Columns(); ++j)
-        {
-            std::cerr << "\t" << std::setprecision(3) << mat.Get(i, j);
-        }
-        std::cerr << std::endl;
-    }
-*/
-}
-
 inline
 Interval RangeUnion(const Interval& range1, const Interval& range2)
 {
@@ -271,30 +247,32 @@ void Recursor::FillBeta(const M& guide, M& beta) const
 
 
             // Match
-                auto match_prev_emission_prob = beta(i + 1, j + 1)
-                                              * tpl_->BaseEmissionPr(nextTplBase, nextReadBase);
-                if ((i+1) < I) {
-                     score = Combine(score, match_prev_emission_prob * currTransProbs.Match * tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv));
-                }
-                else if ((i+1) == I && ((j+1) == J)) {
-
-                    score = Combine(score, match_prev_emission_prob * tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv)); // TODO: Redundant on first pass?
-                }
+            auto match_prev_emission_prob = beta(i + 1, j + 1)
+                                          * tpl_->BaseEmissionPr(nextTplBase, nextReadBase);
+            if ((i+1) < I) {
+                thisMoveScore = match_prev_emission_prob * currTransProbs.Match * tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv);
+                score = Combine(score, thisMoveScore);
+            }
+            else if ((i+1) == I && ((j+1) == J)) {
+                thisMoveScore = match_prev_emission_prob * tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv); // TODO: Redundant on first pass?
+                score = Combine(score, thisMoveScore);
+            }
 
             // Stick or Branch:
-                if (i < (I - 1) && i > 0) // Can only transition to an insertion for the 2nd to last read base
-                {
-                    auto trans_emission_prob = nextBasesMatch ? currTransProbs.Branch : (currTransProbs.Stick / 3.0);
-                    thisMoveScore = beta(i + 1, j) * trans_emission_prob * tpl_->CovEmissionPr(nextBasesMatch ? MoveType::BRANCH : MoveType::STICK, nextReadIqv);
-                    score = Combine(score, thisMoveScore);
-                }
+            //  can only transition to an insertion for the 2nd to last read base
+            if (0 < i && i < I)
+            {
+                auto trans_emission_prob = nextBasesMatch ? currTransProbs.Branch : (currTransProbs.Stick / 3.0);
+                thisMoveScore = beta(i + 1, j) * trans_emission_prob * tpl_->CovEmissionPr(nextBasesMatch ? MoveType::BRANCH : MoveType::STICK, nextReadIqv);
+                score = Combine(score, thisMoveScore);
+            }
 
             // Deletion:
-                if (j < (J - 1) && j > 0)
-                {
-                    thisMoveScore = beta(i, j + 1) * currTransProbs.Deletion;
-                    score = Combine(score, thisMoveScore);
-                }
+            if (0 < j && j < J)
+            {
+                thisMoveScore = beta(i, j + 1) * currTransProbs.Deletion;
+                score = Combine(score, thisMoveScore);
+            }
 
             // Save score
             beta.Set(i, j, score);
@@ -537,8 +515,6 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn,
 void Recursor::ExtendBeta(const M& beta, size_t lastColumn,
                           M& ext, int lengthDiff) const
 {
-    WriteMatrix(beta); 
-
     size_t I = read_.Length();
     size_t J = tpl_->Length();
 
@@ -601,7 +577,7 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn,
 
         for (int i = endRow - 1; i >= beginRow; i--)
         {
-            char nextReadBase = 'N';
+            char nextReadBase = '-';
             unsigned char nextReadIqv = 0;
             if (i < I) {
                 nextReadBase = read_.Seq[i];
@@ -614,28 +590,28 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn,
 
             // Incorporation:
             // TODO: Remove these checks, we should always be on the left side of the matrix....
-            if (i < I && j < J) // Should be I-1, J-1 or removed entirely....
+            if (i < I && j < J)
             {
                 double next = (extCol == lastExtColumn) ? beta(i + 1, j + 1)
                                                         : ext(i + 1, extCol + 1);
                 double emission_prob = tpl_->BaseEmissionPr(nextTplBase, nextReadBase);
-                
+
                 // First and last have to start with an emission
                 if (((i+1) == I && (jp+1) == J) || (i == 0 && j == firstColumn))
                     thisMoveScore = next * emission_prob;
                 else if (j > firstColumn && i > 0)
                     thisMoveScore = next * currTplParams.Match * emission_prob;
-                
-                score = Combine(score, thisMoveScore * tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv));
+                double match = thisMoveScore * tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv);
+                score = Combine(score, match);
             }
 
             // Stick or branch
-            if ((i+1) < I && i > 0 && j > firstColumn)
+            if (0 < i && i < I && firstColumn < j)
             {
                 double insert_trans_emission_prob = nextBasesMatch ? currTplParams.Branch
                                                                    : (currTplParams.Stick / 3.0);
                 thisMoveScore = ext(i + 1, extCol)
-                              * insert_trans_emission_prob 
+                              * insert_trans_emission_prob
                               * tpl_->CovEmissionPr(nextBasesMatch ? MoveType::BRANCH
                                                                    : MoveType::STICK,
                                                     nextReadIqv);
@@ -643,7 +619,7 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn,
             }
 
             // Deletion
-            if ((j+1) < J && j > firstColumn && i > 0)
+            if (0 < i && firstColumn < j && j < J)
             {
                 double next = (extCol == lastExtColumn) ? beta(i, j + 1) : ext(i, extCol + 1);
                 thisMoveScore = next * currTplParams.Deletion;
@@ -664,8 +640,6 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn,
         ext.Set(0, 0, match_trans_prob * match_emission_prob * match_iqv_emisson_prob);
         ext.FinishEditingColumn(0, 0, 1);
     }
-
-    WriteMatrix(ext);
 }
 
 Recursor::Recursor(std::unique_ptr<AbstractTemplate>&& tpl,
