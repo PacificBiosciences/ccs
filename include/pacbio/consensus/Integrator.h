@@ -109,5 +109,5 @@ private:
     std::string tpl_;
 };
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

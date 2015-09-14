@@ -150,7 +150,7 @@ PoaGraphImpl::consensusPath(AlignMode mode, int minCoverage) const
         PoaNode& vInfo = vertexInfoMap_[v];
         int containingReads = vInfo.Reads;
         int spanningReads = vInfo.SpanningReads;
-        float score = (mode != GLOBAL) ?
+        float score = (mode != AlignMode::GLOBAL) ?
             (2 * containingReads - 1 * std::max(spanningReads, minCoverage) - 0.0001f) :
             (2 * containingReads - 1 * totalReads - 0.0001f);
         vInfo.Score = score;
@@ -287,7 +287,7 @@ void PoaGraphImpl::tracebackAndThread
 
             forkVertex = exitVertex_;
 
-            if (alignMode == LOCAL) {
+            if (alignMode == AlignMode::LOCAL) {
                 // Find the row # we are coming from, walk
                 // back to there, threading read bases onto
                 // graph via forkVertex, adjusting i.

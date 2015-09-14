@@ -8,8 +8,8 @@
 namespace PacBio {
 namespace Consensus {
 
-typedef std::array<double, 4> SNR;
-
+// forward declarations
+struct SNR;
 class ModelConfig;
 
 // this pattern is based on http://blog.fourthwoods.com/2011/06/04/factory-design-pattern-in-c/

@@ -73,7 +73,7 @@ PoaConsensus::~PoaConsensus()
 const PoaConsensus*
 PoaConsensus::FindConsensus(const std::vector<std::string>& reads)
 {
-    return FindConsensus(reads, DefaultPoaConfig(GLOBAL), -INT_MAX);
+    return FindConsensus(reads, DefaultPoaConfig(AlignMode::GLOBAL), -INT_MAX);
 }
 
 const PoaConsensus*

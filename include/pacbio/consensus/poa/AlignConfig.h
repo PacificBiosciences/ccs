@@ -37,6 +37,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace PacBio {
 namespace Consensus {
 
@@ -59,7 +61,8 @@ struct AlignParams {
 };
 
 
-enum AlignMode {
+enum struct AlignMode : uint8_t
+{
      GLOBAL     = 0,  // Global in both sequences
      SEMIGLOBAL = 1,  // Global in query, local in target
      LOCAL      = 2   // Local in both sequences

@@ -197,14 +197,14 @@ PoaGraphImpl::makeAlignmentColumnForExit(VD v,
     // in one step via the End move--not just its predecessors in
     // the graph.  In local alignment, it may have been from any
     // row, not necessarily I.
-    if (config.Mode == SEMIGLOBAL || config.Mode == LOCAL)
+    if (config.Mode == AlignMode::SEMIGLOBAL || config.Mode == AlignMode::LOCAL)
     {
         BOOST_FOREACH (const VD u, vertices(g_))
         {
             if (u != exitVertex_)
             {
                 const AlignmentColumn* predCol = colMap.at(u);
-                int prevRow = (config.Mode == LOCAL ? ArgMax(predCol->Score) : I);
+                int prevRow = (config.Mode == AlignMode::LOCAL ? ArgMax(predCol->Score) : I);
 
                 if (predCol->Score[prevRow] > bestScore)
                 {
@@ -260,7 +260,8 @@ PoaGraphImpl::makeAlignmentColumn(VD v,
         curCol->ReachingMove[0] = InvalidMove;
         curCol->PreviousVertex[0] = null_vertex;
     }
-    else if (config.Mode == SEMIGLOBAL  || config.Mode == LOCAL)
+    else if (config.Mode == AlignMode::SEMIGLOBAL ||
+             config.Mode == AlignMode::LOCAL)
     {
         // under semiglobal or local alignment, we use the Start move
         curCol->Score[0] = 0;
@@ -302,7 +303,7 @@ PoaGraphImpl::makeAlignmentColumn(VD v,
         VD prevVertex;
         MoveType reachingMove;
 
-        if (config.Mode == LOCAL)
+        if (config.Mode == AlignMode::LOCAL)
         {
             bestScore = 0;
             prevVertex = enterVertex_;

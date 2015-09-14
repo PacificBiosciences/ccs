@@ -51,5 +51,5 @@ struct MappedRead : public Read
     bool PinEnd;
 };
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

@@ -71,7 +71,7 @@ AlignConfig::AlignConfig(AlignParams params, AlignMode mode)
 AlignConfig
 AlignConfig::Default()
 {
-    return AlignConfig(AlignParams::Default(), GLOBAL);
+    return AlignConfig(AlignParams::Default(), AlignMode::GLOBAL);
 }
 
 }  // namespace Consensus

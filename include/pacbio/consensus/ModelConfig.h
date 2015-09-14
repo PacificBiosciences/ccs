@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -15,9 +16,25 @@ namespace detail {
 
 extern uint8_t TranslationTable[256];
 
-} // namespace detail
+}  // namespace detail
 
-typedef std::array<double, 4> SNR;
+struct SNR
+{
+    double A;
+    double C;
+    double G;
+    double T;
+
+    inline
+    double operator[](const size_t i) const
+    {
+        if (i == 0) return A;
+        if (i == 1) return C;
+        if (i == 2) return G;
+        if (i == 3) return T;
+        throw std::invalid_argument("SNR out of bounds!");
+    }
+};
 
 struct TemplatePosition
 {
@@ -47,5 +64,5 @@ public:
     virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
 };
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

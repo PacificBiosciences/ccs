@@ -55,7 +55,7 @@ class PoaGraph;
 class PoaGraphPath;
 class ScoredMutation;
 
-AlignConfig DefaultPoaConfig(AlignMode mode = GLOBAL);
+AlignConfig DefaultPoaConfig(AlignMode mode = AlignMode::GLOBAL);
 
 /// \brief A multi-sequence consensus obtained from a partial-order alignment
 struct PoaConsensus : private noncopyable

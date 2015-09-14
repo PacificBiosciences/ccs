@@ -28,6 +28,7 @@ set(PacBioConsensus_RootDir           ${PacBioConsensus_SOURCE_DIR})
 set(PacBioConsensus_IncludeDir        ${PacBioConsensus_RootDir}/include)
 set(PacBioConsensus_LibDir            ${PacBioConsensus_RootDir}/lib)
 set(PacBioConsensus_SourceDir         ${PacBioConsensus_RootDir}/src)
+set(PacBioConsensus_SwigDir           ${PacBioConsensus_RootDir}/swig)
 set(PacBioConsensus_TestsDir          ${PacBioConsensus_RootDir}/tests)
 
 file(MAKE_DIRECTORY                   ${PacBioConsensus_LibDir})
@@ -60,7 +61,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_EXE_LINKER_FLAGS "-Wl,-no_pie")
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-# libpbccs.a
+# libpbconsensus.a
 add_library(pbconsensus STATIC
     ${PacBioConsensus_CPP}
     ${PacBioConsensus_HPP}
@@ -68,6 +69,19 @@ add_library(pbconsensus STATIC
 set_target_properties(pbconsensus PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${PacBioConsensus_LibDir}
 )
+
+# support static registration
+if(APPLE)
+    set(PRE_LINK -force_load)
+elseif(UNIX)
+    SET(PRE_LINK -Wl,-whole-archive)
+    SET(POST_LINK -Wl,-no-whole-archive)
+endif()
+
+set(PBCONSENSUS_STATIC ${PRE_LINK} pbconsensus ${POST_LINK})
+
+# swig
+add_subdirectory(${PacBioConsensus_SwigDir})
 
 # testing
 add_subdirectory(${PacBioConsensus_TestsDir})

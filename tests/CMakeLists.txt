@@ -36,17 +36,8 @@ add_executable(test_pbconsensus EXCLUDE_FROM_ALL
 set_target_properties(test_pbconsensus PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PacBioConsensus_TestsDir}/bin
 )
-
-# support static registration
-if(APPLE)
-    set(PRE_LINK -force_load)
-elseif(UNIX)
-    SET(PRE_LINK -Wl,-whole-archive)
-    SET(POST_LINK -Wl,-no-whole-archive)
-endif()
-
 target_link_libraries(test_pbconsensus
-    ${PRE_LINK} pbconsensus ${POST_LINK}
+    ${PBCONSENSUS_STATIC}
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS}
 )
