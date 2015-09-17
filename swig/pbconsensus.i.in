@@ -17,6 +17,7 @@ __version__ = "@PacBioConsensus_VERSION@"
 %ignore boost::noncopyable;
 namespace boost { class noncopyable {}; }
 
+%include <exception.i>
 %include <std_string.i>
 %include <std_vector.i>
 %include <stdint.i>
@@ -25,13 +26,21 @@ namespace boost { class noncopyable {}; }
 %include "numpy.i"
 #endif
 
+// generic exception handling
+%exception {
+    try {
+        $action
+    } catch (const std::exception& e) {
+        SWIG_exception(SWIG_RuntimeError, e.what());
+    }
+}
+
 namespace std
 {
     %template(Uint8Vector) std::vector<uint8_t>;
 }
 
 // no include dependencies
-%include "Exceptions.i"
 %include "ModelConfig.i"
 %include "Mutation.i"
 %include "Polish.i"
