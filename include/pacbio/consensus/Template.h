@@ -54,17 +54,20 @@ public:
 
     void ApplyMutation(const Mutation& mut);
 
-    inline
-    double BaseEmissionPr(MoveType move, char from, char to) const
-    { return cfg_->BaseEmissionPr(move, from, to); }
+    inline double BaseEmissionPr(MoveType move, char from, char to) const
+    {
+        return cfg_->BaseEmissionPr(move, from, to);
+    }
 
-    inline
-    double CovEmissionPr(MoveType move, uint8_t cov) const
-    { return cfg_->CovEmissionPr(move, cov); }
+    inline double CovEmissionPr(MoveType move, uint8_t cov) const
+    {
+        return cfg_->CovEmissionPr(move, cov);
+    }
 
-    inline
-    double UndoCounterWeights(size_t nEmissions) const
-    { return cfg_->UndoCounterWeights(nEmissions); }
+    inline double UndoCounterWeights(size_t nEmissions) const
+    {
+        return cfg_->UndoCounterWeights(nEmissions);
+    }
 
 private:
     std::unique_ptr<ModelConfig> cfg_;
@@ -82,42 +85,41 @@ class VirtualTemplate : public AbstractTemplate
 public:
     VirtualTemplate(const Template& master, size_t start, size_t end);
 
-    inline
-    size_t Length() const
-    { return end_ - start_ + master_.mutOff_; }
+    inline size_t Length() const { return end_ - start_ + master_.mutOff_; }
+    inline const TemplatePosition& operator[](size_t i) const
+    {
+        return master_[i - start_];
+    }
 
-    inline
-    const TemplatePosition& operator[](size_t i) const
-    { return master_[i - start_]; }
+    inline bool IsMutated() const { return master_.IsMutated(); }
+    inline void Mutate(const Mutation& m)
+    {
+        if (!master_.IsMutated())
+            throw std::runtime_error("virtual template badness");
+    }
 
-    inline
-    bool IsMutated() const
-    { return master_.IsMutated(); }
-
-    inline
-    void Mutate(const Mutation& m)
-    { if (!master_.IsMutated()) throw std::runtime_error("virtual template badness"); }
-
-    inline
-    void Reset()
-    { }
+    inline void Reset() {}
     // I would like to do the following, but I don't reset the master
     //   before resetting the children
-    // { if (master_->IsMutated()) throw std::runtime_error("virtual template badness"); }
+    // { if (master_->IsMutated()) throw std::runtime_error("virtual template
+    // badness"); }
 
     void ApplyMutation(const Mutation& mut);
 
-    inline
-    double BaseEmissionPr(MoveType move, char from, char to) const
-    { return master_.cfg_->BaseEmissionPr(move, from, to); }
+    inline double BaseEmissionPr(MoveType move, char from, char to) const
+    {
+        return master_.cfg_->BaseEmissionPr(move, from, to);
+    }
 
-    inline
-    double CovEmissionPr(MoveType move, uint8_t cov) const
-    { return master_.cfg_->CovEmissionPr(move, cov); }
+    inline double CovEmissionPr(MoveType move, uint8_t cov) const
+    {
+        return master_.cfg_->CovEmissionPr(move, cov);
+    }
 
-    inline
-    double UndoCounterWeights(size_t nEmissions) const
-    { return master_.cfg_->UndoCounterWeights(nEmissions); }
+    inline double UndoCounterWeights(size_t nEmissions) const
+    {
+        return master_.cfg_->UndoCounterWeights(nEmissions);
+    }
 
 private:
     Template const& master_;
@@ -125,5 +127,5 @@ private:
     size_t end_;
 };
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

@@ -8,13 +8,12 @@
 
 #include <pacbio/consensus/poa/PoaGraph.h>
 
-
 namespace PacBio {
 namespace Consensus {
 namespace detail {
 
 // an Anchor represents a point (cssPos, readPos)
-typedef std::pair<size_t, size_t>    SdpAnchor;
+typedef std::pair<size_t, size_t> SdpAnchor;
 typedef std::vector<SdpAnchor> SdpAnchorVector;
 
 class PoaGraphImpl;
@@ -36,7 +35,8 @@ class PoaGraphImpl;
 class SdpRangeFinder
 {
 private:
-    std::map<PoaGraph::Vertex, std::tuple<size_t, size_t>> alignableReadIntervalByVertex_;
+    std::map<PoaGraph::Vertex, std::tuple<size_t, size_t>>
+        alignableReadIntervalByVertex_;
 
 public:
     virtual ~SdpRangeFinder();
@@ -49,10 +49,11 @@ public:
     std::tuple<size_t, size_t> FindAlignableRange(PoaGraph::Vertex v);
 
 protected:
-    virtual SdpAnchorVector FindAnchors(const std::string& consensusSequence,
-                                        const std::string& readSequence) const = 0;
+    virtual SdpAnchorVector FindAnchors(
+        const std::string& consensusSequence,
+        const std::string& readSequence) const = 0;
 };
 
-} // namespace detail
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace detail
+}  // namespace Consensus
+}  // namespace PacBio

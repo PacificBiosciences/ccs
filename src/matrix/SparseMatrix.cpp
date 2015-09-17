@@ -46,7 +46,8 @@ SparseMatrix::SparseMatrix(const size_t rows, const size_t cols)
     , nRows_(rows)
     , columnBeingEdited_(std::numeric_limits<size_t>::max())
     , usedRanges_(cols, std::make_tuple(0, 0))
-{ }
+{
+}
 
 SparseMatrix::SparseMatrix(const SparseMatrix& other)
     : columns_(other.nCols_)
@@ -60,9 +61,7 @@ SparseMatrix::SparseMatrix(const SparseMatrix& other)
             columns_[j] = std::unique_ptr<SparseVector>(new SparseVector(*other.columns_[j]));
 }
 
-SparseMatrix::~SparseMatrix()
-{ }
-
+SparseMatrix::~SparseMatrix() {}
 void SparseMatrix::Reset(const size_t rows, const size_t cols)
 {
     std::vector<std::unique_ptr<SparseVector>>(cols).swap(columns_);
@@ -76,8 +75,7 @@ size_t SparseMatrix::UsedEntries() const
 {
     // use column ranges
     size_t filledEntries = 0;
-    for (size_t col = 0; col < Columns(); ++col)
-    {
+    for (size_t col = 0; col < Columns(); ++col) {
         size_t start, end;
         std::tie(start, end) = UsedRowRange(col);
         filledEntries += (end - start);
@@ -88,10 +86,8 @@ size_t SparseMatrix::UsedEntries() const
 size_t SparseMatrix::AllocatedEntries() const
 {
     size_t sum = 0;
-    for (size_t j = 0; j < nCols_; j++)
-    {
-        sum += (columns_[j] != NULL ?
-                columns_[j]->AllocatedEntries() : 0);
+    for (size_t j = 0; j < nCols_; j++) {
+        sum += (columns_[j] != NULL ? columns_[j]->AllocatedEntries() : 0);
     }
     return sum;
 }
@@ -99,8 +95,8 @@ size_t SparseMatrix::AllocatedEntries() const
 void SparseMatrix::ToHostMatrix(double** mat, size_t* rows, size_t* cols) const
 {
     const double nan = std::numeric_limits<double>::quiet_NaN();
-    *mat = new double[Rows() * Columns()];
-    *rows = Rows();
+    *mat             = new double[Rows() * Columns()];
+    *rows            = Rows();
     *cols = Columns();
     for (size_t i = 0; i < Rows(); i++) {
         for (size_t j = 0; j < Columns(); j++) {
@@ -112,12 +108,11 @@ void SparseMatrix::ToHostMatrix(double** mat, size_t* rows, size_t* cols) const
 void SparseMatrix::CheckInvariants(size_t column) const
 {
 #ifndef NDEBUG
-    for (size_t j = 0; j < nCols_; j++)
-     {
-         if (columns_[j] != NULL) columns_[j]->CheckInvariants();
-     }
+    for (size_t j = 0; j < nCols_; j++) {
+        if (columns_[j] != NULL) columns_[j]->CheckInvariants();
+    }
 #endif
 }
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

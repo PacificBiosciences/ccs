@@ -104,15 +104,13 @@ private:
 //
 // Nullability
 //
-inline
-const SparseMatrix& SparseMatrix::Null()
+inline const SparseMatrix& SparseMatrix::Null()
 {
     static SparseMatrix* nullObj = new SparseMatrix(0, 0);
     return *nullObj;
 }
 
-inline
-bool SparseMatrix::IsNull() const
+inline bool SparseMatrix::IsNull() const
 {
     return (Rows() == 0 && Columns() == 0);
 }
@@ -120,36 +118,26 @@ bool SparseMatrix::IsNull() const
 //
 // Size information
 //
-inline
-const size_t SparseMatrix::Rows() const
-{
-    return nRows_;
-}
-
-inline
-const size_t SparseMatrix::Columns() const
-{
-    return nCols_;
-}
-
+inline const size_t SparseMatrix::Rows() const { return nRows_; }
+inline const size_t SparseMatrix::Columns() const { return nCols_; }
 //
 // Entry range queries per column
 //
-inline
-void SparseMatrix::StartEditingColumn(size_t j, size_t hintBegin, size_t hintEnd)
+inline void SparseMatrix::StartEditingColumn(size_t j, size_t hintBegin,
+                                             size_t hintEnd)
 {
     assert(columnBeingEdited_ == std::numeric_limits<size_t>::max());
     columnBeingEdited_ = j;
-    if (columns_[j] != NULL)
-    {
+    if (columns_[j] != NULL) {
         columns_[j]->ResetForRange(hintBegin, hintEnd);
     } else {
-        columns_[j] = std::unique_ptr<SparseVector>(new SparseVector(Rows(), hintBegin, hintEnd));
+        columns_[j] = std::unique_ptr<SparseVector>(
+            new SparseVector(Rows(), hintBegin, hintEnd));
     }
 }
 
-inline
-void SparseMatrix::FinishEditingColumn(size_t j, size_t usedRowsBegin, size_t usedRowsEnd)
+inline void SparseMatrix::FinishEditingColumn(size_t j, size_t usedRowsBegin,
+                                              size_t usedRowsEnd)
 {
     assert(columnBeingEdited_ == j);
     usedRanges_[j] = std::make_tuple(usedRowsBegin, usedRowsEnd);
@@ -157,15 +145,13 @@ void SparseMatrix::FinishEditingColumn(size_t j, size_t usedRowsBegin, size_t us
     columnBeingEdited_ = std::numeric_limits<size_t>::max();
 }
 
-inline
-std::tuple<size_t, size_t> SparseMatrix::UsedRowRange(size_t j) const
+inline std::tuple<size_t, size_t> SparseMatrix::UsedRowRange(size_t j) const
 {
     assert(0 <= j && j < usedRanges_.size());
     return usedRanges_[j];
 }
 
-inline
-bool SparseMatrix::IsColumnEmpty(size_t j) const
+inline bool SparseMatrix::IsColumnEmpty(size_t j) const
 {
     assert(0 <= j && j < usedRanges_.size());
     size_t begin, end;
@@ -176,46 +162,38 @@ bool SparseMatrix::IsColumnEmpty(size_t j) const
 //
 // Accessors
 //
-inline
-const double& SparseMatrix::operator()(size_t i, size_t j) const
+inline const double& SparseMatrix::operator()(size_t i, size_t j) const
 {
-    if (columns_[j] == NULL)
-    {
+    if (columns_[j] == NULL) {
         static const double emptyCell = 0.0;
         return emptyCell;
-    }
-    else
-    {
+    } else {
         return (*columns_[j])(i);
     }
 }
 
-inline
-bool SparseMatrix::IsAllocated(size_t i, size_t j) const
+inline bool SparseMatrix::IsAllocated(size_t i, size_t j) const
 {
     return columns_[j] != NULL && columns_[j]->IsAllocated(i);
 }
 
-inline
-double SparseMatrix::Get(size_t i, size_t j) const
+inline double SparseMatrix::Get(size_t i, size_t j) const
 {
     return (*this)(i, j);
 }
 
-inline
-void SparseMatrix::Set(size_t i, size_t j, double v)
+inline void SparseMatrix::Set(size_t i, size_t j, double v)
 {
     assert(columnBeingEdited_ == j);
     columns_[j]->Set(i, v);
 }
 
-inline
-void SparseMatrix::ClearColumn(size_t j)
+inline void SparseMatrix::ClearColumn(size_t j)
 {
     usedRanges_[j] = std::make_tuple(0, 0);
     columns_[j]->Clear();
     CheckInvariants(j);
 }
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

@@ -15,37 +15,31 @@
 namespace PacBio {
 namespace Consensus {
 
-void Mutations(
-        std::vector<Mutation>* muts,
-        const AbstractIntegrator& ai,
-        const size_t start,
-        const size_t end)
+void Mutations(std::vector<Mutation>* muts, const AbstractIntegrator& ai, const size_t start,
+               const size_t end)
 {
     constexpr auto bases = "ACGT";
 
-    if (start == end)
-        return;
+    if (start == end) return;
 
     char last = (start > 0) ? ai[start - 1] : '\0';
 
-    for (size_t i = start; i < end; ++i)
-    {
+    for (size_t i = start; i < end; ++i) {
         const char curr = ai[i];
 
-        // insertions come before deletion/substitutions at site i, their End() is i < i + 1
-        for (size_t j = 0; j < 4; ++j)
-        {
-            // if it's not a homopolymer insertion, or it's the first base of one..
+        // insertions come before deletion/substitutions at site i, their End()
+        // is i < i + 1
+        for (size_t j = 0; j < 4; ++j) {
+            // if it's not a homopolymer insertion, or it's the first base of
+            // one..
             if (bases[j] != last)
                 muts->emplace_back(Mutation(MutationType::INSERTION, i, bases[j]));
         }
 
         // if we're the first in the homopolymer, we can delete
-        if (curr != last)
-            muts->emplace_back(Mutation(MutationType::DELETION, i));
+        if (curr != last) muts->emplace_back(Mutation(MutationType::DELETION, i));
 
-        for (size_t j = 0; j < 4; ++j)
-        {
+        for (size_t j = 0; j < 4; ++j) {
             if (bases[j] != curr)
                 muts->emplace_back(Mutation(MutationType::SUBSTITUTION, i, bases[j]));
         }
@@ -54,27 +48,23 @@ void Mutations(
     }
 
     // if we're not at the absolute end, use prior algorithm
-    if (end < ai.Length())
-    {
+    if (end < ai.Length()) {
         const char curr = ai[end];
 
         for (size_t j = 0; j < 4; ++j)
             if (bases[j] != last)
                 muts->emplace_back(Mutation(MutationType::INSERTION, end, bases[j]));
     }
-    // if we are at the end, make sure we're not performing a terminal homopolymer insertion
-    else
-    {
+    // if we are at the end, make sure we're not performing a terminal
+    // homopolymer insertion
+    else {
         for (size_t j = 0; j < 4; ++j)
             if (bases[j] != last)
                 muts->emplace_back(Mutation(MutationType::INSERTION, end, bases[j]));
     }
 }
 
-std::vector<Mutation> Mutations(
-        const AbstractIntegrator& ai,
-        const size_t start,
-        const size_t end)
+std::vector<Mutation> Mutations(const AbstractIntegrator& ai, const size_t start, const size_t end)
 {
     std::vector<Mutation> muts;
     Mutations(&muts, ai, start, end);
@@ -82,22 +72,20 @@ std::vector<Mutation> Mutations(
 }
 
 std::vector<Mutation> Mutations(const AbstractIntegrator& ai)
-{ return Mutations(ai, 0, ai.Length()); }
+{
+    return Mutations(ai, 0, ai.Length());
+}
 
-std::vector<Mutation> BestMutations(
-        std::list<ScoredMutation>* scoredMuts,
-        const size_t separation)
+std::vector<Mutation> BestMutations(std::list<ScoredMutation>* scoredMuts, const size_t separation)
 {
     std::vector<Mutation> muts;
 
-    if (separation == 0)
-    {
+    if (separation == 0) {
         std::copy(scoredMuts->begin(), scoredMuts->end(), std::back_inserter(muts));
         return muts;
     }
 
-    while (!scoredMuts->empty())
-    {
+    while (!scoredMuts->empty()) {
         const auto& mut = *std::max_element(scoredMuts->begin(), scoredMuts->end(),
                                             ScoredMutation::ScoreComparer);
 
@@ -107,48 +95,40 @@ std::vector<Mutation> BestMutations(
         const size_t end   = mut.End() + separation;
 
         scoredMuts->remove_if(
-            [start, end] (const ScoredMutation& m)
-            {
-                return m.End() > start && m.Start() < end;
-            });
+            [start, end](const ScoredMutation& m) { return m.End() > start && m.Start() < end; });
     }
 
     return muts;
 }
 
-std::vector<Mutation> NearbyMutations(
-        const AbstractIntegrator& ai,
-        const std::vector<Mutation>& centers,
-        const size_t neighborhood)
+std::vector<Mutation> NearbyMutations(const AbstractIntegrator& ai,
+                                      const std::vector<Mutation>& centers,
+                                      const size_t neighborhood)
 {
     const size_t len = ai.Length();
 
     std::vector<Mutation> muts;
 
-    if (centers.empty())
-        return muts;
+    if (centers.empty()) return muts;
 
-    auto mutRange = [len, neighborhood] (const Mutation& mut)
-    {
+    auto mutRange          = [len, neighborhood](const Mutation& mut) {
         const size_t start = (neighborhood > mut.Start()) ? 0 : mut.Start() - neighborhood;
-        const size_t end   = std::min(len, mut.End() + neighborhood);
+        const size_t end = std::min(len, mut.End() + neighborhood);
         return std::make_tuple(start, end);
     };
 
     // find the ranges
-    std::vector<Mutation>::const_iterator it = centers.begin();
-    std::vector<std::tuple<size_t, size_t>> ranges = { mutRange(*it) };
-    std::tuple<size_t, size_t>& lastRange = ranges.back();
+    std::vector<Mutation>::const_iterator it       = centers.begin();
+    std::vector<std::tuple<size_t, size_t>> ranges = {mutRange(*it)};
+    std::tuple<size_t, size_t>& lastRange          = ranges.back();
 
     // increment to the next position and continue
-    for (++it; it != centers.end(); ++it)
-    {
+    for (++it; it != centers.end(); ++it) {
         const auto nextRange = mutRange(*it);
         // if the new range touches the last one, just extend the last one
         if (std::get<0>(nextRange) <= std::get<1>(lastRange))
             std::get<1>(lastRange) = std::get<1>(nextRange);
-        else
-        {
+        else {
             ranges.push_back(nextRange);
             lastRange = ranges.back();
         }
@@ -164,11 +144,10 @@ bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
 {
     std::vector<Mutation> muts = Mutations(*ai);
     std::hash<std::string> hashFn;
-    size_t oldTpl = hashFn(*ai);
-    std::set<size_t> history = { oldTpl };
+    size_t oldTpl            = hashFn(*ai);
+    std::set<size_t> history = {oldTpl};
 
-    for (size_t i = 0; i < cfg.MaximumIterations; ++i)
-    {
+    for (size_t i = 0; i < cfg.MaximumIterations; ++i) {
         boost::optional<Mutation> bestMut;
 
         // find the best mutations given our parameters
@@ -177,13 +156,10 @@ bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
             std::list<ScoredMutation> scoredMuts;
             double bestll = LL;
 
-            for (const auto& mut : muts)
-            {
+            for (const auto& mut : muts) {
                 const double ll = ai->LL(mut);
-                if (ll > LL)
-                    scoredMuts.emplace_back(mut.WithScore(ll));
-                if (ll > bestll)
-                    bestMut = mut;
+                if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
+                if (ll > bestll) bestMut = mut;
             }
 
             // take best mutations in separation window, apply them
@@ -193,20 +169,17 @@ bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
         const size_t newTpl = hashFn(ApplyMutations(*ai, &muts));
 
         // convergence!!
-        if (newTpl == oldTpl)
-            return true;
+        if (newTpl == oldTpl) return true;
 
-        if (history.find(newTpl) != history.end())
-        {
+        if (history.find(newTpl) != history.end()) {
             // cyclic behavior detected! apply just the single best mutation
             if (!bestMut)
-                throw std::runtime_error("entered cycle detection without any mutations to test...");
+                throw std::runtime_error(
+                    "entered cycle detection without any mutations to test...");
 
             ai->ApplyMutation(*bestMut);
             oldTpl = hashFn(*ai);
-        }
-        else
-        {
+        } else {
             ai->ApplyMutations(&muts);
             oldTpl = newTpl;
         }
@@ -221,5 +194,5 @@ bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
     return false;
 }
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

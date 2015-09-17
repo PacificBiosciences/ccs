@@ -45,31 +45,28 @@ namespace Consensus {
 //
 // Scoring params for Needleman-Wunsch or Smith-Waterman style aligners
 //
-struct AlignParams {
+struct AlignParams
+{
     int Match;
     int Mismatch;
     int Insert;
     int Delete;
 
-    AlignParams(int match,
-                int mismatch,
-                int insert,
-                int delete_);
+    AlignParams(int match, int mismatch, int insert, int delete_);
 
     // Edit distance params
     static AlignParams Default();
 };
 
-
 enum struct AlignMode : uint8_t
 {
-     GLOBAL     = 0,  // Global in both sequences
-     SEMIGLOBAL = 1,  // Global in query, local in target
-     LOCAL      = 2   // Local in both sequences
+    GLOBAL     = 0,  // Global in both sequences
+    SEMIGLOBAL = 1,  // Global in query, local in target
+    LOCAL      = 2   // Local in both sequences
 };
 
-
-struct AlignConfig {
+struct AlignConfig
+{
     AlignParams Params;
     AlignMode Mode;
 
@@ -79,5 +76,5 @@ struct AlignConfig {
     static AlignConfig Default();
 };
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

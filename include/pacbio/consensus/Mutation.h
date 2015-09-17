@@ -47,8 +47,7 @@ public:
 
     ScoredMutation WithScore(double score) const;
 
-    static
-    bool SiteComparer(const Mutation& lhs, const Mutation& rhs)
+    static bool SiteComparer(const Mutation& lhs, const Mutation& rhs)
     {
         if (lhs.End() < rhs.End())
             return true;
@@ -68,9 +67,11 @@ class ScoredMutation : public Mutation
 public:
     double Score;
 
-    static
-    bool ScoreComparer(const ScoredMutation& lhs, const ScoredMutation& rhs)
-    { return lhs.Score < rhs.Score; }
+    static bool ScoreComparer(const ScoredMutation& lhs,
+                              const ScoredMutation& rhs)
+    {
+        return lhs.Score < rhs.Score;
+    }
 
 private:
     ScoredMutation(const Mutation& mut, double score);
@@ -85,5 +86,5 @@ std::ostream& operator<<(std::ostream& out, const ScoredMutation& smut);
 
 std::string ApplyMutations(const std::string& tpl, std::vector<Mutation>* muts);
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

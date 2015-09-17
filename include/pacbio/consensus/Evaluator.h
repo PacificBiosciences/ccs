@@ -16,8 +16,7 @@ class EvaluatorImpl;
 class Evaluator
 {
 public:
-    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl,
-              const MappedRead& mr,
+    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
               double scoreDiff = 12.5);
 
     // move constructors
@@ -43,5 +42,5 @@ private:
     std::unique_ptr<EvaluatorImpl> impl_;
 };
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

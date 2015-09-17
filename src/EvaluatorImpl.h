@@ -16,8 +16,7 @@ namespace Consensus {
 class EvaluatorImpl
 {
 public:
-    EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl,
-                  const MappedRead& mr,
+    EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                   double scoreDiff = 12.5);
 
     double LL(const Mutation& mut);
@@ -41,5 +40,5 @@ private:
     ScaledMatrix extendBuffer_;
 };
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

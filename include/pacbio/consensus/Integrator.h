@@ -14,8 +14,7 @@ namespace Consensus {
 class IntegratorConfig
 {
 public:
-    IntegratorConfig(double minZScore = -5.0,
-                     double scoreDiff = 12.5);
+    IntegratorConfig(double minZScore = -5.0, double scoreDiff = 12.5);
 
     double MinZScore;
     double ScoreDiff;
@@ -39,7 +38,7 @@ public:
     virtual operator std::string() const = 0;
 
     virtual double LL(const Mutation& mut);
-    
+
     double LL() const;
     double AvgZScore() const;
 
@@ -52,8 +51,8 @@ protected:
     // move constructor
     AbstractIntegrator(AbstractIntegrator&&);
 
-    AddReadResult AddRead(Evaluator&& eval); 
-    
+    AddReadResult AddRead(Evaluator&& eval);
+
     IntegratorConfig cfg_;
     std::vector<Evaluator> evals_;
 };
@@ -61,10 +60,8 @@ protected:
 class MonoMolecularIntegrator : public AbstractIntegrator
 {
 public:
-    MonoMolecularIntegrator(const std::string& tpl,
-                            const IntegratorConfig& cfg,
-                            const SNR& snr,
-                            const std::string& model);
+    MonoMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg,
+                            const SNR& snr, const std::string& model);
 
     // move constructor
     MonoMolecularIntegrator(MonoMolecularIntegrator&&);
@@ -75,10 +72,7 @@ public:
 
     double LL(const Mutation& mut);
 
-    inline
-    double LL() const
-    { return AbstractIntegrator::LL(); }
-
+    inline double LL() const { return AbstractIntegrator::LL(); }
     void ApplyMutation(const Mutation& mut);
     void ApplyMutations(std::vector<Mutation>* muts);
 

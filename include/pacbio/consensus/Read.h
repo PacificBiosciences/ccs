@@ -10,13 +10,10 @@ namespace Consensus {
 
 struct Read
 {
-    Read(const std::string& name,
-         const std::string& seq,
-         const std::vector<uint8_t>& cov,
-         const std::string& model);
+    Read(const std::string& name, const std::string& seq,
+         const std::vector<uint8_t>& cov, const std::string& model);
 
-    Read(const std::string& name,
-         const std::string& seq,
+    Read(const std::string& name, const std::string& seq,
          const std::string& model);
 
     std::string Name;
@@ -24,9 +21,7 @@ struct Read
     std::vector<uint8_t> Cov;
     std::string Model;
 
-    inline
-    size_t Length() const
-    { return Seq.length(); }
+    inline size_t Length() const { return Seq.length(); }
 };
 
 enum struct StrandEnum : uint8_t
@@ -37,12 +32,8 @@ enum struct StrandEnum : uint8_t
 
 struct MappedRead : public Read
 {
-    MappedRead(const Read& read,
-               StrandEnum strand,
-               size_t templateStart,
-               size_t templateEnd,
-               bool pinStart = false,
-               bool pinEnd = false);
+    MappedRead(const Read& read, StrandEnum strand, size_t templateStart,
+               size_t templateEnd, bool pinStart = false, bool pinEnd = false);
 
     StrandEnum Strand;
     size_t TemplateStart;

@@ -36,61 +36,45 @@ private:
     std::vector<double> logScalars_;
 };
 
-inline
-const ScaledMatrix& ScaledMatrix::Null()
+inline const ScaledMatrix& ScaledMatrix::Null()
 {
     static ScaledMatrix* nullObj = new ScaledMatrix(0, 0);
     return *nullObj;
 }
 
-inline
-void ScaledMatrix::FinishEditingColumn(int j, int usedBegin, int usedEnd)
+inline void ScaledMatrix::FinishEditingColumn(int j, int usedBegin, int usedEnd)
 {
     // get the constant to scale by
     double c = 0.0;
-    for (int i = usedBegin; i < usedEnd; ++i)
-    {
+    for (int i = usedBegin; i < usedEnd; ++i) {
         c = std::max(c, SparseMatrix::Get(i, j));
     }
 
     // set it
-    if (c != 0.0 && c != 1.0)
-    {
-        for (int i = usedBegin; i < usedEnd; ++i)
-        {
+    if (c != 0.0 && c != 1.0) {
+        for (int i = usedBegin; i < usedEnd; ++i) {
             SparseMatrix::Set(i, j, SparseMatrix::Get(i, j) / c);
         }
         logScalars_[j] = std::log(c);
-    }
-    else
-    {
+    } else {
         logScalars_[j] = 0.0;
     }
 
     SparseMatrix::FinishEditingColumn(j, usedBegin, usedEnd);
 }
 
-inline
-double ScaledMatrix::GetLogScale(int j) const
-{
-    return logScalars_[j];
-}
-
-inline
-double ScaledMatrix::GetLogProdScales(int beginColumn, int endColumn) const
+inline double ScaledMatrix::GetLogScale(int j) const { return logScalars_[j]; }
+inline double ScaledMatrix::GetLogProdScales(int beginColumn,
+                                             int endColumn) const
 {
     return std::accumulate(logScalars_.begin() + beginColumn,
-                           logScalars_.begin() + endColumn,
-                           0.0);
+                           logScalars_.begin() + endColumn, 0.0);
 }
 
-inline
-double ScaledMatrix::GetLogProdScales() const
+inline double ScaledMatrix::GetLogProdScales() const
 {
-    return std::accumulate(logScalars_.begin(),
-                           logScalars_.end(),
-                           0.0);
+    return std::accumulate(logScalars_.begin(), logScalars_.end(), 0.0);
 }
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

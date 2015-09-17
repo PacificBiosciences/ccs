@@ -16,5 +16,5 @@ struct PolishConfig
 
 bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
 
-} // namespace Consensus
-} // namespace PacBio
+}  // namespace Consensus
+}  // namespace PacBio

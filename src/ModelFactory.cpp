@@ -20,8 +20,7 @@ std::unique_ptr<ModelConfig> ModelFactory::Create(const std::string& name, const
 {
     const auto it = CreatorTable().find(name);
 
-    if (it == CreatorTable().end())
-        throw ChemistryNotFound(name);
+    if (it == CreatorTable().end()) throw ChemistryNotFound(name);
 
     return it->second->Create(snr);
 }

@@ -55,37 +55,30 @@ AlignConfig DefaultPoaConfig(AlignMode mode)
     return config;
 }
 
-PoaConsensus::PoaConsensus(const std::string& css,
-                           const PoaGraph& g,
+PoaConsensus::PoaConsensus(const std::string& css, const PoaGraph& g,
                            const std::vector<size_t>& cssPath)
     : Sequence(css), Graph(g), Path(cssPath)
-{}
+{
+}
 
-PoaConsensus::PoaConsensus(const std::string& css,
-                           const detail::PoaGraphImpl& gi,
+PoaConsensus::PoaConsensus(const std::string& css, const detail::PoaGraphImpl& gi,
                            const std::vector<size_t>& cssPath)
     : Sequence(css), Graph(gi), Path(cssPath)
-{}
+{
+}
 
-PoaConsensus::~PoaConsensus()
-{}
-
-const PoaConsensus*
-PoaConsensus::FindConsensus(const std::vector<std::string>& reads)
+PoaConsensus::~PoaConsensus() {}
+const PoaConsensus* PoaConsensus::FindConsensus(const std::vector<std::string>& reads)
 {
     return FindConsensus(reads, DefaultPoaConfig(AlignMode::GLOBAL), -INT_MAX);
 }
 
-const PoaConsensus*
-PoaConsensus::FindConsensus(const std::vector<std::string>& reads,
-                            const AlignConfig& config,
-                            int minCoverage)
+const PoaConsensus* PoaConsensus::FindConsensus(const std::vector<std::string>& reads,
+                                                const AlignConfig& config, int minCoverage)
 {
     PoaGraph pg;
-    for (const std::string& read : reads)
-    {
-        if (read.length() == 0)
-        {
+    for (const std::string& read : reads) {
+        if (read.length() == 0) {
             throw std::invalid_argument("input sequences must have nonzero length.");
         }
         pg.AddRead(read, config);
@@ -93,22 +86,14 @@ PoaConsensus::FindConsensus(const std::vector<std::string>& reads,
     return pg.FindConsensus(config, minCoverage);
 }
 
-const PoaConsensus*
-PoaConsensus::FindConsensus(const std::vector<std::string>& reads,
-                            AlignMode mode,
-                            int minCoverage)
+const PoaConsensus* PoaConsensus::FindConsensus(const std::vector<std::string>& reads,
+                                                AlignMode mode, int minCoverage)
 {
     return FindConsensus(reads, DefaultPoaConfig(mode), minCoverage);
 }
 
-std::string
-PoaConsensus::ToGraphViz(int flags) const
-{
-    return Graph.ToGraphViz(flags, this);
-}
-
-void
-PoaConsensus::WriteGraphVizFile(std::string filename, int flags) const
+std::string PoaConsensus::ToGraphViz(int flags) const { return Graph.ToGraphViz(flags, this); }
+void PoaConsensus::WriteGraphVizFile(std::string filename, int flags) const
 {
     Graph.WriteGraphVizFile(filename, flags, this);
 }

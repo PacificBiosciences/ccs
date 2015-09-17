@@ -27,8 +27,7 @@ struct SNR
 
     SNR(double a, double c, double g, double t);
 
-    inline
-    double operator[](const size_t i) const
+    inline double operator[](const size_t i) const
     {
         if (i == 0) return A;
         if (i == 1) return C;
@@ -54,14 +53,15 @@ enum struct MoveType : uint8_t
     MATCH    = 0,
     BRANCH   = 1,
     STICK    = 2,
-    DELETION = 3 // never used for covariate
+    DELETION = 3  // never used for covariate
 };
 
 class ModelConfig
 {
 public:
-    virtual ~ModelConfig() { }
-    virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
+    virtual ~ModelConfig() {}
+    virtual std::vector<TemplatePosition> Populate(
+        const std::string& tpl) const = 0;
     virtual double BaseEmissionPr(MoveType move, char from, char to) const = 0;
     virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
     // folded into CovEmissionPr for now:
