@@ -6,9 +6,6 @@
 using namespace PacBio::Consensus;
 %}
 
-%feature("notabstract") Read;
-%feature("notabstract") MappedRead;
-
 %include <pacbio/consensus/poa/AlignConfig.h>
 %include <pacbio/consensus/poa/PoaGraph.h>
 

@@ -25,6 +25,8 @@ struct SNR
     double G;
     double T;
 
+    SNR(double a, double c, double g, double t);
+
     inline
     double operator[](const size_t i) const
     {
@@ -60,8 +62,11 @@ class ModelConfig
 public:
     virtual ~ModelConfig() { }
     virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
-    virtual double BaseEmissionPr(char from, char to) const = 0;
+    virtual double BaseEmissionPr(MoveType move, char from, char to) const = 0;
     virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
+    // folded into CovEmissionPr for now:
+    //   virtual double CounterWeight() const = 0;
+    virtual double UndoCounterWeights(size_t nEmissions) const = 0;
 };
 
 }  // namespace Consensus

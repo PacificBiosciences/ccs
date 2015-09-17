@@ -30,8 +30,9 @@ public:
     virtual void ApplyMutations(std::vector<Mutation>* muts);
 
     // access model configuration
-    virtual double BaseEmissionPr(char from, char to) const = 0;
+    virtual double BaseEmissionPr(MoveType move, char from, char to) const = 0;
     virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
+    virtual double UndoCounterWeights(size_t nEmissions) const = 0;
 
     std::tuple<double, double> NormalParameters(size_t start, size_t end) const;
 
@@ -54,12 +55,16 @@ public:
     void ApplyMutation(const Mutation& mut);
 
     inline
-    double BaseEmissionPr(char from, char to) const
-    { return cfg_->BaseEmissionPr(from, to); }
+    double BaseEmissionPr(MoveType move, char from, char to) const
+    { return cfg_->BaseEmissionPr(move, from, to); }
 
     inline
     double CovEmissionPr(MoveType move, uint8_t cov) const
     { return cfg_->CovEmissionPr(move, cov); }
+
+    inline
+    double UndoCounterWeights(size_t nEmissions) const
+    { return cfg_->UndoCounterWeights(nEmissions); }
 
 private:
     std::unique_ptr<ModelConfig> cfg_;
@@ -103,12 +108,16 @@ public:
     void ApplyMutation(const Mutation& mut);
 
     inline
-    double BaseEmissionPr(char from, char to) const
-    { return master_.cfg_->BaseEmissionPr(from, to); }
+    double BaseEmissionPr(MoveType move, char from, char to) const
+    { return master_.cfg_->BaseEmissionPr(move, from, to); }
 
     inline
     double CovEmissionPr(MoveType move, uint8_t cov) const
     { return master_.cfg_->CovEmissionPr(move, cov); }
+
+    inline
+    double UndoCounterWeights(size_t nEmissions) const
+    { return master_.cfg_->UndoCounterWeights(nEmissions); }
 
 private:
     Template const& master_;

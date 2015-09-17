@@ -4,6 +4,11 @@
 #define SWIG_FILE_WITH_INIT
 %}
 
+%pythoncode
+%{
+__version__ = "0.9.0"
+%}
+
 %ignore *::operator[];
 %ignore *::operator=;
 %ignore *::operator<<;
@@ -25,12 +30,16 @@ namespace std
     %template(Uint8Vector) std::vector<uint8_t>;
 }
 
+// no include dependencies
 %include "Exceptions.i"
-%include "Integrator.i"
+%include "ModelConfig.i"
 %include "Mutation.i"
-%include "Poa.i"
 %include "Polish.i"
 %include "Read.i"
+
+// after Read.i
+%include "Integrator.i"
+%include "Poa.i"
 
 %init
 %{

@@ -77,7 +77,7 @@ using ::testing::UnorderedElementsAreArray;
 TEST(MutationEnumerationTest, TestAllMutationsMono)
 {
     string tpl = "GAATC";
-    MonoMolecularIntegrator ai(tpl, IntegratorConfig(), SNR {{ 4, 4, 4, 4 }}, "P6/C4");
+    MonoMolecularIntegrator ai(tpl, IntegratorConfig(), SNR(4, 4, 4, 4), "P6/C4");
     vector<Mutation> result = Mutations(ai);
     // 3 insertions, 3 substitutions, and 1 deletion per base
     //   and +4 for terminal insertions (1 beginning, 3 end)
@@ -97,7 +97,7 @@ TEST(MutationEnumerationTest, TestAllMutationsMulti)
 TEST(MutationEnumerationTest, TestNearbyMutations)
 {
     string tpl = "GAATT";
-    MonoMolecularIntegrator ai(tpl, IntegratorConfig(), SNR {{ 4, 4, 4, 4 }}, "P6/C4");
+    MonoMolecularIntegrator ai(tpl, IntegratorConfig(), SNR(4, 4, 4, 4), "P6/C4");
 
     vector<Mutation> centers = { Mutation(MutationType::SUBSTITUTION, 2, 'T') };
     vector<Mutation> result = NearbyMutations(ai, centers, 1);

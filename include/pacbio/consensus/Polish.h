@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include <pacbio/consensus/Mutation.h>
-
 namespace PacBio {
 namespace Consensus {
 

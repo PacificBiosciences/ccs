@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
 
 #include <pacbio/consensus/Evaluator.h>
@@ -20,7 +21,7 @@ public:
     double ScoreDiff;
 };
 
-enum AddReadResult
+enum struct AddReadResult : uint8_t
 {
     SUCCESS,
     ALPHA_BETA_MISMATCH,

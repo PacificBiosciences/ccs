@@ -92,7 +92,7 @@ TEST(PoaGraph, SmallBasicTest)
     // Test that it works with a single sequence
     vector<string> reads;
     reads += "GGG";
-    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
     string dot = pc->Graph.ToGraphViz();
     string expectedDot = \
                          "digraph G {"
@@ -119,7 +119,7 @@ TEST(PoaGraph, SmallExtraTests)
     {
         vector<string> reads;
         reads += "GGG", "TGGG";
-        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
         string dot = pc->Graph.ToGraphViz();
         string expectedDot = \
                              "digraph G {"
@@ -146,7 +146,7 @@ TEST(PoaGraph, SmallExtraTests)
     {
         vector<string> reads;
         reads += "GGG", "GTGG";
-        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
         string dot = pc->Graph.ToGraphViz();
         // this would be easier if we could use the C++0x raw
         // strings feature (in g++ 4.5+)
@@ -175,7 +175,7 @@ TEST(PoaGraph, SmallExtraTests)
     {
         vector<string> reads;
         reads += "GGG", "GGGT";
-        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
         string dot = pc->Graph.ToGraphViz();
         string expectedDot = \
                              "digraph G {"
@@ -206,7 +206,7 @@ TEST(PoaGraph, SmallMismatchTests)
     {
         vector<string> reads;
         reads += "GGG", "TGG";
-        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
         string dot = pc->Graph.ToGraphViz();
         string expectedDot = \
                              "digraph G {"
@@ -233,7 +233,7 @@ TEST(PoaGraph, SmallMismatchTests)
     {
         vector<string> reads;
         reads += "GGG", "GTG", "GTG";
-        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
         string dot = pc->Graph.ToGraphViz();
         string expectedDot = \
                              "digraph G {"
@@ -260,7 +260,7 @@ TEST(PoaGraph, SmallMismatchTests)
     {
         vector<string> reads;
         reads += "GGG", "GGT";
-        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
         string dot = pc->Graph.ToGraphViz();
         string expectedDot = \
                              "digraph G {"
@@ -290,7 +290,7 @@ TEST(PoaGraph, SmallDeletionTests)
     {
         vector<string> reads;
         reads += "GAT", "AT";
-        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
         string dot = pc->Graph.ToGraphViz();
         string expectedDot = \
                              "digraph G {"
@@ -315,7 +315,7 @@ TEST(PoaGraph, SmallDeletionTests)
     {
         vector<string> reads;
         reads += "GAT", "GT";
-        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
         string dot = pc->Graph.ToGraphViz();
         string expectedDot =
             "digraph G {"
@@ -339,7 +339,7 @@ TEST(PoaGraph, SmallDeletionTests)
     {
         vector<string> reads;
         reads += "GAT", "GA";
-        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
         string dot = pc->Graph.ToGraphViz();
         string expectedDot = \
                              "digraph G {"
@@ -372,7 +372,7 @@ TEST(PoaConsensus, TestSimple)
              "TTTACAGGATTAGTCCAGT",
              "TTTACAGGATTAGGTCCCAGT",
              "TTTACAGGATAGTCCAGT";
-    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
     plotConsensus(pc, "simple");
     EXPECT_EQ("TTTACAGGATAGTCCAGT", pc->Sequence);
     delete pc;
@@ -385,7 +385,7 @@ TEST(PoaConsensus, TestOverhangSecond)
              "TTTACAGGATAGTCCAGT",
              "TTTACAGGATAGTCCAGTAAA",
              "TTTACAGGATAGTCCAGTAAA";
-    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
     EXPECT_EQ("TTTACAGGATAGTCCAGTAAA", pc->Sequence);
     delete pc;
 }
@@ -394,7 +394,7 @@ TEST(PoaConsensus, SmallSemiglobalTest)
 {
     vector<string> reads;
     reads +=  "GGTGG", "GGTGG", "T";
-    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, SEMIGLOBAL);
+    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::SEMIGLOBAL);
     plotConsensus(pc, "small-semiglobal");
     string expectedDot = \
                          "digraph G {"
@@ -428,7 +428,7 @@ TEST(PoaConsensus, SmallTilingTest)
             "AAAATTTT",
             "TTTTCCCC",
             "CCCCAGGA";
-    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, SEMIGLOBAL);
+    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::SEMIGLOBAL);
     plotConsensus(pc, "small-tiling");
     EXPECT_EQ("GGGGAAAATTTTCCCCAGGA", pc->Sequence);
     delete pc;
@@ -439,7 +439,7 @@ TEST(PoaConsensus, TestVerboseGraphVizOutput)
 {
     vector<string> reads;
     reads += "GGG", "TGGG";
-    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
     string dot = pc->Graph.ToGraphViz(PoaGraph::COLOR_NODES | PoaGraph::VERBOSE_NODES, pc);
 
     string expectedDot = \
@@ -481,7 +481,7 @@ TEST(PoaConsensus, TestLocalStaggered)
     // the minCoverage was (numReads - 3), under assumption that basal
     // coverage for CCS is (numReads-2) (beginning, end read).
     // Application has to provide a sensible minCoverage.
-    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, LOCAL, 4);
+    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::LOCAL, 4);
     plotConsensus(pc, "local-staggered", true);
     EXPECT_EQ("ATAGTGCCGCCAATCTTCCAGTATATACAGCACGGAGTAGCATCACGTACGTACGTCTACACGTAATT", pc->Sequence);
     delete pc;
@@ -494,7 +494,7 @@ TEST(PoaConsensus, TestLongInsert)
     reads +=  "TTTACAGGATAGTGCCGCCAATCTTCCAGTGATACCCCGTGCCGCCAATCTTCCAGTATATACAGCACGAGGTAGC", \
               "TTTACAGGATAGTGCCGGCCAATCTTCCAGTGATACCCCGTGCCGCCAATCTTCCAGTATATACAGCACGAGTAGC",
               "TTGTACAGGATAGTGCCGCCAATCTTCCAGTGATGGGGGGGGGGGGGGGGGGGGGGGGGGGACCCCGTGCCGCCAATCTTCCAGTATATACAGCACGAGTAGC";
-    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
     EXPECT_EQ("TTTACAGGATAGTGCCGCCAATCTTCCAGTGATACCCCGTGCCGCCAATCTTCCAGTATATACAGCACGAGTAGC", pc->Sequence);
     delete pc;
 }
@@ -560,7 +560,7 @@ TEST(PoaConsensus, NondeterminismRegressionTest)
     std::set<string> answers;
     for (int run=0; run<100; run++)
     {
-        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, GLOBAL);
+        const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
 #if 0
         char fname[100];
         sprintf(fname, "/tmp/gr%03d.dot", run);

@@ -1,4 +1,5 @@
 
+#include <cassert>
 #include <cmath>
 #include <stdexcept>
 
@@ -8,7 +9,7 @@
 
 namespace PacBio {
 namespace Consensus {
-namespace detail {
+namespace {
 
 class P6C4NoCovModel : public ModelConfig
 {
@@ -17,19 +18,19 @@ class P6C4NoCovModel : public ModelConfig
 public:
     P6C4NoCovModel(const SNR& snr);
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double BaseEmissionPr(char from, char to) const;
+    double BaseEmissionPr(MoveType move, char from, char to) const;
     double CovEmissionPr(MoveType move, uint8_t cov) const;
+    double UndoCounterWeights(size_t nEmissions) const;
 
     static std::string Name()
     { return "P6/C4"; }
 
 private:
     SNR snr_;
+    double counterWeight_;
 };
 
 REGISTER_MODEL_IMPL(P6C4NoCovModel);
-
-namespace { // anonymous
 
 double P6C4NoCovParams[4][2][3][4] = {
     { // A
@@ -82,11 +83,30 @@ double P6C4NoCovParams[4][2][3][4] = {
     }
 };
 
-} // anonymous namespace
-
 P6C4NoCovModel::P6C4NoCovModel(const SNR& snr)
     : snr_(snr)
-{ }
+    , counterWeight_{1.0}
+{
+    constexpr auto bases = "ACGT";
+    constexpr MoveType moves[] = { MoveType::MATCH, MoveType::BRANCH, MoveType::STICK };
+
+    double baseEmission = 0.0;
+    double covEmission  = 0.0;
+
+    for (size_t m = 0; m < 3; ++m)
+    {
+        for (size_t i = 0; i < 4; ++i)
+            for (size_t j = 0; j < 4; ++j)
+                baseEmission += BaseEmissionPr(moves[m], bases[i], bases[j]);
+
+        for (uint8_t c = 0; c < 20; ++c)
+            covEmission += CovEmissionPr(moves[m], c);
+    }
+
+    baseEmission /= (3 * 4 * 4);
+    covEmission /= (3 * 20);
+    counterWeight_ /= (baseEmission * covEmission);
+}
 
 std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) const
 {
@@ -145,16 +165,15 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
     return result;
 }
 
-double P6C4NoCovModel::CovEmissionPr(MoveType move, uint8_t cov) const
+double P6C4NoCovModel::BaseEmissionPr(MoveType move, char from, char to) const
 {
-    if (move == MoveType::DELETION)
-        throw std::invalid_argument("invalid move! DELETION has no covariate!");
+    assert(move != MoveType::DELETION);
 
-    return 1.0;
-}
+    if (move == MoveType::BRANCH)
+        return 1.0;
+    else if (move == MoveType::STICK)
+        return 1.0 / 3.0;
 
-double P6C4NoCovModel::BaseEmissionPr(char from, char to) const
-{
     constexpr double pr = 0.00505052456472967;
 
     if (from == to)
@@ -163,6 +182,17 @@ double P6C4NoCovModel::BaseEmissionPr(char from, char to) const
     return pr / 3.0;
 }
 
-} // namespace detail
+double P6C4NoCovModel::CovEmissionPr(MoveType move, uint8_t cov) const
+{
+    assert(move != MoveType::DELETION);
+    return 1.0 * counterWeight_;
+}
+
+double P6C4NoCovModel::UndoCounterWeights(const size_t nEmissions) const
+{
+    return -std::log(counterWeight_) * nEmissions;
+}
+
+} // namespace anonymous
 } // namespace Consensus
 } // namespace PacBio

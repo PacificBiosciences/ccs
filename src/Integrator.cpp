@@ -35,22 +35,22 @@ AddReadResult AbstractIntegrator::AddRead(Evaluator&& eval)
     }
     catch (AlphaBetaMismatch& e)
     {
-        return ALPHA_BETA_MISMATCH;
+        return AddReadResult::ALPHA_BETA_MISMATCH;
     }
     // TODO(lhepler): do we really want other?
     catch (...)
     {
-        return OTHER;
+        return AddReadResult::OTHER;
     }
 
     if (!std::isnan(cfg_.MinZScore) &&
         evals_.back().ZScore() < cfg_.MinZScore)
     {
         evals_.pop_back();
-        return POOR_ZSCORE;
+        return AddReadResult::POOR_ZSCORE;
     }
 
-    return SUCCESS;
+    return AddReadResult::SUCCESS;
 }
 
 double AbstractIntegrator::LL(const Mutation& mut)
@@ -105,7 +105,7 @@ MonoMolecularIntegrator::MonoMolecularIntegrator(MonoMolecularIntegrator&& mmi)
 AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
 {
     if (read.Model != mdl_)
-        return OTHER;
+        return AddReadResult::OTHER;
   
     return AbstractIntegrator::AddRead(Evaluator(
                 std::unique_ptr<AbstractTemplate>(

@@ -29,6 +29,10 @@ uint8_t TranslationTable[256] = {
 
 }  // namespace detail
 
+SNR::SNR(const double a, const double c, const double g, const double t)
+    : A(a), C(c), G(g), T(t)
+{ }
+
 std::ostream& operator<<(std::ostream& out, const TemplatePosition& pos)
 {
     return out << "TemplatePosition(" << pos.Base <<

@@ -96,8 +96,8 @@ double EvaluatorImpl::LL(const Mutation& mut)
         recursor_.ExtendAlpha(alpha_, extendStartCol, extendBuffer_, extendLength);
         score = recursor_.LinkAlphaBeta(extendBuffer_, extendLength,
                                         beta_, betaLinkCol,
-                                        absoluteLinkColumn);
-        score += alpha_.GetLogProdScales(0, extendStartCol);
+                                        absoluteLinkColumn)
+              + alpha_.GetLogProdScales(0, extendStartCol);
     }
     else if (!atBegin && atEnd)
     {
@@ -151,12 +151,14 @@ double EvaluatorImpl::LL(const Mutation& mut)
     // reset the virtual mutation
     recursor_.tpl_->Reset();
 
-    return score;
+    return score + recursor_.tpl_->UndoCounterWeights(recursor_.read_.Length());
 }
 
 double EvaluatorImpl::LL() const
 {
-    return std::log(beta_(0, 0)) + beta_.GetLogProdScales();
+    return std::log(beta_(0, 0))
+         + beta_.GetLogProdScales()
+         + recursor_.tpl_->UndoCounterWeights(recursor_.read_.Length());
 }
 
 std::tuple<double, double> EvaluatorImpl::NormalParameters() const
