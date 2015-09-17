@@ -1,0 +1,18 @@
+
+#include <string>
+
+namespace PacBio {
+namespace Consensus {
+
+struct Version
+{
+    static size_t Major = @PacBioConsensus_VERSION_MAJOR@;
+    static size_t Minor = @PacBioConsensus_VERSION_MINOR@;
+    static size_t Patch = @PacBioConsensus_VERSION_PATCH@;
+
+    static operator std::string()
+    { return "@PacBioConsensus_VERSION@"; }
+};
+
+}  // namespace Consensus
+}  // namespace PacBio

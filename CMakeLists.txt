@@ -3,7 +3,7 @@
 ########################################################################
 
 cmake_policy(SET CMP0048 NEW)  # lets us set the version in project()
-project(PacBioConsensus VERSION 0.0.1 LANGUAGES CXX C)
+project(PacBioConsensus VERSION 0.9.0 LANGUAGES CXX C)
 cmake_minimum_required(VERSION 3.0)
 
 # required packages
@@ -18,11 +18,6 @@ if (NOT ZLIB_INCLUDE_DIRS OR
     find_package(ZLIB REQUIRED)
 endif()
 
-# project version
-set(PacBioConsensus_VERSION
-  "${PacBioConsensus_VERSION_MAJOR}.${PacBioConsensus_VERSION_MINOR}.${PacBioConsensus_VERSION_PATCH}"
-)
-
 # main project paths
 set(PacBioConsensus_RootDir           ${PacBioConsensus_SOURCE_DIR})
 set(PacBioConsensus_IncludeDir        ${PacBioConsensus_RootDir}/include)
@@ -33,8 +28,13 @@ set(PacBioConsensus_TestsDir          ${PacBioConsensus_RootDir}/tests)
 
 file(MAKE_DIRECTORY                   ${PacBioConsensus_LibDir})
 
+configure_file(
+    ${PacBioConsensus_IncludeDir}/pacbio/consensus/Version.h.in
+    ${PacBioConsensus_IncludeDir}/pacbio/consensus/Version.h
+)
+
 file(GLOB_RECURSE PacBioConsensus_CPP "${PacBioConsensus_SourceDir}/*.cpp")
-file(GLOB_RECURSE PacBioConsensus_HPP "${PacBioConsensus_IncludeDir}/*.hpp")
+file(GLOB_RECURSE PacBioConsensus_HPP "${PacBioConsensus_IncludeDir}/*.h")
 
 # shared CXX flags for src & tests
 include(CheckCXXCompilerFlag)

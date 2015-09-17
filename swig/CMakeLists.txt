@@ -2,6 +2,11 @@
 # output directory
 file(MAKE_DIRECTORY  ${PacBioConsensus_SwigDir}/lib)
 
+configure_file(
+    ${PacBioConsensus_RootDir}/swig/pbconsensus.i.in
+    ${PacBioConsensus_RootDir}/swig/pbconsensus.i
+)
+
 include_directories(
     ${PacBioConsensus_IncludeDir}
 )
