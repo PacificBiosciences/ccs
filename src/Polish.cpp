@@ -15,6 +15,14 @@
 namespace PacBio {
 namespace Consensus {
 
+PolishConfig::PolishConfig(const size_t iterations, const size_t separation,
+                           const size_t neighborhood)
+    : MaximumIterations(iterations)
+    , MutationSeparation(separation)
+    , MutationNeighborhood(neighborhood)
+{
+}
+
 void Mutations(std::vector<Mutation>* muts, const AbstractIntegrator& ai, const size_t start,
                const size_t end)
 {

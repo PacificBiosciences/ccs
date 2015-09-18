@@ -15,7 +15,8 @@ __version__ = "@PacBioConsensus_VERSION@"
 %ignore *::operator std::string;
 
 %ignore boost::noncopyable;
-namespace boost { class noncopyable {}; }
+namespace boost
+{ class noncopyable {}; }
 
 %include <exception.i>
 %include <std_string.i>
@@ -28,17 +29,14 @@ namespace boost { class noncopyable {}; }
 
 // generic exception handling
 %exception {
-    try {
-        $action
-    } catch (const std::exception& e) {
-        SWIG_exception(SWIG_RuntimeError, e.what());
-    }
+    try
+    { $action }
+    catch (const std::exception& e)
+    { SWIG_exception(SWIG_RuntimeError, e.what()); }
 }
 
 namespace std
-{
-    %template(Uint8Vector) std::vector<uint8_t>;
-}
+{ %template(Uint8Vector) std::vector<uint8_t>; }
 
 // no include dependencies
 %include "ModelConfig.i"

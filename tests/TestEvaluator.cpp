@@ -84,8 +84,6 @@ vector<Mutation> Mutations(const string& tpl, const size_t start, const size_t e
 }
 
 vector<Mutation> Mutations(const string& tpl) { return Mutations(tpl, 0, tpl.length()); }
-}  // namespace anonymous
-
 const double prec = 0.001;  // alpha/beta mismatch tolerance
 const SNR snr(10, 7, 5, 11);
 const string mdl = "P6/C4";
@@ -280,3 +278,5 @@ TEST(EvaluatorTest, TestP6C4NoCovAgainstCSharpModel)
     EXPECT_NEAR(-0.166992912601578, score(Mutation(MutationType::SUBSTITUTION, 4, 'A')), prec);
     EXPECT_NEAR(-1.60697112438296, score(Mutation(MutationType::INSERTION, 4, 'G')), prec);
 }
+
+}  // namespace anonymous

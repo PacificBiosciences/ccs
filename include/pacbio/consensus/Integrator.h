@@ -11,13 +11,12 @@
 namespace PacBio {
 namespace Consensus {
 
-class IntegratorConfig
+struct IntegratorConfig
 {
-public:
-    IntegratorConfig(double minZScore = -5.0, double scoreDiff = 12.5);
-
     double MinZScore;
     double ScoreDiff;
+
+    IntegratorConfig(double minZScore = -5.0, double scoreDiff = 12.5);
 };
 
 enum struct AddReadResult : uint8_t
