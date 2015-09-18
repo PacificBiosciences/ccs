@@ -110,8 +110,8 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
     // Find the "direct ranges" implied by the anchors between the
     // css and this read.  Possibly null.
     for (size_t cssPos = 0; cssPos < consensusPath.size(); cssPos++) {
-        Vertex vExt             = consensusPath[cssPos];
-        VD v                    = poaGraph.internalize(vExt);
+        Vertex vExt = consensusPath[cssPos];
+        VD v = poaGraph.internalize(vExt);
         const SdpAnchor* anchor = binarySearchAnchors(anchors, cssPos);
         if (anchor != NULL) {
 #if DEBUG_RANGE_FINDER
@@ -135,7 +135,7 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
         } else {
             std::vector<Interval> predRangesStepped;
             for (const ED& e : inEdges(v, poaGraph.g_)) {
-                VD pred                   = source(e, poaGraph.g_);
+                VD pred = source(e, poaGraph.g_);
                 Interval predRangeStepped = next(fwdMarks.at(pred), readLength);
                 predRangesStepped.push_back(predRangeStepped);
             }
@@ -151,7 +151,7 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
         } else {
             std::vector<Interval> succRangesStepped;
             BOOST_FOREACH (const ED& e, out_edges(v, poaGraph.g_)) {
-                VD succ                   = target(e, poaGraph.g_);
+                VD succ = target(e, poaGraph.g_);
                 Interval succRangeStepped = prev(revMarks.at(succ), 0);
                 succRangesStepped.push_back(succRangeStepped);
             }
@@ -161,7 +161,7 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
 
     // take hulls of extents from forward and reverse recursions
     for (const VD v : sortedVertices) {
-        Vertex vExt                          = poaGraph.externalize(v);
+        Vertex vExt = poaGraph.externalize(v);
         alignableReadIntervalByVertex_[vExt] = RangeUnion(fwdMarks.at(v), revMarks.at(v));
 #if DEBUG_RANGE_FINDER
         cout << vExt << " range = [" << alignableReadIntervalByVertex_[v].Begin << ", "

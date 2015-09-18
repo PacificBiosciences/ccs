@@ -84,12 +84,12 @@ std::ostream& operator<<(std::ostream& out, const MutationType type)
 
 std::ostream& operator<<(std::ostream& out, const Mutation& mut)
 {
-    return out << "Mutation(" << mut.Type << ", " << mut.Start() << ", " << mut.Base << ')';
+    return out << "Mutation(" << mut.Type << ", " << mut.Start() << ", '" << mut.Base << "')";
 }
 
 std::ostream& operator<<(std::ostream& out, const ScoredMutation& smut)
 {
-    return out << "ScoredMutation(" << static_cast<Mutation>(smut) << ", " << smut.Score << ')';
+    return out << "ScoredMutation(" << static_cast<Mutation>(smut) << ", '" << smut.Score << "')";
 }
 
 std::string ApplyMutations(const std::string& oldTpl, std::vector<Mutation>* const muts)

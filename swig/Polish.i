@@ -1,10 +1,7 @@
 
 %{
-#include <pacbio/consensus/Read.h>
+#include <pacbio/consensus/Polish.h>
 using namespace PacBio::Consensus;
 %}
 
-%feature("notabstract") Read;
-%feature("notabstract") MappedRead;
-
-%include <pacbio/consensus/Read.h>
+%include <pacbio/consensus/Polish.h>

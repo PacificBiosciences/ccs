@@ -130,17 +130,17 @@ std::vector<VD> PoaGraphImpl::consensusPath(AlignMode mode, int minCoverage) con
     sortedVertices.pop_back();
     sortedVertices.pop_front();
 
-    VD bestVertex           = null_vertex;
+    VD bestVertex = null_vertex;
     float bestReachingScore = -FLT_MAX;
     for (const VD v : sortedVertices) {
-        PoaNode& vInfo      = vertexInfoMap_[v];
+        PoaNode& vInfo = vertexInfoMap_[v];
         int containingReads = vInfo.Reads;
         int spanningReads = vInfo.SpanningReads;
         float score =
             (mode != AlignMode::GLOBAL)
                 ? (2 * containingReads - 1 * std::max(spanningReads, minCoverage) - 0.0001f)
                 : (2 * containingReads - 1 * totalReads - 0.0001f);
-        vInfo.Score         = score;
+        vInfo.Score = score;
         vInfo.ReachingScore = score;
         bestPrevVertex[v] = null_vertex;
         for (const ED& e : inEdges(v, g_)) {
@@ -148,10 +148,10 @@ std::vector<VD> PoaGraphImpl::consensusPath(AlignMode mode, int minCoverage) con
             float rsc = score + vertexInfoMap_[sourceVertex].ReachingScore;
             if (rsc > vInfo.ReachingScore) {
                 vInfo.ReachingScore = rsc;
-                bestPrevVertex[v]   = sourceVertex;
+                bestPrevVertex[v] = sourceVertex;
             }
             if (rsc > bestReachingScore) {
-                bestVertex        = v;
+                bestVertex = v;
                 bestReachingScore = rsc;
             }
             // if the score is the same, the order we've encountered vertices
@@ -176,9 +176,9 @@ std::vector<VD> PoaGraphImpl::consensusPath(AlignMode mode, int minCoverage) con
 void PoaGraphImpl::threadFirstRead(std::string sequence, std::vector<Vertex>* outputPath)
 {
     // first sequence in the alignment
-    VD u               = null_vertex, v;
+    VD u = null_vertex, v;
     VD startSpanVertex = null_vertex, endSpanVertex;
-    int readPos        = 0;
+    int readPos = 0;
 
     if (outputPath) {
         outputPath->clear();
@@ -239,8 +239,8 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
         // forkVertex: the vertex that will be the target of a new edge
         curCol = alignmentColumnForVertex.at(u);
         assert(curCol != NULL);
-        PoaNode& curNodeInfo  = vertexInfoMap_[u];
-        VD prevVertex         = curCol->PreviousVertex[i];
+        PoaNode& curNodeInfo = vertexInfoMap_[u];
+        VD prevVertex = curCol->PreviousVertex[i];
         MoveType reachingMove = curCol->ReachingMove[i];
 
         if (reachingMove == StartMove) {
@@ -268,7 +268,7 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
                 // back to there, threading read bases onto
                 // graph via forkVertex, adjusting i.
                 const AlignmentColumn* prevCol = alignmentColumnForVertex.at(prevVertex);
-                int prevRow                    = ArgMax(prevCol->Score);
+                int prevRow = ArgMax(prevCol->Score);
 
                 while (i > static_cast<int>(prevRow)) {
                     VD newForkVertex = addVertex(sequence[READPOS]);
@@ -315,7 +315,7 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
     if (forkVertex != null_vertex) {
         add_edge(enterVertex_, forkVertex, g_);
         startSpanVertex = forkVertex;
-        forkVertex      = null_vertex;
+        forkVertex = null_vertex;
     }
 
     if (startSpanVertex != exitVertex_) {
@@ -358,7 +358,7 @@ vector<ScoredMutation>* PoaGraphImpl::findPossibleVariants(
 
     for (int i = 2; i < (int)bestPath_.size() - 2; i++)  // NOLINT
     {
-        VD v                              = bestPath_[i];
+        VD v = bestPath_[i];
         boost::unordered_set<VD> children = childVertices(v, g_);
 
         // Look for a direct edge from the current node to the node
@@ -381,14 +381,14 @@ vector<ScoredMutation>* PoaGraphImpl::findPossibleVariants(
         // ends
         // up being more code.  Sad.)
         float bestInsertScore = -FLT_MAX;
-        VD bestInsertVertex   = null_vertex;
+        VD bestInsertVertex = null_vertex;
 
         for (const VD v : children) {
             boost::unordered_set<VD>::iterator found = lookBack.find(v);
             if (found != lookBack.end()) {
                 float score = vertexInfoMap_[*found].Score;
                 if (score > bestInsertScore) {
-                    bestInsertScore  = score;
+                    bestInsertScore = score;
                     bestInsertVertex = *found;
                 } else if (score == bestInsertScore) {
                     if (get(vertex_index, g_, *found) < get(vertex_index, g_, bestInsertVertex))
@@ -410,7 +410,7 @@ vector<ScoredMutation>* PoaGraphImpl::findPossibleVariants(
         lookBack = parentVertices(bestPath_[i + 2], g_);
 
         float bestMismatchScore = -FLT_MAX;
-        VD bestMismatchVertex   = null_vertex;
+        VD bestMismatchVertex = null_vertex;
 
         for (const VD v : children) {
             if (v == bestPath_[i + 1]) continue;
@@ -419,7 +419,7 @@ vector<ScoredMutation>* PoaGraphImpl::findPossibleVariants(
             if (found != lookBack.end()) {
                 float score = vertexInfoMap_[*found].Score;
                 if (score > bestMismatchScore) {
-                    bestMismatchScore  = score;
+                    bestMismatchScore = score;
                     bestMismatchVertex = *found;
                 } else if (score == bestMismatchScore) {
                     if (get(vertex_index, g_, *found) < get(vertex_index, g_, bestMismatchVertex))

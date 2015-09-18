@@ -183,12 +183,12 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
     size_t nerror = 0;
 
     for (size_t i = 0; i < nsamp; ++i) {
-        const string tpl           = RandomDNA(rand(gen), &gen);
+        const string tpl = RandomDNA(rand(gen), &gen);
         vector<Mutation> mutations = Mutations(tpl);
         for (const auto& mut : mutations) {
             vector<Mutation> muts{mut};
-            const string app  = ApplyMutations(tpl, &muts);  // template with mutation applied
-            const string read = Mutate(app, nmut, &gen);  // mutate the read further away from tpl
+            const string app = ApplyMutations(tpl, &muts);  // template with mutation applied
+            const string read = Mutate(app, nmut, &gen);    // mutate the read further away from tpl
 
             try {
                 auto ai1 = makeIntegrator(tpl);
@@ -197,7 +197,7 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
                 auto ai2 = makeIntegrator(app);
                 addRead(ai2,
                         MappedRead(Read("N/A", read, mdl), StrandEnum::FORWARD, 0, app.length()));
-                const double exp  = ai2.LL();
+                const double exp = ai2.LL();
                 const double obs0 = ai1.LL();
                 const double obs1 = ai1.LL(mut);
                 EXPECT_EQ(string(ai1), tpl);

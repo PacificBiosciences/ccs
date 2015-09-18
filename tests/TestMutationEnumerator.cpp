@@ -93,7 +93,7 @@ TEST(MutationEnumerationTest, TestNearbyMutations)
     MonoMolecularIntegrator ai(tpl, IntegratorConfig(), SNR(4, 4, 4, 4), "P6/C4");
 
     vector<Mutation> centers = {Mutation(MutationType::SUBSTITUTION, 2, 'T')};
-    vector<Mutation> result  = NearbyMutations(ai, centers, 1);
+    vector<Mutation> result = NearbyMutations(ai, centers, 1);
     // 7 for each of ATT,
     //   and +3 for terminal insertions (end)
     //   and -1 for hompolymer TT deletion
@@ -113,7 +113,7 @@ TEST(MutationEnumerationTest, TestNearbyMutations)
     EXPECT_EQ(7 * 4 + 4 - 1, result.size());
 
     centers.push_back(Mutation(MutationType::SUBSTITUTION, 3, 'G'));
-    result                    = NearbyMutations(ai, centers, 2);
+    result = NearbyMutations(ai, centers, 2);
     vector<Mutation> expected = Mutations(ai);
     EXPECT_EQ(expected.size(), result.size());
     EXPECT_THAT(result, UnorderedElementsAreArray(expected));

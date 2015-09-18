@@ -70,11 +70,11 @@ double P6C4NoCovParams[4][2][3][4] = {
 
 P6C4NoCovModel::P6C4NoCovModel(const SNR& snr) : snr_(snr), counterWeight_{1.0}
 {
-    constexpr auto bases       = "ACGT";
+    constexpr auto bases = "ACGT";
     constexpr MoveType moves[] = {MoveType::MATCH, MoveType::BRANCH, MoveType::STICK};
 
     double baseEmission = 0.0;
-    double covEmission  = 0.0;
+    double covEmission = 0.0;
 
     for (size_t m = 0; m < 3; ++m) {
         for (size_t i = 0; i < 4; ++i)
@@ -101,7 +101,7 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
 
         if (b > 3) throw std::invalid_argument("invalid character in sequence!");
 
-        const bool hp     = tpl[i - 1] == tpl[i];  // NA -> 0, AA -> 1
+        const bool hp = tpl[i - 1] == tpl[i];  // NA -> 0, AA -> 1
         const auto params = P6C4NoCovParams[b][hp];
         const double snr = snr_[b], snr2 = snr * snr, snr3 = snr2 * snr;
         double tprobs[3];
@@ -110,7 +110,7 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
         for (size_t j = 0; j < 3; ++j) {
             double xb =
                 params[j][0] + snr * params[j][1] + snr2 * params[j][2] + snr3 * params[j][3];
-            xb        = std::exp(xb);
+            xb = std::exp(xb);
             tprobs[j] = xb;
             sum += xb;
         }

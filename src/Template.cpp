@@ -54,13 +54,13 @@ std::tuple<double, double> AbstractTemplate::SiteNormalParameters(const size_t i
     auto ENN = [=](const double l_m, const double l_d, const double l_b, const double l_s,
                    const double E_M, const double E_D, const double E_B, const double E_S) {
         const double E_MD = (l_m + E_M) * p_m / (p_m + p_d) + (l_d + E_D) * p_d / (p_m + p_d);
-        const double E_I  = (l_b + E_B) * p_b / (p_b + p_s) + (l_s + E_S) * p_s / (p_b + p_s);
+        const double E_I = (l_b + E_B) * p_b / (p_b + p_s) + (l_s + E_S) * p_s / (p_b + p_s);
         const double E_BS = E_I * (p_s + p_b) / (p_m + p_d);
         return E_MD + E_BS;
     };
 
     const double mean = ENN(l_m, l_d, l_b, l_s, E_M, E_D, E_B, E_S);
-    const double var  = ENN(l2_m, l2_d, l2_b, l2_s, E2_M, E2_D, E2_B, E2_S) - mean * mean;
+    const double var = ENN(l2_m, l2_d, l2_b, l2_s, E2_M, E2_D, E2_B, E2_S) - mean * mean;
 
     return std::make_tuple(mean, var);
 }
@@ -125,7 +125,7 @@ void Template::Mutate(const Mutation& mut)
             "invalid mutation type! must be DELETION, INSERTION, or "
             "SUBSTITUTION");
 
-    mutOff_  = mut.LengthDiff();
+    mutOff_ = mut.LengthDiff();
     mutated_ = true;
 
     assert((*this)[Length() - 1].Match == 0.0 && (*this)[Length() - 1].Branch == 0.0 &&
@@ -134,7 +134,7 @@ void Template::Mutate(const Mutation& mut)
 
 void Template::Reset()
 {
-    mutOff_  = 0;
+    mutOff_ = 0;
     mutated_ = false;
 }
 

@@ -99,8 +99,8 @@ std::vector<Mutation> BestMutations(std::list<ScoredMutation>* scoredMuts, const
 
         muts.emplace_back(mut);
 
-        const size_t start = mut.Start() - separation;
-        const size_t end   = mut.End() + separation;
+        const size_t start = (separation < mut.Start()) ? mut.Start() - separation : 0;
+        const size_t end = mut.End() + separation;
 
         scoredMuts->remove_if(
             [start, end](const ScoredMutation& m) { return m.End() > start && m.Start() < end; });
@@ -119,16 +119,16 @@ std::vector<Mutation> NearbyMutations(const AbstractIntegrator& ai,
 
     if (centers.empty()) return muts;
 
-    auto mutRange          = [len, neighborhood](const Mutation& mut) {
+    auto mutRange = [len, neighborhood](const Mutation& mut) {
         const size_t start = (neighborhood > mut.Start()) ? 0 : mut.Start() - neighborhood;
         const size_t end = std::min(len, mut.End() + neighborhood);
         return std::make_tuple(start, end);
     };
 
     // find the ranges
-    std::vector<Mutation>::const_iterator it       = centers.begin();
+    std::vector<Mutation>::const_iterator it = centers.begin();
     std::vector<std::tuple<size_t, size_t>> ranges = {mutRange(*it)};
-    std::tuple<size_t, size_t>& lastRange          = ranges.back();
+    std::tuple<size_t, size_t>& lastRange = ranges.back();
 
     // increment to the next position and continue
     for (++it; it != centers.end(); ++it) {
@@ -152,7 +152,7 @@ bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
 {
     std::vector<Mutation> muts = Mutations(*ai);
     std::hash<std::string> hashFn;
-    size_t oldTpl            = hashFn(*ai);
+    size_t oldTpl = hashFn(*ai);
     std::set<size_t> history = {oldTpl};
 
     for (size_t i = 0; i < cfg.MaximumIterations; ++i) {

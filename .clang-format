@@ -1,5 +1,4 @@
 BasedOnStyle: Google
-AlignConsecutiveAssignments: true
 AllowShortLoopsOnASingleLine: false
 AccessModifierOffset: -4
 BreakBeforeBraces: Mozilla

@@ -86,7 +86,7 @@ PoaGraphImpl::PoaGraphImpl()
     : g_(), vertexInfoMap_(get(vertex_info, g_)), numReads_(0), totalVertices_(0), liveVertices_(0)
 {
     enterVertex_ = addVertex('^', 0);
-    exitVertex_  = addVertex('$', 0);
+    exitVertex_ = addVertex('$', 0);
 }
 
 PoaGraphImpl::PoaGraphImpl(const PoaGraphImpl& other)
@@ -124,7 +124,7 @@ static inline vector<const AlignmentColumn*> getPredecessorColumns(const BoostGr
     vector<const AlignmentColumn*> predecessorColumns;
     const AlignmentColumn* predCol;
     for (auto e : inEdges(v, g)) {
-        VD u    = source(e, g);
+        VD u = source(e, g);
         predCol = colMap.at(u);
         assert(predCol != NULL);
         predecessorColumns.push_back(predCol);
@@ -134,9 +134,9 @@ static inline vector<const AlignmentColumn*> getPredecessorColumns(const BoostGr
 
 PoaConsensus* PoaGraphImpl::FindConsensus(const AlignConfig& config, int minCoverage)
 {
-    std::vector<VD> bestPath      = consensusPath(config.Mode, minCoverage);
+    std::vector<VD> bestPath = consensusPath(config.Mode, minCoverage);
     std::string consensusSequence = sequenceAlongPath(g_, vertexInfoMap_, bestPath);
-    PoaConsensus* pc              = new PoaConsensus(consensusSequence, *this, externalizePath(bestPath));
+    PoaConsensus* pc = new PoaConsensus(consensusSequence, *this, externalizePath(bestPath));
     return pc;
 }
 
@@ -149,11 +149,11 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumnForExit(VD v,
 
     // this is kind of unnecessary as we are only actually using one entry in
     // this column
-    int I                   = sequence.length();
+    int I = sequence.length();
     AlignmentColumn* curCol = new AlignmentColumn(v, I + 1);
 
     float bestScore = -FLT_MAX;
-    VD prevVertex   = null_vertex;
+    VD prevVertex = null_vertex;
 
     // Under local or semiglobal alignment the vertex $ can be
     // "reached" in the dynamic programming from any other vertex
@@ -164,10 +164,10 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumnForExit(VD v,
         BOOST_FOREACH (const VD u, vertices(g_)) {
             if (u != exitVertex_) {
                 const AlignmentColumn* predCol = colMap.at(u);
-                int prevRow                    = (config.Mode == AlignMode::LOCAL ? ArgMax(predCol->Score) : I);
+                int prevRow = (config.Mode == AlignMode::LOCAL ? ArgMax(predCol->Score) : I);
 
                 if (predCol->Score[prevRow] > bestScore) {
-                    bestScore  = predCol->Score[prevRow];
+                    bestScore = predCol->Score[prevRow];
                     prevVertex = predCol->CurrentVertex;
                 }
             }
@@ -177,15 +177,15 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumnForExit(VD v,
         vector<const AlignmentColumn*> predecessorColumns = getPredecessorColumns(g_, v, colMap);
         for (const AlignmentColumn* predCol : predecessorColumns) {
             if (predCol->Score[I] > bestScore) {
-                bestScore  = predCol->Score[I];
+                bestScore = predCol->Score[I];
                 prevVertex = predCol->CurrentVertex;
             }
         }
     }
     assert(prevVertex != null_vertex);
-    curCol->Score[I]          = bestScore;
+    curCol->Score[I] = bestScore;
     curCol->PreviousVertex[I] = prevVertex;
-    curCol->ReachingMove[I]   = EndMove;
+    curCol->ReachingMove[I] = EndMove;
     return curCol;
 }
 
@@ -194,8 +194,8 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentCo
                                                          const AlignConfig& config, int beginRow,
                                                          int endRow) const
 {
-    AlignmentColumn* curCol                           = new AlignmentColumn(v, sequence.length() + 1);
-    const PoaNode& vertexInfo                         = vertexInfoMap_[v];
+    AlignmentColumn* curCol = new AlignmentColumn(v, sequence.length() + 1);
+    const PoaNode& vertexInfo = vertexInfoMap_[v];
     vector<const AlignmentColumn*> predecessorColumns = getPredecessorColumns(g_, v, colMap);
 
     //
@@ -205,32 +205,32 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentCo
         // if this vertex doesn't have any in-edges it is ^; has
         // no reaching move
         assert(v == enterVertex_);
-        curCol->Score[0]          = 0;
-        curCol->ReachingMove[0]   = InvalidMove;
+        curCol->Score[0] = 0;
+        curCol->ReachingMove[0] = InvalidMove;
         curCol->PreviousVertex[0] = null_vertex;
     } else if (config.Mode == AlignMode::SEMIGLOBAL || config.Mode == AlignMode::LOCAL) {
         // under semiglobal or local alignment, we use the Start move
-        curCol->Score[0]          = 0;
-        curCol->ReachingMove[0]   = StartMove;
+        curCol->Score[0] = 0;
+        curCol->ReachingMove[0] = StartMove;
         curCol->PreviousVertex[0] = enterVertex_;
     } else {
         // otherwise it's a deletion
         float candidateScore;
-        float bestScore       = -FLT_MAX;
-        VD prevVertex         = null_vertex;
+        float bestScore = -FLT_MAX;
+        VD prevVertex = null_vertex;
         MoveType reachingMove = InvalidMove;
 
         for (const AlignmentColumn* prevCol : predecessorColumns) {
             candidateScore = prevCol->Score[0] + config.Params.Delete;
             if (candidateScore > bestScore) {
-                bestScore    = candidateScore;
-                prevVertex   = prevCol->CurrentVertex;
+                bestScore = candidateScore;
+                prevVertex = prevCol->CurrentVertex;
                 reachingMove = DeleteMove;
             }
         }
         assert(reachingMove != InvalidMove);
-        curCol->Score[0]          = bestScore;
-        curCol->ReachingMove[0]   = reachingMove;
+        curCol->Score[0] = bestScore;
+        curCol->ReachingMove[0] = reachingMove;
         curCol->PreviousVertex[0] = prevVertex;
     }
 
@@ -245,12 +245,12 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentCo
         MoveType reachingMove;
 
         if (config.Mode == AlignMode::LOCAL) {
-            bestScore    = 0;
-            prevVertex   = enterVertex_;
+            bestScore = 0;
+            prevVertex = enterVertex_;
             reachingMove = StartMove;
         } else {
-            bestScore    = -FLT_MAX;
-            prevVertex   = null_vertex;
+            bestScore = -FLT_MAX;
+            prevVertex = null_vertex;
             reachingMove = InvalidMove;
         }
 
@@ -260,28 +260,28 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentCo
             candidateScore =
                 prevCol->Score[i - 1] + (isMatch ? config.Params.Match : config.Params.Mismatch);
             if (candidateScore > bestScore) {
-                bestScore    = candidateScore;
-                prevVertex   = prevCol->CurrentVertex;
+                bestScore = candidateScore;
+                prevVertex = prevCol->CurrentVertex;
                 reachingMove = (isMatch ? MatchMove : MismatchMove);
             }
             // Delete
             candidateScore = prevCol->Score[i] + config.Params.Delete;
             if (candidateScore > bestScore) {
-                bestScore    = candidateScore;
-                prevVertex   = prevCol->CurrentVertex;
+                bestScore = candidateScore;
+                prevVertex = prevCol->CurrentVertex;
                 reachingMove = DeleteMove;
             }
         }
         // Extra
         candidateScore = curCol->Score[i - 1] + config.Params.Insert;
         if (candidateScore > bestScore) {
-            bestScore    = candidateScore;
-            prevVertex   = v;
+            bestScore = candidateScore;
+            prevVertex = v;
             reachingMove = ExtraMove;
         }
         assert(reachingMove != InvalidMove);
-        curCol->Score[i]          = bestScore;
-        curCol->ReachingMove[i]   = reachingMove;
+        curCol->Score[i] = bestScore;
+        curCol->ReachingMove[i] = reachingMove;
         curCol->PreviousVertex[i] = prevVertex;
     }
 
@@ -332,8 +332,8 @@ PoaAlignmentMatrixImpl* PoaGraphImpl::TryAddRead(const std::string& readSeq,
     // Calculate alignment columns of sequence vs. graph, using sparsity if
     // we have a range finder.
     PoaAlignmentMatrixImpl* mat = new PoaAlignmentMatrixImpl();
-    mat->readSequence_          = readSeq;
-    mat->mode_                  = config.Mode;
+    mat->readSequence_ = readSeq;
+    mat->mode_ = config.Mode;
 
     vector<VD> sortedVertices(num_vertices(g_));
     topological_sort(g_, sortedVertices.rbegin());

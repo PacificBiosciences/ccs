@@ -95,8 +95,8 @@ size_t SparseMatrix::AllocatedEntries() const
 void SparseMatrix::ToHostMatrix(double** mat, size_t* rows, size_t* cols) const
 {
     const double nan = std::numeric_limits<double>::quiet_NaN();
-    *mat             = new double[Rows() * Columns()];
-    *rows            = Rows();
+    *mat = new double[Rows() * Columns()];
+    *rows = Rows();
     *cols = Columns();
     for (size_t i = 0; i < Rows(); i++) {
         for (size_t j = 0; j < Columns(); j++) {

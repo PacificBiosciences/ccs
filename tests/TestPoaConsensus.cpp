@@ -146,7 +146,7 @@ TEST(PoaGraph, SmallExtraTests)
         vector<string> reads;
         reads += "GGG", "GTGG";
         const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
-        string dot             = pc->Graph.ToGraphViz();
+        string dot = pc->Graph.ToGraphViz();
         // this would be easier if we could use the C++0x raw
         // strings feature (in g++ 4.5+)
         string expectedDot =
@@ -425,7 +425,7 @@ TEST(PoaConsensus, TestVerboseGraphVizOutput)
     vector<string> reads;
     reads += "GGG", "TGGG";
     const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
-    string dot             = pc->Graph.ToGraphViz(PoaGraph::COLOR_NODES | PoaGraph::VERBOSE_NODES, pc);
+    string dot = pc->Graph.ToGraphViz(PoaGraph::COLOR_NODES | PoaGraph::VERBOSE_NODES, pc);
 
     string expectedDot =
         "digraph G {"

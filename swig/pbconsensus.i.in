@@ -38,6 +38,13 @@ namespace boost
 namespace std
 { %template(Uint8Vector) std::vector<uint8_t>; }
 
+%define py_tp_str(cls)
+%#ifdef SWIGPYTHON
+%feature("python:slot", "tp_str", functype="reprfunc") cls::as_string();
+%extend cls { std::string as_string() { return std::string(*$self); } }
+%#endif // SWIGPYTHON
+%enddef
+
 // no include dependencies
 %include "ModelConfig.i"
 %include "Mutation.i"
@@ -52,5 +59,5 @@ namespace std
 %{
 #ifdef SWIGPYTHON
   import_array();
-#endif
+#endif // SWIGPYTHON
 %}

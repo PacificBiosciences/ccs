@@ -65,13 +65,13 @@ double EvaluatorImpl::LL(const Mutation& mut)
     // apply the virtual mutation
     recursor_.tpl_->Mutate(mut);
 
-    size_t betaLinkCol        = 1 + mut.End();
+    size_t betaLinkCol = 1 + mut.End();
     size_t absoluteLinkColumn = 1 + mut.End() + mut.LengthDiff();
 
     double score;
 
     bool atBegin = mut.Start() < 3;
-    bool atEnd   = (mut.End() + 3) > beta_.Columns();
+    bool atEnd = (mut.End() + 3) > beta_.Columns();
 
     if (!atBegin && !atEnd) {
         int extendStartCol, extendLength = 2;
