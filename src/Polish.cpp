@@ -103,7 +103,7 @@ std::vector<Mutation> BestMutations(std::list<ScoredMutation>* scoredMuts, const
         const size_t end = mut.End() + separation;
 
         scoredMuts->remove_if(
-            [start, end](const ScoredMutation& m) { return m.End() > start && m.Start() < end; });
+            [start, end](const ScoredMutation& m) { return start <= m.End() && m.Start() < end; });
     }
 
     return muts;
