@@ -301,7 +301,7 @@ Values& OptionParser::parse_args(const vector<string>& v) {
   }
 
   for (list<Option>::const_iterator it = _opts.begin(); it != _opts.end(); ++it) {
-    if (it->get_default() != "" and not _values.is_set(it->dest()))
+    if (not _values.is_set(it->dest()))
         _values[it->dest()] = it->get_default();
   }
 
@@ -461,11 +461,6 @@ void OptionParser::error(const string& msg) const {
 ////////// } class OptionParser //////////
 
 ////////// class Values { //////////
-const string& Values::operator[] (const string& d) const {
-  strMap::const_iterator it = _map.find(d);
-  static const string empty = "";
-  return (it != _map.end()) ? it->second : empty;
-}
 void Values::is_set_by_user(const string& d, bool yes) {
   if (yes)
     _userSet.insert(d);

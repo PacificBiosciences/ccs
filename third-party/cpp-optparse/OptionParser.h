@@ -48,7 +48,7 @@
  * parser.add_option("-q", "--quiet")
  *                   .action("store_false") .dest("verbose") .set_default("1")
  *                   .help("don't print status messages to stdout");
- * 
+ *
  * optparse::Values options = parser.parse_args(argc, argv);
  * vector<string> args = parser.args();
  *
@@ -67,6 +67,8 @@
 #include <set>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
+#include <type_traits>
 
 namespace optparse {
 
@@ -84,23 +86,33 @@ typedef std::map<std::string,Option const*> optMap;
 const char* const SUPPRESS_HELP = "SUPPRESS" "HELP";
 const char* const SUPPRESS_USAGE = "SUPPRESS" "USAGE";
 
+//Exception classes for error conditions
+class InvalidValueCast : public std::runtime_error {
+  public:
+    InvalidValueCast() : std::runtime_error("invalid cast of Value") {}
+};
+
+class InvalidOption : public std::runtime_error {
+  public:
+    InvalidOption() : std::runtime_error("invalid Option") {}
+};
+
 //! Class for automatic conversion from string -> anytype
 class Value {
   public:
     Value() : str(), valid(false) {}
     Value(const std::string& v) : str(v), valid(true) {}
-    operator const char*() { return str.c_str(); }
-    operator bool() { bool t; return (valid && (std::istringstream(str) >> t)) ? t : false; }
-    operator short() { short t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
-    operator unsigned short() { unsigned short t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
-    operator int() { int t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
-    operator unsigned int() { unsigned int t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
-    operator long() { long t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
-    operator unsigned long() { unsigned long t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
-    operator float() { float t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
-    operator double() { double t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
-    operator long double() { long double t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
- private:
+
+    template<typename T,
+             typename = typename std::enable_if<std::is_arithmetic<T>::value>::type>
+    operator T() {
+        T t;
+        if (valid && (std::istringstream(str) >> t)) return t;
+        throw InvalidValueCast();
+    }
+
+    operator const char*() { if (valid) return str.c_str(); throw InvalidValueCast(); }
+  private:
     const std::string str;
     bool valid;
 };
@@ -108,12 +120,16 @@ class Value {
 class Values {
   public:
     Values() : _map() {}
-    const std::string& operator[] (const std::string& d) const;
+    const std::string& operator[] (const std::string& d) const {
+        strMap::const_iterator it = _map.find(d);
+        if (it != _map.end()) return it->second;
+        throw InvalidOption();
+    }
     std::string& operator[] (const std::string& d) { return _map[d]; }
     bool is_set(const std::string& d) const { return _map.find(d) != _map.end(); }
     bool is_set_by_user(const std::string& d) const { return _userSet.find(d) != _userSet.end(); }
     void is_set_by_user(const std::string& d, bool yes);
-    Value get(const std::string& d) const { return (is_set(d)) ? Value((*this)[d]) : Value(); }
+    Value get(const std::string& d) const { return Value((*this)[d]); }
 
     typedef std::list<std::string>::iterator iterator;
     typedef std::list<std::string>::const_iterator const_iterator;
@@ -141,8 +157,6 @@ class OptionParser {
     OptionParser& set_defaults(const std::string& dest, const std::string& val) {
       _defaults[dest] = val; return *this;
     }
-    template<typename T>
-    OptionParser& set_defaults(const std::string& dest, T t) { std::ostringstream ss; ss << t; _defaults[dest] = ss.str(); return *this; }
     OptionParser& enable_interspersed_args() { _interspersed_args = true; return *this; }
     OptionParser& disable_interspersed_args() { _interspersed_args = false; return *this; }
     OptionParser& add_option_group(const OptionGroup& group);
@@ -224,7 +238,7 @@ class OptionParser {
 class OptionGroup : public OptionParser {
   public:
     OptionGroup(const OptionParser& p, const std::string& t, const std::string& d = "") :
-      _parser(p), _title(t), _group_description(d) {}
+      _title(t), _group_description(d) {}
     virtual ~OptionGroup() {}
 
     OptionGroup& title(const std::string& t) { _title = t; return *this; }
@@ -233,7 +247,6 @@ class OptionGroup : public OptionParser {
     const std::string& group_description() const { return _group_description; }
 
   private:
-    const OptionParser& _parser;
     std::string _title;
     std::string _group_description;
 };
