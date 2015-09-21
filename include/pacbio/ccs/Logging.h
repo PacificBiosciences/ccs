@@ -215,8 +215,8 @@ class LogMessage
 {
 public:
     LogMessage(
-        const char* file,
-        const char* function,
+        const char* file __attribute__((unused)),
+        const char* function __attribute__((unused)),
         unsigned int line,
         LogLevel level,
         Logger& logger)
@@ -332,28 +332,28 @@ void InstallSignalHandlers(Logger& logger = Logger::Default())
 
     static Logger& logger_ = logger;
 
-    signal(SIGABRT, [] (int sig)
+    signal(SIGABRT, [] (int)
         {
             { PBLOGGER_FATAL(logger_) << "caught SIGABRT"; }
             logger_.Die();
             signal(SIGABRT, SIG_DFL);
             raise(SIGABRT);
         });
-    signal(SIGINT, [] (int sig)
+    signal(SIGINT, [] (int)
         {
             { PBLOGGER_FATAL(logger_) << "caught SIGINT"; }
             logger_.Die();
             signal(SIGINT, SIG_DFL);
             raise(SIGINT);
         });
-    signal(SIGSEGV, [] (int sig)
+    signal(SIGSEGV, [] (int)
         {
             { PBLOGGER_FATAL(logger_) << "caught SIGSEGV"; }
             logger_.Die();
             signal(SIGSEGV, SIG_DFL);
             raise(SIGSEGV);
         });
-    signal(SIGTERM, [] (int sig)
+    signal(SIGTERM, [] (int)
         {
             { PBLOGGER_FATAL(logger_) << "caught SIGTERM"; }
             logger_.Die();
