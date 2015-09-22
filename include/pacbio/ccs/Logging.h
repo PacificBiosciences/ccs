@@ -217,7 +217,7 @@ public:
     LogMessage(
         const char* file __attribute__((unused)),
         const char* function __attribute__((unused)),
-        unsigned int line,
+        unsigned int line __attribute__((unused)),
         LogLevel level,
         Logger& logger)
         : logger_(logger)
