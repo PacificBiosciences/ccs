@@ -71,14 +71,14 @@ namespace ConsensusCore {
     // Size information
     //
     template<typename F, typename Z>
-    inline const int
+    inline int
     DenseMatrix<F, Z>::Rows() const
     {
         return boost_dense_matrix::size1();
     }
 
     template<typename F, typename Z>
-    inline const  int
+    inline int
     DenseMatrix<F, Z>::Columns() const
     {
         return boost_dense_matrix::size2();
@@ -89,7 +89,7 @@ namespace ConsensusCore {
     //
     template<typename F, typename Z>
     inline void
-    DenseMatrix<F, Z>::StartEditingColumn(int j, int hintBegin, int hintEnd)
+    DenseMatrix<F, Z>::StartEditingColumn(int j, int /* hintBegin */, int /* hintEnd */)
     {
         assert(columnBeingEdited_ == -1);
         columnBeingEdited_ = j;
@@ -135,7 +135,8 @@ namespace ConsensusCore {
 
     template<typename F, typename Z>
     inline bool
-    DenseMatrix<F, Z>::IsAllocated(int i, int j) const
+    DenseMatrix<F, Z>::IsAllocated(int i __attribute__((unused)),
+                                   int j __attribute__((unused))) const
     {
         assert(0 <= i && i < Rows() && 0 <= j && j < Columns());
         return true;
@@ -184,7 +185,7 @@ namespace ConsensusCore {
 
     template<typename F, typename Z>
     inline __m128
-    DenseMatrix<F, Z>::Get4(int i, int j) const
+    DenseMatrix<F, Z>::Get4(int, int) const
     {
         throw std::runtime_error("cannot use Get4 with non-f32 type!");
     }
@@ -200,7 +201,7 @@ namespace ConsensusCore {
 
     template<typename F, typename Z>
     inline void
-    DenseMatrix<F, Z>::Set4(int i, int j, __m128 v4)
+    DenseMatrix<F, Z>::Set4(int, int, __m128)
     {
         throw std::runtime_error("cannot use Set4 with non-f32 type!");
     }

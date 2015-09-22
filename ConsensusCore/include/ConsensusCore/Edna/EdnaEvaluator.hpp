@@ -268,7 +268,7 @@ namespace ConsensusCore
             return NEG_INF;
         }
 
-        float Burst(int i, int j, int hpLength) const
+        float Burst(int, int, int) const
         {
             NotYetImplemented();
             return NEG_INF;
@@ -314,7 +314,7 @@ namespace ConsensusCore
             return res;
         }
 
-        __m128 Burst4(int i, int j, int hpLength) const
+        __m128 Burst4(int, int, int) const
         {
             NotYetImplemented();
             return Zero4<lfloat>();

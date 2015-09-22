@@ -89,7 +89,7 @@ namespace
     MatchScore<Standard>(char t, char q,
                           float matchScore,
                           float mismatchScore,
-                          float partialMatchScore)
+                          float /* partialMatchScore */)
      {
          return (t == q ? matchScore : mismatchScore);
      }

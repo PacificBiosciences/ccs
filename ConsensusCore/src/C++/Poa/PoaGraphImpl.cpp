@@ -237,8 +237,8 @@ namespace detail {
                                       const AlignmentColumnMap& colMap,
                                       const std::string& sequence,
                                       const AlignConfig& config,
-                                      int beginRow,
-                                      int endRow) const
+                                      int /* beginRow */,
+                                      int /* endRow */) const
     {
         AlignmentColumn* curCol = new AlignmentColumn(v, sequence.length() + 1);
         const PoaNode& vertexInfo = vertexInfoMap_[v];
@@ -317,8 +317,8 @@ namespace detail {
                 // Incorporate (Match or Mismatch)
                 bool isMatch = sequence[readPos] == vertexInfo.Base;
                 candidateScore = prevCol->Score[i - 1] + (isMatch ?
-                                                             config.Params.Match :
-                                                             config.Params.Mismatch);
+                                                          config.Params.Match :
+                                                          config.Params.Mismatch);
                 if (candidateScore > bestScore)
                 {
                     bestScore = candidateScore;

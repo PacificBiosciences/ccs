@@ -194,9 +194,9 @@ TYPED_TEST(MutationScorerTest, TinyTemplate)
     EXPECT_EQ(params.DeletionN, ms.ScoreMutation(insertAtBeginning));
     EXPECT_EQ(params.DeletionN, ms.ScoreMutation(insertAtEnd));
 
-    for (int pos = 0; pos < tpl.length(); pos++)
+    for (size_t pos = 0; pos < tpl.length(); pos++)
     {
-        Mutation m(SUBSTITUTION, pos, 'A');
+        Mutation m(SUBSTITUTION, static_cast<int>(pos), 'A');
         EXPECT_EQ(params.Mismatch, ms.ScoreMutation(m));
     }
 }

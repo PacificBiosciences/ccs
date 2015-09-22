@@ -272,7 +272,7 @@ PairwiseAlignment*
 ConsensusCore::AlignLinear(const std::string& target,
                            const std::string& query,
                            int* score,
-                           AlignConfig config)
+                           AlignConfig /* config */)
 {
     int J = target.length();
     ublas::vector<int> buf1(J + 1), buf2(J + 1);

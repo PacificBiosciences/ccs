@@ -206,7 +206,7 @@ namespace ConsensusCore
 
     template<typename F, typename Z>
     inline __m128
-    SparseVector<F, Z>::Get4(int i) const
+    SparseVector<F, Z>::Get4(int) const
     {
         throw std::runtime_error("cannot perform Get4 with non-f32 type");
     }
@@ -233,7 +233,7 @@ namespace ConsensusCore
 
     template<typename F, typename Z>
     inline void
-    SparseVector<F, Z>::Set4(int i, __m128 v4)
+    SparseVector<F, Z>::Set4(int, __m128)
     {
         throw std::runtime_error("cannot perform Set4 with non-f32 type");
     }

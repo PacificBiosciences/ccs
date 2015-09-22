@@ -49,7 +49,7 @@ namespace Arrow {
             // Accessors that are handy for debugging.
             const MatrixType* Alpha() const;
             const MatrixType* Beta() const;
-            const int NumFlipFlops() const { return numFlipFlops_; }
+            int NumFlipFlops() const { return numFlipFlops_; }
 
         private:
              R* recursor_;

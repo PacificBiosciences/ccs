@@ -63,12 +63,14 @@ namespace ConsensusCore
     {
         float ScoreDiff;
 
-        BandingOptions(int diagonalCross, float scoreDiff)
+        BandingOptions(int /* diagonalCross */, float scoreDiff)
             : ScoreDiff(scoreDiff)
         {}
 
-        BandingOptions(int diagonalCross, float scoreDiff,
-                       float dynamicAdjustFactor, float dynamicAdjustOffset)
+        BandingOptions(int /* diagonalCross */,
+                       float scoreDiff,
+                       float /* dynamicAdjustFactor */,
+                       float /* dynamicAdjustOffset */)
             : ScoreDiff(scoreDiff)
         {}
     };

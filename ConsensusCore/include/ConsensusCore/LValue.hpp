@@ -74,7 +74,7 @@ namespace ConsensusCore {
         }
     };
 
-    template<typename T>  const __m128 Zero4() { return _mm_set_ps1(T()); }
+    template<typename T> __m128 Zero4() { return _mm_set_ps1(T()); }
 
     typedef lvalue<float>  lfloat;
     typedef lvalue<double> ldouble;

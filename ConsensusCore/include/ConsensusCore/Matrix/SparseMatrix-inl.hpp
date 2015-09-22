@@ -67,14 +67,14 @@ namespace ConsensusCore {
     // Size information
     //
     template<typename F, typename Z>
-    inline const int
+    inline int
     SparseMatrix<F, Z>::Rows() const
     {
         return nRows_;
     }
 
     template<typename F, typename Z>
-    inline const int
+    inline int
     SparseMatrix<F, Z>::Columns() const
     {
         return nCols_;
@@ -191,7 +191,7 @@ namespace ConsensusCore {
 
     template<typename F, typename Z>
     inline __m128
-    SparseMatrix<F, Z>::Get4(int i, int j) const
+    SparseMatrix<F, Z>::Get4(int, int) const
     {
         throw std::runtime_error("cannot perform Get4 with non-f32 type");
     }
@@ -206,7 +206,7 @@ namespace ConsensusCore {
 
     template<typename F, typename Z>
     inline void
-    SparseMatrix<F, Z>::Set4(int i, int j, __m128 v4)
+    SparseMatrix<F, Z>::Set4(int, int, __m128)
     {
         throw std::runtime_error("cannot perform Get4 with non-f32 type");
     }
@@ -300,7 +300,7 @@ namespace ConsensusCore {
 
     template<typename F, typename Z>
     void
-    SparseMatrix<F, Z>::CheckInvariants(int column) const
+    SparseMatrix<F, Z>::CheckInvariants(int) const
     {
         for (int j = 0; j < nCols_; j++)
          {

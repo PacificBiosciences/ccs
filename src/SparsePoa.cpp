@@ -83,18 +83,40 @@ SparsePoa::~SparsePoa()
 
 SparsePoa::ReadKey
 SparsePoa::AddRead
-  (const std::string& readSequence, const PoaAlignmentOptions& alnOptions, float minScoreToAdd)
+  (const std::string& readSequence, const PoaAlignmentOptions& /* alnOptions */, float minScoreToAdd)
 {
     AlignConfig config = DefaultPoaConfig(LOCAL);
     Path outputPath;
-    graph_->AddRead(readSequence, config, rangeFinder_, &outputPath);
-    readPaths_.push_back(outputPath);
-    return graph_->NumReads() - 1;
+    ReadKey key = -1;
+
+    if (graph_->NumReads() == 0)
+    {
+        graph_->AddFirstRead(readSequence, &outputPath);
+        readPaths_.push_back(outputPath);
+        reverseComplemented_.push_back(false);
+        key = graph_->NumReads() - 1;
+    }
+    else
+    {
+        auto c = graph_->TryAddRead(readSequence, config, rangeFinder_);
+
+        if (c->Score() >= minScoreToAdd)
+        {
+            graph_->CommitAdd(c, &outputPath);
+            readPaths_.push_back(outputPath);
+            reverseComplemented_.push_back(false);
+            key = graph_->NumReads() - 1;
+        }
+
+        delete c;
+    }
+
+    return key;
 }
 
 SparsePoa::ReadKey
 SparsePoa::OrientAndAddRead
-  (const std::string& readSequence, const PoaAlignmentOptions& alnOptions, float minScoreToAdd)
+  (const std::string& readSequence, const PoaAlignmentOptions& /* alnOptions */, float minScoreToAdd)
 {
     AlignConfig config = DefaultPoaConfig(LOCAL);
     Path outputPath;
@@ -213,7 +235,7 @@ SparsePoa::WriteGraphVizFile(const std::string& filename, int flags, const PoaCo
 }
 
 void
-SparsePoa::PruneGraph(float minCoverageFraction)
+SparsePoa::PruneGraph(float /* minCoverageFraction */)
 {}
 
 void

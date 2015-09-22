@@ -35,5 +35,10 @@ namespace Arrow {
         Branch /= value;
         Deletion /= value;
     }
+
+    std::ostream& operator<<(std::ostream& out, const TransitionParameters& tp)
+    {
+        return out << "TransitionParameters(" << tp.Match << ", " << tp.Branch << ", " << tp.Stick << ", " << tp.Deletion << ')';
+    }
 }
 }

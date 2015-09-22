@@ -47,7 +47,7 @@
 namespace ConsensusCore {
 namespace detail {
 
-    std::string sequenceAlongPath(const BoostGraph& g,
+    std::string sequenceAlongPath(const BoostGraph&,
                                   const VertexInfoMap& vertexInfoMap,
                                   const std::vector<VD>& path)
     {

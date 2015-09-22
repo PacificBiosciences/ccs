@@ -63,8 +63,8 @@ namespace ConsensusCore {
         bool IsNull() const;
 
     public:  // Size information
-        const int Rows() const;
-        const int Columns() const;
+        int Rows() const;
+        int Columns() const;
 
     public:  // Information about entries filled by column
         void StartEditingColumn(int j, int hintBegin, int hintEnd);

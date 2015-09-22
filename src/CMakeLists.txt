@@ -49,4 +49,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_link_libraries(ccs tcmalloc)
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-add_dependencies(ccs htslib)
+if (TARGET htslib)
+    add_dependencies(ccs htslib)
+endif()

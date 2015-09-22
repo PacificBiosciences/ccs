@@ -47,7 +47,7 @@ namespace ConsensusCore {
 
     void CoverageInWindow(int  tStartDim,
                           int *tStart,
-                          int  tEndDim,
+                          int  tEndDim __attribute__((unused)),
                           int *tEnd,
                           int  winStart,
                           int  winLen,
@@ -78,7 +78,7 @@ namespace ConsensusCore {
     vector<Interval> CoveredIntervals(int minCoverage,
                                       int tStartDim,
                                       int *tStart,
-                                      int tEndDim,
+                                      int tEndDim __attribute__((unused)),
                                       int *tEnd,
                                       int winStart,
                                       int winLen)

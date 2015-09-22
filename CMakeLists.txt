@@ -2,6 +2,10 @@
 # CMake build script for PacBioCCS executable.
 ########################################################################
 
+if (POLICY CMP0048)
+    cmake_policy(SET CMP0048 OLD)
+endif()
+
 project(PacBioCCS CXX C)
 cmake_minimum_required(VERSION 2.8)
 
@@ -136,8 +140,8 @@ endif(HAS_NO_UNUSED_VARIABLE)
 if (NOT PBBAM_INCLUDE_DIRS OR
     NOT PBBAM_LIBRARIES)
     add_subdirectory(${PacBioBAM_RootDir} external/pbbam/build EXCLUDE_FROM_ALL)
-    set(PBBAM_INCLUDE_DIRS ${PacBioBAM_IncludeDir})
-    set(PBBAM_LIBRARIES pbbam)
+    set(PBBAM_INCLUDE_DIRS "${PacBioBAM_IncludeDir}" CACHE INTERNAL "bla" FORCE)
+    set(PBBAM_LIBRARIES pbbam CACHE INTERNAL "bla" FORCE)
 endif()
 
 # main exe src
