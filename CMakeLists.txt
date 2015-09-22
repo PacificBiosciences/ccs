@@ -11,6 +11,27 @@ if (NOT Boost_INCLUDE_DIRS)
     find_package(Boost 1.58.0 REQUIRED)
 endif()
 
+if(NOT HTSLIB_INCLUDE_DIRS OR
+   NOT HTSLIB_LIBRARIES)
+    if(HTSLIB_ROOTDIR)
+        find_package(htslib
+                     PATHS ${HTSLIB_ROOTDIR}
+                     REQUIRED)
+    elseif(PacBioBAM_RootDir)
+        find_package(htslib
+                     PATHS ${PacBioBAM_RootDir}/../htslib
+                     REQUIRED)
+    elseif(Bifx_RootDir)
+        find_package(htslib
+                     PATHS ${Bifx_RootDir}/staging/PostPrimary/htslib
+                     REQUIRED)
+    else()
+        find_package(htslib
+                     PATHS ${PacBioCCS_SOURCE_DIR}/../../../staging/PostPrimary/htslib
+                     REQUIRED)
+    endif()
+endif()
+
 find_package(Threads REQUIRED)
 
 if (NOT ZLIB_INCLUDE_DIRS OR
@@ -42,7 +63,7 @@ file(MAKE_DIRECTORY             ${PacBioCCS_BinDir})
 file(MAKE_DIRECTORY             ${PacBioCCS_LibDir})
 
 # PacBio libraries
-set(Bifx_RootDir                ${PacBioCCS_RootDir}/../../../software/smrtanalysis/bioinformatics CACHE PATH "smrtanalysis/bioinformatics root path")
+set(Bifx_RootDir                ${PacBioCCS_RootDir}/../../.. CACHE PATH "smrtanalysis/bioinformatics root path")
 
 # ConsensusCore
 #set(ConsensusCore_RootDir       ${Bifx_RootDir}/lib/cpp/ConsensusCore                              CACHE PATH "ConsensusCore root path")
@@ -110,9 +131,15 @@ if(HAS_NO_UNUSED_VARIABLE)
     set(PacBioCCS_CXX_FLAGS "${PacBioCCS_CXX_FLAGS} -Wno-unused-variable")
 endif(HAS_NO_UNUSED_VARIABLE)
 
+if (NOT PBBAM_INCLUDE_DIRS OR
+    NOT PBBAM_LIBRARIES)
+    add_subdirectory(${PacBioBAM_RootDir} external/pbbam/build EXCLUDE_FROM_ALL)
+    set(PBBAM_INCLUDE_DIRS ${PacBioBAM_IncludeDir})
+    set(PBBAM_LIBRARIES pbbam)
+endif()
+
 # main exe src
-add_subdirectory(${ConsensusCore_RootDir} external/ConsensusCore/build)
-add_subdirectory(${PacBioBAM_RootDir}     external/pbbam/build)
+add_subdirectory(${ConsensusCore_RootDir} external/ConsensusCore/build EXCLUDE_FROM_ALL)
 add_subdirectory(src)
 
 # testing

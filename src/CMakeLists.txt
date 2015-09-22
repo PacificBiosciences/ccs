@@ -4,7 +4,7 @@ include_directories(SYSTEM
     ${Boost_INCLUDE_DIRS}
     ${ConsensusCore_IncludeDir}
     ${HTSLIB_INCLUDE_DIRS}
-    ${PacBioBAM_IncludeDir}
+    ${PBBAM_INCLUDE_DIRS}
     ${CPPOPTPARSE_IncludeDir}
     ${SEQAN_IncludeDir}
 )
@@ -37,7 +37,7 @@ set_target_properties(ccs PROPERTIES
 target_link_libraries(ccs
     pbccs
     ConsensusCore
-    pbbam
+    ${PBBAM_LIBRARIES}
     ${HTSLIB_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
@@ -48,3 +48,5 @@ target_link_libraries(ccs
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_link_libraries(ccs tcmalloc)
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
+add_dependencies(ccs htslib)
