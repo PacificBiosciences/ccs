@@ -689,9 +689,10 @@ ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>* chains,
 /// \param  deletion  Penalty for each base along the diagonal that
 ///                   separates two seeds, if the 'upstream' seed is on 
 ///                   a lower diagonal than the 'downstream' seed.
-void ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>>* chains,
-                const std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>> seedSets,
-                const ChainSeedsConfig config)
+void __attribute__((unused))
+ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>>* chains,
+           const std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>> seedSets,
+           const ChainSeedsConfig config)
 {
     using namespace seqan;
     using namespace std;
