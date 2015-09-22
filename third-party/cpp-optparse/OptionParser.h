@@ -237,7 +237,7 @@ class OptionParser {
 
 class OptionGroup : public OptionParser {
   public:
-    OptionGroup(const OptionParser& p, const std::string& t, const std::string& d = "") :
+    OptionGroup(const OptionParser&, const std::string& t, const std::string& d = "") :
       _title(t), _group_description(d) {}
     virtual ~OptionGroup() {}
 
