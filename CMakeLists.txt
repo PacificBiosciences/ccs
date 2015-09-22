@@ -2,9 +2,8 @@
 # CMake build script for PacBioCCS executable.
 ########################################################################
 
-cmake_policy(SET CMP0048 NEW)  # lets us set the version in project()
-project(PacBioCCS VERSION 0.0.1 LANGUAGES CXX C)
-cmake_minimum_required(VERSION 3.0)
+project(PacBioCCS CXX C)
+cmake_minimum_required(VERSION 2.8)
 
 # required packages
 if (NOT Boost_INCLUDE_DIRS)
@@ -40,6 +39,9 @@ if (NOT ZLIB_INCLUDE_DIRS OR
 endif()
 
 # project version
+set(PacBioCCS_VERSION_MAJOR 0)
+set(PacBioCCS_VERSION_MINOR 0)
+set(PacBioCCS_VERSION_PATCH 1)
 set(PacBioCCS_VERSION
     "${PacBioCCS_VERSION_MAJOR}.${PacBioCCS_VERSION_MINOR}.${PacBioCCS_VERSION_PATCH}"
 )
