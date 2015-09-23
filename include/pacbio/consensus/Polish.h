@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <tuple>
 #include <vector>
 
 #include <pacbio/consensus/Mutation.h>
@@ -20,7 +21,9 @@ struct PolishConfig
     PolishConfig(size_t iterations = 40, size_t separation = 10, size_t neighborhood = 20);
 };
 
-bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
+std::tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
+
+std::vector<int> ConsensusQVs(const AbstractIntegrator& ai);
 
 std::vector<Mutation> Mutations(const AbstractIntegrator& ai);
 

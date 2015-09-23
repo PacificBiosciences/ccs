@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 
 #include <pacbio/consensus/Evaluator.h>
 #include <pacbio/consensus/Exceptions.h>
@@ -40,6 +41,7 @@ public:
 
     double LL() const;
     double AvgZScore() const;
+    std::vector<double> ZScores() const;
 
     virtual void ApplyMutation(const Mutation& mut) = 0;
     virtual void ApplyMutations(std::vector<Mutation>* muts) = 0;
@@ -53,7 +55,7 @@ protected:
     AddReadResult AddRead(Evaluator&& eval);
 
     IntegratorConfig cfg_;
-    std::vector<Evaluator> evals_;
+    std::vector<std::unique_ptr<Evaluator>> evals_;
 };
 
 class MonoMolecularIntegrator : public AbstractIntegrator

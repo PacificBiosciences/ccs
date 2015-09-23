@@ -21,22 +21,29 @@ AbstractIntegrator::AbstractIntegrator(AbstractIntegrator&& ai)
 }
 
 AbstractIntegrator::~AbstractIntegrator() {}
-AddReadResult AbstractIntegrator::AddRead(Evaluator&& eval)
+AddReadResult AbstractIntegrator::AddRead(Evaluator&& eval_)
 {
+    std::unique_ptr<Evaluator> eval;
+    AddReadResult result = AddReadResult::SUCCESS;
+
     try {
-        evals_.emplace_back(std::move(eval));
+        eval.reset(new Evaluator(std::move(eval_)));
     } catch (AlphaBetaMismatch& e) {
-        return AddReadResult::ALPHA_BETA_MISMATCH;
+        eval.reset(nullptr);
+        result = AddReadResult::ALPHA_BETA_MISMATCH;
     }
     // TODO(lhepler): do we really want other?
     catch (...) {
-        return AddReadResult::OTHER;
+        eval.reset(nullptr);
+        result = AddReadResult::OTHER;
     }
 
-    if (!std::isnan(cfg_.MinZScore) && evals_.back().ZScore() < cfg_.MinZScore) {
-        evals_.pop_back();
-        return AddReadResult::POOR_ZSCORE;
+    if (!std::isnan(cfg_.MinZScore) && eval && eval->ZScore() < cfg_.MinZScore) {
+        eval.reset(nullptr);
+        result = AddReadResult::POOR_ZSCORE;
     }
+
+    evals_.emplace_back(std::move(eval));
 
     return AddReadResult::SUCCESS;
 }
@@ -45,7 +52,7 @@ double AbstractIntegrator::LL(const Mutation& mut)
 {
     double ll = 0.0;
     for (auto& eval : evals_) {
-        ll += eval.LL(mut);
+        if (eval) ll += eval->LL(mut);
     }
     return ll;
 }
@@ -54,7 +61,7 @@ double AbstractIntegrator::LL() const
 {
     double ll = 0.0;
     for (const auto& eval : evals_) {
-        ll += eval.LL();
+        if (eval) ll += eval->LL();
     }
     return ll;
 }
@@ -63,13 +70,33 @@ double AbstractIntegrator::AvgZScore() const
 {
     double mean = 0.0, var = 0.0;
     for (const auto& eval : evals_) {
-        double m, v;
-        std::tie(m, v) = eval.NormalParameters();
-        mean += m;
-        var += v;
+        if (eval)
+        {
+            double m, v;
+            std::tie(m, v) = eval->NormalParameters();
+            mean += m;
+            var += v;
+        }
     }
     const size_t n = evals_.size();
     return (LL() / n - mean / n) / std::sqrt(var / n);
+}
+
+std::vector<double> AbstractIntegrator::ZScores() const
+{
+    std::vector<double> results;
+    results.reserve(evals_.size());
+    for (const auto& eval : evals_) {
+        if (eval)
+        {
+            double mean, var;
+            std::tie(mean, var) = eval->NormalParameters();
+            results.emplace_back((eval->LL() - mean) / std::sqrt(var));
+        }
+        else
+            results.emplace_back(std::numeric_limits<double>::quiet_NaN());
+    }
+    return results;
 }
 
 MonoMolecularIntegrator::MonoMolecularIntegrator(const std::string& tpl,
@@ -121,14 +148,14 @@ void MonoMolecularIntegrator::ApplyMutation(const Mutation& mut)
 {
     tpl_.ApplyMutation(mut);
     for (auto& eval : evals_)
-        eval.ApplyMutation(mut);
+        if (eval) eval->ApplyMutation(mut);
 }
 
 void MonoMolecularIntegrator::ApplyMutations(std::vector<Mutation>* muts)
 {
     tpl_.ApplyMutations(muts);
     for (auto& eval : evals_)
-        eval.ApplyMutations(muts);
+        if (eval) eval->ApplyMutations(muts);
 }
 
 MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
@@ -152,14 +179,14 @@ void MultiMolecularIntegrator::ApplyMutation(const Mutation& mut)
     std::vector<Mutation> muts(1, mut);
     tpl_ = ::PacBio::Consensus::ApplyMutations(tpl_, &muts);
     for (auto& eval : evals_)
-        eval.ApplyMutation(mut);
+        if (eval) eval->ApplyMutation(mut);
 }
 
 void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* muts)
 {
     tpl_ = ::PacBio::Consensus::ApplyMutations(tpl_, muts);
     for (auto& eval : evals_)
-        eval.ApplyMutations(muts);
+        if (eval) eval->ApplyMutations(muts);
 }
 
 }  // namespace Consensus

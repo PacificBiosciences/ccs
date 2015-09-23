@@ -1,10 +1,13 @@
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <iterator>
 #include <list>
+#include <limits>
 #include <set>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include <boost/optional.hpp>
@@ -148,12 +151,14 @@ std::vector<Mutation> NearbyMutations(const AbstractIntegrator& ai,
     return muts;
 }
 
-bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
+std::tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
 {
     std::vector<Mutation> muts = Mutations(*ai);
     std::hash<std::string> hashFn;
     size_t oldTpl = hashFn(*ai);
     std::set<size_t> history = {oldTpl};
+    size_t nTested = 0;
+    size_t nApplied = 0;
 
     for (size_t i = 0; i < cfg.MaximumIterations; ++i) {
         boost::optional<Mutation> bestMut;
@@ -168,6 +173,7 @@ bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
                 const double ll = ai->LL(mut);
                 if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
                 if (ll > bestll) bestMut = mut;
+                ++nTested;
             }
 
             // take best mutations in separation window, apply them
@@ -177,7 +183,7 @@ bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
         const size_t newTpl = hashFn(ApplyMutations(*ai, &muts));
 
         // convergence!!
-        if (newTpl == oldTpl) return true;
+        if (newTpl == oldTpl) return std::make_tuple(true, nTested, nApplied);
 
         if (history.find(newTpl) != history.end()) {
             // cyclic behavior detected! apply just the single best mutation
@@ -187,9 +193,11 @@ bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
 
             ai->ApplyMutation(*bestMut);
             oldTpl = hashFn(*ai);
+            ++nApplied;
         } else {
             ai->ApplyMutations(&muts);
             oldTpl = newTpl;
+            nApplied += muts.size();
         }
 
         // keep track of which templates we've seen
@@ -199,7 +207,37 @@ bool Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
         muts = NearbyMutations(*ai, muts, cfg.MutationNeighborhood);
     }
 
-    return false;
+    return std::make_tuple(false, nTested, nApplied);
+}
+
+int ProbabilityToQV(double probability)
+{
+    if (probability < 0.0 || probability > 1.0)
+        throw std::invalid_argument("invalid value: probability not in [0,1]");
+    else if (probability == 0.0)
+        probability = std::numeric_limits<double>::min();
+
+    return static_cast<int>(round(-10.0 * log10(probability)));
+}
+
+std::vector<int> ConsensusQVs(AbstractIntegrator& ai)
+{
+    std::vector<int> QVs;
+    const double LL = ai.LL();
+    for (size_t i = 0; i < ai.Length(); ++i)
+    {
+        double scoreSum = 0.0;
+        for (const auto& m : Mutations(ai, i, i + 1))
+        {
+            // TODO (lhepler): this is dumb, but untestable mutations,
+            //   aka insertions at ends, cause all sorts of weird issues
+            double score = ai.LL(m) - LL;
+            if (score < 0.0)
+                scoreSum += exp(score);
+        }
+        QVs.push_back(ProbabilityToQV(1.0 - 1.0 / (1.0 + scoreSum)));
+    }
+    return QVs;
 }
 
 }  // namespace Consensus
