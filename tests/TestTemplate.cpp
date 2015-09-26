@@ -145,7 +145,8 @@ string ToString(const AbstractTemplate& tpl)
 
 void TemplateEquivalence(const size_t nsamp, const size_t nvirt, const size_t len = 100)
 {
-    mt19937 gen(42);
+    std::random_device rd;
+    mt19937 gen(rd());
     uniform_int_distribution<size_t> randIdx(0, len - 1);
     bernoulli_distribution randPin(0.5);
     bernoulli_distribution randSpanning(0.33);
@@ -244,6 +245,62 @@ TEST(TemplateTest, TestVirtualTemplateEquivalence)
 {
     TemplateEquivalence(1000, 20, 10);
     TemplateEquivalence(500, 20, 30);
+}
+
+TEST(TemplateTest, TestPinning)
+{
+    constexpr size_t len = 5;
+    const string tpl(len, 'C');
+    const string A(1, 'A');
+
+    // pinStart and pinEnd
+    {
+        Template master(tpl, ModelFactory::Create(mdl, snr), 0, len, true, true);
+        EXPECT_EQ(len, master.Length());
+        EXPECT_EQ(tpl, ToString(master));
+        master.ApplyMutation(Mutation(MutationType::INSERTION, len, 'A'));
+        EXPECT_EQ(len + 1, master.Length());
+        EXPECT_EQ(tpl + A, ToString(master));
+        master.ApplyMutation(Mutation(MutationType::INSERTION, 0, 'A'));
+        EXPECT_EQ(len + 2, master.Length());
+        EXPECT_EQ(A + tpl + A, ToString(master));
+    }
+    // no pinStart but pinEnd
+    {
+        Template master(tpl, ModelFactory::Create(mdl, snr), 0, len, false, true);
+        EXPECT_EQ(len, master.Length());
+        EXPECT_EQ(tpl, ToString(master));
+        master.ApplyMutation(Mutation(MutationType::INSERTION, 0, 'A'));
+        EXPECT_EQ(len, master.Length());
+        EXPECT_EQ(tpl, ToString(master));
+        master.ApplyMutation(Mutation(MutationType::INSERTION, len, 'A'));
+        EXPECT_EQ(len + 1, master.Length());
+        EXPECT_EQ(tpl + A, ToString(master));
+    }
+    // pinStart but no pinEnd
+    {
+        Template master(tpl, ModelFactory::Create(mdl, snr), 0, len, true, false);
+        EXPECT_EQ(len, master.Length());
+        EXPECT_EQ(tpl, ToString(master));
+        master.ApplyMutation(Mutation(MutationType::INSERTION, len, 'A'));
+        EXPECT_EQ(len, master.Length());
+        EXPECT_EQ(tpl, ToString(master));
+        master.ApplyMutation(Mutation(MutationType::INSERTION, 0, 'A'));
+        EXPECT_EQ(len + 1, master.Length());
+        EXPECT_EQ(A + tpl, ToString(master));
+    }
+    // no pinStart or pinEnd
+    {
+        Template master(tpl, ModelFactory::Create(mdl, snr), 0, len, false, false);
+        EXPECT_EQ(len, master.Length());
+        EXPECT_EQ(tpl, ToString(master));
+        master.ApplyMutation(Mutation(MutationType::INSERTION, len, 'A'));
+        EXPECT_EQ(len, master.Length());
+        EXPECT_EQ(tpl, ToString(master));
+        master.ApplyMutation(Mutation(MutationType::INSERTION, 0, 'A'));
+        EXPECT_EQ(len, master.Length());
+        EXPECT_EQ(tpl, ToString(master));
+    }
 }
 
 }  // namespace anonymous

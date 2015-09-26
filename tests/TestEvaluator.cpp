@@ -140,8 +140,8 @@ template <typename F, typename G>
 void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeIntegrator,
                          const G& addRead)
 {
-    // std::random_device rd;
-    std::mt19937 gen(42);
+    std::random_device rd;
+    std::mt19937 gen(rd());
     // increase the floor by nmut because we do not support templates with lt 3
     // bases
     std::uniform_int_distribution<size_t> rand(3 + nmut, 30);
