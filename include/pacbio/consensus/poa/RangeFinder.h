@@ -35,23 +35,20 @@ class PoaGraphImpl;
 class SdpRangeFinder
 {
 private:
-    std::map<PoaGraph::Vertex, std::tuple<size_t, size_t>>
-        alignableReadIntervalByVertex_;
+    std::map<PoaGraph::Vertex, std::tuple<size_t, size_t>> alignableReadIntervalByVertex_;
 
 public:
     virtual ~SdpRangeFinder();
 
     void InitRangeFinder(const PoaGraphImpl& poaGraph,
                          const std::vector<PoaGraph::Vertex>& consensusPath,
-                         const std::string& consensusSequence,
-                         const std::string& readSequence);
+                         const std::string& consensusSequence, const std::string& readSequence);
 
     std::tuple<size_t, size_t> FindAlignableRange(PoaGraph::Vertex v);
 
 protected:
-    virtual SdpAnchorVector FindAnchors(
-        const std::string& consensusSequence,
-        const std::string& readSequence) const = 0;
+    virtual SdpAnchorVector FindAnchors(const std::string& consensusSequence,
+                                        const std::string& readSequence) const = 0;
 };
 
 }  // namespace detail

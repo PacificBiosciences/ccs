@@ -64,8 +64,8 @@ public:  // Nullability
     bool IsNull() const;
 
 public:  // Size information
-    const size_t Rows() const;
-    const size_t Columns() const;
+    size_t Rows() const;
+    size_t Columns() const;
 
 public:  // Information about entries filled by column
     void StartEditingColumn(size_t j, size_t hintBegin, size_t hintEnd);
@@ -110,34 +110,27 @@ inline const SparseMatrix& SparseMatrix::Null()
     return *nullObj;
 }
 
-inline bool SparseMatrix::IsNull() const
-{
-    return (Rows() == 0 && Columns() == 0);
-}
-
+inline bool SparseMatrix::IsNull() const { return (Rows() == 0 && Columns() == 0); }
 //
 // Size information
 //
-inline const size_t SparseMatrix::Rows() const { return nRows_; }
-inline const size_t SparseMatrix::Columns() const { return nCols_; }
+inline size_t SparseMatrix::Rows() const { return nRows_; }
+inline size_t SparseMatrix::Columns() const { return nCols_; }
 //
 // Entry range queries per column
 //
-inline void SparseMatrix::StartEditingColumn(size_t j, size_t hintBegin,
-                                             size_t hintEnd)
+inline void SparseMatrix::StartEditingColumn(size_t j, size_t hintBegin, size_t hintEnd)
 {
     assert(columnBeingEdited_ == std::numeric_limits<size_t>::max());
     columnBeingEdited_ = j;
     if (columns_[j] != NULL) {
         columns_[j]->ResetForRange(hintBegin, hintEnd);
     } else {
-        columns_[j] = std::unique_ptr<SparseVector>(
-            new SparseVector(Rows(), hintBegin, hintEnd));
+        columns_[j] = std::unique_ptr<SparseVector>(new SparseVector(Rows(), hintBegin, hintEnd));
     }
 }
 
-inline void SparseMatrix::FinishEditingColumn(size_t j, size_t usedRowsBegin,
-                                              size_t usedRowsEnd)
+inline void SparseMatrix::FinishEditingColumn(size_t j, size_t usedRowsBegin, size_t usedRowsEnd)
 {
     assert(columnBeingEdited_ == j);
     usedRanges_[j] = std::make_tuple(usedRowsBegin, usedRowsEnd);
@@ -177,11 +170,7 @@ inline bool SparseMatrix::IsAllocated(size_t i, size_t j) const
     return columns_[j] != NULL && columns_[j]->IsAllocated(i);
 }
 
-inline double SparseMatrix::Get(size_t i, size_t j) const
-{
-    return (*this)(i, j);
-}
-
+inline double SparseMatrix::Get(size_t i, size_t j) const { return (*this)(i, j); }
 inline void SparseMatrix::Set(size_t i, size_t j, double v)
 {
     assert(columnBeingEdited_ == j);

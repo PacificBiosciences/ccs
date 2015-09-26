@@ -93,13 +93,12 @@ private:
 
 namespace {  // anonymous
 
-constexpr size_t PADDING          = 8;
+constexpr size_t PADDING = 8;
 constexpr double SHRINK_THRESHOLD = 0.8;
 
 }  // anonymous namespace
 
-inline SparseVector::SparseVector(size_t logicalLength, size_t beginRow,
-                                  size_t endRow)
+inline SparseVector::SparseVector(size_t logicalLength, size_t beginRow, size_t endRow)
     : logicalLength_(logicalLength)
     , allocatedBeginRow_((beginRow > PADDING) ? beginRow - PADDING : 0)
     , allocatedEndRow_(std::min(endRow + PADDING, logicalLength_))
@@ -127,19 +126,16 @@ inline void SparseVector::ResetForRange(size_t beginRow, size_t endRow)
     assert(beginRow >= 0 && beginRow <= endRow && endRow <= logicalLength_);
     size_t newAllocatedBegin = (beginRow > PADDING) ? beginRow - PADDING : 0;
     size_t newAllocatedEnd = std::min(endRow + PADDING, logicalLength_);
-    if ((newAllocatedEnd - newAllocatedBegin) >
-        (allocatedEndRow_ - allocatedBeginRow_)) {
+    if ((newAllocatedEnd - newAllocatedBegin) > (allocatedEndRow_ - allocatedBeginRow_)) {
         storage_.resize(newAllocatedEnd - newAllocatedBegin);
         nReallocs_++;
         Clear();
     } else if ((newAllocatedEnd - newAllocatedBegin) <
-               static_cast<size_t>(SHRINK_THRESHOLD *
-                                   (allocatedEndRow_ - allocatedBeginRow_))) {
+               static_cast<size_t>(SHRINK_THRESHOLD * (allocatedEndRow_ - allocatedBeginRow_))) {
         // use swap trick to free allocated but unused memory,
         // see:
         // http://stackoverflow.com/questions/253157/how-to-downsize-stdvector
-        std::vector<double>(newAllocatedEnd - newAllocatedBegin, 0.0)
-            .swap(storage_);
+        std::vector<double>(newAllocatedEnd - newAllocatedBegin, 0.0).swap(storage_);
         nReallocs_++;
     } else {
         Clear();
@@ -149,15 +145,13 @@ inline void SparseVector::ResetForRange(size_t beginRow, size_t endRow)
     CheckInvariants();
 }
 
-inline void SparseVector::ExpandAllocated(size_t newAllocatedBegin,
-                                          size_t newAllocatedEnd)
+inline void SparseVector::ExpandAllocated(size_t newAllocatedBegin, size_t newAllocatedEnd)
 {
     // Expands allocated storage while preserving the contents.
     CheckInvariants();
     assert(newAllocatedBegin >= 0 && newAllocatedBegin <= newAllocatedEnd &&
            newAllocatedEnd <= logicalLength_);
-    assert(newAllocatedBegin <= allocatedBeginRow_ &&
-           newAllocatedEnd >= allocatedEndRow_);
+    assert(newAllocatedBegin <= allocatedBeginRow_ && newAllocatedEnd >= allocatedEndRow_);
     // Resize the underlying storage.
     storage_.resize(newAllocatedEnd - newAllocatedBegin);
     // Use memmove to robustly relocate the old data (handles overlapping
@@ -166,17 +160,14 @@ inline void SparseVector::ExpandAllocated(size_t newAllocatedBegin,
     //      storage[0 ... (end - begin) )
     //   Must be moved to:
     //      storage[(begin - newBegin) ... (end - newBegin)]
-    memmove(
-        &storage_[allocatedBeginRow_ - newAllocatedBegin], &storage_[0],
-        (allocatedEndRow_ - allocatedBeginRow_) * sizeof(double));  // NOLINT
+    memmove(&storage_[allocatedBeginRow_ - newAllocatedBegin], &storage_[0],
+            (allocatedEndRow_ - allocatedBeginRow_) * sizeof(double));  // NOLINT
     // "Zero"-fill the allocated but unused space.
-    std::fill(storage_.begin(),
-              storage_.begin() + (allocatedBeginRow_ - newAllocatedBegin), 0.0);
-    std::fill(storage_.begin() + (allocatedEndRow_ - newAllocatedBegin),
-              storage_.end(), 0.0);
+    std::fill(storage_.begin(), storage_.begin() + (allocatedBeginRow_ - newAllocatedBegin), 0.0);
+    std::fill(storage_.begin() + (allocatedEndRow_ - newAllocatedBegin), storage_.end(), 0.0);
     // Update pointers.
     allocatedBeginRow_ = newAllocatedBegin;
-    allocatedEndRow_   = newAllocatedEnd;
+    allocatedEndRow_ = newAllocatedEnd;
     nReallocs_++;
     CheckInvariants();
 }
@@ -206,21 +197,15 @@ inline void SparseVector::Set(size_t i, double v)
     CheckInvariants();
     assert(i >= 0 && i < logicalLength_);
     if (!IsAllocated(i)) {
-        size_t newBeginRow =
-            min((i > PADDING) ? i - PADDING : 0, allocatedBeginRow_);
-        size_t newEndRow =
-            min(max(i + PADDING, allocatedEndRow_), logicalLength_);
+        size_t newBeginRow = min((i > PADDING) ? i - PADDING : 0, allocatedBeginRow_);
+        size_t newEndRow = min(max(i + PADDING, allocatedEndRow_), logicalLength_);
         ExpandAllocated(newBeginRow, newEndRow);
     }
     storage_[i - allocatedBeginRow_] = v;
     CheckInvariants();
 }
 
-inline void SparseVector::Clear()
-{
-    std::fill(storage_.begin(), storage_.end(), 0.0);
-}
-
+inline void SparseVector::Clear() { std::fill(storage_.begin(), storage_.end(), 0.0); }
 inline size_t SparseVector::AllocatedEntries() const
 {
     // We want the real memory usage.  std::vector is holding some memory back

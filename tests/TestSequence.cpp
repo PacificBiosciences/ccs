@@ -48,9 +48,5 @@ using namespace PacBio::Consensus;  // NOLINT
 
 namespace {
 
-TEST(SequenceTest, ReverseComplement)
-{
-    EXPECT_EQ("TACGAT", ReverseComplement("ATCGTA"));
-}
-
+TEST(SequenceTest, ReverseComplement) { EXPECT_EQ("TACGAT", ReverseComplement("ATCGTA")); }
 }

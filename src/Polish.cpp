@@ -224,16 +224,13 @@ std::vector<int> ConsensusQVs(AbstractIntegrator& ai)
 {
     std::vector<int> QVs;
     const double LL = ai.LL();
-    for (size_t i = 0; i < ai.Length(); ++i)
-    {
+    for (size_t i = 0; i < ai.Length(); ++i) {
         double scoreSum = 0.0;
-        for (const auto& m : Mutations(ai, i, i + 1))
-        {
+        for (const auto& m : Mutations(ai, i, i + 1)) {
             // TODO (lhepler): this is dumb, but untestable mutations,
             //   aka insertions at ends, cause all sorts of weird issues
             double score = ai.LL(m) - LL;
-            if (score < 0.0)
-                scoreSum += exp(score);
+            if (score < 0.0) scoreSum += exp(score);
         }
         QVs.push_back(ProbabilityToQV(1.0 - 1.0 / (1.0 + scoreSum)));
     }

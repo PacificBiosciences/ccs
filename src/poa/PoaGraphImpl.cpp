@@ -1,6 +1,5 @@
 
 #include <set>
-#include <iostream>
 
 #include <boost/graph/copy.hpp>
 #include <boost/graph/graphviz.hpp>

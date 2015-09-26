@@ -1,2 +1,5 @@
-#!/usr/bin/env bash
-find include src tests -iname '*.h' -o -iname '*.cpp' -exec clang-format -i {} \;
+#!/usr/bin/env bash -x
+for f in `find include src tests -iname '*.h' -o -iname '*.cpp'`
+do
+    clang-format -i $f
+done

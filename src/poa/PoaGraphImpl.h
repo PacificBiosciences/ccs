@@ -75,11 +75,11 @@ struct PoaNode
 
     void Init(size_t id, char base, int reads)
     {
-        this->Id            = id;
-        this->Base          = base;
-        this->Reads         = reads;
+        this->Id = id;
+        this->Base = base;
+        this->Reads = reads;
         this->SpanningReads = 0;
-        this->Score         = 0;
+        this->Score = 0;
         this->ReachingScore = 0;
     }
 
@@ -90,10 +90,8 @@ struct PoaNode
 
 // BGL is intimidating, and it *deserves* your hatred.  But it's
 // the only game in town!
-typedef property<vertex_info_t, PoaNode, property<vertex_index_t, size_t> >
-    vertex_property_t;
-typedef adjacency_list<setS, listS, bidirectionalS, vertex_property_t>
-    BoostGraph;
+typedef property<vertex_info_t, PoaNode, property<vertex_index_t, size_t> > vertex_property_t;
+typedef adjacency_list<setS, listS, bidirectionalS, vertex_property_t> BoostGraph;
 
 // Descriptor types used internally
 typedef graph_traits<BoostGraph>::edge_descriptor ED;
@@ -193,10 +191,9 @@ class PoaGraphImpl
     VD enterVertex_;
     VD exitVertex_;
     size_t numReads_;
-    size_t
-        totalVertices_;  // includes "ex"-vertices which have since been removed
-    size_t liveVertices_;  // vertices that are in the graph.  this is needed
-                           // for algorithms.
+    size_t totalVertices_;               // includes "ex"-vertices which have since been removed
+    size_t liveVertices_;                // vertices that are in the graph.  this is needed
+                                         // for algorithms.
     std::map<Vertex, VD> vertexLookup_;  // external ID -> internal ID
 
     void repCheck() const;
@@ -223,25 +220,26 @@ class PoaGraphImpl
 
     VD addVertex(char base, int nReads = 1)
     {
-        VD vd               = add_vertex(g_);
-        Vertex vExt         = totalVertices_++;
-        vertexInfoMap_[vd]  = PoaNode(vExt, base, nReads);
+        VD vd = add_vertex(g_);
+        Vertex vExt = totalVertices_++;
+        vertexInfoMap_[vd] = PoaNode(vExt, base, nReads);
         vertexLookup_[vExt] = vd;
-        indexMap_[vd]       = liveVertices_++;
+        indexMap_[vd] = liveVertices_++;
         return vd;
     }
 
     //
     // utility routines
     //
-    const AlignmentColumn* makeAlignmentColumn(
-        VD v, const AlignmentColumnMap& alignmentColumnForVertex,
-        const std::string& sequence, const AlignConfig& config, int beginRow,
-        int endRow) const;
+    const AlignmentColumn* makeAlignmentColumn(VD v,
+                                               const AlignmentColumnMap& alignmentColumnForVertex,
+                                               const std::string& sequence,
+                                               const AlignConfig& config, int beginRow,
+                                               int endRow) const;
 
     const AlignmentColumn* makeAlignmentColumnForExit(
-        VD v, const AlignmentColumnMap& alignmentColumnForVertex,
-        const std::string& sequence, const AlignConfig& config) const;
+        VD v, const AlignmentColumnMap& alignmentColumnForVertex, const std::string& sequence,
+        const AlignConfig& config) const;
 
 public:
     //
@@ -249,19 +247,15 @@ public:
     //
     void tagSpan(VD start, VD end);
 
-    std::vector<VD> consensusPath(AlignMode mode,
-                                  int minCoverage = -INT_MAX) const;
+    std::vector<VD> consensusPath(AlignMode mode, int minCoverage = -INT_MAX) const;
 
-    void threadFirstRead(std::string sequence,
-                         std::vector<Vertex>* readPathOutput = NULL);
+    void threadFirstRead(std::string sequence, std::vector<Vertex>* readPathOutput = NULL);
 
     void tracebackAndThread(std::string sequence,
-                            const AlignmentColumnMap& alignmentColumnForVertex,
-                            AlignMode mode,
+                            const AlignmentColumnMap& alignmentColumnForVertex, AlignMode mode,
                             std::vector<Vertex>* readPathOutput = NULL);
 
-    vector<ScoredMutation>* findPossibleVariants(
-        const std::vector<Vertex>& bestPath) const;
+    vector<ScoredMutation>* findPossibleVariants(const std::vector<Vertex>& bestPath) const;
 
 public:
     PoaGraphImpl();
@@ -269,31 +263,24 @@ public:
     ~PoaGraphImpl();
 
     void AddRead(const std::string& sequence, const AlignConfig& config,
-                 SdpRangeFinder* rangeFinder         = NULL,
-                 std::vector<Vertex>* readPathOutput = NULL);
+                 SdpRangeFinder* rangeFinder = NULL, std::vector<Vertex>* readPathOutput = NULL);
 
-    void AddFirstRead(const std::string& sequence,
-                      std::vector<Vertex>* readPathOutput = NULL);
+    void AddFirstRead(const std::string& sequence, std::vector<Vertex>* readPathOutput = NULL);
 
-    PoaAlignmentMatrixImpl* TryAddRead(
-        const std::string& sequence, const AlignConfig& config,
-        SdpRangeFinder* rangeFinder = NULL) const;
+    PoaAlignmentMatrixImpl* TryAddRead(const std::string& sequence, const AlignConfig& config,
+                                       SdpRangeFinder* rangeFinder = NULL) const;
 
-    void CommitAdd(PoaAlignmentMatrix* mat,
-                   std::vector<Vertex>* readPathOutput = NULL);
+    void CommitAdd(PoaAlignmentMatrix* mat, std::vector<Vertex>* readPathOutput = NULL);
 
-    PoaConsensus* FindConsensus(const AlignConfig& config,
-                                int minCoverage = -INT_MAX);
+    PoaConsensus* FindConsensus(const AlignConfig& config, int minCoverage = -INT_MAX);
 
     size_t NumReads() const;
     string ToGraphViz(int flags, const PoaConsensus* pc) const;
-    void WriteGraphVizFile(const string& filename, int flags,
-                           const PoaConsensus* pc) const;
+    void WriteGraphVizFile(const string& filename, int flags, const PoaConsensus* pc) const;
 };
 
 // free functions, we should put these all in traversals
-std::string sequenceAlongPath(const BoostGraph& g,
-                              const VertexInfoMap& vertexInfoMap,
+std::string sequenceAlongPath(const BoostGraph& g, const VertexInfoMap& vertexInfoMap,
                               const std::vector<VD>& path);
 
 }  // namespace detail

@@ -75,7 +75,7 @@ public:
 public:  // Flags enums for specifying GraphViz output features
     enum
     {
-        COLOR_NODES   = 0x1,
+        COLOR_NODES = 0x1,
         VERBOSE_NODES = 0x2
     };
 
@@ -95,15 +95,12 @@ public:
     //
     // API for more control
     //
-    void AddFirstRead(const std::string& sequence,
-                      std::vector<Vertex>* readPathOutput = NULL);
+    void AddFirstRead(const std::string& sequence, std::vector<Vertex>* readPathOutput = NULL);
 
-    PoaAlignmentMatrix* TryAddRead(
-        const std::string& sequence, const AlignConfig& config,
-        detail::SdpRangeFinder* rangeFinder = NULL) const;
+    PoaAlignmentMatrix* TryAddRead(const std::string& sequence, const AlignConfig& config,
+                                   detail::SdpRangeFinder* rangeFinder = NULL) const;
 
-    void CommitAdd(PoaAlignmentMatrix* mat,
-                   std::vector<Vertex>* readPathOutput = NULL);
+    void CommitAdd(PoaAlignmentMatrix* mat, std::vector<Vertex>* readPathOutput = NULL);
 
     // ----------
 
@@ -114,8 +111,7 @@ public:
     void WriteGraphVizFile(const std::string& filename, int flags = 0,
                            const PoaConsensus* pc = NULL) const;
 
-    const PoaConsensus* FindConsensus(const AlignConfig& config,
-                                      int minCoverage = -INT_MAX) const;
+    const PoaConsensus* FindConsensus(const AlignConfig& config, int minCoverage = -INT_MAX) const;
 
 private:
     detail::PoaGraphImpl* impl;

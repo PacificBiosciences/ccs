@@ -23,7 +23,7 @@ struct PolishConfig
 
 std::tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
 
-std::vector<int> ConsensusQVs(const AbstractIntegrator& ai);
+std::vector<int> ConsensusQVs(AbstractIntegrator& ai);
 
 std::vector<Mutation> Mutations(const AbstractIntegrator& ai);
 

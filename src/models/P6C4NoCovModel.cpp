@@ -148,7 +148,7 @@ double P6C4NoCovModel::BaseEmissionPr(MoveType move, char from, char to) const
     return pr / 3.0;
 }
 
-double P6C4NoCovModel::CovEmissionPr(MoveType move, uint8_t cov) const
+double P6C4NoCovModel::CovEmissionPr(MoveType move, uint8_t) const
 {
     assert(move != MoveType::DELETION);
     return 1.0 * counterWeight_;

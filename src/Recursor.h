@@ -127,14 +127,12 @@ public:
 
     /// \brief Calculate the recursion score by "linking" partial alpha and/or
     ///        beta matrices.
-    double LinkAlphaBeta(const M& alpha, size_t alphaColumn, const M& beta,
-                         size_t betaColumn, size_t absoluteColumn) const;
+    double LinkAlphaBeta(const M& alpha, size_t alphaColumn, const M& beta, size_t betaColumn,
+                         size_t absoluteColumn) const;
 
-    void ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
-                     size_t numExtColumns = 2) const;
+    void ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t numExtColumns = 2) const;
 
-    void ExtendBeta(const M& beta, size_t endColumn, M& ext,
-                    int lengthDiff = 0) const;
+    void ExtendBeta(const M& beta, size_t endColumn, M& ext, int lengthDiff = 0) const;
 
     //
     // Constructors
@@ -143,8 +141,7 @@ public:
              double scoreDiff = 12.5);
 
 private:
-    std::tuple<size_t, size_t> RowRange(size_t j, const M& matrix,
-                                        double scoreDiff) const;
+    std::tuple<size_t, size_t> RowRange(size_t j, const M& matrix, double scoreDiff) const;
 
     /// \brief Reband alpha and beta matrices.
     /// This routine will reband alpha and beta to the convex hull

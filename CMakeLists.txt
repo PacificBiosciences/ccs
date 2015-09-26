@@ -78,7 +78,7 @@ elseif(UNIX)
     SET(POST_LINK -Wl,-no-whole-archive)
 endif()
 
-set(PBCONSENSUS_STATIC ${PRE_LINK} pbconsensus ${POST_LINK})
+set(PBCONSENSUS_LIBRARIES ${PRE_LINK} pbconsensus ${POST_LINK} CACHE INTERNAL "" FORCE)
 
 # swig
 add_subdirectory(${PacBioConsensus_SwigDir})

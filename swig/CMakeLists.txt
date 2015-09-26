@@ -94,7 +94,7 @@ add_library(_pbconsensus MODULE EXCLUDE_FROM_ALL
 )
 
 target_link_libraries(_pbconsensus
-    ${PBCONSENSUS_STATIC}
+    ${PBCONSENSUS_LIBRARIES}
     ${PYTHON_LIBRARIES}
 )
 

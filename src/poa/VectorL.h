@@ -36,9 +36,7 @@ private:
 
 public:
     VectorL(int beginRow, int endRow, T defaultVal = T())
-        : storage_(endRow - beginRow, defaultVal)
-        , beginRow_(beginRow)
-        , endRow_(endRow)
+        : storage_(endRow - beginRow, defaultVal), beginRow_(beginRow), endRow_(endRow)
     {
     }
 
@@ -73,8 +71,7 @@ template <typename T>
 size_t ArgMax(const VectorL<T>& v)
 {
     return v.beginRow_ +
-           distance(v.storage_.begin(),
-                    max_element(v.storage_.begin(), v.storage_.end()));
+           distance(v.storage_.begin(), max_element(v.storage_.begin(), v.storage_.end()));
 }
 
 }  // namespace detail

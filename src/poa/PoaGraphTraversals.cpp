@@ -251,7 +251,7 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
             }
             // In local model thread read bases, adjusting i (should stop at 0)
             while (i > 0) {
-                assert(alignMode == LOCAL);
+                assert(alignMode == AlignMode::LOCAL);
                 VD newForkVertex = addVertex(sequence[READPOS]);
                 add_edge(newForkVertex, forkVertex, g_);
                 VERTEX_ON_PATH(READPOS, newForkVertex);

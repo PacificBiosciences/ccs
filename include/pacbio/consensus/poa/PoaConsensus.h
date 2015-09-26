@@ -77,16 +77,13 @@ struct PoaConsensus : private noncopyable
 
     ~PoaConsensus();
 
-    static const PoaConsensus* FindConsensus(
-        const std::vector<std::string>& reads);
+    static const PoaConsensus* FindConsensus(const std::vector<std::string>& reads);
 
-    static const PoaConsensus* FindConsensus(
-        const std::vector<std::string>& reads, const AlignConfig& config,
-        int minCoverage = -INT_MAX);
+    static const PoaConsensus* FindConsensus(const std::vector<std::string>& reads,
+                                             const AlignConfig& config, int minCoverage = -INT_MAX);
 
-    static const PoaConsensus* FindConsensus(
-        const std::vector<std::string>& reads, AlignMode mode,
-        int minCoverage = -INT_MAX);
+    static const PoaConsensus* FindConsensus(const std::vector<std::string>& reads, AlignMode mode,
+                                             int minCoverage = -INT_MAX);
 
 public:
     // Additional accessors, which do things on the graph/graphImpl

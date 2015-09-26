@@ -21,13 +21,14 @@ AbstractIntegrator::AbstractIntegrator(AbstractIntegrator&& ai)
 }
 
 AbstractIntegrator::~AbstractIntegrator() {}
-AddReadResult AbstractIntegrator::AddRead(Evaluator&& eval_)
+AddReadResult AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
+                                          const MappedRead& read)
 {
     std::unique_ptr<Evaluator> eval;
     AddReadResult result = AddReadResult::SUCCESS;
 
     try {
-        eval.reset(new Evaluator(std::move(eval_)));
+        eval.reset(new Evaluator(std::move(tpl), read, cfg_.ScoreDiff));
     } catch (AlphaBetaMismatch& e) {
         eval.reset(nullptr);
         result = AddReadResult::ALPHA_BETA_MISMATCH;
@@ -45,7 +46,7 @@ AddReadResult AbstractIntegrator::AddRead(Evaluator&& eval_)
 
     evals_.emplace_back(std::move(eval));
 
-    return AddReadResult::SUCCESS;
+    return result;
 }
 
 double AbstractIntegrator::LL(const Mutation& mut)
@@ -70,8 +71,7 @@ double AbstractIntegrator::AvgZScore() const
 {
     double mean = 0.0, var = 0.0;
     for (const auto& eval : evals_) {
-        if (eval)
-        {
+        if (eval) {
             double m, v;
             std::tie(m, v) = eval->NormalParameters();
             mean += m;
@@ -87,13 +87,11 @@ std::vector<double> AbstractIntegrator::ZScores() const
     std::vector<double> results;
     results.reserve(evals_.size());
     for (const auto& eval : evals_) {
-        if (eval)
-        {
+        if (eval) {
             double mean, var;
             std::tie(mean, var) = eval->NormalParameters();
             results.emplace_back((eval->LL() - mean) / std::sqrt(var));
-        }
-        else
+        } else
             results.emplace_back(std::numeric_limits<double>::quiet_NaN());
     }
     return results;
@@ -116,9 +114,9 @@ AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
     if (read.Model != mdl_) return AddReadResult::OTHER;
 
     return AbstractIntegrator::AddRead(
-        Evaluator(std::unique_ptr<AbstractTemplate>(
-                      new VirtualTemplate(tpl_, read.TemplateStart, read.TemplateEnd)),
-                  read, cfg_.ScoreDiff));
+        std::unique_ptr<AbstractTemplate>(new VirtualTemplate(
+            tpl_, read.TemplateStart, read.TemplateEnd, read.PinStart, read.PinEnd)),
+        read);
 }
 
 size_t MonoMolecularIntegrator::Length() const { return tpl_.Length(); }
@@ -166,9 +164,11 @@ MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
 
 AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read, const SNR& snr)
 {
-    return AbstractIntegrator::AddRead(Evaluator(std::unique_ptr<AbstractTemplate>(new Template(
-                                                     tpl_, ModelFactory::Create(read.Model, snr))),
-                                                 read, cfg_.ScoreDiff));
+    return AbstractIntegrator::AddRead(
+        std::unique_ptr<AbstractTemplate>(new Template(tpl_, ModelFactory::Create(read.Model, snr),
+                                                       read.TemplateStart, read.TemplateEnd,
+                                                       read.PinStart, read.PinEnd)),
+        read);
 }
 
 size_t MultiMolecularIntegrator::Length() const { return tpl_.length(); }

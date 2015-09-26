@@ -49,6 +49,9 @@
 #include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Mutation.h>
 
+#include "Mutations.h"
+#include "RandomDNA.h"
+
 using std::string;
 using std::vector;
 using std::cout;
@@ -60,30 +63,6 @@ using ::testing::UnorderedElementsAreArray;
 
 namespace {
 
-vector<Mutation> Mutations(const string& tpl, const size_t start, const size_t end)
-{
-    constexpr auto bases = "ACGT";
-
-    vector<Mutation> result;
-
-    for (size_t i = start; i < end; ++i) {
-        for (size_t j = 0; j < 4; ++j)
-            result.push_back(Mutation(MutationType::INSERTION, i, bases[j]));
-
-        result.push_back(Mutation(MutationType::DELETION, i));
-
-        for (size_t j = 0; j < 4; ++j)
-            if (bases[j] != tpl[i])
-                result.push_back(Mutation(MutationType::SUBSTITUTION, i, bases[j]));
-    }
-
-    for (size_t j = 0; j < 4; ++j)
-        result.push_back(Mutation(MutationType::INSERTION, tpl.length(), bases[j]));
-
-    return result;
-}
-
-vector<Mutation> Mutations(const string& tpl) { return Mutations(tpl, 0, tpl.length()); }
 const double prec = 0.001;  // alpha/beta mismatch tolerance
 const SNR snr(10, 7, 5, 11);
 const string mdl = "P6/C4";
@@ -118,7 +97,8 @@ const IntegratorConfig cfg;
 TEST(EvaluatorTest, TestLongTemplate)
 {
     MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
-    ai.AddRead(MappedRead(Read("N/A", longRead, mdl), StrandEnum::FORWARD, 0, longTpl.length()));
+    ai.AddRead(MappedRead(Read("N/A", longRead, mdl), StrandEnum::FORWARD, 0, longTpl.length(),
+                          true, true));
     EXPECT_NEAR(-148.92614949338801011, ai.LL(), prec);
 }
 
@@ -128,24 +108,12 @@ TEST(EvaluatorTest, TestLongTemplateTiming)
     MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
     const auto stime = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < nsamp; ++i)
-        ai.AddRead(
-            MappedRead(Read("N/A", longRead, mdl), StrandEnum::FORWARD, 0, longTpl.length()));
+        ai.AddRead(MappedRead(Read("N/A", longRead, mdl), StrandEnum::FORWARD, 0, longTpl.length(),
+                              true, true));
     const auto etime = std::chrono::high_resolution_clock::now();
     const auto duration =
         std::chrono::duration_cast<std::chrono::microseconds>(etime - stime).count();
     EXPECT_LT(duration / nsamp, 1500);
-}
-
-std::string RandomDNA(const size_t n, std::mt19937* const gen)
-{
-    constexpr auto bases = "ACGT";
-    string result(n, 'A');
-    std::uniform_int_distribution<size_t> rand(0, 3);
-
-    for (size_t i = 0; i < n; ++i)
-        result[i] = bases[rand(*gen)];
-
-    return result;
 }
 
 std::string Mutate(const std::string& tpl, const size_t nmut, std::mt19937* const gen)
@@ -192,11 +160,11 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
 
             try {
                 auto ai1 = makeIntegrator(tpl);
-                addRead(ai1,
-                        MappedRead(Read("N/A", read, mdl), StrandEnum::FORWARD, 0, tpl.length()));
+                addRead(ai1, MappedRead(Read("N/A", read, mdl), StrandEnum::FORWARD, 0,
+                                        tpl.length(), true, true));
                 auto ai2 = makeIntegrator(app);
-                addRead(ai2,
-                        MappedRead(Read("N/A", read, mdl), StrandEnum::FORWARD, 0, app.length()));
+                addRead(ai2, MappedRead(Read("N/A", read, mdl), StrandEnum::FORWARD, 0,
+                                        app.length(), true, true));
                 const double exp = ai2.LL();
                 const double obs0 = ai1.LL();
                 const double obs1 = ai1.LL(mut);
@@ -218,6 +186,7 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
                     std::cerr << "  " << mut << std::endl;
                     std::cerr << "  " << tpl.length() << ", " << tpl << std::endl;
                     std::cerr << "  " << app.length() << ", " << app << std::endl;
+                    std::cerr << "  " << ai1.Length() << ", " << string(ai1) << std::endl;
                     std::cerr << "  " << read.length() << ", " << read << std::endl;
                     ++nerror;
                 }
@@ -267,7 +236,9 @@ TEST(EvaluatorTest, TestP6C4NoCovAgainstCSharpModel)
 {
     const string tpl = "ACGTCGT";
     MultiMolecularIntegrator ai(tpl, cfg);
-    ai.AddRead(MappedRead(Read("N/A", "ACGTACGT", mdl), StrandEnum::FORWARD, 0, tpl.length()), snr);
+    ai.AddRead(
+        MappedRead(Read("N/A", "ACGTACGT", mdl), StrandEnum::FORWARD, 0, tpl.length(), true, true),
+        snr);
     auto score = [&ai](Mutation&& mut) { return ai.LL(mut) - ai.LL(); };
     EXPECT_NEAR(-4.74517984808494, ai.LL(), prec);
     EXPECT_NEAR(4.00250386364592, score(Mutation(MutationType::INSERTION, 4, 'A')), prec);

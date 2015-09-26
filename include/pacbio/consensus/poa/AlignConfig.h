@@ -60,9 +60,9 @@ struct AlignParams
 
 enum struct AlignMode : uint8_t
 {
-    GLOBAL     = 0,  // Global in both sequences
+    GLOBAL = 0,      // Global in both sequences
     SEMIGLOBAL = 1,  // Global in query, local in target
-    LOCAL      = 2   // Local in both sequences
+    LOCAL = 2        // Local in both sequences
 };
 
 struct AlignConfig

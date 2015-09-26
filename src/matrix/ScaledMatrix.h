@@ -64,11 +64,9 @@ inline void ScaledMatrix::FinishEditingColumn(int j, int usedBegin, int usedEnd)
 }
 
 inline double ScaledMatrix::GetLogScale(int j) const { return logScalars_[j]; }
-inline double ScaledMatrix::GetLogProdScales(int beginColumn,
-                                             int endColumn) const
+inline double ScaledMatrix::GetLogProdScales(int beginColumn, int endColumn) const
 {
-    return std::accumulate(logScalars_.begin() + beginColumn,
-                           logScalars_.begin() + endColumn, 0.0);
+    return std::accumulate(logScalars_.begin() + beginColumn, logScalars_.begin() + endColumn, 0.0);
 }
 
 inline double ScaledMatrix::GetLogProdScales() const

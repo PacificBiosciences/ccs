@@ -36,8 +36,7 @@ public:
 class ModelFactory
 {
 public:
-    static std::unique_ptr<ModelConfig> Create(const std::string& name,
-                                               const SNR&);
+    static std::unique_ptr<ModelConfig> Create(const std::string& name, const SNR&);
     static bool Register(const std::string& name, ModelCreator* ctor);
 
 private:
@@ -48,8 +47,7 @@ private:
 private:                    \
     static const ModelCreatorImpl<cls> creator_
 
-#define REGISTER_MODEL_IMPL(cls) \
-    const ModelCreatorImpl<cls> cls::creator_(cls::Name())
+#define REGISTER_MODEL_IMPL(cls) const ModelCreatorImpl<cls> cls::creator_(cls::Name())
 
 }  // namespace Consensus
 }  // namespace PacBio

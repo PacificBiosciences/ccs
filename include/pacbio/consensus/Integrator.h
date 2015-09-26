@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <iostream>
 #include <memory>
 
 #include <pacbio/consensus/Evaluator.h>
@@ -28,6 +29,13 @@ enum struct AddReadResult : uint8_t
     OTHER
 };
 
+inline std::ostream& operator<<(std::ostream& os, AddReadResult result)
+{
+    static const char* names[] = {"SUCCESS", "ALPHA/BETA MISMATCH", "POOR Z-SCORE", "OTHER"};
+    os << names[static_cast<size_t>(result)];
+    return os;
+}
+
 class AbstractIntegrator
 {
 public:
@@ -52,7 +60,7 @@ protected:
     // move constructor
     AbstractIntegrator(AbstractIntegrator&&);
 
-    AddReadResult AddRead(Evaluator&& eval);
+    AddReadResult AddRead(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& read);
 
     IntegratorConfig cfg_;
     std::vector<std::unique_ptr<Evaluator>> evals_;
@@ -61,8 +69,8 @@ protected:
 class MonoMolecularIntegrator : public AbstractIntegrator
 {
 public:
-    MonoMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg,
-                            const SNR& snr, const std::string& model);
+    MonoMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg, const SNR& snr,
+                            const std::string& model);
 
     // move constructor
     MonoMolecularIntegrator(MonoMolecularIntegrator&&);
@@ -87,8 +95,7 @@ private:
 class MultiMolecularIntegrator : public AbstractIntegrator
 {
 public:
-    MultiMolecularIntegrator(const std::string& tpl,
-                             const IntegratorConfig& cfg);
+    MultiMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg);
 
     size_t Length() const;
     char operator[](size_t i) const;

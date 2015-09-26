@@ -10,15 +10,24 @@ namespace Consensus {
 char ComplementaryBase(char base)
 {
     switch (base) {
-        case 'A': return 'T';
-        case 'a': return 't';
-        case 'C': return 'G';
-        case 'c': return 'g';
-        case 'G': return 'C';
-        case 'g': return 'c';
-        case 'T': return 'A';
-        case 't': return 'a';
-        default: throw std::invalid_argument("invalid base!");
+        case 'A':
+            return 'T';
+        case 'a':
+            return 't';
+        case 'C':
+            return 'G';
+        case 'c':
+            return 'g';
+        case 'G':
+            return 'C';
+        case 'g':
+            return 'c';
+        case 'T':
+            return 'A';
+        case 't':
+            return 'a';
+        default:
+            throw std::invalid_argument("invalid base!");
     }
 }
 

@@ -67,8 +67,7 @@ class ScoredMutation : public Mutation
 public:
     double Score;
 
-    static bool ScoreComparer(const ScoredMutation& lhs,
-                              const ScoredMutation& rhs)
+    static bool ScoreComparer(const ScoredMutation& lhs, const ScoredMutation& rhs)
     {
         return lhs.Score < rhs.Score;
     }

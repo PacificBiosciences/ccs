@@ -37,8 +37,11 @@ set_target_properties(test_pbconsensus PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PacBioConsensus_TestsDir}/bin
 )
 target_link_libraries(test_pbconsensus
-    ${PBCONSENSUS_STATIC}
+    ${PBCONSENSUS_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS}
 )
-add_custom_target(check test_pbconsensus)
+
+if (${PROJECT_NAME} STREQUAL "PacBioConsensus")
+    add_custom_target(check test_pbconsensus)
+endif()
