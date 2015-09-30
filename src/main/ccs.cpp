@@ -134,11 +134,10 @@ void Writer(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts, 
         tags["RG"] = MakeReadGroupId(*(ccs.Id.MovieName), "CCS");
         tags["zm"] = static_cast<int32_t>(ccs.Id.HoleNumber);
         tags["np"] = static_cast<int32_t>(ccs.NumPasses);
-        tags["rq"] = static_cast<int32_t>(1000 * ccs.PredictedAccuracy);
+        tags["rq"] = static_cast<float>(ccs.PredictedAccuracy);
         tags["sn"] = snr;
 
         // TODO(lhepler) maybe remove one day
-        tags["pq"] = static_cast<float>(ccs.PredictedAccuracy);
         tags["za"] = static_cast<float>(ccs.AvgZScore);
         vector<float> zScores;
         for (const double z : ccs.ZScores)
@@ -151,11 +150,6 @@ void Writer(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts, 
         tags["ms"] = ccs.ElapsedMilliseconds;
         tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
-
-
-        // These are SUPER valuable for filtering, let's leave em in for now.
-        tags["zg"] = static_cast<float>(ccs.GlobalZScore);
-
 #endif
 
         record.Name(name.str())
@@ -191,7 +185,7 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char **argv, const
            .Version(VERSION);
 
     BamHeader header;
-    header.PacBioBamVersion("3.0b7")
+    header.PacBioBamVersion("3.0.1")
           .SortOrder("unknown")
           .Version("1.5")
           .AddProgram(program);
