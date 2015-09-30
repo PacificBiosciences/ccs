@@ -36,6 +36,8 @@ class Constants(object):
     MIN_LENGTH_DEFAULT = 10
     MIN_PASSES_ID = "pbccs.task_options.min_passes"
     MIN_PASSES_DEFAULT = 3
+    MIN_PREDICTED_ACCURACY_ID = "pbccs.task_options.min_predicted_accuracy"
+    MIN_PREDICTED_ACCURACY_DEFAULT = 0.9
     MIN_ZSCORE_ID = "pbccs.task_options.min_zscore"
     MIN_ZSCORE_DEFAULT = -5
     MAX_DROP_FRAC_ID = "pbccs.task_options.max_drop_fraction"
@@ -82,6 +84,8 @@ def resolved_tool_contract_runner(rtc):
         "--minPasses=%d" % rtc.task.options[Constants.MIN_PASSES_ID],
         "--minZScore=%g" % rtc.task.options[Constants.MIN_ZSCORE_ID],
         "--maxDropFraction=%g" % rtc.task.options[Constants.MAX_DROP_FRAC_ID],
+        "--minPredictedAccuracy=%g" % \
+            rtc.task.options[Constants.MIN_PREDICTED_ACCURACY_ID],
         output_file,
     ]
     zmwRanges = ds.zmwRanges
@@ -172,6 +176,10 @@ def get_parser():
               default=Constants.MIN_PASSES_DEFAULT,
               name="Minimum passes",
               description="Minimum number of subreads required to generate CCS")
+    p.add_float(Constants.MIN_PREDICTED_ACCURACY_ID, "minPredictedAccuracy",
+                default=Constants.MIN_PREDICTED_ACCURACY_DEFAULT,
+                name="Min. predicted accuracy",
+                description="Minimum predicted accuracy in [0, 1]")
     p.add_float(Constants.MIN_ZSCORE_ID, "minZScore",
                 default=Constants.MIN_ZSCORE_DEFAULT,
                 name="Min. Z-score",
