@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -72,7 +73,7 @@ using optparse::OptionParser;
 
 
 // these strings are part of the BAM header, they CANNOT contain newlines
-#define VERSION "0.0.1"
+#define VERSION "2.0.0"
 #define DESCRIPTION "Generate circular consensus sequences (ccs) from subreads."
 
 
@@ -314,7 +315,7 @@ int main(int argc, char **argv)
     const bool forceOutput   = options.get(OptionNames::ForceOutput);
     const bool pbIndex       = options.get(OptionNames::PbIndex);
     const float minSnr       = options.get(OptionNames::MinSnr);
-    const float minReadScore = 1000 * static_cast<float>(options.get(OptionNames::MinReadScore));
+    const float minReadScore = static_cast<float>(options.get(OptionNames::MinReadScore));
     const size_t nThreads    = ThreadCount(options.get(OptionNames::NumThreads));
     const size_t chunkSize   = 1;  // static_cast<size_t>(options.get("chunkSize"));
 
@@ -351,14 +352,14 @@ int main(int argc, char **argv)
     // logging
     //
     //
-    fstream logStream;
+    ofstream logStream;
     {
         string logLevel(options.get(OptionNames::LogLevel));
         string logFile(options.get(OptionNames::LogFile));
 
         if (!logFile.empty())
         {
-            logStream.open(logFile, fstream::out);
+            logStream.open(logFile);
             Logging::Logger::Default(new Logging::Logger(logStream, logLevel));
         }
         else
@@ -446,7 +447,7 @@ int main(int argc, char **argv)
                         {
                             ReadId(movieNames[movieName], *holeNumber),
                             vector<Subread>(),
-                            SNR(snr)
+                            SNR(snr[0], snr[1], snr[2], snr[3])
                         });
                 }
             }
@@ -505,7 +506,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        fstream stream(reportFile, fstream::out);
+        ofstream stream(reportFile);
         WriteResultsReport(stream, counts);
     }
 
