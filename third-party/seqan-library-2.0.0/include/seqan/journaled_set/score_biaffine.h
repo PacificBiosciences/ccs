@@ -136,6 +136,13 @@ scoreGapExtendHorizontal(Score<TScoreValue, BiAffine> const & me,
     return me._gapExtendHorizontal;
 }
 
+template <typename TScoreValue>
+inline TScoreValue
+scoreGapExtendHorizontal(Score<TScoreValue, BiAffine> const & me)
+{
+    return me._gapExtendHorizontal;
+}
+
 // ----------------------------------------------------------------------------
 // Function scoreGapOpenHorizontal()
 // ----------------------------------------------------------------------------
@@ -145,6 +152,13 @@ inline TScoreValue
 scoreGapOpenHorizontal(Score<TScoreValue, BiAffine> const & me,
                        TSeqEntry1 const & /*seqEntry1*/,
                        TSeqEntry2 const & /*seqEntry2*/)
+{
+    return me._gapOpenHorizontal;
+}
+
+template <typename TScoreValue>
+inline TScoreValue
+scoreGapOpenHorizontal(Score<TScoreValue, BiAffine> const & me)
 {
     return me._gapOpenHorizontal;
 }
@@ -162,6 +176,13 @@ scoreGapExtendVertical(Score<TScoreValue, BiAffine> const & me,
     return me._gapExtendVertical;
 }
 
+template <typename TScoreValue>
+inline TScoreValue
+scoreGapExtendVertical(Score<TScoreValue, BiAffine> const & me)
+{
+    return me._gapExtendVertical;
+}
+
 // ----------------------------------------------------------------------------
 // Function scoreGapOpenVertical()
 // ----------------------------------------------------------------------------
@@ -171,6 +192,13 @@ inline TScoreValue
 scoreGapOpenVertical(Score<TScoreValue, BiAffine> const & me,
                      TSeqEntry1 const & /*seqEntry1*/,
                      TSeqEntry2 const & /*seqEntry2*/)
+{
+    return me._gapOpenVertical;
+}
+
+template <typename TScoreValue>
+inline TScoreValue
+scoreGapOpenVertical(Score<TScoreValue, BiAffine> const & me)
 {
     return me._gapOpenVertical;
 }

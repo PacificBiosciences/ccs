@@ -1,0 +1,88 @@
+diff -ru1 -r seqan-library-2.0.0/include/seqan/align/evaluate_alignment.h /home/UNIXHOME/bbowman/p4/depot/software/smrtanalysis/bioinformatics/third-party/cpp/seqan-library-2.0.0/include/seqan/align/evaluate_alignment.h
+--- seqan-library-2.0.0/include/seqan/align/evaluate_alignment.h	2015-10-01 15:18:22.945986000 -0700
++++ /home/UNIXHOME/bbowman/p4/depot/software/smrtanalysis/bioinformatics/third-party/cpp/seqan-library-2.0.0/include/seqan/align/evaluate_alignment.h	2015-09-14 10:10:07.294729000 -0700
+@@ -226,3 +226,3 @@
+                 stats.numGapOpens += 1;
+-                stats.alignmentScore += scoreGapOpen(scoringScheme);
++                stats.alignmentScore += scoreGapOpenVertical(scoringScheme);
+             }
+@@ -231,3 +231,3 @@
+                 stats.numGapExtensions += 1;
+-                stats.alignmentScore += scoreGapExtend(scoringScheme);
++                stats.alignmentScore += scoreGapExtendVertical(scoringScheme);
+             }
+@@ -246,3 +246,3 @@
+                 stats.numGapOpens += 1;
+-                stats.alignmentScore += scoreGapOpen(scoringScheme);
++                stats.alignmentScore += scoreGapOpenHorizontal(scoringScheme);
+             }
+@@ -251,3 +251,3 @@
+                 stats.numGapExtensions += 1;
+-                stats.alignmentScore += scoreGapExtend(scoringScheme);
++                stats.alignmentScore += scoreGapExtendHorizontal(scoringScheme);
+             }
+diff -ru1 -r seqan-library-2.0.0/include/seqan/journaled_set/score_biaffine.h /home/UNIXHOME/bbowman/p4/depot/software/smrtanalysis/bioinformatics/third-party/cpp/seqan-library-2.0.0/include/seqan/journaled_set/score_biaffine.h
+--- seqan-library-2.0.0/include/seqan/journaled_set/score_biaffine.h	2015-10-01 15:18:22.951958000 -0700
++++ /home/UNIXHOME/bbowman/p4/depot/software/smrtanalysis/bioinformatics/third-party/cpp/seqan-library-2.0.0/include/seqan/journaled_set/score_biaffine.h	2015-09-14 10:10:10.041700000 -0700
+@@ -138,2 +138,9 @@
+ 
++template <typename TScoreValue>
++inline TScoreValue
++scoreGapExtendHorizontal(Score<TScoreValue, BiAffine> const & me)
++{
++    return me._gapExtendHorizontal;
++}
++
+ // ----------------------------------------------------------------------------
+@@ -151,2 +158,9 @@
+ 
++template <typename TScoreValue>
++inline TScoreValue
++scoreGapOpenHorizontal(Score<TScoreValue, BiAffine> const & me)
++{
++    return me._gapOpenHorizontal;
++}
++
+ // ----------------------------------------------------------------------------
+@@ -164,2 +178,9 @@
+ 
++template <typename TScoreValue>
++inline TScoreValue
++scoreGapExtendVertical(Score<TScoreValue, BiAffine> const & me)
++{
++    return me._gapExtendVertical;
++}
++
+ // ----------------------------------------------------------------------------
+@@ -174,2 +195,9 @@
+ {
++    return me._gapOpenVertical;
++}
++
++template <typename TScoreValue>
++inline TScoreValue
++scoreGapOpenVertical(Score<TScoreValue, BiAffine> const & me)
++{
+     return me._gapOpenVertical;
+diff -ru1 -r seqan-library-2.0.0/include/seqan/seeds/banded_chain_alignment_traceback.h /home/UNIXHOME/bbowman/p4/depot/software/smrtanalysis/bioinformatics/third-party/cpp/seqan-library-2.0.0/include/seqan/seeds/banded_chain_alignment_traceback.h
+--- seqan-library-2.0.0/include/seqan/seeds/banded_chain_alignment_traceback.h	2015-10-01 15:18:22.958027000 -0700
++++ /home/UNIXHOME/bbowman/p4/depot/software/smrtanalysis/bioinformatics/third-party/cpp/seqan-library-2.0.0/include/seqan/seeds/banded_chain_alignment_traceback.h	2015-09-14 10:10:11.049664000 -0700
+@@ -195,2 +195,3 @@
+     SEQAN_ASSERT_EQ_MSG(isGlued, true, "Fatal error while trying to connect trace backs: No glue point available!");
++    (void)isGlued;
+ }
+diff -ru1 -r seqan-library-2.0.0/include/seqan/sequence/string_base.h /home/UNIXHOME/bbowman/p4/depot/software/smrtanalysis/bioinformatics/third-party/cpp/seqan-library-2.0.0/include/seqan/sequence/string_base.h
+--- seqan-library-2.0.0/include/seqan/sequence/string_base.h	2015-10-01 15:18:22.967005000 -0700
++++ /home/UNIXHOME/bbowman/p4/depot/software/smrtanalysis/bioinformatics/third-party/cpp/seqan-library-2.0.0/include/seqan/sequence/string_base.h	2015-09-25 10:38:06.303831000 -0700
+@@ -427,3 +427,5 @@
+ {
++#if SEQAN_ENABLE_DEBUG
+     typedef typename Position< String<TValue, TSpec> >::Type TStringPos SEQAN_TYPEDEF_FOR_DEBUG;
++#endif
+     SEQAN_ASSERT_LT_MSG(static_cast<TStringPos>(pos), static_cast<TStringPos>(length(me)), "Trying to access an element behind the last one!");
+@@ -437,3 +439,5 @@
+ {
++#if SEQAN_ENABLE_DEBUG
+     typedef typename Position< String<TValue, TSpec> const >::Type TStringPos SEQAN_TYPEDEF_FOR_DEBUG;
++#endif
+     SEQAN_ASSERT_LT_MSG(static_cast<TStringPos>(pos), static_cast<TStringPos>(length(me)), "Trying to access an element behind the last one!");
