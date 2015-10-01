@@ -22,8 +22,20 @@ set(PacBioSparse_RootDir        ${PacBioSparse_SOURCE_DIR})
 set(PacBioSparse_IncludeDir     ${PacBioSparse_RootDir}/include)
 
 # ccs
-set(PacBioCCS_RootDir           ${PacBioLAA_RootDir}/../pbccs CACHE PATH "pbccs root path")
+set(PacBioCCS_RootDir           ${PacBioSparse_RootDir}/../pbccs CACHE PATH "pbccs root path")
 set(PacBioCCS_ThirdPartyDir     ${PacBioCCS_RootDir}/third-party)
 
 # third-party libraries (from pbccs)
-set(SEQAN_IncludeDir            ${PacBioCCS_ThirdPartyDir}/seqan-library-2.0.0/include)
+set(SeqAn_IncludeDir            ${PacBioCCS_ThirdPartyDir}/seqan-library-2.0.0/include)
+link_directories(SeqAn_IncludeDir)
+
+# Declare the PbSparse library target
+if (NOT TARGET SPARSE_ALIGNMENT_LIB)
+    add_library(SPARSE_ALIGNMENT_LIB INTERFACE)
+
+    target_include_directories(SPARSE_ALIGNMENT_LIB
+        INTERFACE
+        ${SeqAn_IncludeDir}
+        ${PacBioSparse_IncludeDir}
+    )
+endif()
