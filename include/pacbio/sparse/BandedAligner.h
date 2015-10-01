@@ -522,10 +522,10 @@ private:  // Private non-modifying functions
     {
         // If not specified, default to starting at the right end
         if (startPos == 0)
-            startPos = seqan::length(queryRow);
+            startPos = seqan::length(queryRow) - 1;
 
         size_t matchCount = 0;
-        for (size_t i = startPos; i > 0; --i)
+        for (int i = startPos; i >= 0; --i)
         {
             // If either row is a gap, reset the counter 
             if (IsGap(refRow[i]) || IsGap(queryRow[i]))
