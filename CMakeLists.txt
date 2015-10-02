@@ -23,10 +23,9 @@ set(PacBioSparse_IncludeDir     ${PacBioSparse_RootDir}/include)
 
 # ccs
 set(PacBioCCS_RootDir           ${PacBioSparse_RootDir}/../pbccs CACHE PATH "pbccs root path")
-set(PacBioCCS_ThirdPartyDir     ${PacBioCCS_RootDir}/third-party)
 
-# third-party libraries (from pbccs)
-set(SeqAn_IncludeDir            ${PacBioCCS_ThirdPartyDir}/seqan-library-2.0.0/include)
+# seqan
+set(SeqAn_IncludeDir            ${PacBioSparse_RootDir}/../seqan/include)
 link_directories(SeqAn_IncludeDir)
 
 # Declare the PbSparse library target
