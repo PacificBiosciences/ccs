@@ -25,8 +25,8 @@ set(PacBioSparse_IncludeDir     ${PacBioSparse_RootDir}/include)
 set(PacBioCCS_RootDir           ${PacBioSparse_RootDir}/../pbccs CACHE PATH "pbccs root path")
 
 # seqan
-set(SeqAn_IncludeDir            ${PacBioSparse_RootDir}/../seqan/include)
-link_directories(SeqAn_IncludeDir)
+set(SeqAn_RootDir               ${PacBioSparse_RootDir}/../seqan)
+set(SeqAn_IncludeDir            ${SeqAn_RootDir}/include)
 
 # Declare the PbSparse library target
 if (NOT TARGET SPARSE_ALIGNMENT_LIB)
