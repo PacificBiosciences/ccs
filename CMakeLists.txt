@@ -96,7 +96,7 @@ set(PreBuilt_OutDir             ${Bifx_RootDir}/../prebuilt.out                 
 # third-party libraries
 set(CPPOPTPARSE_RootDir         ${PacBioCCS_ThirdPartyDir}/cpp-optparse)
 set(CPPOPTPARSE_IncludeDir      ${CPPOPTPARSE_RootDir})
-set(SEQAN_IncludeDir            ${PacBioCCS_ThirdPartyDir}/seqan-library-2.0.0/include)
+set(SEQAN_IncludeDir            ${PacBioCCS_RootDir}/../seqan/include)
 
 # laa sources
 file(GLOB         PacBioCCS_CPP "${PacBioCCS_SourceDir}/*.cpp")
