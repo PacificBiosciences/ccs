@@ -42,6 +42,6 @@ target_link_libraries(test_pbconsensus
     ${CMAKE_DL_LIBS}
 )
 
-if (${PROJECT_NAME} STREQUAL "PacBioConsensus")
+if (${ROOT_PROJECT_NAME} STREQUAL "PacBioConsensus")
     add_custom_target(check test_pbconsensus)
 endif()

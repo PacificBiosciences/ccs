@@ -6,6 +6,9 @@ cmake_policy(SET CMP0048 NEW)  # lets us set the version in project()
 project(PacBioConsensus VERSION 0.9.0 LANGUAGES CXX C)
 cmake_minimum_required(VERSION 3.0)
 
+# set magic variable
+set(ROOT_PROJECT_NAME ${PROJECT_NAME} CACHE STRING "root project name")
+
 # required packages
 if (NOT Boost_INCLUDE_DIRS)
     find_package(Boost 1.58.0 REQUIRED)
