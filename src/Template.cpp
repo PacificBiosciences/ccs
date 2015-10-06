@@ -203,7 +203,7 @@ void Template::ApplyMutation(const Mutation& mut)
 
 VirtualTemplate::VirtualTemplate(const Template& master, const size_t start, const size_t end,
                                  const bool pinStart, const bool pinEnd)
-    : AbstractTemplate(start, end, pinStart, pinEnd), master_{master}
+    : AbstractTemplate(start, end, pinStart, pinEnd), master_(master)
 {
     assert(!pinStart_ || start_ == 0);
     assert(!pinEnd_ || end_ == master_.tpl_.size());
