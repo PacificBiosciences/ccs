@@ -84,7 +84,9 @@ endif()
 set(PBCONSENSUS_LIBRARIES ${PRE_LINK} pbconsensus ${POST_LINK} CACHE INTERNAL "" FORCE)
 
 # swig
-add_subdirectory(${PacBioConsensus_SwigDir})
+if (PYTHON_SWIG)
+    add_subdirectory(${PacBioConsensus_SwigDir})
+endif()
 
 # testing
 add_subdirectory(${PacBioConsensus_TestsDir})

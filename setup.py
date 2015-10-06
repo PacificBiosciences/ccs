@@ -32,7 +32,7 @@ class MyBuild(dbuild_py):
         buildDir = mkdtemp()
         try:
             cleanAll(self)
-            retcode = Popen(["cmake", "-DCMAKE_BUILD_TYPE=Release", "-DPYTHON_EXECUTABLE={0}".format(sys.executable), thisDir], cwd=buildDir).wait()
+            retcode = Popen(["cmake", "-DCMAKE_BUILD_TYPE=Release", "-DPYTHON_SWIG=1", "-DPYTHON_EXECUTABLE={0}".format(sys.executable), thisDir], cwd=buildDir).wait()
             if (retcode != 0):
                 raise CompileError("failed to configure the pbconsensus with CMake!")
             retcode = Popen(["make", "_pbconsensus"], cwd=buildDir).wait()
