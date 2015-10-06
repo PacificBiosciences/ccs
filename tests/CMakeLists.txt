@@ -23,9 +23,9 @@ include_directories(SYSTEM
     ${Boost_INCLUDE_DIRS}
     ${PBCONSENSUS_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
-    ${PacBioBAM_IncludeDir}
+    ${PBBAM_INCLUDE_DIRS}
     ${CPPOPTPARSE_IncludeDir}
-    ${SEQAN_IncludeDir}
+    ${SEQAN_INCLUDE_DIRS}
     ${GMOCK_IncludeDir}
 )
 

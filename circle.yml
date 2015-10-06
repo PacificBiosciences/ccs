@@ -10,9 +10,10 @@ dependencies:
         - pushd _deps ; git clone https://github.com/PacificBiosciences/htslib.git
         - pushd _deps ; git clone https://github.com/PacificBiosciences/pbbam.git
         - pushd _deps ; git clone https://github.com/PacificBiosciences/ConsensusCore.git pbconsensus ; pushd pbconsensus ; git checkout pbconsensus
+        - pushd _deps ; git clone https://github.com/PacificBiosciences/seqan.git
 test:
     pre:
         - mkdir _build
-        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=$(readlink -f ../_deps/pbbam) -DPacBioConsensus_RootDir=$(readlink -f ../_deps/pbconsensus) -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
+        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=$(readlink -f ../_deps/pbbam) -DPacBioConsensus_RootDir=$(readlink -f ../_deps/pbconsensus) -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_deps/seqan/include) ..
     override:
         - pushd _build ; make ; make check

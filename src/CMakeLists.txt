@@ -6,7 +6,7 @@ include_directories(SYSTEM
     ${HTSLIB_INCLUDE_DIRS}
     ${PBBAM_INCLUDE_DIRS}
     ${CPPOPTPARSE_IncludeDir}
-    ${SEQAN_IncludeDir}
+    ${SEQAN_INCLUDE_DIRS}
 )
 
 # flags
