@@ -41,7 +41,7 @@ file(GLOB_RECURSE PacBioConsensus_HPP "${PacBioConsensus_IncludeDir}/*.h")
 
 # shared CXX flags for src & tests
 include(CheckCXXCompilerFlag)
-set(PacBioConsensus_CXX_FLAGS "-std=c++11 -Wall -pedantic -msse3 -ferror-limit=5")
+set(PacBioConsensus_CXX_FLAGS "-std=c++11 -Wall -pedantic -msse3")
 
 # silence gmock warning
 check_cxx_compiler_flag("-Wno-unused-variable" HAS_NO_UNUSED_VARIABLE)
