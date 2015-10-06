@@ -9,9 +9,10 @@ dependencies:
         - pushd _deps ; if [ ! -d boost_1_58_0 ] ; then wget http://superb-dca2.dl.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 ; tar xjf boost_1_58_0.tar.bz2 ; fi
         - pushd _deps ; git clone https://github.com/PacificBiosciences/htslib.git
         - pushd _deps ; git clone https://github.com/PacificBiosciences/pbbam.git
+        - pushd _deps ; git clone https://github.com/PacificBiosciences/ConsensusCore.git pbconsensus ; pushd pbconsensus ; git checkout pbconsensus
 test:
     pre:
         - mkdir _build
-        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=$(readlink -f ../_deps/pbbam) -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
+        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=$(readlink -f ../_deps/pbbam) -DPacBioConsensus_RootDir=$(readlink -f ../_deps/pbconsensus) -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
     override:
         - pushd _build ; make ; make check
