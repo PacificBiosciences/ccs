@@ -39,6 +39,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <utility>
 #include <vector>
 
