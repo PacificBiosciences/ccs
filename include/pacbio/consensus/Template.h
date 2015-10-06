@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/optional.hpp>
+
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/consensus/Mutation.h>
 
@@ -22,7 +24,7 @@ public:
 
     // virtual mutations (for mutation testing purposes)
     virtual bool IsMutated() const = 0;
-    virtual void Mutate(const Mutation& m) = 0;
+    virtual boost::optional<Mutation> Mutate(const Mutation& m) = 0;
     virtual void Reset() = 0;
 
     // actually apply mutations
@@ -34,7 +36,10 @@ public:
     virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
     virtual double UndoCounterWeights(size_t nEmissions) const = 0;
 
-    std::tuple<double, double> NormalParameters(size_t start, size_t end) const;
+    std::tuple<double, double> NormalParameters() const;
+
+    // a sad but necessary release valve for MonoMolecularIntegrator Length()
+    size_t TrueLength() const;
 
 protected:
     AbstractTemplate(size_t start, size_t end, bool pinStart, bool pinEnd);
@@ -61,7 +66,7 @@ public:
     inline const TemplatePosition& operator[](size_t i) const;
 
     inline bool IsMutated() const;
-    void Mutate(const Mutation& mut);
+    boost::optional<Mutation> Mutate(const Mutation& mut);
     void Reset();
 
     void ApplyMutation(const Mutation& mut);
@@ -91,8 +96,10 @@ public:
     inline const TemplatePosition& operator[](size_t i) const;
 
     inline bool IsMutated() const;
-    inline void Mutate(const Mutation&);
+    inline boost::optional<Mutation> Mutate(const Mutation&);
     inline void Reset() {}
+    void ApplyMutation(const Mutation& mut);
+
     inline double BaseEmissionPr(MoveType move, char from, char to) const;
     inline double CovEmissionPr(MoveType move, uint8_t cov) const;
     inline double UndoCounterWeights(size_t nEmissions) const;
@@ -142,22 +149,28 @@ double Template::UndoCounterWeights(size_t nEmissions) const
 
 size_t VirtualTemplate::Length() const
 {
-    if (IsMutated() && InRange(master_.mutStart_, master_.mutEnd_))
-        return end_ - start_ + master_.mutOff_;
+    if (IsMutated()) return end_ - start_ + master_.mutOff_;
 
     return end_ - start_;
 }
 
 const TemplatePosition& VirtualTemplate::operator[](const size_t i) const
 {
-    if (IsMutated() && !pinStart_ && master_.mutEnd_ <= start_)
+    if (master_.IsMutated() && !pinStart_ && master_.mutEnd_ <= start_)
         return master_[start_ + i + master_.mutOff_];
     return master_[start_ + i];
 }
-bool VirtualTemplate::IsMutated() const { return master_.IsMutated(); }
-void VirtualTemplate::Mutate(const Mutation&)
+
+bool VirtualTemplate::IsMutated() const
 {
-    if (!IsMutated()) throw std::runtime_error("virtual template badness");
+    return master_.IsMutated() && InRange(master_.mutStart_, master_.mutEnd_);
+}
+
+boost::optional<Mutation> VirtualTemplate::Mutate(const Mutation& mut)
+{
+    if (!master_.IsMutated()) throw std::runtime_error("virtual template badness");
+    if (!InRange(mut.Start(), mut.End())) return boost::optional<Mutation>(boost::none);
+    return boost::optional<Mutation>(Mutation(mut.Type, mut.Start() - start_, mut.Base));
 }
 
 double VirtualTemplate::BaseEmissionPr(MoveType move, char from, char to) const

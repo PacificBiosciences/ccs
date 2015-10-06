@@ -3,6 +3,7 @@
 #include <utility>
 
 #include <pacbio/consensus/Integrator.h>
+#include <pacbio/consensus/Sequence.h>
 
 #include "ModelFactory.h"
 
@@ -24,11 +25,16 @@ AbstractIntegrator::~AbstractIntegrator() {}
 AddReadResult AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
                                           const MappedRead& read)
 {
-    std::unique_ptr<Evaluator> eval;
+    std::unique_ptr<Evaluator> eval(nullptr);
     AddReadResult result = AddReadResult::SUCCESS;
 
     try {
         eval.reset(new Evaluator(std::move(tpl), read, cfg_.ScoreDiff));
+        const double zScore = eval->ZScore();
+        if (!std::isnan(cfg_.MinZScore) && (!std::isfinite(zScore) || zScore < cfg_.MinZScore)) {
+            eval.reset(nullptr);
+            result = AddReadResult::POOR_ZSCORE;
+        }
     } catch (AlphaBetaMismatch& e) {
         eval.reset(nullptr);
         result = AddReadResult::ALPHA_BETA_MISMATCH;
@@ -39,21 +45,22 @@ AddReadResult AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tp
         result = AddReadResult::OTHER;
     }
 
-    if (!std::isnan(cfg_.MinZScore) && eval && eval->ZScore() < cfg_.MinZScore) {
-        eval.reset(nullptr);
-        result = AddReadResult::POOR_ZSCORE;
-    }
-
-    evals_.emplace_back(std::move(eval));
+    evals_.emplace_back(ReadState(std::move(eval), read.Strand));
 
     return result;
 }
 
-double AbstractIntegrator::LL(const Mutation& mut)
+double AbstractIntegrator::LL(const Mutation& fwdMut)
 {
+    const Mutation revMut(ReverseComplement(fwdMut));
     double ll = 0.0;
     for (auto& eval : evals_) {
-        if (eval) ll += eval->LL(mut);
+        if (eval) {
+            if (eval.Strand == StrandEnum::FORWARD)
+                ll += eval->LL(fwdMut);
+            else
+                ll += eval->LL(revMut);
+        }
     }
     return ll;
 }
@@ -70,15 +77,16 @@ double AbstractIntegrator::LL() const
 double AbstractIntegrator::AvgZScore() const
 {
     double mean = 0.0, var = 0.0;
+    size_t n = 0;
     for (const auto& eval : evals_) {
         if (eval) {
             double m, v;
             std::tie(m, v) = eval->NormalParameters();
             mean += m;
             var += v;
+            ++n;
         }
     }
-    const size_t n = evals_.size();
     return (LL() / n - mean / n) / std::sqrt(var / n);
 }
 
@@ -97,15 +105,31 @@ std::vector<double> AbstractIntegrator::ZScores() const
     return results;
 }
 
+Mutation AbstractIntegrator::ReverseComplement(const Mutation& mut) const
+{
+    return Mutation(mut.Type, Length() - mut.End(), Complement(mut.Base));
+}
+
+AbstractIntegrator::ReadState::ReadState(std::unique_ptr<Evaluator>&& ptr, StrandEnum strand)
+    : std::unique_ptr<Evaluator>(std::forward<std::unique_ptr<Evaluator>>(ptr)), Strand(strand)
+{
+}
+
 MonoMolecularIntegrator::MonoMolecularIntegrator(const std::string& tpl,
                                                  const IntegratorConfig& cfg, const SNR& snr,
                                                  const std::string& model)
-    : AbstractIntegrator(cfg), mdl_{model}, tpl_(tpl, ModelFactory::Create(mdl_, snr))
+    : AbstractIntegrator(cfg)
+    , mdl_{model}
+    , fwdTpl_(tpl, ModelFactory::Create(mdl_, snr))
+    , revTpl_(::PacBio::Consensus::ReverseComplement(tpl), ModelFactory::Create(mdl_, snr))
 {
 }
 
 MonoMolecularIntegrator::MonoMolecularIntegrator(MonoMolecularIntegrator&& mmi)
-    : AbstractIntegrator(std::move(mmi)), mdl_{mmi.mdl_}, tpl_{std::move(mmi.tpl_)}
+    : AbstractIntegrator(std::move(mmi))
+    , mdl_{mmi.mdl_}
+    , fwdTpl_{std::move(mmi.fwdTpl_)}
+    , revTpl_{std::move(mmi.revTpl_)}
 {
 }
 
@@ -113,80 +137,179 @@ AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
 {
     if (read.Model != mdl_) return AddReadResult::OTHER;
 
+    if (read.Strand == StrandEnum::FORWARD)
+        return AbstractIntegrator::AddRead(
+            std::unique_ptr<AbstractTemplate>(new VirtualTemplate(
+                fwdTpl_, read.TemplateStart, read.TemplateEnd, read.PinStart, read.PinEnd)),
+            read);
+
     return AbstractIntegrator::AddRead(
-        std::unique_ptr<AbstractTemplate>(new VirtualTemplate(
-            tpl_, read.TemplateStart, read.TemplateEnd, read.PinStart, read.PinEnd)),
+        std::unique_ptr<AbstractTemplate>(new VirtualTemplate(revTpl_, Length() - read.TemplateEnd,
+                                                              Length() - read.TemplateStart,
+                                                              read.PinEnd, read.PinStart)),
         read);
 }
 
-size_t MonoMolecularIntegrator::Length() const { return tpl_.Length(); }
-char MonoMolecularIntegrator::operator[](const size_t i) const { return tpl_[i].Base; }
+size_t MonoMolecularIntegrator::Length() const { return fwdTpl_.TrueLength(); }
+char MonoMolecularIntegrator::operator[](const size_t i) const { return fwdTpl_[i].Base; }
 MonoMolecularIntegrator::operator std::string() const
 {
     std::string result;
 
-    result.resize(tpl_.Length());
+    result.resize(fwdTpl_.Length());
 
-    for (size_t i = 0; i < tpl_.Length(); ++i) {
-        result[i] = tpl_[i].Base;
-    }
+    for (size_t i = 0; i < fwdTpl_.Length(); ++i)
+        result[i] = fwdTpl_[i].Base;
 
     return result;
 }
 
-double MonoMolecularIntegrator::LL(const Mutation& mut)
+double MonoMolecularIntegrator::LL(const Mutation& fwdMut)
 {
-    tpl_.Mutate(mut);
-    const double ll = AbstractIntegrator::LL(mut);
-    tpl_.Reset();
+    const Mutation revMut(ReverseComplement(fwdMut));
+    fwdTpl_.Mutate(fwdMut);
+    revTpl_.Mutate(revMut);
+    const double ll = AbstractIntegrator::LL(fwdMut);
+    fwdTpl_.Reset();
+    revTpl_.Reset();
     return ll;
 }
 
-void MonoMolecularIntegrator::ApplyMutation(const Mutation& mut)
+void MonoMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)
 {
-    tpl_.ApplyMutation(mut);
-    for (auto& eval : evals_)
-        if (eval) eval->ApplyMutation(mut);
+    const Mutation revMut(ReverseComplement(fwdMut));
+
+    fwdTpl_.ApplyMutation(fwdMut);
+    revTpl_.ApplyMutation(revMut);
+
+    for (auto& eval : evals_) {
+        if (eval) {
+            if (eval.Strand == StrandEnum::FORWARD)
+                eval->ApplyMutation(fwdMut);
+            else
+                eval->ApplyMutation(revMut);
+        }
+    }
+
+    assert(fwdTpl_.Length() == revTpl_.Length());
+
+#ifndef NDEBUG
+    std::string fwd;
+    std::string rev;
+
+    for (size_t i = 0; i < Length(); ++i) {
+        fwd.push_back(fwdTpl_[i].Base);
+        rev.push_back(revTpl_[i].Base);
+    }
+
+#endif
+
+    assert(fwd == ::PacBio::Consensus::ReverseComplement(rev));
 }
 
-void MonoMolecularIntegrator::ApplyMutations(std::vector<Mutation>* muts)
+void MonoMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
 {
-    tpl_.ApplyMutations(muts);
-    for (auto& eval : evals_)
-        if (eval) eval->ApplyMutations(muts);
+    std::vector<Mutation> revMuts;
+
+    for (auto it = fwdMuts->crbegin(); it != fwdMuts->crend(); ++it)
+        revMuts.emplace_back(ReverseComplement(*it));
+
+    fwdTpl_.ApplyMutations(fwdMuts);
+    revTpl_.ApplyMutations(&revMuts);
+
+    for (auto& eval : evals_) {
+        if (eval) {
+            if (eval.Strand == StrandEnum::FORWARD)
+                eval->ApplyMutations(fwdMuts);
+            else
+                eval->ApplyMutations(&revMuts);
+        }
+    }
+
+    assert(fwdTpl_.Length() == revTpl_.Length());
+
+#ifndef NDEBUG
+    std::string fwd;
+    std::string rev;
+
+    for (size_t i = 0; i < Length(); ++i) {
+        fwd.push_back(fwdTpl_[i].Base);
+        rev.push_back(revTpl_[i].Base);
+    }
+#endif
+
+    assert(fwd == ::PacBio::Consensus::ReverseComplement(rev));
 }
 
 MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
                                                    const IntegratorConfig& cfg)
-    : AbstractIntegrator(cfg), tpl_{tpl}
+    : AbstractIntegrator(cfg), fwdTpl_{tpl}, revTpl_{::PacBio::Consensus::ReverseComplement(tpl)}
 {
 }
 
 AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read, const SNR& snr)
 {
+    if (read.Strand == StrandEnum::FORWARD)
+        return AbstractIntegrator::AddRead(
+            std::unique_ptr<AbstractTemplate>(
+                new Template(fwdTpl_, ModelFactory::Create(read.Model, snr), read.TemplateStart,
+                             read.TemplateEnd, read.PinStart, read.PinEnd)),
+            read);
+
     return AbstractIntegrator::AddRead(
-        std::unique_ptr<AbstractTemplate>(new Template(tpl_, ModelFactory::Create(read.Model, snr),
-                                                       read.TemplateStart, read.TemplateEnd,
-                                                       read.PinStart, read.PinEnd)),
+        std::unique_ptr<AbstractTemplate>(new Template(
+            revTpl_, ModelFactory::Create(read.Model, snr), revTpl_.size() - read.TemplateEnd,
+            revTpl_.size() - read.TemplateStart, read.PinEnd, read.PinStart)),
         read);
 }
 
-size_t MultiMolecularIntegrator::Length() const { return tpl_.length(); }
-char MultiMolecularIntegrator::operator[](const size_t i) const { return tpl_[i]; }
-MultiMolecularIntegrator::operator std::string() const { return tpl_; }
-void MultiMolecularIntegrator::ApplyMutation(const Mutation& mut)
+size_t MultiMolecularIntegrator::Length() const { return fwdTpl_.length(); }
+char MultiMolecularIntegrator::operator[](const size_t i) const { return fwdTpl_[i]; }
+MultiMolecularIntegrator::operator std::string() const { return fwdTpl_; }
+void MultiMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)
 {
-    std::vector<Mutation> muts(1, mut);
-    tpl_ = ::PacBio::Consensus::ApplyMutations(tpl_, &muts);
-    for (auto& eval : evals_)
-        if (eval) eval->ApplyMutation(mut);
+    const Mutation revMut(ReverseComplement(fwdMut));
+
+    std::vector<Mutation> fwdMuts = {fwdMut};
+    std::vector<Mutation> revMuts = {revMut};
+
+    fwdTpl_ = ::PacBio::Consensus::ApplyMutations(fwdTpl_, &fwdMuts);
+    revTpl_ = ::PacBio::Consensus::ApplyMutations(revTpl_, &revMuts);
+
+    for (auto& eval : evals_) {
+        if (eval) {
+            if (eval.Strand == StrandEnum::FORWARD)
+                eval->ApplyMutation(fwdMut);
+            else
+                eval->ApplyMutation(revMut);
+        }
+    }
+
+    assert(fwdTpl_.length() == revTpl_.length());
+    assert(fwdTpl_ == ::PacBio::Consensus::ReverseComplement(revTpl_));
 }
 
-void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* muts)
+void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
 {
-    tpl_ = ::PacBio::Consensus::ApplyMutations(tpl_, muts);
-    for (auto& eval : evals_)
-        if (eval) eval->ApplyMutations(muts);
+    std::vector<Mutation> revMuts;
+
+    for (auto it = fwdMuts->crbegin(); it != fwdMuts->crend(); ++it)
+        revMuts.emplace_back(ReverseComplement(*it));
+
+    fwdTpl_ = ::PacBio::Consensus::ApplyMutations(fwdTpl_, fwdMuts);
+    revTpl_ = ::PacBio::Consensus::ApplyMutations(revTpl_, &revMuts);
+
+    for (auto& eval : evals_) {
+        if (eval) {
+            if (eval.Strand == StrandEnum::FORWARD)
+                eval->ApplyMutations(fwdMuts);
+            else
+                eval->ApplyMutations(&revMuts);
+        }
+    }
+
+    assert(fwdTpl_.length() == revTpl_.length());
+    assert(fwdTpl_ == ::PacBio::Consensus::ReverseComplement(revTpl_));
 }
 
 }  // namespace Consensus

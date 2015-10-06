@@ -55,6 +55,14 @@ public:
     virtual void ApplyMutations(std::vector<Mutation>* muts) = 0;
 
 protected:
+    struct ReadState : std::unique_ptr<Evaluator>
+    {
+        ReadState(std::unique_ptr<Evaluator>&& ptr, StrandEnum strand);
+        StrandEnum Strand;
+    };
+
+    Mutation ReverseComplement(const Mutation& mut) const;
+
     AbstractIntegrator(const IntegratorConfig& cfg);
 
     // move constructor
@@ -63,7 +71,7 @@ protected:
     AddReadResult AddRead(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& read);
 
     IntegratorConfig cfg_;
-    std::vector<std::unique_ptr<Evaluator>> evals_;
+    std::vector<ReadState> evals_;
 };
 
 class MonoMolecularIntegrator : public AbstractIntegrator
@@ -89,7 +97,8 @@ public:
 
 private:
     std::string mdl_;
-    Template tpl_;
+    Template fwdTpl_;
+    Template revTpl_;
 };
 
 class MultiMolecularIntegrator : public AbstractIntegrator
@@ -109,7 +118,8 @@ public:
 private:
     friend struct std::hash<MultiMolecularIntegrator>;
 
-    std::string tpl_;
+    std::string fwdTpl_;
+    std::string revTpl_;
 };
 
 }  // namespace Consensus

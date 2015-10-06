@@ -112,36 +112,42 @@ std::vector<Mutation> BestMutations(std::list<ScoredMutation>* scoredMuts, const
     return muts;
 }
 
-std::vector<Mutation> NearbyMutations(const AbstractIntegrator& ai,
-                                      const std::vector<Mutation>& centers,
+std::vector<Mutation> NearbyMutations(std::vector<Mutation>* centers, const AbstractIntegrator& ai,
                                       const size_t neighborhood)
 {
     const size_t len = ai.Length();
+    const auto clamp = [len](const int i) { return std::max(0, std::min<int>(len, i)); };
 
     std::vector<Mutation> muts;
 
-    if (centers.empty()) return muts;
+    if (centers->empty()) return muts;
 
-    auto mutRange = [len, neighborhood](const Mutation& mut) {
-        const size_t start = (neighborhood > mut.Start()) ? 0 : mut.Start() - neighborhood;
-        const size_t end = std::min(len, mut.End() + neighborhood);
-        return std::make_tuple(start, end);
+    std::sort(centers->begin(), centers->end(), Mutation::SiteComparer);
+
+    const auto mutRange = [clamp, neighborhood](const Mutation& mut, const int diff) {
+        const int start = diff + mut.Start() - neighborhood;
+        const int end = diff + mut.End() + neighborhood;
+        return std::tuple<size_t, size_t>(clamp(start), clamp(end));
     };
 
     // find the ranges
-    std::vector<Mutation>::const_iterator it = centers.begin();
-    std::vector<std::tuple<size_t, size_t>> ranges = {mutRange(*it)};
-    std::tuple<size_t, size_t>& lastRange = ranges.back();
+    auto it = centers->cbegin();
+    std::vector<std::tuple<size_t, size_t>> ranges = {mutRange(*it, 0)};
+    size_t currEnd = std::get<1>(ranges.back());
+    int runningLengthDiff = it->LengthDiff();
 
     // increment to the next position and continue
-    for (++it; it != centers.end(); ++it) {
-        const auto nextRange = mutRange(*it);
-        // if the new range touches the last one, just extend the last one
-        if (std::get<0>(nextRange) <= std::get<1>(lastRange))
-            std::get<1>(lastRange) = std::get<1>(nextRange);
+    for (++it; it != centers->cend(); ++it) {
+        size_t nextStart, nextEnd;
+        std::tie(nextStart, nextEnd) = mutRange(*it, runningLengthDiff);
+        runningLengthDiff += it->LengthDiff();
+
+        // if the next range touches the last one, just extend the last one
+        if (nextStart <= currEnd)
+            std::get<1>(ranges.back()) = nextEnd;
         else {
-            ranges.push_back(nextRange);
-            lastRange = ranges.back();
+            ranges.emplace_back(std::make_tuple(nextStart, nextEnd));
+            currEnd = nextEnd;
         }
     }
 
@@ -204,7 +210,7 @@ std::tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConf
         history.insert(oldTpl);
 
         // get the mutations for the next round
-        muts = NearbyMutations(*ai, muts, cfg.MutationNeighborhood);
+        muts = NearbyMutations(&muts, *ai, cfg.MutationNeighborhood);
     }
 
     return std::make_tuple(false, nTested, nApplied);
@@ -227,6 +233,8 @@ std::vector<int> ConsensusQVs(AbstractIntegrator& ai)
     for (size_t i = 0; i < ai.Length(); ++i) {
         double scoreSum = 0.0;
         for (const auto& m : Mutations(ai, i, i + 1)) {
+            // skip mutations that start beyond the current site (e.g. trailing insertions)
+            if (m.Start() > i) continue;
             // TODO (lhepler): this is dumb, but untestable mutations,
             //   aka insertions at ends, cause all sorts of weird issues
             double score = ai.LL(m) - LL;

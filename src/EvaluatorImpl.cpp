@@ -1,6 +1,8 @@
 
 #include <cmath>
 
+#include <boost/optional.hpp>
+
 #include <pacbio/consensus/Evaluator.h>
 
 #include "EvaluatorImpl.h"
@@ -60,29 +62,31 @@ EvaluatorImpl::EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const Mapp
     if (!std::isfinite(LL())) throw AlphaBetaMismatch();
 }
 
-double EvaluatorImpl::LL(const Mutation& mut)
+double EvaluatorImpl::LL(const Mutation& mut_)
 {
-    // apply the virtual mutation
-    recursor_.tpl_->Mutate(mut);
+    boost::optional<Mutation> mut(recursor_.tpl_->Mutate(mut_));
 
-    size_t betaLinkCol = 1 + mut.End();
-    size_t absoluteLinkColumn = 1 + mut.End() + mut.LengthDiff();
+    // apply the virtual mutation
+    if (!mut) return LL();
+
+    size_t betaLinkCol = 1 + mut->End();
+    size_t absoluteLinkColumn = 1 + mut->End() + mut->LengthDiff();
 
     double score;
 
-    bool atBegin = mut.Start() < 3;
-    bool atEnd = (mut.End() + 3) > beta_.Columns();
+    bool atBegin = mut->Start() < 3;
+    bool atEnd = (mut->End() + 3) > beta_.Columns();
 
     if (!atBegin && !atEnd) {
         int extendStartCol, extendLength = 2;
 
-        if (mut.Type == MutationType::DELETION) {
+        if (mut->Type == MutationType::DELETION) {
             // Future thought: If we revise the semantic of Extra,
             // we can remove the extend and just link alpha and
             // beta directly.
-            extendStartCol = mut.Start() - 1;
+            extendStartCol = mut->Start() - 1;
         } else {
-            extendStartCol = mut.Start();
+            extendStartCol = mut->Start();
             assert(extendLength <= EXTEND_BUFFER_COLUMNS);
         }
 
@@ -94,7 +98,7 @@ double EvaluatorImpl::LL(const Mutation& mut)
         //
         // Extend alpha to end
         //
-        size_t extendStartCol = mut.Start() - 1;
+        size_t extendStartCol = mut->Start() - 1;
         assert(recursor_.tpl_->Length() + 1 > extendStartCol);
         size_t extendLength = recursor_.tpl_->Length() - extendStartCol + 1;
 
@@ -104,11 +108,11 @@ double EvaluatorImpl::LL(const Mutation& mut)
                 extendBuffer_.GetLogProdScales(0, extendLength);
     } else if (atBegin && !atEnd) {
         // If the mutation occurs at positions 0 - 2
-        size_t extendLastCol = mut.End();
+        size_t extendLastCol = mut->End();
         // We duplicate this math inside the function
-        size_t extendLength = 1 + mut.End() + mut.LengthDiff();
+        size_t extendLength = 1 + mut->End() + mut->LengthDiff();
 
-        recursor_.ExtendBeta(beta_, extendLastCol, extendBuffer_, mut.LengthDiff());
+        recursor_.ExtendBeta(beta_, extendLastCol, extendBuffer_, mut->LengthDiff());
         score = std::log(extendBuffer_(0, 0)) +
                 beta_.GetLogProdScales(extendLastCol + 1, beta_.Columns()) +
                 extendBuffer_.GetLogProdScales(0, extendLength);
@@ -148,8 +152,7 @@ double EvaluatorImpl::LL() const
 
 std::tuple<double, double> EvaluatorImpl::NormalParameters() const
 {
-    return recursor_.tpl_->NormalParameters(recursor_.read_.TemplateStart,
-                                            recursor_.read_.TemplateEnd);
+    return recursor_.tpl_->NormalParameters();
 }
 
 double EvaluatorImpl::ZScore() const

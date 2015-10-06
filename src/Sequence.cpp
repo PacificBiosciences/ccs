@@ -7,7 +7,7 @@
 namespace PacBio {
 namespace Consensus {
 
-char ComplementaryBase(char base)
+char Complement(char base)
 {
     switch (base) {
         case 'A':
@@ -26,6 +26,8 @@ char ComplementaryBase(char base)
             return 'A';
         case 't':
             return 'a';
+        case '-':
+            return '-';
         default:
             throw std::invalid_argument("invalid base!");
     }
@@ -36,7 +38,7 @@ std::string Complement(const std::string& input)
     std::string output;
     output.reserve(input.length());
     for (const char b : input)
-        output.push_back(ComplementaryBase(b));
+        output.push_back(Complement(b));
     return output;
 }
 
@@ -54,7 +56,7 @@ std::string ReverseComplement(const std::string& input)
     std::string output;
     output.reserve(input.length());
     for (auto it = input.crbegin(); it != input.crend(); ++it)
-        output.push_back(ComplementaryBase(*it));
+        output.push_back(Complement(*it));
     return output;
 }
 

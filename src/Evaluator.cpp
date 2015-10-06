@@ -26,10 +26,5 @@ std::tuple<double, double> Evaluator::NormalParameters() const { return impl_->N
 double Evaluator::ZScore() const { return impl_->ZScore(); }
 void Evaluator::ApplyMutation(const Mutation& mut) { impl_->ApplyMutation(mut); }
 void Evaluator::ApplyMutations(std::vector<Mutation>* muts) { impl_->ApplyMutations(muts); }
-/*
-Matrix* Evaluator::AlphaMatrix();
-Matrix* Evaluator::BetaMatrix();
-*/
-
 }  // namespace Consensus
 }  // namespace PacBio

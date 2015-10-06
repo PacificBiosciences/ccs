@@ -339,14 +339,11 @@ PoaAlignmentMatrixImpl* PoaGraphImpl::TryAddRead(const std::string& readSeq,
     const AlignmentColumn* curCol;
     for (const auto& v : sortedVertices) {
         if (v != exitVertex_) {
-            std::tuple<size_t, size_t> rowRange;
+            size_t startRange = 0, endRange = readSeq.size();
             if (rangeFinder) {
-                rowRange = rangeFinder->FindAlignableRange(externalize(v));
-            } else {
-                rowRange = std::tuple<size_t, size_t>(0, readSeq.size());
+                std::tie(startRange, endRange) = rangeFinder->FindAlignableRange(externalize(v));
             }
-            curCol = makeAlignmentColumn(v, mat->columns_, readSeq, config, std::get<0>(rowRange),
-                                         std::get<1>(rowRange));
+            curCol = makeAlignmentColumn(v, mat->columns_, readSeq, config, startRange, endRange);
         } else {
             curCol = makeAlignmentColumnForExit(v, mat->columns_, readSeq, config);
         }

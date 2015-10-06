@@ -18,15 +18,15 @@ AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const b
 AbstractTemplate::~AbstractTemplate() {}
 void AbstractTemplate::ApplyMutation(const Mutation& mut)
 {
-    if (!InRange(mut.Start(), mut.End())) return;
-
     // if the end of the mutation is before the end of our mapping,
     //   update the mapping
     if (pinEnd_ || mut.Start() < end_) end_ += mut.LengthDiff();
 
     // if the end of the mutation is before the start of our mapping,
     //   update the mapping
-    if (!pinStart_ || mut.End() < start_) start_ += mut.LengthDiff();
+    if (!pinStart_ && mut.End() < start_) start_ += mut.LengthDiff();
+
+    assert(start_ < end_);
 }
 
 void AbstractTemplate::ApplyMutations(std::vector<Mutation>* const muts)
@@ -38,12 +38,11 @@ void AbstractTemplate::ApplyMutations(std::vector<Mutation>* const muts)
         ApplyMutation(*it);
 }
 
-std::tuple<double, double> AbstractTemplate::NormalParameters(const size_t start,
-                                                              const size_t end) const
+std::tuple<double, double> AbstractTemplate::NormalParameters() const
 {
     double mean = 0.0, var = 0.0;
 
-    for (size_t i = start; i < end; ++i) {
+    for (size_t i = 0; (i + 1) < Length(); ++i) {
         double m, v;
         std::tie(m, v) = SiteNormalParameters(i);
         mean += m;
@@ -53,6 +52,7 @@ std::tuple<double, double> AbstractTemplate::NormalParameters(const size_t start
     return std::make_tuple(mean, var);
 }
 
+size_t AbstractTemplate::TrueLength() const { return end_ - start_; }
 std::tuple<double, double> AbstractTemplate::SiteNormalParameters(const size_t i) const
 {
     // std::log(1.0/3);
@@ -104,10 +104,10 @@ Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg, c
     //   assert(!pinEnd_ || end_ == tpl_.size());
 }
 
-void Template::Mutate(const Mutation& mut)
+boost::optional<Mutation> Template::Mutate(const Mutation& mut)
 {
     Reset();
-    if (!InRange(mut.Start(), mut.End())) return;
+    if (!InRange(mut.Start(), mut.End())) return boost::none;
     mutStart_ = mut.Start() - start_;
     mutEnd_ = mut.End() - start_;
     if (mut.Type == MutationType::INSERTION) {
@@ -147,6 +147,8 @@ void Template::Mutate(const Mutation& mut)
 
     assert((*this)[Length() - 1].Match == 0.0 && (*this)[Length() - 1].Branch == 0.0 &&
            (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0);
+
+    return Mutation(mut.Type, mutStart_, mut.Base);
 }
 
 void Template::Reset()
@@ -195,6 +197,8 @@ void Template::ApplyMutation(const Mutation& mut)
     assert(tpl_.size() == end_ - start_);
     assert((*this)[Length() - 1].Match == 0.0 && (*this)[Length() - 1].Branch == 0.0 &&
            (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0);
+
+    assert(!pinStart_ || start_ == 0);
 }
 
 VirtualTemplate::VirtualTemplate(const Template& master, const size_t start, const size_t end,
@@ -203,6 +207,13 @@ VirtualTemplate::VirtualTemplate(const Template& master, const size_t start, con
 {
     assert(!pinStart_ || start_ == 0);
     assert(!pinEnd_ || end_ == master_.tpl_.size());
+}
+
+void VirtualTemplate::ApplyMutation(const Mutation& mut)
+{
+    assert(!pinStart_ || start_ == 0);
+    AbstractTemplate::ApplyMutation(mut);
+    assert(!pinStart_ || start_ == 0);
 }
 
 }  // namespace Consensus
