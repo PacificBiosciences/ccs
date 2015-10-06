@@ -487,6 +487,9 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 continue;
             }
 
+            const double zAvg = ai.AvgZScore();
+            const auto zScores = ai.ZScores();
+
             // find consensus!!
             size_t nTested, nApplied;
             bool polished;
@@ -528,8 +531,8 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                     QVsToASCII(qvs),
                     nPasses,
                     predAcc,
-                    ai.AvgZScore(),
-                    ai.ZScores(),
+                    zAvg,
+                    zScores,
                     statusCounts,
                     nTested,
                     nApplied,
