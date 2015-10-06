@@ -9,6 +9,9 @@ endif()
 project(PacBioCCS CXX C)
 cmake_minimum_required(VERSION 2.8)
 
+# set magic variable
+set(ROOT_PROJECT_NAME ${PROJECT_NAME} CACHE STRING "root project name")
+
 # required packages
 if (NOT Boost_INCLUDE_DIRS)
     find_package(Boost 1.58.0 REQUIRED)

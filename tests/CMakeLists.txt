@@ -1,6 +1,6 @@
 
 # gmock/gtest
-set(GMOCK_RootDir    ${PacBioCCS_ThirdPartyDir}/gmock-1.7.0)
+set(GMOCK_RootDir    ${PacBioCCS_RootDir}/ConsensusCore/external/gmock-1.7.0)
 set(GMOCK_IncludeDir ${GMOCK_RootDir})
 
 file(GLOB           GMOCK_CC    "${GMOCK_RootDir}/*.cc")
@@ -51,6 +51,6 @@ target_link_libraries(test_pbccs
     ${CMAKE_DL_LIBS}
 )
 
-if (${PROJECT_NAME} STREQUAL "PacBioCCS")
+if (${ROOT_PROJECT_NAME} STREQUAL "PacBioCCS")
     add_custom_target(check test_pbccs)
 endif()

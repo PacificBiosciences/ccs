@@ -44,9 +44,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <ConsensusCore/Poa/PoaConsensus.hpp>
-
 #include <pacbio/ccs/SparsePoa.h>
+#include <pacbio/consensus/poa/PoaConsensus.h>
 
 #include "TestData.h"
 #include "TestUtils.h"
