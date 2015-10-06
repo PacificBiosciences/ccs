@@ -43,15 +43,16 @@ if (NOT ZLIB_INCLUDE_DIRS OR
 endif()
 
 # project version
-set(PacBioCCS_VERSION_MAJOR 0)
+set(PacBioCCS_VERSION_MAJOR 2)
 set(PacBioCCS_VERSION_MINOR 0)
-set(PacBioCCS_VERSION_PATCH 1)
+set(PacBioCCS_VERSION_PATCH 0)
 set(PacBioCCS_VERSION
     "${PacBioCCS_VERSION_MAJOR}.${PacBioCCS_VERSION_MINOR}.${PacBioCCS_VERSION_PATCH}"
 )
 
 # main project paths
 set(PacBioCCS_RootDir           ${PacBioCCS_SOURCE_DIR})
+set(PacBioCCS_ParentDir         ${PacBioCCS_RootDir}/..)
 set(PacBioCCS_IncludeDir        ${PacBioCCS_RootDir}/include)
 set(PacBioCCS_DocsDir           ${PacBioCCS_RootDir}/docs)
 set(PacBioCCS_SourceDir         ${PacBioCCS_RootDir}/src)
@@ -69,29 +70,23 @@ file(MAKE_DIRECTORY             ${PacBioCCS_BinDir})
 file(MAKE_DIRECTORY             ${PacBioCCS_LibDir})
 
 # PacBio libraries
-set(Bifx_RootDir                ${PacBioCCS_RootDir}/../../.. CACHE PATH "smrtanalysis/bioinformatics root path")
-
-# ConsensusCore
-#set(ConsensusCore_RootDir       ${Bifx_RootDir}/lib/cpp/ConsensusCore                              CACHE PATH "ConsensusCore root path")
-set(ConsensusCore_RootDir       ${PacBioCCS_RootDir}/ConsensusCore)
-set(ConsensusCore_IncludeDir    ${ConsensusCore_RootDir}/include ${ConsensusCore_RootDir}/external)
+set(Bifx_RootDir                ${PacBioCCS_RootDir}/../../.. CACHE PATH "smrtanalysis/bioinformatics path")
 
 # pbbam
-set(PacBioBAM_RootDir           ${Bifx_RootDir}/staging/PostPrimary/pbbam                          CACHE PATH "pbbam source path")
+set(PacBioBAM_RootDir           ${Bifx_RootDir}/staging/PostPrimary/pbbam CACHE PATH "pbbam source path")
 set(PacBioBAM_IncludeDir        ${PacBioBAM_RootDir}/include)
-#set(PacBioBAM_LibDir            ${PacBioBAM_RootDir}/lib)
 
 # disable extra pbbam stuff for now
 set(PacBioBAM_build_docs        OFF CACHE BOOL "build pbbam docs" FORCE)
 set(PacBioBAM_build_pbindex     OFF CACHE BOOL "build pbbam pbindex" FORCE)
 set(PacBioBAM_build_tests       OFF CACHE BOOL "build pbbam tests" FORCE)
 
-# htslib
-#set(HTSLIB_ROOTDIR              ${Bifx_RootDir}/staging/PostPrimary/htslib                         CACHE PATH "htslib source path")
-#set(HTSLIB_LibDir               ${HTSLIB_RootDir})
+# pbconsensus
+set(PacBioConsensus_RootDir     ${PacBioCCS_ParentDir}/pbconsensus CACHE PATH "pbconsensus source path")
+set(PacBioConsensus_IncludeDir  ${PacBioConsensus_RootDir}/include)
 
 # prebuilt libraries
-set(PreBuilt_OutDir             ${Bifx_RootDir}/../prebuilt.out                                    CACHE PATH "smrtanalysis/prebuilt.out root path")
+set(PreBuilt_OutDir             ${Bifx_RootDir}/../prebuilt.out CACHE PATH "smrtanalysis/prebuilt.out path")
 
 # third-party libraries
 set(CPPOPTPARSE_RootDir         ${PacBioCCS_ThirdPartyDir}/cpp-optparse)
@@ -105,24 +100,6 @@ file(GLOB_RECURSE PacBioCCS_H   "${PacBioCCS_IncludeDir}/*.h")
 # cpp-optparse sources
 set(CPPOPTPARSE_CPP             ${CPPOPTPARSE_RootDir}/OptionParser.cpp)
 set(CPPOPTPARSE_H               ${CPPOPTPARSE_RootDir}/OptionParser.h)
-
-# find (existing) libraries needed by executable and tests
-#find_library(CONSENSUSCORE_LIBRARIES
-#    NAMES ConsensusCore
-#    PATHS ${ConsensusCore_LibDir}
-#    NO_DEFAULT_PATH)
-
-#find_library(PBBAM_LIBRARY
-#    NAMES pbbam
-#    PATHS ${PacBioBAM_LibDir} ${HTSLIB_LibDir}
-#    NO_DEFAULT_PATH)
-#
-#find_library(HTSLIB_LIBRARY
-#    NAMES hts
-#    PATHS ${HTSLIB_LibDir}
-#    NO_DEFAULT_PATH)
-
-#set(PBBAM_LIBRARIES ${PBBAM_LIBRARY} ${HTSLIB_LIBRARY})
 
 # set this compiler definition to prevent unhygenic seqan behavior
 add_definitions(-DSEQAN_NO_GLOBAL_EXCEPTION_HANDLER)
@@ -140,12 +117,17 @@ endif(HAS_NO_UNUSED_VARIABLE)
 if (NOT PBBAM_INCLUDE_DIRS OR
     NOT PBBAM_LIBRARIES)
     add_subdirectory(${PacBioBAM_RootDir} external/pbbam/build EXCLUDE_FROM_ALL)
-    set(PBBAM_INCLUDE_DIRS "${PacBioBAM_IncludeDir}" CACHE INTERNAL "bla" FORCE)
-    set(PBBAM_LIBRARIES pbbam CACHE INTERNAL "bla" FORCE)
+    set(PBBAM_INCLUDE_DIRS ${PacBioBAM_IncludeDir} CACHE INTERNAL "" FORCE)
+    set(PBBAM_LIBRARIES pbbam CACHE INTERNAL "" FORCE)
+endif()
+
+if (NOT PBCONSENSUS_INCLUDE_DIRS OR
+    NOT PBCONSENSUS_LIBRARIES)
+    add_subdirectory(${PacBioConsensus_RootDir} external/pbconsensus/build EXCLUDE_FROM_ALL)
+    set(PBCONSENSUS_INCLUDE_DIRS ${PacBioConsensus_IncludeDir} CACHE INTERNAL "" FORCE)
 endif()
 
 # main exe src
-add_subdirectory(${ConsensusCore_RootDir} external/ConsensusCore/build EXCLUDE_FROM_ALL)
 add_subdirectory(src)
 
 # testing

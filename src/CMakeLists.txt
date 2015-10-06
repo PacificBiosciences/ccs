@@ -2,7 +2,7 @@
 include_directories(. ${PacBioCCS_IncludeDir})
 include_directories(SYSTEM
     ${Boost_INCLUDE_DIRS}
-    ${ConsensusCore_IncludeDir}
+    ${PBCONSENSUS_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
     ${PBBAM_INCLUDE_DIRS}
     ${CPPOPTPARSE_IncludeDir}
@@ -36,7 +36,7 @@ set_target_properties(ccs PROPERTIES
 )
 target_link_libraries(ccs
     pbccs
-    ConsensusCore
+    ${PBCONSENSUS_LIBRARIES}
     ${PBBAM_LIBRARIES}
     ${HTSLIB_LIBRARIES}
     ${ZLIB_LIBRARIES}
@@ -45,9 +45,9 @@ target_link_libraries(ccs
 )
 
 # gperftools support
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_link_libraries(ccs tcmalloc)
-endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+# if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+#     target_link_libraries(ccs tcmalloc)
+# endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 if (TARGET htslib)
     add_dependencies(ccs htslib)

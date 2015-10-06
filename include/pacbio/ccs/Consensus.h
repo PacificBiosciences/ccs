@@ -43,15 +43,16 @@
 #include <memory>
 #include <numeric>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include <boost/optional.hpp>
 
 #include <OptionParser.h>
 
-#include <ConsensusCore/Arrow/MultiReadMutationScorer.hpp>
-#include <ConsensusCore/Poa/PoaConsensus.hpp>
-#include <ConsensusCore/Consensus.hpp>
+#include <pacbio/consensus/poa/PoaConsensus.h>
+#include <pacbio/consensus/Integrator.h>
+#include <pacbio/consensus/Polish.h>
 
 #include <pbbam/Accuracy.h>
 #include <pbbam/QualityValues.h>
@@ -66,7 +67,7 @@ namespace PacBio {
 namespace CCS {
 
 
-using SNR = ConsensusCore::Arrow::SNR;
+using SNR = PacBio::Consensus::SNR;
 using QualityValues = PacBio::BAM::QualityValues;
 using LocalContextFlags = PacBio::BAM::LocalContextFlags;
 using Accuracy = PacBio::BAM::Accuracy;
@@ -140,7 +141,6 @@ struct ConsensusType
     std::string Qualities;
     size_t NumPasses;
     double PredictedAccuracy;
-    double GlobalZScore;
     double AvgZScore;
     std::vector<double> ZScores;
     std::vector<int32_t> StatusCounts;
@@ -292,13 +292,13 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
 }
 
 template<typename TRead>
-boost::optional<ConsensusCore::MappedArrowRead>
+boost::optional<PacBio::Consensus::MappedRead>
 ExtractMappedRead(const TRead& read,
                   const PoaAlignmentSummary& summary,
+                  const size_t poaLength,
                   const size_t minLength)
 {
-    using ConsensusCore::FORWARD_STRAND;
-    using ConsensusCore::REVERSE_STRAND;
+    using PacBio::Consensus::StrandEnum;
 
     const size_t tplStart  = summary.ExtentOnConsensus.Left();
     const size_t tplEnd    = summary.ExtentOnConsensus.Right();
@@ -312,14 +312,13 @@ ExtractMappedRead(const TRead& read,
         return boost::none;
     }
 
-    ConsensusCore::ArrowSequenceFeatures features(
-            read.Seq.substr(readStart, readEnd - readStart));
-
-    ConsensusCore::MappedArrowRead mappedRead(
-            ConsensusCore::ArrowRead(features, read.Id, "N/A"),
-            summary.ReverseComplementedRead ? REVERSE_STRAND : FORWARD_STRAND,
+    PacBio::Consensus::MappedRead mappedRead(
+            PacBio::Consensus::Read(read.Id, read.Seq.substr(readStart, readEnd - readStart), "P6/C4"),
+            summary.ReverseComplementedRead ? StrandEnum::REVERSE : StrandEnum::FORWARD,
             tplStart,
-            tplEnd);
+            tplEnd,
+            (tplStart == 0) ? true : false,
+            (tplEnd == poaLength) ? true : false);
 
     return boost::make_optional(mappedRead);
 }
@@ -396,7 +395,7 @@ template<typename TChunk, typename TResult>
 ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                               const ConsensusSettings& settings)
 {
-    using namespace ConsensusCore::Arrow;
+    using namespace PacBio::Consensus;
 
     auto chunks(std::move(chunksRef));
     ResultType<TResult> results;
@@ -433,39 +432,38 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 continue;
             }
 
-            // setup the arrow scorer
-            ContextParameters ctxParams(chunk.SignalToNoise);
-            ArrowConfig config(ctxParams, BandingOptions(12.5));
-            ArrowMultiReadMutationScorer scorer(config, poaConsensus);
-            std::vector<int32_t> statusCounts(OTHER + 1, 0);
+            // setup the arrow integrator
+            IntegratorConfig cfg(settings.MinZScore, 12.5);
+            MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise, "P6/C4");
+            std::vector<int32_t> statusCounts(static_cast<int>(AddReadResult::OTHER) + 1, 0);
             const size_t nReads = readKeys.size();
             size_t nPasses = 0, nDropped = 0;
 
-            // add the reads to the scorer
+            // add the reads to the integrator
             for (size_t i = 0; i < nReads; ++i)
             {
                 // skip unadded reads
                 if (readKeys[i] < 0)
                     continue;
 
-                if (auto mr = ExtractMappedRead(*reads[i], summaries[readKeys[i]], settings.MinLength))
+                if (auto mr = ExtractMappedRead(*reads[i], summaries[readKeys[i]], poaConsensus.length(), settings.MinLength))
                 {
-                    auto status = scorer.AddRead(*mr, settings.MinZScore);
+                    auto status = ai.AddRead(*mr);
 
                     // increment the status count
-                    statusCounts[status] += 1;
+                    statusCounts[static_cast<size_t>(status)] += 1;
 
-                    if (status == SUCCESS &&
+                    if (status == AddReadResult::SUCCESS &&
                         reads[i]->Flags & BAM::ADAPTER_BEFORE &&
                         reads[i]->Flags & BAM::ADAPTER_AFTER)
                     {
                         ++nPasses;
                     }
-                    else if (status != SUCCESS)
+                    else if (status != AddReadResult::SUCCESS)
                     {
                         ++nDropped;
                         PBLOG_DEBUG << "Skipping read " << mr->Name
-                                    << ", " << AddReadResultNames[status];
+                                    << ", " << status;
                     }
                 }
             }
@@ -489,12 +487,12 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 continue;
             }
 
-            // get the original zscores
-            const auto zdata = scorer.ZScores();
-
             // find consensus!!
-            size_t nTested = 0, nApplied = 0;
-            if (!RefineConsensus(scorer, &nTested, &nApplied))
+            size_t nTested, nApplied;
+            bool polished;
+            std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
+
+            if (!polished)
             {
                 results.NonConvergent += 1;
                 PBLOG_DEBUG << "Skipping " << chunk.Id
@@ -504,7 +502,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
             // compute predicted accuracy
             double predAcc = 0.0;
-            std::vector<int> qvs = ConsensusQVs(scorer);
+            std::vector<int> qvs = ConsensusQVs(ai);
             for (const int qv : qvs)
             {
                 predAcc += pow(10.0, static_cast<double>(qv) / -10.0);
@@ -526,13 +524,12 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 TResult
                 {
                     chunk.Id,
-                    scorer.Template(),
+                    std::string(ai),
                     QVsToASCII(qvs),
                     nPasses,
                     predAcc,
-                    zdata.first.first,
-                    zdata.first.second,
-                    zdata.second,
+                    ai.AvgZScore(),
+                    ai.ZScores(),
                     statusCounts,
                     nTested,
                     nApplied,

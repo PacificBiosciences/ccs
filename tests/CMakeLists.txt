@@ -1,6 +1,6 @@
 
 # gmock/gtest
-set(GMOCK_RootDir    ${ConsensusCore_RootDir}/external/gmock-1.7.0)
+set(GMOCK_RootDir    ${PacBioCCS_ThirdPartyDir}/gmock-1.7.0)
 set(GMOCK_IncludeDir ${GMOCK_RootDir})
 
 file(GLOB           GMOCK_CC    "${GMOCK_RootDir}/*.cc")
@@ -21,7 +21,7 @@ configure_file(
 
 include_directories(SYSTEM
     ${Boost_INCLUDE_DIRS}
-    ${ConsensusCore_IncludeDir}
+    ${PBCONSENSUS_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
     ${PacBioBAM_IncludeDir}
     ${CPPOPTPARSE_IncludeDir}
@@ -35,7 +35,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioCCS_CXX_FLAGS}")
 
 add_executable(test_pbccs EXCLUDE_FROM_ALL
     ${PacBioCCSTests_CPP}
-    ${ConsensusCoreTests_SOURCES}
     ${CPPOPTPARSE_CPP}
     ${CPPOPTPARSE_H}
     ${GMOCK_CC}
@@ -46,9 +45,12 @@ set_target_properties(test_pbccs PROPERTIES
 )
 target_link_libraries(test_pbccs
     pbccs
-    ConsensusCore
+    ${PBCONSENSUS_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS}
 )
-add_custom_target(check test_pbccs)
+
+if (${PROJECT_NAME} STREQUAL "PacBioCCS")
+    add_custom_target(check test_pbccs)
+endif()

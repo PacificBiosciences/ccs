@@ -41,25 +41,26 @@
 #include <vector>
 #include <memory>
 
-#include <ConsensusCore/Poa/RangeFinder.hpp>
+#include <pacbio/consensus/poa/RangeFinder.h>
 
 #include <pacbio/ccs/Interval.h>
 
-// some fwd decls
-namespace ConsensusCore
-{
-    class ScoredMutation;
-    class PoaGraph;
-}
-
 namespace PacBio {
+namespace Consensus {
+
+// some fwd decls
+class ScoredMutation;
+class PoaGraph;
+
+}  // namespace Consensus
+
 namespace CCS {
 
-class SdpRangeFinder : public ConsensusCore::detail::SdpRangeFinder
+class SdpRangeFinder : public PacBio::Consensus::detail::SdpRangeFinder
 {
 protected:
     virtual
-    ConsensusCore::detail::SdpAnchorVector
+    PacBio::Consensus::detail::SdpAnchorVector
     FindAnchors(const std::string& consensusSequence,
                 const std::string& readSequence) const final;
 };
@@ -124,21 +125,21 @@ public:
     //
     // Walk the POA and get the optimal consensus path
     //
-    std::shared_ptr<const ConsensusCore::PoaConsensus>
+    std::shared_ptr<const PacBio::Consensus::PoaConsensus>
     FindConsensus(int minCoverage, std::vector<PoaAlignmentSummary>* summaries=NULL) const;
 
     //
     // Serialize the POA graph to std::string
     //
     std::string ToGraphViz(int flags = 0,
-                           const ConsensusCore::PoaConsensus* pc = nullptr) const;
+                           const PacBio::Consensus::PoaConsensus* pc = nullptr) const;
 
     //
     // Serialize the POA graph to a file
     //
     void WriteGraphVizFile(const std::string& filename,
                            int flags = 0,
-                           const ConsensusCore::PoaConsensus* pc = nullptr) const;
+                           const PacBio::Consensus::PoaConsensus* pc = nullptr) const;
 
     //
     // Clean up the POA graph, pruning minority paths, to speed up
@@ -150,9 +151,9 @@ private:
     void repCheck();
 
 private:
-    using Path = std::vector<ConsensusCore::PoaGraph::Vertex>;
+    using Path = std::vector<PacBio::Consensus::PoaGraph::Vertex>;
 
-    ConsensusCore::PoaGraph* graph_;
+    PacBio::Consensus::PoaGraph* graph_;
     std::vector<Path> readPaths_;
     std::vector<bool> reverseComplemented_;
     SdpRangeFinder* rangeFinder_;

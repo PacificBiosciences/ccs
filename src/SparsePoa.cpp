@@ -40,22 +40,22 @@
 #include <vector>
 #include <iostream>
 
-#include <ConsensusCore/Align/AlignConfig.hpp>
-#include <ConsensusCore/Poa/PoaConsensus.hpp>
-#include <ConsensusCore/Poa/PoaGraph.hpp>
-#include <ConsensusCore/Sequence.hpp>
+#include <pacbio/consensus/poa/AlignConfig.h>
+#include <pacbio/consensus/poa/PoaConsensus.h>
+#include <pacbio/consensus/poa/PoaGraph.h>
+#include <pacbio/consensus/Sequence.h>
 
 #include <pacbio/ccs/Logging.h>
 #include <pacbio/ccs/SparsePoa.h>
 #include <pacbio/ccs/SparseAlignment.h>
 
-using ConsensusCore::detail::SdpAnchorVector;
-using ConsensusCore::AlignConfig;
-using ConsensusCore::DefaultPoaConfig;
-using ConsensusCore::LOCAL;
-using ConsensusCore::PoaConsensus;
-using ConsensusCore::PoaGraph;
-using ConsensusCore::ReverseComplement;
+using PacBio::Consensus::detail::SdpAnchorVector;
+using PacBio::Consensus::AlignConfig;
+using PacBio::Consensus::AlignMode;
+using PacBio::Consensus::DefaultPoaConfig;
+using PacBio::Consensus::PoaConsensus;
+using PacBio::Consensus::PoaGraph;
+using PacBio::Consensus::ReverseComplement;
 
 namespace PacBio {
 namespace CCS {
@@ -85,7 +85,7 @@ SparsePoa::ReadKey
 SparsePoa::AddRead
   (const std::string& readSequence, const PoaAlignmentOptions& /* alnOptions */, float minScoreToAdd)
 {
-    AlignConfig config = DefaultPoaConfig(LOCAL);
+    AlignConfig config = DefaultPoaConfig(AlignMode::LOCAL);
     Path outputPath;
     ReadKey key = -1;
 
@@ -118,7 +118,7 @@ SparsePoa::ReadKey
 SparsePoa::OrientAndAddRead
   (const std::string& readSequence, const PoaAlignmentOptions& /* alnOptions */, float minScoreToAdd)
 {
-    AlignConfig config = DefaultPoaConfig(LOCAL);
+    AlignConfig config = DefaultPoaConfig(AlignMode::LOCAL);
     Path outputPath;
     ReadKey key;
 
@@ -163,7 +163,7 @@ std::shared_ptr<const PoaConsensus>
 SparsePoa::FindConsensus(int minCoverage,
                          std::vector<PoaAlignmentSummary>* summaries) const
 {
-    AlignConfig config = DefaultPoaConfig(LOCAL);
+    AlignConfig config = DefaultPoaConfig(AlignMode::LOCAL);
     std::shared_ptr<const PoaConsensus> pc(graph_->FindConsensus(config, minCoverage));
     std::string css = pc->Sequence;
 
@@ -176,7 +176,7 @@ SparsePoa::FindConsensus(int minCoverage,
         std::map<Vertex, size_t> cssPosition;
 
         int i = 0;
-        foreach (Vertex v, pc->Path)
+        for (Vertex v : pc->Path)
         {
             cssPosition[v] = i;
             i++;

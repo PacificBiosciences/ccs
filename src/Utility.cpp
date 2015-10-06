@@ -70,28 +70,6 @@ bool FileExists(const string& path)
     return stat(path.c_str(), &buffer) == 0;
 }
 
-#if 0
-ConsensusCore::Read SMRTSequenceToRead(const SMRTSequence& seq,
-                                       const shared_ptr<ChemistryTriple>& triple,
-                                       const ChemistryMapping& mapper)
-{
-    using ConsensusCore::QvSequenceFeatures;
-    using ConsensusCore::Read;
-
-    string bases(reinterpret_cast<const char*>(seq.seq));
-    boost::to_upper(bases);
-    QvSequenceFeatures features(bases,
-                                seq.insertionQV.data,
-                                seq.substitutionQV.data,
-                                seq.deletionQV.data,
-                                seq.deletionTag,
-                                seq.mergeQV.data);
-    Read read(features, seq.GetTitle(), mapper.MapTriple(*triple));
-
-    return read;
-}
-#endif
-
 void FlattenFofn(vector<string>& res, const string& file)
 {
     using boost::algorithm::iends_with;
