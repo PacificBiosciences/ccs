@@ -124,27 +124,32 @@ TEST(IntegratorTest, TestLongTemplateTiming)
 std::tuple<std::string, StrandEnum> Mutate(const std::string& tpl, const size_t nmut,
                                            std::mt19937* const gen)
 {
-    if (nmut == 0) return tpl;
+    string result;
 
-    std::vector<Mutation> muts;
-    std::uniform_int_distribution<size_t> rand(0, tpl.length() - 1);
-    std::set<size_t> sites;
+    if (nmut == 0)
+        result = tpl;
+    else {
+        std::vector<Mutation> muts;
+        std::uniform_int_distribution<size_t> rand(0, tpl.length() - 1);
+        std::set<size_t> sites;
 
-    while (sites.size() < nmut)
-        sites.insert(rand(*gen));
+        while (sites.size() < nmut)
+            sites.insert(rand(*gen));
 
-    for (const size_t site : sites) {
-        vector<Mutation> possible = Mutations(tpl, site, site + 1);
-        std::uniform_int_distribution<size_t> rand2(0, possible.size() - 1);
-        muts.push_back(possible[rand2(*gen)]);
+        for (const size_t site : sites) {
+            vector<Mutation> possible = Mutations(tpl, site, site + 1);
+            std::uniform_int_distribution<size_t> rand2(0, possible.size() - 1);
+            muts.push_back(possible[rand2(*gen)]);
+        }
+
+        result = ApplyMutations(tpl, &muts);
     }
 
-    string mutated = ApplyMutations(tpl, &muts);
     std::bernoulli_distribution coin(0.5);
 
-    if (coin(*gen)) return std::make_tuple(mutated, StrandEnum::FORWARD);
+    if (coin(*gen)) return std::make_tuple(result, StrandEnum::FORWARD);
 
-    return std::make_tuple(ReverseComplement(mutated), StrandEnum::REVERSE);
+    return std::make_tuple(ReverseComplement(result), StrandEnum::REVERSE);
 }
 
 template <typename F, typename G>
