@@ -59,8 +59,8 @@ vector<Mutation> Mutations(const AbstractIntegrator& ai, const size_t start, con
 
 vector<Mutation> Mutations(const AbstractIntegrator& ai);
 
-vector<Mutation> NearbyMutations(vector<Mutation>* centers, const AbstractIntegrator& ai,
-                                 const size_t neighborhood);
+vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* centers,
+                                 const AbstractIntegrator& ai, const size_t neighborhood);
 }
 }
 
@@ -93,7 +93,7 @@ TEST(MutationEnumerationTest, TestNearbyMutations)
     MonoMolecularIntegrator ai(tpl, IntegratorConfig(), SNR(4, 4, 4, 4), "P6/C4");
 
     vector<Mutation> centers = {Mutation(MutationType::SUBSTITUTION, 2, 'T')};
-    vector<Mutation> result = NearbyMutations(&centers, ai, 1);
+    vector<Mutation> result = NearbyMutations(&centers, &centers, ai, 1);
     // 7 for each of ATT,
     //   and +3 for terminal insertions (end)
     //   and -1 for hompolymer TT deletion
@@ -101,19 +101,19 @@ TEST(MutationEnumerationTest, TestNearbyMutations)
 
     centers.back() = Mutation(MutationType::SUBSTITUTION, 1, 'T');
 
-    result = NearbyMutations(&centers, ai, 1);
+    result = NearbyMutations(&centers, &centers, ai, 1);
     // 7 for each of ATT,
     //   and +4 for terminal insertions (1 beg, 3 end)
     //   and -1 for hompolymer TT deletion
     EXPECT_EQ(7 * 3 + 4 - 1, result.size());
 
-    result = NearbyMutations(&centers, ai, 2);
+    result = NearbyMutations(&centers, &centers, ai, 2);
     // 8 mutations for each of GAAT, except -2 for the homopolymer AA indels,
     //   and +3 for terminal insertions (not T, because it's not the first)
     EXPECT_EQ(7 * 4 + 4 - 1, result.size());
 
     centers.push_back(Mutation(MutationType::SUBSTITUTION, 3, 'G'));
-    result = NearbyMutations(&centers, ai, 2);
+    result = NearbyMutations(&centers, &centers, ai, 2);
     vector<Mutation> expected = Mutations(ai);
     EXPECT_EQ(expected.size(), result.size());
     EXPECT_THAT(result, UnorderedElementsAreArray(expected));

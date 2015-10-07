@@ -112,7 +112,8 @@ std::vector<Mutation> BestMutations(std::list<ScoredMutation>* scoredMuts, const
     return muts;
 }
 
-std::vector<Mutation> NearbyMutations(std::vector<Mutation>* centers, const AbstractIntegrator& ai,
+std::vector<Mutation> NearbyMutations(std::vector<Mutation>* applied,
+                                      std::vector<Mutation>* centers, const AbstractIntegrator& ai,
                                       const size_t neighborhood)
 {
     const size_t len = ai.Length();
@@ -122,6 +123,7 @@ std::vector<Mutation> NearbyMutations(std::vector<Mutation>* centers, const Abst
 
     if (centers->empty()) return muts;
 
+    std::sort(applied->begin(), applied->end(), Mutation::SiteComparer);
     std::sort(centers->begin(), centers->end(), Mutation::SiteComparer);
 
     const auto mutRange = [clamp, neighborhood](const Mutation& mut, const int diff) {
@@ -131,16 +133,24 @@ std::vector<Mutation> NearbyMutations(std::vector<Mutation>* centers, const Abst
     };
 
     // find the ranges
-    auto it = centers->cbegin();
-    std::vector<std::tuple<size_t, size_t>> ranges = {mutRange(*it, 0)};
+    auto ait = applied->cbegin();
+    auto cit = centers->cbegin();
+    int lengthDiff = 0;
+
+    for (; ait != applied->cend() && ait->End() <= cit->Start(); ++ait)
+        lengthDiff += ait->LengthDiff();
+
+    std::vector<std::tuple<size_t, size_t>> ranges = {mutRange(*cit, lengthDiff)};
     size_t currEnd = std::get<1>(ranges.back());
-    int runningLengthDiff = it->LengthDiff();
 
     // increment to the next position and continue
-    for (++it; it != centers->cend(); ++it) {
+    for (++cit; cit != centers->cend(); ++cit) {
         size_t nextStart, nextEnd;
-        std::tie(nextStart, nextEnd) = mutRange(*it, runningLengthDiff);
-        runningLengthDiff += it->LengthDiff();
+
+        for (; ait != applied->cend() && ait->End() <= cit->Start(); ++ait)
+            lengthDiff += ait->LengthDiff();
+
+        std::tie(nextStart, nextEnd) = mutRange(*cit, lengthDiff);
 
         // if the next range touches the last one, just extend the last one
         if (nextStart <= currEnd)
@@ -167,18 +177,14 @@ std::tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConf
     size_t nApplied = 0;
 
     for (size_t i = 0; i < cfg.MaximumIterations; ++i) {
-        boost::optional<Mutation> bestMut;
-
         // find the best mutations given our parameters
         {
             const double LL = ai->LL();
             std::list<ScoredMutation> scoredMuts;
-            double bestll = LL;
 
             for (const auto& mut : muts) {
                 const double ll = ai->LL(mut);
                 if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
-                if (ll > bestll) bestMut = mut;
                 ++nTested;
             }
 
@@ -193,24 +199,28 @@ std::tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConf
 
         if (history.find(newTpl) != history.end()) {
             // cyclic behavior detected! apply just the single best mutation
-            if (!bestMut)
+            if (muts.empty())
                 throw std::runtime_error(
                     "entered cycle detection without any mutations to test...");
 
-            ai->ApplyMutation(*bestMut);
+            ai->ApplyMutation(muts.front());
             oldTpl = hashFn(*ai);
             ++nApplied;
+
+            // get the mutations for the next round
+            std::vector<Mutation> applied(muts.begin(), muts.begin() + 1);
+            muts = NearbyMutations(&applied, &muts, *ai, cfg.MutationNeighborhood);
         } else {
             ai->ApplyMutations(&muts);
             oldTpl = newTpl;
             nApplied += muts.size();
+
+            // get the mutations for the next round
+            muts = NearbyMutations(&muts, &muts, *ai, cfg.MutationNeighborhood);
         }
 
         // keep track of which templates we've seen
         history.insert(oldTpl);
-
-        // get the mutations for the next round
-        muts = NearbyMutations(&muts, *ai, cfg.MutationNeighborhood);
     }
 
     return std::make_tuple(false, nTested, nApplied);
