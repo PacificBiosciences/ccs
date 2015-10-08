@@ -118,7 +118,7 @@ TEST(IntegratorTest, TestLongTemplateTiming)
     const auto etime = std::chrono::high_resolution_clock::now();
     const auto duration =
         std::chrono::duration_cast<std::chrono::microseconds>(etime - stime).count();
-    EXPECT_LT(duration / nsamp, 1500);
+    EXPECT_LT(duration / nsamp, 2000);
 }
 
 std::tuple<std::string, StrandEnum> Mutate(const std::string& tpl, const size_t nmut,
@@ -191,8 +191,8 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
                 EXPECT_EQ(string(ai1), tpl);
                 ai1.ApplyMutations(&muts);
                 const double obs2 = ai1.LL();
-                // if we're mutating the
-                if (nmut == 0) EXPECT_LT(obs0, exp);
+                // Nigel says the following is not necessarily true
+                // if (nmut == 0) EXPECT_LT(obs0, exp);
                 // EXPECT_NEAR(obs1, exp, prec);
                 // EXPECT_NEAR(obs2, exp, prec);
                 EXPECT_EQ(string(ai1), app);

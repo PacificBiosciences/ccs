@@ -30,6 +30,7 @@ void Mutations(std::vector<Mutation>* muts, const AbstractIntegrator& ai, const 
                const size_t end)
 {
     constexpr auto bases = "ACGT";
+    constexpr size_t nbases = 4;
 
     if (start == end) return;
 
@@ -40,7 +41,7 @@ void Mutations(std::vector<Mutation>* muts, const AbstractIntegrator& ai, const 
 
         // insertions come before deletion/substitutions at site i, their End()
         // is i < i + 1
-        for (size_t j = 0; j < 4; ++j) {
+        for (size_t j = 0; j < nbases; ++j) {
             // if it's not a homopolymer insertion, or it's the first base of
             // one..
             if (bases[j] != last)
@@ -50,7 +51,7 @@ void Mutations(std::vector<Mutation>* muts, const AbstractIntegrator& ai, const 
         // if we're the first in the homopolymer, we can delete
         if (curr != last) muts->emplace_back(Mutation(MutationType::DELETION, i));
 
-        for (size_t j = 0; j < 4; ++j) {
+        for (size_t j = 0; j < nbases; ++j) {
             if (bases[j] != curr)
                 muts->emplace_back(Mutation(MutationType::SUBSTITUTION, i, bases[j]));
         }
@@ -58,21 +59,10 @@ void Mutations(std::vector<Mutation>* muts, const AbstractIntegrator& ai, const 
         last = curr;
     }
 
-    // if we're not at the absolute end, use prior algorithm
-    if (end < ai.Length()) {
-        const char curr = ai[end];
-
-        for (size_t j = 0; j < 4; ++j)
-            if (bases[j] != last)
-                muts->emplace_back(Mutation(MutationType::INSERTION, end, bases[j]));
-    }
     // if we are at the end, make sure we're not performing a terminal
     // homopolymer insertion
-    else {
-        for (size_t j = 0; j < 4; ++j)
-            if (bases[j] != last)
-                muts->emplace_back(Mutation(MutationType::INSERTION, end, bases[j]));
-    }
+    for (size_t j = 0; j < nbases; ++j)
+        if (bases[j] != last) muts->emplace_back(Mutation(MutationType::INSERTION, end, bases[j]));
 }
 
 std::vector<Mutation> Mutations(const AbstractIntegrator& ai, const size_t start, const size_t end)
@@ -89,18 +79,16 @@ std::vector<Mutation> Mutations(const AbstractIntegrator& ai)
 
 std::vector<Mutation> BestMutations(std::list<ScoredMutation>* scoredMuts, const size_t separation)
 {
-    std::vector<Mutation> muts;
+    std::vector<Mutation> result;
 
-    if (separation == 0) {
-        std::copy(scoredMuts->begin(), scoredMuts->end(), std::back_inserter(muts));
-        return muts;
-    }
+    // TODO handle 0-separation correctly
+    if (separation == 0) throw std::invalid_argument("nonzero separation required");
 
     while (!scoredMuts->empty()) {
         const auto& mut = *std::max_element(scoredMuts->begin(), scoredMuts->end(),
                                             ScoredMutation::ScoreComparer);
 
-        muts.emplace_back(mut);
+        result.emplace_back(mut);
 
         const size_t start = (separation < mut.Start()) ? mut.Start() - separation : 0;
         const size_t end = mut.End() + separation;
@@ -109,7 +97,7 @@ std::vector<Mutation> BestMutations(std::list<ScoredMutation>* scoredMuts, const
             [start, end](const ScoredMutation& m) { return start <= m.End() && m.Start() < end; });
     }
 
-    return muts;
+    return result;
 }
 
 std::vector<Mutation> NearbyMutations(std::vector<Mutation>* applied,
@@ -119,9 +107,9 @@ std::vector<Mutation> NearbyMutations(std::vector<Mutation>* applied,
     const size_t len = ai.Length();
     const auto clamp = [len](const int i) { return std::max(0, std::min<int>(len, i)); };
 
-    std::vector<Mutation> muts;
+    std::vector<Mutation> result;
 
-    if (centers->empty()) return muts;
+    if (centers->empty()) return result;
 
     std::sort(applied->begin(), applied->end(), Mutation::SiteComparer);
     std::sort(centers->begin(), centers->end(), Mutation::SiteComparer);
@@ -143,7 +131,7 @@ std::vector<Mutation> NearbyMutations(std::vector<Mutation>* applied,
     std::vector<std::tuple<size_t, size_t>> ranges = {mutRange(*cit, lengthDiff)};
     size_t currEnd = std::get<1>(ranges.back());
 
-    // increment to the next position and continue
+    // increment to the next centerpoint and continue
     for (++cit; cit != centers->cend(); ++cit) {
         size_t nextStart, nextEnd;
 
@@ -162,9 +150,9 @@ std::vector<Mutation> NearbyMutations(std::vector<Mutation>* applied,
     }
 
     for (const auto& range : ranges)
-        Mutations(&muts, ai, std::get<0>(range), std::get<1>(range));
+        Mutations(&result, ai, std::get<0>(range), std::get<1>(range));
 
-    return muts;
+    return result;
 }
 
 std::tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
@@ -192,23 +180,19 @@ std::tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConf
             muts = BestMutations(&scoredMuts, cfg.MutationSeparation);
         }
 
-        const size_t newTpl = hashFn(ApplyMutations(*ai, &muts));
-
         // convergence!!
-        if (newTpl == oldTpl) return std::make_tuple(true, nTested, nApplied);
+        if (muts.empty()) return std::make_tuple(true, nTested, nApplied);
+
+        const size_t newTpl = hashFn(ApplyMutations(*ai, &muts));
 
         if (history.find(newTpl) != history.end()) {
             // cyclic behavior detected! apply just the single best mutation
-            if (muts.empty())
-                throw std::runtime_error(
-                    "entered cycle detection without any mutations to test...");
-
             ai->ApplyMutation(muts.front());
             oldTpl = hashFn(*ai);
             ++nApplied;
 
             // get the mutations for the next round
-            std::vector<Mutation> applied(muts.begin(), muts.begin() + 1);
+            std::vector<Mutation> applied = {muts.front()};
             muts = NearbyMutations(&applied, &muts, *ai, cfg.MutationNeighborhood);
         } else {
             ai->ApplyMutations(&muts);
@@ -238,7 +222,7 @@ int ProbabilityToQV(double probability)
 
 std::vector<int> ConsensusQVs(AbstractIntegrator& ai)
 {
-    std::vector<int> QVs;
+    std::vector<int> result;
     const double LL = ai.LL();
     for (size_t i = 0; i < ai.Length(); ++i) {
         double scoreSum = 0.0;
@@ -250,9 +234,9 @@ std::vector<int> ConsensusQVs(AbstractIntegrator& ai)
             double score = ai.LL(m) - LL;
             if (score < 0.0) scoreSum += exp(score);
         }
-        QVs.push_back(ProbabilityToQV(1.0 - 1.0 / (1.0 + scoreSum)));
+        result.push_back(ProbabilityToQV(1.0 - 1.0 / (1.0 + scoreSum)));
     }
-    return QVs;
+    return result;
 }
 
 }  // namespace Consensus
