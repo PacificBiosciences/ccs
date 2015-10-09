@@ -249,18 +249,29 @@ MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
 
 AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read, const SNR& snr)
 {
-    if (read.Strand == StrandEnum::FORWARD)
-        return AbstractIntegrator::AddRead(
-            std::unique_ptr<AbstractTemplate>(
-                new Template(fwdTpl_, ModelFactory::Create(read.Model, snr), read.TemplateStart,
-                             read.TemplateEnd, read.PinStart, read.PinEnd)),
-            read);
+    const size_t len = read.TemplateEnd - read.TemplateStart;
 
-    return AbstractIntegrator::AddRead(
-        std::unique_ptr<AbstractTemplate>(new Template(
-            revTpl_, ModelFactory::Create(read.Model, snr), revTpl_.size() - read.TemplateEnd,
-            revTpl_.size() - read.TemplateStart, read.PinEnd, read.PinStart)),
-        read);
+    if (read.Strand == StrandEnum::FORWARD) {
+        const size_t start = read.TemplateStart;
+        const size_t end = read.TemplateEnd;
+
+        return AbstractIntegrator::AddRead(
+            std::unique_ptr<AbstractTemplate>(new Template(fwdTpl_.substr(start, len),
+                                                           ModelFactory::Create(read.Model, snr),
+                                                           start, end, read.PinStart, read.PinEnd)),
+            read);
+    } else {
+        const size_t start = revTpl_.size() - read.TemplateEnd;
+        const size_t end = revTpl_.size() - read.TemplateStart;
+
+        return AbstractIntegrator::AddRead(
+            std::unique_ptr<AbstractTemplate>(new Template(revTpl_.substr(start, len),
+                                                           ModelFactory::Create(read.Model, snr),
+                                                           start, end, read.PinEnd, read.PinStart)),
+            read);
+    }
+
+    return AddReadResult::OTHER;
 }
 
 size_t MultiMolecularIntegrator::Length() const { return fwdTpl_.length(); }
