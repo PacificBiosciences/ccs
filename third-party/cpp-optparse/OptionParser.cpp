@@ -169,14 +169,17 @@ Option& OptionParser::add_option(const vector<string>& v) {
 }
 
 OptionParser& OptionParser::add_option_group(const OptionGroup& group) {
-  for (list<Option>::const_iterator oit = group._opts.begin(); oit != group._opts.end(); ++oit) {
+  _groups.push_back(group);
+  OptionGroup* currentGroup = &_groups.back();
+
+  for (list<Option>::const_iterator oit = currentGroup->_opts.begin(); oit != currentGroup->_opts.end(); ++oit) {
     const Option& option = *oit;
     for (set<string>::const_iterator it = option._short_opts.begin(); it != option._short_opts.end(); ++it)
       _optmap_s[*it] = &option;
     for (set<string>::const_iterator it = option._long_opts.begin(); it != option._long_opts.end(); ++it)
       _optmap_l[*it] = &option;
   }
-  _groups.push_back(group);
+
   return *this;
 }
 
