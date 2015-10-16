@@ -12,6 +12,7 @@ __version__ = "@PacBioConsensus_VERSION@"
 %ignore *::operator[];
 %ignore *::operator=;
 %ignore *::operator<<;
+%ignore *::operator std::tuple<bool&, size_t&, size_t&>;
 %ignore *::operator std::string;
 
 %ignore boost::noncopyable;
@@ -19,6 +20,7 @@ namespace boost
 { class noncopyable {}; }
 
 %include <exception.i>
+%include <std_pair.i>
 %include <std_string.i>
 %include <std_vector.i>
 %include <stdint.i>
@@ -36,7 +38,19 @@ namespace boost
 }
 
 namespace std
-{ %template(Uint8Vector) std::vector<uint8_t>; }
+{
+    // pair types
+    %template(DoublePair) std::pair<double, double>;
+    %template(IntPair) std::pair<int, int>;
+    %template(LengthPair) std::pair<size_t, size_t>;
+
+    // vector types
+    %template(DoubleVector) std::vector<double>;
+    %template(IntPairVector) std::vector<std::pair<int, int> >;
+    %template(IntVector) std::vector<int>;
+    %template(StringVector) std::vector<string>;
+    %template(Uint8Vector) std::vector<uint8_t>;
+}
 
 %define py_tp_str(cls)
 %#ifdef SWIGPYTHON
@@ -46,10 +60,15 @@ namespace std
 %enddef
 
 // no include dependencies
+%include "Alignment.i"
+%include "Coverage.i"
 %include "ModelConfig.i"
 %include "Mutation.i"
 %include "Polish.i"
 %include "Read.i"
+
+// after ModelConfig.i and Mutation.i
+// %include "Template.i"
 
 // after Read.i
 %include "Integrator.i"

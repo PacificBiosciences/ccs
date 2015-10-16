@@ -35,15 +35,15 @@
 
 // Author: David Alexander
 
-#include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
+
+#include <pacbio/consensus/align/AlignConfig.h>
 #include <pacbio/consensus/poa/PoaConsensus.h>
-#include <pacbio/consensus/poa/AlignConfig.h>
 
 namespace PacBio {
 namespace Consensus {

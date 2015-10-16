@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2013, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,56 +33,54 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: David Alexander
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+//
+// Support for pairwise alignment with an affine gap penalty.
+//
+
+#pragma once
 
 #include <string>
-#include <tuple>
+#include <vector>
 
-#include <pacbio/consensus/Integrator.h>
-#include <pacbio/consensus/Polish.h>
-#include <pacbio/consensus/Read.h>
-#include <pacbio/consensus/Sequence.h>
+namespace PacBio {
+namespace Consensus {
 
-using namespace PacBio::Consensus;  // NOLINT
+class PairwiseAlignment;
 
-namespace {
-
-const SNR snr(10, 7, 5, 11);
-
-TEST(PolishTest, MonoBasic)
+struct AffineAlignmentParams
 {
-    MonoMolecularIntegrator ai("GCGTCGT", IntegratorConfig(), snr, "P6-C4");
+    float MatchScore;
+    float MismatchScore;
+    float GapOpen;
+    float GapExtend;
+    float PartialMatchScore;
 
-    ai.AddRead(MappedRead(Read("NA", "ACGTACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
+    AffineAlignmentParams(float matchScore, float mismatchScore, float gapOpen, float gapExtend,
+                          float partialMatchScore = 0);
+};
 
-    Polish(&ai, PolishConfig());
+AffineAlignmentParams DefaultAffineAlignmentParams();
+AffineAlignmentParams IupacAwareAffineAlignmentParams();
 
-    EXPECT_EQ("ACGACGT", std::string(ai));
-}
+//
+// Affine gap-penalty alignment.
+//
+PairwiseAlignment* AlignAffine(
+    const std::string& target, const std::string& query,
+    AffineAlignmentParams params = DefaultAffineAlignmentParams());  // NOLINT
 
-TEST(PolishTest, MultiBasic)
-{
-    MultiMolecularIntegrator ai("GCGTCGT", IntegratorConfig());
+//
+// Affine gap-penalty alignment with partial awareness of IUPAC ambiguous bases---
+// half-penalizes partial mismatches.  For example:  (M = IUPAC A/C)
+//   T->A = -1,
+//   T->M = -1,
+//   A->M = -0.5
+//
+PairwiseAlignment* AlignAffineIupac(
+    const std::string& target, const std::string& query,
+    AffineAlignmentParams params = IupacAwareAffineAlignmentParams());  // NOLINT
 
-    ai.AddRead(MappedRead(Read("NA", "ACGTACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true),
-               snr);
-    ai.AddRead(MappedRead(Read("NA", ReverseComplement("ACGACGT"), "P6-C4"), StrandEnum::REVERSE, 0,
-                          7, true, true),
-               snr);
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true),
-               snr);
-
-    bool polished;
-    size_t nTested, nApplied;
-
-    std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
-
-    EXPECT_TRUE(polished);
-    EXPECT_EQ("ACGACGT", std::string(ai));
-}
-}
+}  // namespace Consensus
+}  // namespace PacBio

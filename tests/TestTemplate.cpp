@@ -100,7 +100,7 @@ ostream& operator<<(ostream& os, const AbstractTemplate& tpl)
 
 namespace {
 
-const string mdl = "P6/C4";
+const string mdl = "P6-C4";
 const SNR snr(10, 7, 5, 11);
 
 string ApplyMutations(const string& tpl, vector<Mutation>&& muts)

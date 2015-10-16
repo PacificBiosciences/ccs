@@ -29,7 +29,6 @@ namespace detail {
 
 using std::min;
 using std::max;
-using std::make_pair;
 using boost::optional;
 
 static inline bool compareAnchorsOnCssPos(const SdpAnchor& a1, const SdpAnchor& a2)
@@ -40,7 +39,7 @@ static inline bool compareAnchorsOnCssPos(const SdpAnchor& a1, const SdpAnchor& 
 static const SdpAnchor* binarySearchAnchors(const SdpAnchorVector& anchors, size_t cssPosition)
 {
     typedef SdpAnchorVector::const_iterator iter_t;
-    iter_t found = std::lower_bound(anchors.begin(), anchors.end(), make_pair(cssPosition, -1),
+    iter_t found = std::lower_bound(anchors.begin(), anchors.end(), std::make_pair(cssPosition, -1),
                                     compareAnchorsOnCssPos);
     if (found != anchors.end() && (*found).first == cssPosition) {
         return &(*found);
@@ -49,12 +48,11 @@ static const SdpAnchor* binarySearchAnchors(const SdpAnchorVector& anchors, size
     }
 }
 
-typedef std::tuple<size_t, size_t> Interval;
+typedef std::pair<size_t, size_t> Interval;
 
 inline Interval RangeUnion(const Interval& range1, const Interval& range2)
 {
-    return Interval(min(std::get<0>(range1), std::get<0>(range2)),
-                    max(std::get<1>(range2), std::get<1>(range2)));
+    return Interval(min(range1.first, range2.first), max(range1.second, range2.second));
 }
 
 inline Interval RangeUnion(const std::vector<Interval>& ranges)
@@ -68,18 +66,17 @@ inline Interval RangeUnion(const std::vector<Interval>& ranges)
 
 inline Interval next(const Interval& v, size_t upperBound)
 {
-    return Interval(min(std::get<0>(v) + 1, upperBound), min(std::get<1>(v) + 1, upperBound));
+    return Interval(min(v.first + 1, upperBound), min(v.second + 1, upperBound));
 }
 
 inline Interval prev(const Interval& v, size_t lowerBound = 0)
 {
-    return Interval(max(std::get<0>(v) - 1, lowerBound), max(std::get<1>(v) - 1, lowerBound));
+    return Interval(max(v.first - 1, lowerBound), max(v.second - 1, lowerBound));
 }
 
 inline Interval rangeIntersection(const Interval& range1, const Interval& range2)
 {
-    return Interval(max(std::get<0>(range1), std::get<0>(range2)),
-                    min(std::get<1>(range1), std::get<1>(range2)));
+    return Interval(max(range1.first, range2.first), min(range1.second, range2.second));
 }
 
 SdpRangeFinder::~SdpRangeFinder() {}

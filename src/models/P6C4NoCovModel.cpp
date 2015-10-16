@@ -22,7 +22,7 @@ public:
     double CovEmissionPr(MoveType move, uint8_t cov) const;
     double UndoCounterWeights(size_t nEmissions) const;
 
-    static std::string Name() { return "P6/C4"; }
+    static std::string Name() { return "P6-C4"; }
 private:
     SNR snr_;
     double counterWeight_;

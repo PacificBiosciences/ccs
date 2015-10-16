@@ -14,14 +14,14 @@ namespace {  // anonymous
 constexpr size_t EXTEND_BUFFER_COLUMNS = 8;
 
 #if 0
-std::ostream& operator<<(std::ostream& out, const std::tuple<size_t, size_t>& x)
+std::ostream& operator<<(std::ostream& out, const std::pair<size_t, size_t>& x)
 {
-    return out << '(' << std::get<0>(x) << ", " << std::get<1>(x) << ')';
+    return out << '(' << x.first << ", " << x.second << ')';
 }
 
 void WriteMatrix(const ScaledMatrix& mat)
 {
-    std::cerr << std::tuple<size_t, size_t>(mat.Rows(), mat.Columns()) << std::endl;
+    std::cerr << std::pair<size_t, size_t>(mat.Rows(), mat.Columns()) << std::endl;
 
     for (size_t j = 0; j < mat.Columns(); ++j)
         std::cerr << " " << mat.UsedRowRange(j);
@@ -150,7 +150,7 @@ double EvaluatorImpl::LL() const
            recursor_.tpl_->UndoCounterWeights(recursor_.read_.Length());
 }
 
-std::tuple<double, double> EvaluatorImpl::NormalParameters() const
+std::pair<double, double> EvaluatorImpl::NormalParameters() const
 {
     return recursor_.tpl_->NormalParameters();
 }

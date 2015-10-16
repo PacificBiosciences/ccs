@@ -16,11 +16,10 @@
 #include <boost/format.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/static_assert.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/utility.hpp>
 
-#include <pacbio/consensus/poa/AlignConfig.h>
+#include <pacbio/consensus/align/AlignConfig.h>
 #include <pacbio/consensus/poa/PoaGraph.h>
 #include <pacbio/consensus/Mutation.h>
 

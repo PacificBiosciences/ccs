@@ -26,6 +26,7 @@ struct SNR
     double T;
 
     SNR(double a, double c, double g, double t);
+    SNR(const std::vector<double>& snrs);
 
     inline double operator[](const size_t i) const
     {

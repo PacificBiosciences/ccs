@@ -1,4 +1,5 @@
-// Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+
+// Copyright (c) 2011-2013, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,56 +34,25 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Authors: David Alexander, Lance Hepler
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#pragma once
 
-#include <string>
-#include <tuple>
+#include <vector>
+#include <utility>
 
-#include <pacbio/consensus/Integrator.h>
-#include <pacbio/consensus/Polish.h>
-#include <pacbio/consensus/Read.h>
-#include <pacbio/consensus/Sequence.h>
+namespace PacBio {
+namespace Consensus {
 
-using namespace PacBio::Consensus;  // NOLINT
+// These APIs are a little more awkward than I'd have liked---see
+// "winLen" instead of winEnd.  Had to contort a bit to get SWIG
+// bindings working well.
 
-namespace {
+void CoverageInWindow(int tStartDim, int* tStart, int tEndDim, int* tEnd, int winStart, int winLen,
+                      int* coverage);
 
-const SNR snr(10, 7, 5, 11);
+std::vector<std::pair<int, int>> CoveredIntervals(int minCoverage, int tStartDim, int* tStart,
+                                                  int tEndDim, int* tEnd, int winStart, int winLen);
 
-TEST(PolishTest, MonoBasic)
-{
-    MonoMolecularIntegrator ai("GCGTCGT", IntegratorConfig(), snr, "P6-C4");
-
-    ai.AddRead(MappedRead(Read("NA", "ACGTACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-
-    Polish(&ai, PolishConfig());
-
-    EXPECT_EQ("ACGACGT", std::string(ai));
-}
-
-TEST(PolishTest, MultiBasic)
-{
-    MultiMolecularIntegrator ai("GCGTCGT", IntegratorConfig());
-
-    ai.AddRead(MappedRead(Read("NA", "ACGTACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true),
-               snr);
-    ai.AddRead(MappedRead(Read("NA", ReverseComplement("ACGACGT"), "P6-C4"), StrandEnum::REVERSE, 0,
-                          7, true, true),
-               snr);
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true),
-               snr);
-
-    bool polished;
-    size_t nTested, nApplied;
-
-    std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
-
-    EXPECT_TRUE(polished);
-    EXPECT_EQ("ACGACGT", std::string(ai));
-}
-}
+}  // namespace Consensus
+}  // namespace PacBio

@@ -38,7 +38,7 @@ void AbstractTemplate::ApplyMutations(std::vector<Mutation>* const muts)
         ApplyMutation(*it);
 }
 
-std::tuple<double, double> AbstractTemplate::NormalParameters() const
+std::pair<double, double> AbstractTemplate::NormalParameters() const
 {
     double mean = 0.0, var = 0.0;
 
@@ -49,11 +49,11 @@ std::tuple<double, double> AbstractTemplate::NormalParameters() const
         var += v;
     }
 
-    return std::make_tuple(mean, var);
+    return std::make_pair(mean, var);
 }
 
 size_t AbstractTemplate::TrueLength() const { return end_ - start_; }
-std::tuple<double, double> AbstractTemplate::SiteNormalParameters(const size_t i) const
+std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i) const
 {
     // std::log(1.0/3);
     constexpr double lgThird = -1.0986122886681098;
@@ -82,7 +82,7 @@ std::tuple<double, double> AbstractTemplate::SiteNormalParameters(const size_t i
     const double mean = ENN(l_m, l_d, l_b, l_s, E_M, E_D, E_B, E_S);
     const double var = ENN(l2_m, l2_d, l2_b, l2_s, E2_M, E2_D, E2_B, E2_S) - mean * mean;
 
-    return std::make_tuple(mean, var);
+    return std::make_pair(mean, var);
 }
 
 Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg)

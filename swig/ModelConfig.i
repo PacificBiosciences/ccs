@@ -1,7 +1,6 @@
 
 %{
 #include <pacbio/consensus/ModelConfig.h>
-using namespace PacBio::Consensus;
 %}
 
 %ignore PacBio::Consensus::TemplatePosition;

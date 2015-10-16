@@ -1,9 +1,3 @@
-/*
-
- *
- *  Created on: Feb 12, 2015
- *      Author: dalexander
- */
 // Copyright (c) 2011-2013, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
@@ -41,22 +35,26 @@
 
 // Author: David Alexander
 
-#include <pacbio/consensus/poa/AlignConfig.h>
+//
+// Linear-space basic alignment following Hirschberg
+//
+
+#pragma once
+
+#include <string>
+
+#include <pacbio/consensus/align/PairwiseAlignment.h>
 
 namespace PacBio {
 namespace Consensus {
 
-AlignParams::AlignParams(int match, int mismatch, int insert, int delete_)
-    : Match(match), Mismatch(mismatch), Insert(insert), Delete(delete_)
-{
-}
+class PairwiseAlignment;
 
-AlignParams AlignParams::Default() { return AlignParams(0, -1, -1, -1); }
-AlignConfig::AlignConfig(AlignParams params, AlignMode mode) : Params(params), Mode(mode) {}
-AlignConfig AlignConfig::Default()
-{
-    return AlignConfig(AlignParams::Default(), AlignMode::GLOBAL);
-}
+PairwiseAlignment* AlignLinear(const std::string& target, const std::string& query,
+                               AlignConfig config = AlignConfig::Default());
+
+PairwiseAlignment* AlignLinear(const std::string& target, const std::string& query, int* score,
+                               AlignConfig config = AlignConfig::Default());
 
 }  // namespace Consensus
 }  // namespace PacBio

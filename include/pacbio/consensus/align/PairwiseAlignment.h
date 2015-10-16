@@ -33,88 +33,78 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: David Alexander
+// Authors: David Alexander, Lance Hepler
 
 #pragma once
 
-#include <climits>
-#include <vector>
 #include <string>
-#include <utility>
+#include <vector>
 
 #include <pacbio/consensus/align/AlignConfig.h>
 
 namespace PacBio {
 namespace Consensus {
+namespace {
 
-// some forward declaration
-struct PoaConsensus;
+// Utility functions common to implementations of aligners
 
-namespace detail {
-
-class PoaGraphImpl;
-class SdpRangeFinder;
-
-}  // namespace detail
-
-class PoaAlignmentMatrix
+inline int Max3(int a, int b, int c) { return std::max((a), std::max((b), (c))); }
+inline int ArgMax3(int a, int b, int c)
 {
-public:
-    virtual ~PoaAlignmentMatrix(){};
-    virtual float Score() const = 0;
-};
+    if (a >= b && a >= c)
+        return 0;
+    else if (b >= c)
+        return 1;
+    else
+        return 2;
+}
 
-/// \brief An object representing a Poa (partial-order alignment) graph
-class PoaGraph
+}  // anonymous namespace
+
+/// \brief A pairwise alignment
+class PairwiseAlignment
 {
-public:
-    typedef size_t Vertex;
-    typedef size_t ReadId;
-
-public:  // Flags enums for specifying GraphViz output features
-    enum
-    {
-        COLOR_NODES = 0x1,
-        VERBOSE_NODES = 0x2
-    };
-
-public:
-    PoaGraph();
-    PoaGraph(const PoaGraph& other);
-    PoaGraph(const detail::PoaGraphImpl& o);  // NB: this performs a copy
-    ~PoaGraph();
-
-    //
-    // Easy API
-    //
-    void AddRead(const std::string& sequence, const AlignConfig& config,
-                 detail::SdpRangeFinder* rangeFinder = NULL,
-                 std::vector<Vertex>* readPathOutput = NULL);
-
-    //
-    // API for more control
-    //
-    void AddFirstRead(const std::string& sequence, std::vector<Vertex>* readPathOutput = NULL);
-
-    PoaAlignmentMatrix* TryAddRead(const std::string& sequence, const AlignConfig& config,
-                                   detail::SdpRangeFinder* rangeFinder = NULL) const;
-
-    void CommitAdd(PoaAlignmentMatrix* mat, std::vector<Vertex>* readPathOutput = NULL);
-
-    // ----------
-
-    size_t NumReads() const;
-
-    std::string ToGraphViz(int flags = 0, const PoaConsensus* pc = NULL) const;
-
-    void WriteGraphVizFile(const std::string& filename, int flags = 0,
-                           const PoaConsensus* pc = NULL) const;
-
-    const PoaConsensus* FindConsensus(const AlignConfig& config, int minCoverage = -INT_MAX) const;
-
 private:
-    detail::PoaGraphImpl* impl;
+    std::string target_;
+    std::string query_;
+    std::string transcript_;
+
+public:
+    // target string, including gaps; usually the "reference"
+    std::string Target() const;
+
+    // query string, including gaps; usually the "read"
+    std::string Query() const;
+
+    // transcript as defined by Gusfield pg 215.
+    std::string Transcript() const;
+
+public:
+    float Accuracy() const;
+    int Matches() const;
+    int Errors() const;
+    int Mismatches() const;
+    int Insertions() const;
+    int Deletions() const;
+    int Length() const;
+
+public:
+    PairwiseAlignment(const std::string& target, const std::string& query);
+
+    static PairwiseAlignment* FromTranscript(const std::string& transcript,
+                                             const std::string& unalnTarget,
+                                             const std::string& unalnQuery);
 };
+
+PairwiseAlignment* Align(const std::string& target, const std::string& query, int* score,
+                         AlignConfig config = AlignConfig::Default());
+
+PairwiseAlignment* Align(const std::string& target, const std::string& query,
+                         AlignConfig config = AlignConfig::Default());
+
+// These calls return an array, same len as target, containing indices into the query string.
+std::vector<int> TargetToQueryPositions(const std::string& transcript);
+std::vector<int> TargetToQueryPositions(const PairwiseAlignment& aln);
 
 }  // namespace Consensus
 }  // namespace PacBio

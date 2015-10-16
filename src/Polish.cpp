@@ -117,7 +117,7 @@ std::vector<Mutation> NearbyMutations(std::vector<Mutation>* applied,
     const auto mutRange = [clamp, neighborhood](const Mutation& mut, const int diff) {
         const int start = diff + mut.Start() - neighborhood;
         const int end = diff + mut.End() + neighborhood;
-        return std::tuple<size_t, size_t>(clamp(start), clamp(end));
+        return std::pair<size_t, size_t>(clamp(start), clamp(end));
     };
 
     // find the ranges
@@ -128,8 +128,8 @@ std::vector<Mutation> NearbyMutations(std::vector<Mutation>* applied,
     for (; ait != applied->cend() && ait->End() <= cit->Start(); ++ait)
         lengthDiff += ait->LengthDiff();
 
-    std::vector<std::tuple<size_t, size_t>> ranges = {mutRange(*cit, lengthDiff)};
-    size_t currEnd = std::get<1>(ranges.back());
+    std::vector<std::pair<size_t, size_t>> ranges = {mutRange(*cit, lengthDiff)};
+    size_t currEnd = ranges.back().second;
 
     // increment to the next centerpoint and continue
     for (++cit; cit != centers->cend(); ++cit) {
@@ -142,15 +142,15 @@ std::vector<Mutation> NearbyMutations(std::vector<Mutation>* applied,
 
         // if the next range touches the last one, just extend the last one
         if (nextStart <= currEnd)
-            std::get<1>(ranges.back()) = nextEnd;
+            ranges.back().second = nextEnd;
         else {
-            ranges.emplace_back(std::make_tuple(nextStart, nextEnd));
+            ranges.emplace_back(std::make_pair(nextStart, nextEnd));
             currEnd = nextEnd;
         }
     }
 
     for (const auto& range : ranges)
-        Mutations(&result, ai, std::get<0>(range), std::get<1>(range));
+        Mutations(&result, ai, range.first, range.second);
 
     return result;
 }

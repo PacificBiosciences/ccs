@@ -45,7 +45,7 @@ SparseMatrix::SparseMatrix(const size_t rows, const size_t cols)
     , nCols_(cols)
     , nRows_(rows)
     , columnBeingEdited_(std::numeric_limits<size_t>::max())
-    , usedRanges_(cols, std::make_tuple(0, 0))
+    , usedRanges_(cols, std::make_pair(0, 0))
 {
 }
 
@@ -67,7 +67,7 @@ void SparseMatrix::Reset(const size_t rows, const size_t cols)
     std::vector<std::unique_ptr<SparseVector>>(cols).swap(columns_);
     nCols_ = cols;
     nRows_ = rows;
-    std::vector<std::tuple<size_t, size_t>>(cols, std::make_tuple(0, 0)).swap(usedRanges_);
+    std::vector<std::pair<size_t, size_t>>(cols, std::make_pair(0, 0)).swap(usedRanges_);
     columnBeingEdited_ = std::numeric_limits<size_t>::max();
 }
 

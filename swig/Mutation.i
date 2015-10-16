@@ -1,7 +1,6 @@
 
 %{
 #include <pacbio/consensus/Mutation.h>
-using namespace PacBio::Consensus;
 %}
 
 py_tp_str(PacBio::Consensus::Mutation);

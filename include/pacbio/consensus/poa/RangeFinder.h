@@ -35,7 +35,7 @@ class PoaGraphImpl;
 class SdpRangeFinder
 {
 private:
-    std::map<PoaGraph::Vertex, std::tuple<size_t, size_t>> alignableReadIntervalByVertex_;
+    std::map<PoaGraph::Vertex, std::pair<size_t, size_t>> alignableReadIntervalByVertex_;
 
 public:
     virtual ~SdpRangeFinder();
@@ -44,7 +44,7 @@ public:
                          const std::vector<PoaGraph::Vertex>& consensusPath,
                          const std::string& consensusSequence, const std::string& readSequence);
 
-    std::tuple<size_t, size_t> FindAlignableRange(PoaGraph::Vertex v);
+    std::pair<size_t, size_t> FindAlignableRange(PoaGraph::Vertex v);
 
 protected:
     virtual SdpAnchorVector FindAnchors(const std::string& consensusSequence,

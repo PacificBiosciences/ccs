@@ -38,7 +38,7 @@
 #pragma once
 
 #include <memory>
-#include <tuple>
+#include <utility>
 
 #include <pacbio/consensus/Exceptions.h>
 #include <pacbio/consensus/Read.h>
@@ -141,7 +141,7 @@ public:
              double scoreDiff = 12.5);
 
 private:
-    std::tuple<size_t, size_t> RowRange(size_t j, const M& matrix, double scoreDiff) const;
+    std::pair<size_t, size_t> RowRange(size_t j, const M& matrix, double scoreDiff) const;
 
     /// \brief Reband alpha and beta matrices.
     /// This routine will reband alpha and beta to the convex hull

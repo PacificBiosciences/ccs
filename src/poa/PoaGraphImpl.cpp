@@ -6,7 +6,7 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/foreach.hpp>
 
-#include <pacbio/consensus/poa/AlignConfig.h>
+#include <pacbio/consensus/align/AlignConfig.h>
 #include <pacbio/consensus/poa/PoaConsensus.h>
 #include <pacbio/consensus/poa/PoaGraph.h>
 #include <pacbio/consensus/poa/RangeFinder.h>

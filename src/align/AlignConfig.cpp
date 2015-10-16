@@ -1,4 +1,10 @@
-// Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+/*
+
+ *
+ *  Created on: Feb 12, 2015
+ *      Author: dalexander
+ */
+// Copyright (c) 2011-2013, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,56 +39,24 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Authors: David Alexander, Lance Hepler
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include <pacbio/consensus/align/AlignConfig.h>
 
-#include <string>
-#include <tuple>
+namespace PacBio {
+namespace Consensus {
 
-#include <pacbio/consensus/Integrator.h>
-#include <pacbio/consensus/Polish.h>
-#include <pacbio/consensus/Read.h>
-#include <pacbio/consensus/Sequence.h>
-
-using namespace PacBio::Consensus;  // NOLINT
-
-namespace {
-
-const SNR snr(10, 7, 5, 11);
-
-TEST(PolishTest, MonoBasic)
+AlignParams::AlignParams(int match, int mismatch, int insert, int delete_)
+    : Match(match), Mismatch(mismatch), Insert(insert), Delete(delete_)
 {
-    MonoMolecularIntegrator ai("GCGTCGT", IntegratorConfig(), snr, "P6-C4");
-
-    ai.AddRead(MappedRead(Read("NA", "ACGTACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-
-    Polish(&ai, PolishConfig());
-
-    EXPECT_EQ("ACGACGT", std::string(ai));
 }
 
-TEST(PolishTest, MultiBasic)
+AlignParams AlignParams::Default() { return AlignParams(0, -1, -1, -1); }
+AlignConfig::AlignConfig(AlignParams params, AlignMode mode) : Params(params), Mode(mode) {}
+AlignConfig AlignConfig::Default()
 {
-    MultiMolecularIntegrator ai("GCGTCGT", IntegratorConfig());
-
-    ai.AddRead(MappedRead(Read("NA", "ACGTACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true),
-               snr);
-    ai.AddRead(MappedRead(Read("NA", ReverseComplement("ACGACGT"), "P6-C4"), StrandEnum::REVERSE, 0,
-                          7, true, true),
-               snr);
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true),
-               snr);
-
-    bool polished;
-    size_t nTested, nApplied;
-
-    std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
-
-    EXPECT_TRUE(polished);
-    EXPECT_EQ("ACGACGT", std::string(ai));
+    return AlignConfig(AlignParams::Default(), AlignMode::GLOBAL);
 }
-}
+
+}  // namespace Consensus
+}  // namespace PacBio

@@ -48,7 +48,7 @@ using std::max;
     .001  // TODO: Hmmm... not sure what the heck to do about these...
 #define REBANDING_THRESHOLD 0.04
 
-typedef std::tuple<size_t, size_t> Interval;
+typedef std::pair<size_t, size_t> Interval;
 
 namespace PacBio {
 namespace Consensus {
@@ -56,8 +56,7 @@ namespace {  // anonymous
 
 inline Interval RangeUnion(const Interval& range1, const Interval& range2)
 {
-    return Interval(std::min(std::get<0>(range1), std::get<0>(range2)),
-                    std::max(std::get<1>(range1), std::get<1>(range2)));
+    return Interval(std::min(range1.first, range2.first), std::max(range1.second, range2.second));
 }
 
 inline Interval RangeUnion(const Interval& range1, const Interval& range2, const Interval& range3,
@@ -425,7 +424,7 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
                 endRow = std::max(endRow, nEnd);
             }
         } else {
-            beginRow = std::get<0>(alpha.UsedRowRange(alpha.Columns() - 1));
+            beginRow = alpha.UsedRowRange(alpha.Columns() - 1).first;
             endRow = alpha.Rows();
         }
         ext.StartEditingColumn(extCol, beginRow, endRow);
@@ -544,7 +543,7 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
         int beginRow, endRow;
         if (j < 0) {
             beginRow = 0;
-            endRow = std::get<1>(beta.UsedRowRange(0));
+            endRow = beta.UsedRowRange(0).second;
         } else {
             std::tie(beginRow, endRow) = beta.UsedRowRange(j);
             int pBegin, pEnd, nBegin, nEnd;

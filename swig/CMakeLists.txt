@@ -89,7 +89,7 @@ add_custom_command(OUTPUT pbconsensus_wrap.cxx
 )
 
 # _pbconsensus.so
-add_library(_pbconsensus MODULE EXCLUDE_FROM_ALL
+add_library(_pbconsensus MODULE
     pbconsensus_wrap.cxx
 )
 

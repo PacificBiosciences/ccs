@@ -2,6 +2,7 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include <pacbio/consensus/Read.h>
@@ -31,7 +32,7 @@ public:
     double LL(const Mutation& mut);
     double LL() const;
 
-    std::tuple<double, double> NormalParameters() const;
+    std::pair<double, double> NormalParameters() const;
 
     double ZScore() const;
 

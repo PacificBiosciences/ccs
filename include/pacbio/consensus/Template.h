@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <boost/optional.hpp>
@@ -36,7 +37,7 @@ public:
     virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
     virtual double UndoCounterWeights(size_t nEmissions) const = 0;
 
-    std::tuple<double, double> NormalParameters() const;
+    std::pair<double, double> NormalParameters() const;
 
     // a sad but necessary release valve for MonoMolecularIntegrator Length()
     size_t TrueLength() const;
@@ -52,7 +53,7 @@ protected:
     bool pinEnd_;
 
 private:
-    std::tuple<double, double> SiteNormalParameters(size_t i) const;
+    std::pair<double, double> SiteNormalParameters(size_t i) const;
 };
 
 class Template : public AbstractTemplate

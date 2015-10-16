@@ -43,13 +43,11 @@
 #include <utility>
 #include <vector>
 
-#include <pacbio/consensus/poa/AlignConfig.h>
+#include <pacbio/consensus/align/AlignConfig.h>
 #include <pacbio/consensus/poa/PoaGraph.h>
 
 namespace PacBio {
 namespace Consensus {
-
-using boost::noncopyable;
 
 class PoaGraph;
 class PoaGraphPath;
@@ -58,7 +56,7 @@ class ScoredMutation;
 AlignConfig DefaultPoaConfig(AlignMode mode = AlignMode::GLOBAL);
 
 /// \brief A multi-sequence consensus obtained from a partial-order alignment
-struct PoaConsensus : private noncopyable
+struct PoaConsensus : private boost::noncopyable
 {
     const std::string Sequence;
     PoaGraph Graph;

@@ -22,7 +22,7 @@ Evaluator::Evaluator(Evaluator&& eval) : impl_{std::move(eval.impl_)} {}
 Evaluator::~Evaluator() {}
 double Evaluator::LL(const Mutation& mut) { return impl_->LL(mut); }
 double Evaluator::LL() const { return impl_->LL(); }
-std::tuple<double, double> Evaluator::NormalParameters() const { return impl_->NormalParameters(); }
+std::pair<double, double> Evaluator::NormalParameters() const { return impl_->NormalParameters(); }
 double Evaluator::ZScore() const { return impl_->ZScore(); }
 void Evaluator::ApplyMutation(const Mutation& mut) { impl_->ApplyMutation(mut); }
 void Evaluator::ApplyMutations(std::vector<Mutation>* muts) { impl_->ApplyMutations(muts); }

@@ -1,10 +1,9 @@
 
 %{
 #include <pacbio/consensus/Read.h>
-using namespace PacBio::Consensus;
 %}
 
-%feature("notabstract") Read;
-%feature("notabstract") MappedRead;
+%feature("notabstract") PacBio::Consensus::Read;
+%feature("notabstract") PacBio::Consensus::MappedRead;
 
 %include <pacbio/consensus/Read.h>

@@ -40,7 +40,6 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -70,7 +69,7 @@ public:  // Size information
 public:  // Information about entries filled by column
     void StartEditingColumn(size_t j, size_t hintBegin, size_t hintEnd);
     void FinishEditingColumn(size_t j, size_t usedBegin, size_t usedEnd);
-    std::tuple<size_t, size_t> UsedRowRange(size_t j) const;
+    std::pair<size_t, size_t> UsedRowRange(size_t j) const;
     bool IsColumnEmpty(size_t j) const;
     size_t UsedEntries() const;
     size_t AllocatedEntries() const;  // an entry may be allocated but not used
@@ -98,7 +97,7 @@ private:
     size_t nCols_;
     size_t nRows_;
     size_t columnBeingEdited_;
-    std::vector<std::tuple<size_t, size_t>> usedRanges_;
+    std::vector<std::pair<size_t, size_t>> usedRanges_;
 };
 
 //
@@ -133,12 +132,12 @@ inline void SparseMatrix::StartEditingColumn(size_t j, size_t hintBegin, size_t 
 inline void SparseMatrix::FinishEditingColumn(size_t j, size_t usedRowsBegin, size_t usedRowsEnd)
 {
     assert(columnBeingEdited_ == j);
-    usedRanges_[j] = std::make_tuple(usedRowsBegin, usedRowsEnd);
+    usedRanges_[j] = std::make_pair(usedRowsBegin, usedRowsEnd);
     CheckInvariants(columnBeingEdited_);
     columnBeingEdited_ = std::numeric_limits<size_t>::max();
 }
 
-inline std::tuple<size_t, size_t> SparseMatrix::UsedRowRange(size_t j) const
+inline std::pair<size_t, size_t> SparseMatrix::UsedRowRange(size_t j) const
 {
     assert(0 <= j && j < usedRanges_.size());
     return usedRanges_[j];
@@ -179,7 +178,7 @@ inline void SparseMatrix::Set(size_t i, size_t j, double v)
 
 inline void SparseMatrix::ClearColumn(size_t j)
 {
-    usedRanges_[j] = std::make_tuple(0, 0);
+    usedRanges_[j] = std::make_pair(0, 0);
     columns_[j]->Clear();
     CheckInvariants(j);
 }

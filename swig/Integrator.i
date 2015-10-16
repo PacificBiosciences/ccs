@@ -1,11 +1,12 @@
 
 %{
 #include <pacbio/consensus/Integrator.h>
-using namespace PacBio::Consensus;
 %}
 
-%feature("notabstract") MonoMolecularIntegrator;
-%feature("notabstract") MultiMolecularIntegrator;
+%ignore PacBio::Consensus::AbstractIntegrator::ReadState;
+
+%feature("notabstract") PacBio::Consensus::MonoMolecularIntegrator;
+%feature("notabstract") PacBio::Consensus::MultiMolecularIntegrator;
 
 py_tp_str(PacBio::Consensus::AbstractIntegrator);
 py_tp_str(PacBio::Consensus::MonoMolecularIntegrator);
