@@ -51,7 +51,8 @@ void SetColumns()
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     static char env[32];
-    int retval = snprintf(env, sizeof(env), "COLUMNS=%u", w.ws_col);
+    unsigned short col_size = w.ws_col > 0 ? w.ws_col : 80;
+    int retval = snprintf(env, sizeof(env), "COLUMNS=%u", col_size);
     if (retval >= 0 && static_cast<size_t>(retval) < sizeof(env))
     {
         putenv(env);

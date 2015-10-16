@@ -169,14 +169,17 @@ Option& OptionParser::add_option(const vector<string>& v) {
 }
 
 OptionParser& OptionParser::add_option_group(const OptionGroup& group) {
-  for (list<Option>::const_iterator oit = group._opts.begin(); oit != group._opts.end(); ++oit) {
+  _groups.push_back(group);
+  OptionGroup& currentGroup = _groups.back();
+
+  for (list<Option>::const_iterator oit = currentGroup._opts.begin(); oit != currentGroup._opts.end(); ++oit) {
     const Option& option = *oit;
     for (set<string>::const_iterator it = option._short_opts.begin(); it != option._short_opts.end(); ++it)
       _optmap_s[*it] = &option;
     for (set<string>::const_iterator it = option._long_opts.begin(); it != option._long_opts.end(); ++it)
       _optmap_l[*it] = &option;
   }
-  _groups.push_back(&group);
+
   return *this;
 }
 
@@ -305,13 +308,13 @@ Values& OptionParser::parse_args(const vector<string>& v) {
         _values[it->dest()] = it->get_default();
   }
 
-  for (list<OptionGroup const*>::iterator group_it = _groups.begin(); group_it != _groups.end(); ++group_it) {
-      for (strMap::const_iterator it = (*group_it)->_defaults.begin(); it != (*group_it)->_defaults.end(); ++it) {
+  for (list<OptionGroup>::iterator group_it = _groups.begin(); group_it != _groups.end(); ++group_it) {
+      for (strMap::const_iterator it = group_it->_defaults.begin(); it != group_it->_defaults.end(); ++it) {
           if (not _values.is_set(it->first))
               _values[it->first] = it->second;
       }
       
-      for (list<Option>::const_iterator it = (*group_it)->_opts.begin(); it != (*group_it)->_opts.end(); ++it) {
+      for (list<Option>::const_iterator it = group_it->_opts.begin(); it != group_it->_opts.end(); ++it) {
           if (it->get_default() != "" and not _values.is_set(it->dest()))
               _values[it->dest()] = it->get_default();
       }
@@ -396,8 +399,8 @@ string OptionParser::format_help() const {
   ss << _("Options") << ":" << endl;
   ss << format_option_help();
 
-  for (list<OptionGroup const*>::const_iterator it = _groups.begin(); it != _groups.end(); ++it) {
-    const OptionGroup& group = **it;
+  for (list<OptionGroup>::const_iterator it = _groups.begin(); it != _groups.end(); ++it) {
+    const OptionGroup& group = *it;
     ss << endl << "  " << group.title() << ":" << endl;
     if (group.group_description() != "")
       ss << str_format(group.group_description(), 4, cols()) << endl;
