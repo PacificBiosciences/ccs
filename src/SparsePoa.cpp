@@ -40,7 +40,7 @@
 #include <vector>
 #include <iostream>
 
-#include <pacbio/consensus/poa/AlignConfig.h>
+#include <pacbio/consensus/align/AlignConfig.h>
 #include <pacbio/consensus/poa/PoaConsensus.h>
 #include <pacbio/consensus/poa/PoaGraph.h>
 #include <pacbio/consensus/Sequence.h>
