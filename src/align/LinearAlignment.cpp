@@ -57,8 +57,8 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
-#include <pacbio/consensus/Align/LinearAlignment.h>
-#include <pacbio/consensus/Align/PairwiseAlignment.h>
+#include <pacbio/consensus/align/LinearAlignment.h>
+#include <pacbio/consensus/align/PairwiseAlignment.h>
 // #include <pacbio/consensus/Utils.h>
 
 //#define DEBUG_LINEAR_ALIGNMENT
