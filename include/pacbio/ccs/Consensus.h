@@ -313,7 +313,7 @@ ExtractMappedRead(const TRead& read,
     }
 
     PacBio::Consensus::MappedRead mappedRead(
-            PacBio::Consensus::Read(read.Id, read.Seq.substr(readStart, readEnd - readStart), "P6/C4"),
+            PacBio::Consensus::Read(read.Id, read.Seq.substr(readStart, readEnd - readStart), "P6-C4"),
             summary.ReverseComplementedRead ? StrandEnum::REVERSE : StrandEnum::FORWARD,
             tplStart,
             tplEnd,
