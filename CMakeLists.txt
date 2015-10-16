@@ -14,13 +14,6 @@ if (NOT Boost_INCLUDE_DIRS)
     find_package(Boost 1.58.0 REQUIRED)
 endif()
 
-find_package(Threads REQUIRED)
-
-if (NOT ZLIB_INCLUDE_DIRS OR
-    NOT ZLIB_LIBRARIES)
-    find_package(ZLIB REQUIRED)
-endif()
-
 # main project paths
 set(PacBioConsensus_RootDir           ${PacBioConsensus_SOURCE_DIR})
 set(PacBioConsensus_IncludeDir        ${PacBioConsensus_RootDir}/include)
@@ -53,7 +46,6 @@ endif(HAS_NO_UNUSED_VARIABLE)
 include_directories(. ${PacBioConsensus_IncludeDir})
 include_directories(SYSTEM
     ${Boost_INCLUDE_DIRS}
-    ${ZLIB_INCLUDE_DIRS}
 )
 
 # flags

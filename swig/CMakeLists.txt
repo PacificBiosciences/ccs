@@ -79,8 +79,10 @@ include_directories(SYSTEM
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioConsensus_CXX_FLAGS}")
 
 # pbconsensus_wrap.cxx
+set(SWIG_COMMAND swig CACHE PATH "swig path")
+
 add_custom_command(OUTPUT pbconsensus_wrap.cxx
-    COMMAND swig -Wall -c++ -python -builtin -module pbconsensus
+    COMMAND ${SWIG_COMMAND} -Wall -c++ -python -builtin -module pbconsensus
                  -I${PacBioConsensus_IncludeDir}
                  -o ${CMAKE_BINARY_DIR}/swig/pbconsensus_wrap.cxx -outdir ${CMAKE_BINARY_DIR}/swig
                  ${PacBioConsensus_SwigDir}/pbconsensus.i
