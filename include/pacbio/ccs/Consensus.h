@@ -434,7 +434,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
             // setup the arrow integrator
             IntegratorConfig cfg(settings.MinZScore, 12.5);
-            MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise, "P6/C4");
+            MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise, "P6-C4");
             std::vector<int32_t> statusCounts(static_cast<int>(AddReadResult::OTHER) + 1, 0);
             const size_t nReads = readKeys.size();
             size_t nPasses = 0, nDropped = 0;
