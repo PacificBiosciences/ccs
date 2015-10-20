@@ -12,7 +12,7 @@ CCS_DIR = op.dirname(op.dirname(op.dirname(__file__)))
 
 #XXX totally arbitrary input file - we just need subreads w/P6-C4 chemistry,
 # and this one happens to be small and usable enough to test TCI support
-DATA = "/mnt/secondary-siv/testdata/kineticsTools/Hpyl_1_2500.bam"
+DATA = "/pbi/dept/secondary/siv/testdata/kineticsTools/Hpyl_1_2500.bam"
 
 
 @unittest.skipUnless(op.isfile(DATA), "Missing %s" % DATA)
