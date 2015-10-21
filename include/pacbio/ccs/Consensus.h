@@ -417,6 +417,25 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                             << ", no high quality subreads available";
                 continue;
             }
+            /* If it is not possible to exceed the minPasses requirement, we will bail here before
+               generating the POA, filling the matrices and performing all the other checks */
+            size_t possiblePasses = 0;
+            for (size_t i = 0; i < reads.size(); ++i)
+            {
+                if (reads[i]->Flags & BAM::ADAPTER_BEFORE &&
+                    reads[i]->Flags & BAM::ADAPTER_AFTER)
+                {
+                    possiblePasses++;
+                }
+            }
+            if (possiblePasses < settings.MinPasses)
+            {
+                results.TooFewPasses += 1;
+                PBLOG_DEBUG << "Skipping " << chunk.Id
+                << ", not enough possible passes ("
+                << possiblePasses << '<' << settings.MinPasses << ')';
+                continue;
+            }
 
             std::vector<SparsePoa::ReadKey> readKeys;
             std::vector<PoaAlignmentSummary> summaries;
@@ -439,7 +458,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             const size_t nReads = readKeys.size();
             size_t nPasses = 0, nDropped = 0;
 
-            // add the reads to the integrator
+            // If this ZMW could possibly pass,  add the reads to the integrator
             for (size_t i = 0; i < nReads; ++i)
             {
                 // skip unadded reads
