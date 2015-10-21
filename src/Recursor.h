@@ -141,14 +141,18 @@ public:
              double scoreDiff = 12.5);
 
 private:
-    std::pair<size_t, size_t> RowRange(size_t j, const M& matrix, double scoreDiff) const;
+    std::pair<size_t, size_t> RowRange(size_t j, const M& matrix) const;
 
     /// \brief Reband alpha and beta matrices.
     /// This routine will reband alpha and beta to the convex hull
     /// of the maximum path through each and the inputs for column j.
     bool RangeGuide(size_t j, const M& guide, const M& matrix, size_t* beginRow,
                     size_t* endRow) const;
-    double scoreDiff_;
+    /* TODO: These two are totally redundant.  We will need to either enforce the scaling we will use
+      or expand the template typing to properly handle either case.  The RangeGuide function determines the 
+      minimum score by either diving or subtracting depending on the scale. */
+    double scoreDiff_;  // Should be positive
+    double score_diff_natural_scale_; // Should be > 1
 };
 
 }  // namespace Consensus
