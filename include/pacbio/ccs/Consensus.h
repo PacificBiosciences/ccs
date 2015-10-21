@@ -422,7 +422,8 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             size_t possiblePasses = 0;
             for (size_t i = 0; i < reads.size(); ++i)
             {
-                if (reads[i]->Flags & BAM::ADAPTER_BEFORE &&
+                if (reads[i] != nullptr &&
+                    reads[i]->Flags & BAM::ADAPTER_BEFORE &&
                     reads[i]->Flags & BAM::ADAPTER_AFTER)
                 {
                     possiblePasses++;
