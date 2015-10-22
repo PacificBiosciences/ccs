@@ -91,8 +91,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
     // int hintBeginRow = 1, hintEndRow = I - 1;
     size_t hintBeginRow = 1, hintEndRow = 1;
     auto prevTransProbs = TemplatePosition{'-', 0, 0, 0, 0};
-    auto score_diff_natural_scale = std::exp(scoreDiff_);
-
+    
     for (int j = 1; j < J; ++j)  // Note due to offset with reads and otherwise, this is ugly-ish
     {
         // Load up the transition parameters for this context
@@ -170,11 +169,10 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
             alpha.Set(i, j, score);
             if (score > maxScore) {
                 maxScore = score;
-                thresholdScore = maxScore / score_diff_natural_scale;
+                thresholdScore = maxScore / score_diff_natural_scale_;
             }
         }
         endRow = i;
-        alpha.FinishEditingColumn(j, beginRow, endRow);
         prevTransProbs = currTransProbs;
         // Now, revise the hints to tell the caller where the mass of the
         // distribution really lived in this column.
@@ -182,6 +180,10 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
         for (i = beginRow; i < endRow && alpha(i, j) < thresholdScore; ++i)
             ;
         hintBeginRow = i;
+        
+        // Don't rescale until we finish updating the hint.
+        alpha.FinishEditingColumn(j, beginRow, endRow);
+        
     }
 
     /* Now fill out the probability in the last pinned position.
@@ -211,9 +213,7 @@ void Recursor::FillBeta(const M& guide, M& beta) const
     beta.StartEditingColumn(J, I, I + 1);
     beta.Set(I, J, 1.0);
     beta.FinishEditingColumn(J, I, I + 1);
-
-    auto score_diff_natural_scale = std::exp(scoreDiff_);
-
+    
     // Totally arbitray decision here...
     size_t hintBeginRow = I, hintEndRow = I;
     // NOPE:
@@ -288,19 +288,23 @@ void Recursor::FillBeta(const M& guide, M& beta) const
 
             if (score > maxScore) {
                 maxScore = score;
-                thresholdScore = maxScore / score_diff_natural_scale;
+                thresholdScore = maxScore / score_diff_natural_scale_;
             }
         }
 
         beginRow = i + 1;
-        beta.FinishEditingColumn(j, beginRow, endRow);
         // DumpBetaMatrix(beta);
         // Now, revise the hints to tell the caller where the mass of the
         // distribution really lived in this column.
+        
         hintBeginRow = beginRow;
         for (i = endRow; i > beginRow && beta(i - 1, j) < thresholdScore; --i)
             ;
         hintEndRow = i;
+        
+        // Don't rescale until we update the hints
+        beta.FinishEditingColumn(j, beginRow, endRow);
+        
     }
 
     /* Now to fill the top row which must be a match
@@ -635,7 +639,7 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
 
 Recursor::Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                    const double scoreDiff)
-    : tpl_{std::forward<std::unique_ptr<AbstractTemplate>>(tpl)}, read_{mr}, scoreDiff_{scoreDiff}
+    : tpl_{std::forward<std::unique_ptr<AbstractTemplate>>(tpl)}, read_{mr}, scoreDiff_{scoreDiff}, score_diff_natural_scale_{exp(scoreDiff)}
 {
 }
 
@@ -651,11 +655,17 @@ size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
 
     // if we use too much space, do at least one more round
     // to take advantage of rebanding
+   // std::cout << "Alpha Used: " << a.UsedEntries() << "  Beta Used:  " << b.UsedEntries() << std::endl;
     if (a.UsedEntries() >= maxSize || b.UsedEntries() >= maxSize) {
+
         FillAlpha(b, a);
+        //std::cout << "Alpha Used: " << a.UsedEntries() << "  Beta Used:  " << b.UsedEntries() << std::endl;
         FillBeta(a, b);
+        //std::cout << "Alpha Used: " << a.UsedEntries() << "  Beta Used:  " << b.UsedEntries() << std::endl;
         FillAlpha(b, a);
+        //std::cout << "Alpha Used: " << a.UsedEntries() << "  Beta Used:  " << b.UsedEntries() << std::endl;
         flipflops += 3;
+        
     }
 
     double alphaV, betaV;
@@ -671,6 +681,7 @@ size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
             FillBeta(a, b);
 
         ++flipflops;
+        //std::cout << "Alpha Used: " << a.UsedEntries() << "  Beta Used:  " << b.UsedEntries() << std::endl;
     }
 
     if (std::abs(1.0 - alphaV / betaV) > ALPHA_BETA_MISMATCH_TOLERANCE) {
@@ -684,7 +695,7 @@ size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
     return flipflops;
 }
 
-inline Interval Recursor::RowRange(size_t j, const M& matrix, double scoreDiff) const
+inline Interval Recursor::RowRange(size_t j, const M& matrix) const
 {
     int beginRow, endRow;
     std::tie(beginRow, endRow) = matrix.UsedRowRange(j);
@@ -701,7 +712,7 @@ inline Interval Recursor::RowRange(size_t j, const M& matrix, double scoreDiff) 
         }
     }
 
-    double thresholdScore = maxScore - scoreDiff_;
+    double thresholdScore = maxScore / score_diff_natural_scale_;
 
     for (i = beginRow; i < maxRow && matrix(i, j) < thresholdScore; i++)
         ;
@@ -725,13 +736,12 @@ inline bool Recursor::RangeGuide(size_t j, const M& guide, const M& matrix, size
     }
 
     Interval interval(*beginRow, *endRow);
-
     if (useGuide) {
-        interval = RangeUnion(RowRange(j, guide, scoreDiff_), interval);
+        interval = RangeUnion(RowRange(j, guide), interval);
     }
 
     if (useMatrix) {
-        interval = RangeUnion(RowRange(j, matrix, scoreDiff_), interval);
+        interval = RangeUnion(RowRange(j, matrix), interval);
     }
 
     std::tie(*beginRow, *endRow) = interval;

@@ -46,7 +46,7 @@ using namespace PacBio::Consensus;  // NOLINT
 using ::testing::ElementsAre;
 using ::testing::ElementsAreArray;
 
-#define t(a, b) (std::make_tuple((a), (b)))
+#define t(a, b) (std::make_pair((a), (b)))
 
 TEST(CoverageTests, CoverageInWindowTest)
 {

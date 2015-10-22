@@ -110,6 +110,11 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
     if (!InRange(mut.Start(), mut.End())) return boost::none;
     mutStart_ = mut.Start() - start_;
     mutEnd_ = mut.End() - start_;
+
+    // TODO(lhepler): The following should never happen, but does.
+    //     find the root cause, fix it, and nuke this line
+    if (mutStart_ > tpl_.size()) return boost::none;
+
     if (mut.Type == MutationType::INSERTION) {
         if (mutStart_ > 0) mutTpl_[0] = cfg_->Populate({tpl_[mutStart_ - 1].Base, mut.Base})[0];
 
