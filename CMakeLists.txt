@@ -85,7 +85,7 @@ set(PacBioBAM_build_pbindex     OFF CACHE BOOL "build pbbam pbindex" FORCE)
 set(PacBioBAM_build_tests       OFF CACHE BOOL "build pbbam tests" FORCE)
 
 # pbconsensus
-set(PacBioConsensus_RootDir     ${PacBioCCS_ParentDir}/pbconsensus CACHE PATH "pbconsensus source path")
+set(PacBioConsensus_RootDir     ${PacBioCCS_ParentDir}/ConsensusCore2 CACHE PATH "ConsensusCore2 source path")
 set(PacBioConsensus_IncludeDir  ${PacBioConsensus_RootDir}/include)
 
 # prebuilt libraries
@@ -127,7 +127,7 @@ endif()
 
 if (NOT PBCONSENSUS_INCLUDE_DIRS OR
     NOT PBCONSENSUS_LIBRARIES)
-    add_subdirectory(${PacBioConsensus_RootDir} external/pbconsensus/build EXCLUDE_FROM_ALL)
+    add_subdirectory(${PacBioConsensus_RootDir} external/ConsensusCore2/build EXCLUDE_FROM_ALL)
     set(PBCONSENSUS_INCLUDE_DIRS ${PacBioConsensus_IncludeDir} CACHE INTERNAL "" FORCE)
 endif()
 
