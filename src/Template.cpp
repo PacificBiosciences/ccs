@@ -168,6 +168,10 @@ void Template::ApplyMutation(const Mutation& mut)
 
     const size_t i = mut.Start() - start_;
 
+     // TODO(lhepler): The following should never happen, but does.
+     //     find the root cause, fix it, and nuke this line
+     if (i >= tpl_.size()) return;
+
     if (mut.Type == MutationType::INSERTION) {
         if (i > 0) tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, mut.Base})[0];
 
