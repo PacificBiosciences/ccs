@@ -20,6 +20,7 @@ test:
     pre:
         - mkdir _build
         - pushd _build     ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
+        - mkdir _build_ccs
         - pushd _build_ccs ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=$(readlink -f ../_rev_deps/pbbam) -DPacBioConsensus_RootDir=$(readlink -f ..) -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_deps/seqan/include) ../_rev_deps/pbccs/CMakeLists.txt
     override:
         - pushd _build ; make 
