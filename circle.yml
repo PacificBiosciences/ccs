@@ -13,17 +13,25 @@ dependencies:
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/htslib.git
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbbam.git
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/seqan.git
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbccs.git
+        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbccs.git ; pushd pbccs ; git checkout verbose
+        - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbsparse.git
+        - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pblaa.git
     override:
         - echo "Overriding to skip automated call to setup.py"
 test:
     pre:
         - mkdir _build
-        - pushd _build     ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
-        - mkdir _build_ccs
-        - pushd _build_ccs ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=$(readlink -f ../_rev_deps/pbbam) -DPacBioConsensus_RootDir=$(readlink -f ..) -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_rev_deps/seqan/include) ../_rev_deps/pbccs
+        - pushd _build     ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
     override:
         - pushd _build ; make 
         - pushd _build ; make check
+    post:
+        - echo "Building PBBAM"
+        - mkdir _build_bam
+        - pushd _build_bam ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_build_tests=OFF ../_rev_deps/pbbam
+        - pushd _build_bam ; make
+        - echo "Building PBCCS"
+        - mkdir _build_ccs
+        - pushd _build_ccs ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_rev_deps/seqan/include) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_RootDir=$(readlink -f ../_rev_deps/pbbam) -DPBBAM_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbbam/include) -DPBBAM_LIBRARIES=$(readlink -f ../_rev_deps/pbbam/lib/libpbbam.a) -DPacBioConsensus_RootDir=$(readlink -f ..) -DPBCONSENSUS_INCLUDE_DIRS=$(readlink -f ../include) -DPBCONSENSUS_LIBRARIES="-Wl,-whole-archive /home/ubuntu/ConsensusCore2/lib/libpbconsensus.a -Wl,-no-whole-archive" ../_rev_deps/pbccs
         - pushd _build_ccs ; make
         - pushd _build_ccs ; make check
