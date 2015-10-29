@@ -2,6 +2,9 @@ dependencies:
     cache_directories:
         - "_deps/cmake-3.3.0-Linux-x86_64"
         - "_deps/boost_1_58_0"
+        - "_rev_deps/htslib"
+        - "_rev_deps/pbbam"
+        - "_build_bam"
     pre:
         - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
         - sudo apt-get update 
@@ -10,13 +13,17 @@ dependencies:
         - if [ ! -d _rev_deps ] ; then mkdir _rev_deps ; fi # Create a directory for reverse-dependencies, i.e., things that depend on us
         - pushd _deps ; if [ ! -d cmake-3.3.0-Linux-x86_64 ] ; then wget http://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xzf cmake-3.3.0-Linux-x86_64.tar.gz ; fi
         - pushd _deps ; if [ ! -d boost_1_58_0 ] ; then wget http://superb-dca2.dl.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 ; tar xjf boost_1_58_0.tar.bz2 ; fi 
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/htslib.git
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbbam.git
+        - pushd _rev_deps ; if [ ! -d htslib ] ; then git clone https://github.com/PacificBiosciences/htslib.git ; fi
+        - pushd _rev_deps ; if [ ! -d pbbam  ] ; then git clone https://github.com/PacificBiosciences/pbbam.git ; fi
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/seqan.git
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbccs.git ; pushd pbccs ; git checkout verbose
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbsparse.git
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pblaa.git
     override:
+        - echo "Building PBBAM"
+        - if [ ! -d _build_bam ] ; then mkdir _build_bam ; fi
+        - pushd _build_bam ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_build_tests=OFF ../_rev_deps/pbbam
+        - pushd _build_bam ; make
         - echo "Overriding to skip automated call to setup.py"
 test:
     pre:
@@ -26,10 +33,6 @@ test:
         - pushd _build ; make 
         - pushd _build ; make check
     post:
-        - echo "Building PBBAM"
-        - mkdir _build_bam
-        - pushd _build_bam ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_build_tests=OFF ../_rev_deps/pbbam
-        - pushd _build_bam ; make
         - echo "Building PBCCS"
         - mkdir _build_ccs
         - pushd _build_ccs ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_rev_deps/seqan/include) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_RootDir=$(readlink -f ../_rev_deps/pbbam) -DPBBAM_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbbam/include) -DPBBAM_LIBRARIES=$(readlink -f ../_rev_deps/pbbam/lib/libpbbam.a) -DPacBioConsensus_RootDir=$(readlink -f ..) -DPBCONSENSUS_INCLUDE_DIRS=$(readlink -f ../include) -DPBCONSENSUS_LIBRARIES="-Wl,-whole-archive /home/ubuntu/ConsensusCore2/lib/libpbconsensus.a -Wl,-no-whole-archive" ../_rev_deps/pbccs
