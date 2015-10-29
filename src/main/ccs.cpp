@@ -348,6 +348,13 @@ int main(int argc, char **argv)
     // Verify output file does not already exist
     if (FileExists(files.front()) && !forceOutput)
         parser.error("OUTPUT: file already exists: '" + files.front() + "'");
+    
+    // Verify input files exist
+    for (auto fn = (files.begin() + 1); fn != files.end(); fn++) {
+        if(!FileExists(*fn)) {
+            parser.error("Input file " + *fn + " does not exist.");
+        }
+    }
 
     // logging
     //
