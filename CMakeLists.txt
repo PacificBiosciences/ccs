@@ -48,6 +48,15 @@ include_directories(SYSTEM
     ${Boost_INCLUDE_DIRS}
 )
 
+
+# Make release with debug the default, helps tests pass by being fast enough
+IF(NOT CMAKE_BUILD_TYPE)
+  SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, 
+      options are: Debug Release Profile RelWithDebInfo" FORCE)
+ENDIF(NOT CMAKE_BUILD_TYPE)
+
+
+
 # flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioConsensus_CXX_FLAGS}")
 
