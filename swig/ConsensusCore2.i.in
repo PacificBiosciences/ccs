@@ -1,4 +1,7 @@
-%module pbconsensus
+%module ConsensusCore2
+
+// for the 309 warning about boost::noncoypable, try to figure out %ignore
+#pragma SWIG nowarn=309
 
 %{
 #define SWIG_FILE_WITH_INIT
@@ -15,12 +18,9 @@ __version__ = "@PacBioConsensus_VERSION@"
 %ignore *::operator std::tuple<bool&, size_t&, size_t&>;
 %ignore *::operator std::string;
 
-%ignore boost::noncopyable;
-namespace boost
-{ class noncopyable {}; }
-
 %include <exception.i>
 %include <std_pair.i>
+%include <std_set.i>
 %include <std_string.i>
 %include <std_vector.i>
 %include <stdint.i>
@@ -43,6 +43,9 @@ namespace std
     %template(DoublePair) std::pair<double, double>;
     %template(IntPair) std::pair<int, int>;
     %template(LengthPair) std::pair<size_t, size_t>;
+
+    // set types
+    %template(StringSet) std::set<std::string>;
 
     // vector types
     %template(DoubleVector) std::vector<double>;

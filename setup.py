@@ -48,11 +48,11 @@ class MyBuild(dbuild_py):
             print("running command: {0}".format(" ".join(cmds)), file=sys.stderr)
             retcode = Popen(cmds, cwd=buildDir, env=env).wait()
             if (retcode != 0):
-                raise CompileError("failed to configure the pbconsensus with CMake!")
+                raise CompileError("failed to configure the ConsensusCore2 with CMake!")
             print("running command: make", file=sys.stderr)
             retcode = Popen(["make"], cwd=buildDir).wait()
             if (retcode != 0):
-                raise CompileError("failed to compile or link pbconsensus!")
+                raise CompileError("failed to compile or link ConsensusCore2!")
         finally:
             rmtree(buildDir)
             try: super(MyBuild, self).run()
@@ -69,16 +69,16 @@ class MyDist(Distribution):
         return True
 
 setup(
-    name="pbconsensus",
+    name="ConsensusCore2",
     version="0.9.0",
     author="PacificBiosciences",
     author_email="devnet@pacb.com",
-    url="http://www.github.com/PacificBiosciences/pbconsensus",
+    url="http://www.github.com/PacificBiosciences/ConsensusCore2",
     description="A library for generating consensus sequences for PacBio data",
     license="BSD",
-    packages=["pbconsensus"],
-    package_dir={"pbconsensus": swigLib},
-    package_data={"pbconsensus": ["_pbconsensus.so"]},
+    packages=["ConsensusCore2"],
+    package_dir={"ConsensusCore2": swigLib},
+    package_data={"ConsensusCore2": ["_ConsensusCore2.so"]},
     install_requires=["numpy >= 1.6.0"],
     setup_requires=["numpy >= 1.6.0"],
     distclass=MyDist,

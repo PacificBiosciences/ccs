@@ -3,8 +3,8 @@
 file(MAKE_DIRECTORY  ${PacBioConsensus_SwigDir}/lib)
 
 configure_file(
-    ${PacBioConsensus_RootDir}/swig/pbconsensus.i.in
-    ${PacBioConsensus_RootDir}/swig/pbconsensus.i
+    ${PacBioConsensus_RootDir}/swig/ConsensusCore2.i.in
+    ${PacBioConsensus_RootDir}/swig/ConsensusCore2.i
 )
 
 include_directories(
@@ -78,29 +78,29 @@ include_directories(SYSTEM
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioConsensus_CXX_FLAGS}")
 
-# pbconsensus_wrap.cxx
+# ConsensusCore2_wrap.cxx
 set(SWIG_COMMAND swig CACHE PATH "swig path")
 
-add_custom_command(OUTPUT pbconsensus_wrap.cxx
-    COMMAND ${SWIG_COMMAND} -Wall -c++ -python -builtin -module pbconsensus
-                 -I${PacBioConsensus_IncludeDir}
-                 -o ${CMAKE_BINARY_DIR}/swig/pbconsensus_wrap.cxx -outdir ${CMAKE_BINARY_DIR}/swig
-                 ${PacBioConsensus_SwigDir}/pbconsensus.i
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/swig/pbconsensus.py
-                                     ${PacBioConsensus_SwigDir}/lib/__init__.py
+add_custom_command(OUTPUT ConsensusCore2_wrap.cxx
+    COMMAND ${SWIG_COMMAND} -Wextra -c++ -python -builtin -module ConsensusCore2
+        -I${PacBioConsensus_IncludeDir}
+        -o ${CMAKE_BINARY_DIR}/swig/ConsensusCore2_wrap.cxx -outdir ${CMAKE_BINARY_DIR}/swig
+        ${PacBioConsensus_SwigDir}/ConsensusCore2.i
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/swig/ConsensusCore2.py
+        ${PacBioConsensus_SwigDir}/lib/__init__.py
 )
 
-# _pbconsensus.so
-add_library(_pbconsensus MODULE
-    pbconsensus_wrap.cxx
+# _ConsensusCore2.so
+add_library(_ConsensusCore2 MODULE
+    ConsensusCore2_wrap.cxx
 )
 
-target_link_libraries(_pbconsensus
+target_link_libraries(_ConsensusCore2
     ${PBCONSENSUS_LIBRARIES}
     ${PYTHON_LIBRARIES}
 )
 
-set_target_properties(_pbconsensus PROPERTIES
+set_target_properties(_ConsensusCore2 PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${PacBioConsensus_SwigDir}/lib
     PREFIX ""
 )

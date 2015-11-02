@@ -3,6 +3,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 
 namespace PacBio {
@@ -38,6 +39,7 @@ class ModelFactory
 public:
     static std::unique_ptr<ModelConfig> Create(const std::string& name, const SNR&);
     static bool Register(const std::string& name, ModelCreator* ctor);
+    static std::set<std::string> SupportedChemistries();
 
 private:
     static std::map<std::string, ModelCreator*>& CreatorTable();

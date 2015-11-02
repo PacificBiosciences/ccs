@@ -238,7 +238,7 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentCo
     //
     // i represents position in array
     // readPos=i-1 represents position in read
-    for (unsigned int i = 1, readPos = 0; i <= sequence.length(); i++, readPos++) {
+    for (unsigned int i = 1; i <= sequence.length(); i++) {
         float candidateScore, bestScore;
         VD prevVertex;
         MoveType reachingMove;
@@ -255,7 +255,7 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentCo
 
         for (const AlignmentColumn* prevCol : predecessorColumns) {
             // Incorporate (Match or Mismatch)
-            bool isMatch = sequence[readPos] == vertexInfo.Base;
+            bool isMatch = sequence[i - 1] == vertexInfo.Base;
             candidateScore =
                 prevCol->Score[i - 1] + (isMatch ? config.Params.Match : config.Params.Mismatch);
             if (candidateScore > bestScore) {

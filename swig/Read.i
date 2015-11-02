@@ -1,4 +1,8 @@
 
+// TODO(lhepler): remove these, figure out %ignore
+%warnfilter(509) PacBio::Consensus::Read::Read;
+%warnfilter(509) PacBio::Consensus::MappedRead::MappedRead;
+
 %{
 #include <pacbio/consensus/Read.h>
 %}

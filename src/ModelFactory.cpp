@@ -30,6 +30,14 @@ bool ModelFactory::Register(const std::string& name, ModelCreator* const ctor)
     return CreatorTable().insert(std::make_pair(name, ctor)).second;
 }
 
+std::set<std::string> ModelFactory::SupportedChemistries()
+{
+    std::set<std::string> result;
+    for (const auto& item : ModelFactory::CreatorTable())
+        result.insert(item.first);
+    return result;
+}
+
 std::map<std::string, ModelCreator*>& ModelFactory::CreatorTable()
 {
     static std::map<std::string, ModelCreator*> tbl;

@@ -169,7 +169,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
             alpha.Set(i, j, score);
             if (score > maxScore) {
                 maxScore = score;
-                thresholdScore = maxScore / score_diff_natural_scale_;
+                thresholdScore = maxScore / scoreDiff_;
             }
         }
         endRow = i;
@@ -288,7 +288,7 @@ void Recursor::FillBeta(const M& guide, M& beta) const
 
             if (score > maxScore) {
                 maxScore = score;
-                thresholdScore = maxScore / score_diff_natural_scale_;
+                thresholdScore = maxScore / scoreDiff_;
             }
         }
 
@@ -639,7 +639,7 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
 
 Recursor::Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                    const double scoreDiff)
-    : tpl_{std::forward<std::unique_ptr<AbstractTemplate>>(tpl)}, read_{mr}, scoreDiff_{scoreDiff}, score_diff_natural_scale_{exp(scoreDiff)}
+    : tpl_{std::forward<std::unique_ptr<AbstractTemplate>>(tpl)}, read_{mr}, scoreDiff_{exp(scoreDiff)}
 {
 }
 
@@ -712,7 +712,7 @@ inline Interval Recursor::RowRange(size_t j, const M& matrix) const
         }
     }
 
-    double thresholdScore = maxScore / score_diff_natural_scale_;
+    double thresholdScore = maxScore / scoreDiff_;
 
     for (i = beginRow; i < maxRow && matrix(i, j) < thresholdScore; i++)
         ;

@@ -151,8 +151,7 @@ private:
     /* TODO: These two are totally redundant.  We will need to either enforce the scaling we will use
       or expand the template typing to properly handle either case.  The RangeGuide function determines the 
       minimum score by either diving or subtracting depending on the scale. */
-    double scoreDiff_;  // Should be positive
-    double score_diff_natural_scale_; // Should be > 1
+    double scoreDiff_;  // Should be >1
 };
 
 }  // namespace Consensus
