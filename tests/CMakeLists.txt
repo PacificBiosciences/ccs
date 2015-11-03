@@ -1,6 +1,6 @@
 
 # gmock/gtest
-set(GMOCK_RootDir    ${PacBioCCS_RootDir}/ConsensusCore/external/gmock-1.7.0)
+set(GMOCK_RootDir    ${PacBioConsensus_RootDir}/third-party/gmock-1.7.0)
 set(GMOCK_IncludeDir ${GMOCK_RootDir})
 
 file(GLOB           GMOCK_CC    "${GMOCK_RootDir}/*.cc")
