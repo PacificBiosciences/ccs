@@ -5,7 +5,7 @@ dependencies:
     pre:
         - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test ; sudo apt-get update ; sudo apt-get install g++-4.8
         - if [ ! -d _deps ] ; then mkdir _deps ; fi
-        - pushd _deps ; if [ ! -d cmake-3.3.0-Linux-x86_64 ] ; then wget http://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xzf cmake-3.3.0-Linux-x86_64.tar.gz ; fi
+        - pushd _deps ; if [ ! -d cmake-3.3.0-Linux-x86_64 ] ; then wget --no-check-certificate http://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xzf cmake-3.3.0-Linux-x86_64.tar.gz ; fi
         - pushd _deps ; if [ ! -d boost_1_58_0 ] ; then wget http://superb-dca2.dl.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 ; tar xjf boost_1_58_0.tar.bz2 ; fi
         - pushd _deps ; git clone https://github.com/PacificBiosciences/htslib.git
         - pushd _deps ; git clone https://github.com/PacificBiosciences/pbbam.git
