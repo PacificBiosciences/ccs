@@ -11,7 +11,7 @@ dependencies:
         - sudo apt-get install g++-4.8
         - if [ ! -d _deps ] ; then mkdir _deps ; fi         # Create a directory for dependencies
         - if [ ! -d _rev_deps ] ; then mkdir _rev_deps ; fi # Create a directory for reverse-dependencies, i.e., things that depend on us
-        - pushd _deps ; if [ ! -d cmake-3.3.0-Linux-x86_64 ] ; then wget http://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xzf cmake-3.3.0-Linux-x86_64.tar.gz ; fi
+        - pushd _deps ; if [ ! -d cmake-3.3.0-Linux-x86_64 ] ; then wget --no-check-certificate http://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xzf cmake-3.3.0-Linux-x86_64.tar.gz ; fi
         - pushd _deps ; if [ ! -d boost_1_58_0 ] ; then wget http://superb-dca2.dl.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 ; tar xjf boost_1_58_0.tar.bz2 ; fi 
         - pushd _rev_deps ; if [ ! -d htslib ] ; then git clone https://github.com/PacificBiosciences/htslib.git ; fi
         - pushd _rev_deps ; if [ ! -d pbbam  ] ; then git clone https://github.com/PacificBiosciences/pbbam.git ; fi
