@@ -39,6 +39,7 @@
 #include <functional>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -191,9 +192,9 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char **argv, const
           .Version("1.5")
           .AddProgram(program);
 
-    for (auto file = ++files.begin(); file != files.end(); ++file)
+    for (const auto& file : files)
     {
-        BamFile bam(*file);
+        BamFile bam(file);
 
         for (const auto& rg : bam.Header().ReadGroups())
         {
@@ -257,27 +258,9 @@ void WriteResultsReport(ostream& report, const Results& counts)
 }
 
 
-// TODO(lhepler) remove in favor of decoding, only accept P6/C4 data for now
-bool VerifyChemistry(const ReadGroupInfo& readGroup)
-{
-    string bcVer = readGroup.BasecallerVersion().substr(0, 3);
-
-    if (readGroup.BindingKit() == "100356300" &&
-        readGroup.SequencingKit() == "100356200" &&
-        (bcVer == "2.1" || bcVer == "2.3"))
-        return true;
-
-    if (readGroup.BindingKit() == "100372700" &&
-        readGroup.SequencingKit() == "100356200" &&
-        (bcVer == "2.1" || bcVer == "2.3"))
-        return true;
-
-    return false;
-}
-
-
 int main(int argc, char **argv)
 {
+    using boost::algorithm::join;
     using boost::make_optional;
 
     SetColumns();
@@ -308,7 +291,7 @@ int main(int argc, char **argv)
     parser.add_option(em + OptionNames::LogLevel).choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
 
     const auto options = parser.parse_args(argc, argv);
-    const auto files   = parser.args();
+          auto files   = parser.args();
 
     const ConsensusSettings settings(options);
 
@@ -341,20 +324,21 @@ int main(int argc, char **argv)
     //
     //
     if (files.size() < 1)
-        parser.error("missing OUTPUT");
+        parser.error("missing OUTPUT and FILES...");
     else if (files.size() < 2)
         parser.error("missing FILES...");
 
-    // Verify output file does not already exist
-    if (FileExists(files.front()) && !forceOutput)
-        parser.error("OUTPUT: file already exists: '" + files.front() + "'");
-    
-    // Verify input files exist
-    for (auto fn = (files.begin() + 1); fn != files.end(); fn++) {
-        if(!FileExists(*fn)) {
-            parser.error("Input file " + *fn + " does not exist.");
-        }
-    }
+    // pop first file off the list, is OUTPUT file
+    const string outputFile(files.front());
+    files.erase(files.begin());
+
+    // verify output file does not already exist
+    if (FileExists(outputFile) && !forceOutput)
+        parser.error("OUTPUT: file already exists: '" + outputFile + "'");
+
+    // verify input files exist
+    for (const auto& file : files)
+        if (!FileExists(file)) parser.error("FILES...: file does not exist: '" + file + "'");
 
     // logging
     //
@@ -379,106 +363,120 @@ int main(int argc, char **argv)
     // start processing chunks!
     //
     //
-    BamWriter ccsBam(files.front(), PrepareHeader(parser, argc, argv, files));
+    BamWriter ccsBam(outputFile, PrepareHeader(parser, argc, argv, files));
     unique_ptr<PbiBuilder> ccsPbi(nullptr);
     unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
     map<string, shared_ptr<string>> movieNames;
 
     if (pbIndex)
-        ccsPbi.reset(new PbiBuilder(files.front() + ".pbi"));
+        ccsPbi.reset(new PbiBuilder(outputFile + ".pbi"));
 
     WorkQueue<Results> workQueue(nThreads);
     future<Results> writer = async(launch::async, WriterThread, ref(workQueue), ref(ccsBam), ref(ccsPbi));
     size_t poorSNR = 0, tooFewPasses = 0;
 
-    // skip the first file, it's for output
-    for (auto file = ++files.begin(); file != files.end(); ++file)
+    const auto avail = PacBio::Consensus::SupportedChemistries();
+
+    PBLOG_DEBUG << "Found consensus models for: (" << join(avail, ", ") << ')';
+
+    DataSet ds(files);
+
+    // test that all input chemistries are supported
     {
-        EntireFileQuery query(*file);
+        const set<string> used = ds.SequencingChemistries();
+        vector<string> unavail;
 
-        // use make_optional here to get around spurious warnings from gcc:
-        //   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47679
-        optional<int32_t> holeNumber(none);
-        bool skipZmw = false;
+        set_difference(avail.begin(), avail.end(),
+                       used.begin(), used.end(),
+                       back_inserter(unavail));
 
-        for (const auto& read : query)
+        if (!unavail.empty())
         {
-            const string movieName = read.MovieName();
-
-            if (movieNames.find(movieName) == movieNames.end())
-            {
-                movieNames[movieName] = make_shared<string>(movieName);
-            }
-
-            if (!holeNumber || *holeNumber != read.HoleNumber())
-            {
-                if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses)
-                {
-                    PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
-                                << ", insufficient number of passes ("
-                                << chunk->back().Reads.size() << '<' << settings.MinPasses << ')';
-                    tooFewPasses += 1;
-                    chunk->pop_back();
-                }
-
-                if (chunk && chunk->size() >= chunkSize)
-                {
-                    workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
-                    chunk.reset(new vector<Chunk>());
-                }
-
-                holeNumber = read.HoleNumber();
-                auto snr = read.SignalToNoise();
-                if (whitelist && !whitelist->Contains(movieName, *holeNumber))
-                {
-                    skipZmw = true;
-                }
-                // test chemistry here, we only accept P6/C4 for now
-                //   TODO(lhepler) remove this in favor of actual chemistry decoding
-                else if (!VerifyChemistry(read.ReadGroup()))
-                {
-                    PBLOG_NOTICE << "Skipping ZMW " << movieName << '/' << *holeNumber << ", invalid chemistry (not P6/C4)";
-                    skipZmw = true;
-                }
-                else if (*min_element(snr.begin(), snr.end()) < minSnr)
-                {
-                    PBLOG_DEBUG << "Skipping ZMW " << movieName << '/' << *holeNumber << ", fails SNR threshold (" << minSnr << ')';
-                    poorSNR += 1;
-                    skipZmw = true;
-                }
-                else
-                {
-                    skipZmw = false;
-                    chunk->emplace_back(
-                        Chunk
-                        {
-                            ReadId(movieNames[movieName], *holeNumber),
-                            vector<Subread>(),
-                            SNR(snr[0], snr[1], snr[2], snr[3])
-                        });
-                }
-            }
-
-            if (skipZmw)
-                continue;
-
-            if (static_cast<float>(read.ReadAccuracy()) < minReadScore)
-            {
-                PBLOG_DEBUG << "Skipping read " << read.FullName()
-                            << ", insufficient read accuracy ("
-                            << read.ReadAccuracy() << '<' << minReadScore << ')';
-                continue;
-            }
-
-            chunk->back().Reads.emplace_back(
-                Subread
-                {
-                    ReadId(movieNames[movieName], *holeNumber, Interval(read.QueryStart(), read.QueryEnd())),
-                    read.Sequence(),
-                    read.LocalContextFlags(),
-                    read.ReadAccuracy()
-                });
+            PBLOG_FATAL << "Unsupported chemistries found: " << join(unavail, ", ");
+            exit(-1);
         }
+
+        PBLOG_DEBUG << "Using consensus models for: (" << join(used, ", ") << ')';
+    }
+
+    EntireFileQuery query(ds);
+
+    // use make_optional here to get around spurious warnings from gcc:
+    //   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47679
+    optional<int32_t> holeNumber(none);
+    bool skipZmw = false;
+
+    for (const auto& read : query)
+    {
+        const string movieName = read.MovieName();
+
+        if (movieNames.find(movieName) == movieNames.end())
+        {
+            movieNames[movieName] = make_shared<string>(movieName);
+        }
+
+        if (!holeNumber || *holeNumber != read.HoleNumber())
+        {
+            if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses)
+            {
+                PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
+                            << ", insufficient number of passes ("
+                            << chunk->back().Reads.size() << '<' << settings.MinPasses << ')';
+                tooFewPasses += 1;
+                chunk->pop_back();
+            }
+
+            if (chunk && chunk->size() >= chunkSize)
+            {
+                workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
+                chunk.reset(new vector<Chunk>());
+            }
+
+            holeNumber = read.HoleNumber();
+            auto snr = read.SignalToNoise();
+            if (whitelist && !whitelist->Contains(movieName, *holeNumber))
+            {
+                skipZmw = true;
+            }
+            else if (*min_element(snr.begin(), snr.end()) < minSnr)
+            {
+                PBLOG_DEBUG << "Skipping ZMW " << movieName << '/' << *holeNumber << ", fails SNR threshold (" << minSnr << ')';
+                poorSNR += 1;
+                skipZmw = true;
+            }
+            else
+            {
+                skipZmw = false;
+                chunk->emplace_back(
+                    Chunk
+                    {
+                        ReadId(movieNames[movieName], *holeNumber),
+                        vector<Subread>(),
+                        SNR(snr[0], snr[1], snr[2], snr[3]),
+                        read.ReadGroup().SequencingChemistry()
+                    });
+            }
+        }
+
+        if (skipZmw)
+            continue;
+
+        if (static_cast<float>(read.ReadAccuracy()) < minReadScore)
+        {
+            PBLOG_DEBUG << "Skipping read " << read.FullName()
+                        << ", insufficient read accuracy ("
+                        << read.ReadAccuracy() << '<' << minReadScore << ')';
+            continue;
+        }
+
+        chunk->back().Reads.emplace_back(
+            Subread
+            {
+                ReadId(movieNames[movieName], *holeNumber, Interval(read.QueryStart(), read.QueryEnd())),
+                read.Sequence(),
+                read.LocalContextFlags(),
+                read.ReadAccuracy()
+            });
     }
 
     // if the last chunk doesn't have enough passes, skip it

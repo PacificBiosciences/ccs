@@ -119,8 +119,9 @@ struct ReadType
     std::string Seq;
     LocalContextFlags Flags;
     Accuracy ReadAccuracy;
-    // TODO (move SNR here, eventually)
+    // TODO (move SNR and Chemistry here, eventually)
     // SNR SignalToNoise;
+    // std::string Chemistry;
 };
 
 
@@ -130,6 +131,7 @@ struct ChunkType
     TId Id;
     std::vector<TRead> Reads;
     SNR SignalToNoise;
+    std::string Chemistry;
 };
 
 
@@ -294,6 +296,7 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
 template<typename TRead>
 boost::optional<PacBio::Consensus::MappedRead>
 ExtractMappedRead(const TRead& read,
+                  const std::string& chem,
                   const PoaAlignmentSummary& summary,
                   const size_t poaLength,
                   const size_t minLength)
@@ -313,7 +316,7 @@ ExtractMappedRead(const TRead& read,
     }
 
     PacBio::Consensus::MappedRead mappedRead(
-            PacBio::Consensus::Read(read.Id, read.Seq.substr(readStart, readEnd - readStart), "P6-C4"),
+            PacBio::Consensus::Read(read.Id, read.Seq.substr(readStart, readEnd - readStart), chem),
             summary.ReverseComplementedRead ? StrandEnum::REVERSE : StrandEnum::FORWARD,
             tplStart,
             tplEnd,
@@ -454,7 +457,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
 
             // setup the arrow integrator
             IntegratorConfig cfg(settings.MinZScore, 12.5);
-            MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise, "P6-C4");
+            MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise, chunk.Chemistry);
             std::vector<int32_t> statusCounts(static_cast<int>(AddReadResult::OTHER) + 1, 0);
             const size_t nReads = readKeys.size();
             size_t nPasses = 0, nDropped = 0;
@@ -466,7 +469,11 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 if (readKeys[i] < 0)
                     continue;
 
-                if (auto mr = ExtractMappedRead(*reads[i], summaries[readKeys[i]], poaConsensus.length(), settings.MinLength))
+                if (auto mr = ExtractMappedRead(*reads[i],
+                                                chunk.Chemistry,
+                                                summaries[readKeys[i]],
+                                                poaConsensus.length(),
+                                                settings.MinLength))
                 {
                     auto status = ai.AddRead(*mr);
 
