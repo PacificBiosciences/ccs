@@ -10,11 +10,7 @@
 namespace PacBio {
 namespace Consensus {
 
-std::set<std::string> SupportedChemistries()
-{
-    return ModelFactory::SupportedChemistries();
-}
-
+std::set<std::string> SupportedChemistries() { return ModelFactory::SupportedChemistries(); }
 IntegratorConfig::IntegratorConfig(const double minZScore, const double scoreDiff)
     : MinZScore{minZScore}, ScoreDiff{scoreDiff}
 {

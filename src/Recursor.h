@@ -66,12 +66,9 @@ public:
 
     /**
      Fill in the alpha matrix.  This matrix has the read run along the rows, and
-     the
-     template run along the columns.  The first row and column do not correspond
-     to
-     a template position.  Therefore the match represented at position (i,j)
-     corresponds
-     to a match between template positions (i+1, j+1).
+     the template run along the columns.  The first row and column do not correspond
+     to a template position.  Therefore the match represented at position (i,j)
+     corresponds to a match between template positions (i+1, j+1).
 
      The alpha matrix is the "Forward" matrix used in the forward/backward
      algorithm.
@@ -85,16 +82,13 @@ public:
      calculated and stored as LOG values.
 
      Note that in doing this calculation, in order to work with di-nucleotide
-     contexts, we
-     require that the first and last transition be a match.  In other words the
-     start and end of
-     the read and template are "pinned" to each other.
+     contexts, we require that the first and last transition be a match.  In other words the
+     start and end of the read and template are "pinned" to each other.
 
      //TODO: Verify memory is initialized to 0!
 
      @param guide An object that helps inform how to select the size of "bands"
-     for the
-     banded algorithm used.  This is typically the beta matrix if we are
+     for the banded algorithm used.  This is typically the beta matrix if we are
      "repopulating" the matrix.
      @param alpha The matrix to be filled.
      */
@@ -104,15 +98,12 @@ public:
     /**
      Fill the Beta matrix, the backwards half of the forward-backward algorithm.
      This represents the probability that starting from the (i,j) state, the
-     combined
-     probability of transitioning out and following all paths through to the
-     end.
-     That is, we need to calculate transition from state and emit from next
+     combined probability of transitioning out and following all paths through to the
+     end. That is, we need to calculate transition from state and emit from next
      state for each
 
      In combination with the Alpha matrix, this allows us to calculate all paths
-     that
-     pass through the (i,j) element, as exp(Alpha(i,j) + Beta(i,j))
+     that pass through the (i,j) element, as exp(Alpha(i,j) + Beta(i,j))
 
      All probabilities stored in the matrix are stored as NON-LOGGED
      probabilities.
@@ -148,9 +139,9 @@ private:
     /// of the maximum path through each and the inputs for column j.
     bool RangeGuide(size_t j, const M& guide, const M& matrix, size_t* beginRow,
                     size_t* endRow) const;
-    /* TODO: These two are totally redundant.  We will need to either enforce the scaling we will use
-      or expand the template typing to properly handle either case.  The RangeGuide function determines the 
-      minimum score by either diving or subtracting depending on the scale. */
+    /* TODO: These two are totally redundant.  We will need to either enforce the scaling we will
+      use or expand the template typing to properly handle either case.  The RangeGuide function
+      determines the minimum score by either diving or subtracting depending on the scale. */
     double scoreDiff_;  // Should be >1
 };
 
