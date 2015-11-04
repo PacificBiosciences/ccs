@@ -386,8 +386,8 @@ int main(int argc, char **argv)
         const set<string> used = ds.SequencingChemistries();
         vector<string> unavail;
 
-        set_difference(avail.begin(), avail.end(),
-                       used.begin(), used.end(),
+        set_difference(used.begin(), used.end(),
+                       avail.begin(), avail.end(),
                        back_inserter(unavail));
 
         if (!unavail.empty())
