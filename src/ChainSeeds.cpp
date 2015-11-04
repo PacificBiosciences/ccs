@@ -56,52 +56,44 @@ long Diagonal(const seqan::Seed<seqan::Simple>& seed)
     size_t v = beginPositionV(seed);
     size_t h = beginPositionH(seed);
 
-    if (v > h)
-        return -static_cast<long>(v - h);
+    if (v > h) return -static_cast<long>(v - h);
 
     return static_cast<long>(h - v);
 }
 
 bool HVCompare(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Simple>& b)
 {
-    unsigned leftA = beginPositionH(a),
-             leftB = beginPositionH(b);
+    unsigned leftA = beginPositionH(a), leftB = beginPositionH(b);
 
-    if (leftA < leftB)
-        return true;
+    if (leftA < leftB) return true;
 
-    if (leftA == leftB)
-        return endPositionV(a) < endPositionV(b);
+    if (leftA == leftB) return endPositionV(a) < endPositionV(b);
 
     return false;
 }
 
 bool VHCompare(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Simple>& b)
 {
-    unsigned leftA = beginPositionV(a),
-             leftB = beginPositionV(b);
+    unsigned leftA = beginPositionV(a), leftB = beginPositionV(b);
 
-    if (leftA < leftB)
-        return true;
+    if (leftA < leftB) return true;
 
-    if (leftA == leftB)
-        return endPositionH(a) < endPositionH(b);
+    if (leftA == leftB) return endPositionH(a) < endPositionH(b);
 
     return false;
 }
 
 bool DiagonalCompare(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Simple>& b)
 {
-    int diagA = Diagonal(a),
-        diagB = Diagonal(b);
+    int diagA = Diagonal(a), diagB = Diagonal(b);
 
-    if (diagA == diagB)
-        return beginPositionH(a) < beginPositionH(b);
+    if (diagA == diagB) return beginPositionH(a) < beginPositionH(b);
 
     return diagA < diagB;
 }
 
-long LinkScore(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Simple>& b, const int matchReward)
+long LinkScore(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Simple>& b,
+               const int matchReward)
 {
     using namespace std;
 
@@ -109,7 +101,7 @@ long LinkScore(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Sim
     long aV = static_cast<long>(beginPositionV(a));
     long bH = static_cast<long>(beginPositionH(b));
     long bV = static_cast<long>(beginPositionV(b));
-    long k  = min(static_cast<long>(seedSize(a)), static_cast<long>(seedSize(b)));
+    long k = min(static_cast<long>(seedSize(a)), static_cast<long>(seedSize(b)));
 
     long diagA = Diagonal(a);
     long diagB = Diagonal(b);
@@ -126,40 +118,29 @@ struct SDPHit : public seqan::Seed<seqan::Simple>
     size_t Index;
 
     SDPHit(const seqan::Seed<seqan::Simple>& seed, const size_t index)
-        : seqan::Seed<seqan::Simple>(seed)
-        , Index(index)
-    {}
-
-    bool operator<(const SDPHit& other) const
+        : seqan::Seed<seqan::Simple>(seed), Index(index)
     {
-        return DiagonalCompare(*this, other);
     }
+
+    bool operator<(const SDPHit& other) const { return DiagonalCompare(*this, other); }
 };
 
-bool IndexCompare(const SDPHit& a, const SDPHit& b)
-{
-    return a.Index < b.Index;
-}
-
+bool IndexCompare(const SDPHit& a, const SDPHit& b) { return a.Index < b.Index; }
 struct SDPColumn
 {
     boost::optional<SDPHit> Seed;
     size_t Column;
 
     SDPColumn(size_t column, const boost::optional<SDPHit> seed = boost::none)
-        : Seed(seed)
-        , Column(column)
-    {}
-
-    bool operator<(const SDPColumn& other) const
+        : Seed(seed), Column(column)
     {
-        return Column < other.Column;
     }
+
+    bool operator<(const SDPColumn& other) const { return Column < other.Column; }
 };
 
-std::vector<boost::optional<SDPHit>>
-ComputeVisibilityLeft(const std::vector<SDPHit>& seeds,
-                      std::set<SDPHit>& sweepSet)
+std::vector<boost::optional<SDPHit>> ComputeVisibilityLeft(const std::vector<SDPHit>& seeds,
+                                                           std::set<SDPHit>& sweepSet)
 {
     using namespace seqan;
     using namespace std;
@@ -167,25 +148,21 @@ ComputeVisibilityLeft(const std::vector<SDPHit>& seeds,
     vector<boost::optional<SDPHit>> visible(seeds.size(), boost::none);
     auto toRemove = seeds.begin();
 
-    for (auto it = seeds.begin(); it != seeds.end(); )
-    {
+    for (auto it = seeds.begin(); it != seeds.end();) {
         const size_t col = beginPositionH(*it);
         const auto start = it;
 
-        for (; it != seeds.end() && col == beginPositionH(*it); ++it)
-        {
+        for (; it != seeds.end() && col == beginPositionH(*it); ++it) {
             auto succ = sweepSet.upper_bound(*it);
 
-            if (succ != sweepSet.end())
-            {
+            if (succ != sweepSet.end()) {
                 visible[it->Index] = *succ;
             }
         }
 
         sweepSet.insert(start, it);
 
-        for (; toRemove != seeds.end() && endPositionH(*toRemove) < col; ++toRemove)
-        {
+        for (; toRemove != seeds.end() && endPositionH(*toRemove) < col; ++toRemove) {
             sweepSet.erase(*toRemove);
         }
     }
@@ -196,13 +173,10 @@ ComputeVisibilityLeft(const std::vector<SDPHit>& seeds,
     return visible;
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
-
-void
-ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
-           const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
-           const int matchReward)
+void ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
+                const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet, const int matchReward)
 {
     using namespace seqan;
     using namespace std;
@@ -214,8 +188,7 @@ ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
     {
         size_t i = 0;
 
-        for (auto it = begin(seedSet); it != end(seedSet); ++it, ++i)
-        {
+        for (auto it = begin(seedSet); it != end(seedSet); ++it, ++i) {
             seeds.push_back(SDPHit(*it, i));
             scores[i] = seedSize(*it);
         }
@@ -235,16 +208,15 @@ ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
     boost::optional<size_t> bestChainEnd = boost::none;
     vector<boost::optional<size_t>> chainPred(seeds.size(), boost::none);
 
-    auto zScore = [&scores] (const SDPHit& seed)
-                  { return scores[seed.Index] + beginPositionH(seed) + beginPositionV(seed); };
+    auto zScore = [&scores](const SDPHit& seed) {
+        return scores[seed.Index] + beginPositionH(seed) + beginPositionV(seed);
+    };
 
-    for (auto it = seeds.begin(); it != seeds.end(); )
-    {
+    for (auto it = seeds.begin(); it != seeds.end();) {
         const size_t row = beginPositionV(*it);
         const auto start = it;
 
-        for (; it != seeds.end() && row == beginPositionV(*it); ++it)
-        {
+        for (; it != seeds.end() && row == beginPositionV(*it); ++it) {
             long bestScore = -numeric_limits<long>::max();
             boost::optional<SDPHit> bestSeed = boost::none;
 
@@ -253,15 +225,13 @@ ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
                 SDPColumn col(beginPositionH(*it));
                 auto pred = colSet.lower_bound(col);
 
-                if (pred != colSet.begin())
-                {
+                if (pred != colSet.begin()) {
                     pred = prev(pred);
                     long s = scores[pred->Seed->Index] + LinkScore(*it, *(pred->Seed), matchReward);
 
-                    if (s > bestScore)
-                    {
+                    if (s > bestScore) {
                         bestScore = s;
-                        bestSeed  = pred->Seed;
+                        bestSeed = pred->Seed;
                     }
                 }
             }
@@ -270,44 +240,36 @@ ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
             {
                 auto visa = sweepSet.lower_bound(*it);
 
-                if (visa != sweepSet.begin())
-                {
+                if (visa != sweepSet.begin()) {
                     visa = prev(visa);
                     long s = scores[visa->Index] + LinkScore(*it, *visa, matchReward);
 
-                    if (s > bestScore)
-                    {
+                    if (s > bestScore) {
                         bestScore = s;
-                        bestSeed  = *visa;
+                        bestSeed = *visa;
                     }
                 }
             }
 
             // search visible fragments (left)
-            if (auto visl = visible[it->Index])
-            {
+            if (auto visl = visible[it->Index]) {
                 long s = scores[visl->Index] + LinkScore(*it, *visl, matchReward);
 
-                if (s > bestScore)
-                {
+                if (s > bestScore) {
                     bestScore = s;
-                    bestSeed  = visl;
+                    bestSeed = visl;
                 }
             }
 
-            if (bestSeed && bestScore > 0)
-            {
+            if (bestSeed && bestScore > 0) {
                 scores[it->Index] = bestScore;
                 chainPred[it->Index] = bestSeed->Index;
 
-                if (bestScore > bestChainScore)
-                {
+                if (bestScore > bestChainScore) {
                     bestChainScore = bestScore;
-                    bestChainEnd   = it->Index;
+                    bestChainEnd = it->Index;
                 }
-            }
-            else
-            {
+            } else {
                 // PLEASE NOTE: these have already been done at creation time
                 // scores[it->Index] = seedSize(*it);
                 // chainPred[it->Index] = boost::none;
@@ -319,22 +281,19 @@ ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
         // remove all seeds from the sweepSet with end position less than the current row,
         // and ensure the colSet invariant is kept:
         //   that all columns greater than our current
-        for (; toRemove != seeds.end() && endPositionV(*toRemove) < row; ++toRemove)
-        {
+        for (; toRemove != seeds.end() && endPositionV(*toRemove) < row; ++toRemove) {
             SDPColumn col(endPositionH(*toRemove), boost::make_optional(*toRemove));
 
             auto it = colSet.find(col);
 
             // update the column if it doesn't exist
             // or if its score is less than the fragment we're removing from consideration
-            if (it == colSet.end() || zScore(*(it->Seed)) < zScore(*toRemove))
-            {
+            if (it == colSet.end() || zScore(*(it->Seed)) < zScore(*toRemove)) {
                 // insert the updated column, get successor
                 it = next(colSet.insert(col).first);
 
                 // keep removing columns long as the scores are less than
-                while (it != colSet.end() && zScore(*(it->Seed)) < zScore(*toRemove))
-                {
+                while (it != colSet.end() && zScore(*(it->Seed)) < zScore(*toRemove)) {
                     it = colSet.erase(it);
                 }
             }
@@ -347,8 +306,7 @@ ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
     sort(seeds.begin(), seeds.end(), IndexCompare);
     clear(chain);
 
-    while (bestChainEnd)
-    {
+    while (bestChainEnd) {
         appendValue(chain, seeds[*bestChainEnd]);
         bestChainEnd = chainPred[*bestChainEnd];
     }
@@ -357,5 +315,5 @@ ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
     reverse(chain);
 }
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

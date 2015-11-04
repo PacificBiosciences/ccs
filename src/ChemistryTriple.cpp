@@ -46,45 +46,40 @@ using namespace std;
 namespace PacBio {
 namespace CCS {
 
-ChemistryTriple::ChemistryTriple(const std::string& bindingKit,
-                                 const std::string& sequencingKit,
+ChemistryTriple::ChemistryTriple(const std::string& bindingKit, const std::string& sequencingKit,
                                  const std::string& changeListID)
 {
-    if (!SetValues(bindingKit, sequencingKit, changeListID))
-    {
-        throw BadChemistryTriple("unparsable ChemistryTriple(" + bindingKit + ", " + sequencingKit + ", " + changeListID + ")");
+    if (!SetValues(bindingKit, sequencingKit, changeListID)) {
+        throw BadChemistryTriple("unparsable ChemistryTriple(" + bindingKit + ", " + sequencingKit +
+                                 ", " + changeListID + ")");
     }
 }
 
-bool ChemistryTriple::SetValues(const std::string& bindingKit,
-                                const std::string& sequencingKit,
+bool ChemistryTriple::SetValues(const std::string& bindingKit, const std::string& sequencingKit,
                                 const std::string& changeListID)
 {
     using namespace boost::xpressive;
 
     using boost::lexical_cast;
 
-    try
-    {
+    try {
         BindingKit = lexical_cast<unsigned>(bindingKit);
         SequencingKit = lexical_cast<unsigned>(sequencingKit);
 
         smatch what;
         // sregex::compile("^(\\d+)\\.(\\d+)");
-        sregex re = bos >> (s1=+_d) >> '.' >> (s2=+_d);
+        sregex re = bos >> (s1 = +_d) >> '.' >> (s2 = +_d);
 
-        if (regex_search(changeListID.begin(), changeListID.end(), what, re))
-        {
+        if (regex_search(changeListID.begin(), changeListID.end(), what, re)) {
             MajorVersion = lexical_cast<unsigned>(what[1]);
             MinorVersion = lexical_cast<unsigned>(what[2]);
             return true;
         }
+    } catch (const boost::bad_lexical_cast& e) {
     }
-    catch (const boost::bad_lexical_cast& e)
-    {}
 
     return false;
 }
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

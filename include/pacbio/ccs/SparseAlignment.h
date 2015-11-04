@@ -55,13 +55,8 @@ namespace PacBio {
 namespace CCS {
 namespace {
 
-inline
-size_t SafeSubtract(size_t size, size_t k)
-{
-    return size > k ? size - k : 0;
-}
-
-template<typename TShape>
+inline size_t SafeSubtract(size_t size, size_t k) { return size > k ? size - k : 0; }
+template <typename TShape>
 class HpHasher
 {
 public:
@@ -72,19 +67,15 @@ public:
 
         const char dna[4] = {'A', 'C', 'G', 'T'};
 
-        for (size_t i = 0; i < 4; i++)
-        {
+        for (size_t i = 0; i < 4; i++) {
             DnaString s = string(length(shape), dna[i]);
             hashes[i] = hash(shape, begin(s));
         }
     }
 
-    inline
-    bool operator()(const unsigned h) const
+    inline bool operator()(const unsigned h) const
     {
-        if (h == hashes[0] || h == hashes[1] ||
-            h == hashes[2] || h == hashes[3])
-            return true;
+        if (h == hashes[0] || h == hashes[1] || h == hashes[2] || h == hashes[3]) return true;
 
         return false;
     }
@@ -93,12 +84,11 @@ private:
     unsigned hashes[4];
 };
 
-} // anonymous namespace
+}  // anonymous namespace
 
-
-template<typename TConfig>
-void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds,
-               const seqan::DnaString& seq1, const seqan::DnaString& seq2)
+template <typename TConfig>
+void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds, const seqan::DnaString& seq1,
+               const seqan::DnaString& seq2)
 {
     using namespace seqan;
 
@@ -112,15 +102,12 @@ void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds,
 
     hashInit(shape, start);
 
-    for (size_t j = 0; j < end; j++)
-    {
-        if (isHomopolymer(hashNext(shape, start + j)))
-            continue;
+    for (size_t j = 0; j < end; j++) {
+        if (isHomopolymer(hashNext(shape, start + j))) continue;
 
         auto hits = getOccurrences(index, shape);
 
-        for (const auto& i : hits)
-        {
+        for (const auto& i : hits) {
             Seed<Simple> seed(i, j, TConfig::Size);
 
 #ifdef MERGESEEDS
@@ -133,12 +120,11 @@ void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds,
     }
 }
 
-
-template<typename TConfig>
-void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& seeds,
-               const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
-               const seqan::DnaString& seq,
-               const size_t qIdx)
+template <typename TConfig>
+void FindSeeds(
+    std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& seeds,
+    const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
+    const seqan::DnaString& seq, const size_t qIdx)
 {
     using namespace seqan;
     using namespace std;
@@ -152,19 +138,15 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& see
 
     hashInit(shape, start);
 
-    for (size_t i = 0; i < end; i++)
-    {
-        if (isHomopolymer(hashNext(shape, start + i)))
-            continue;
+    for (size_t i = 0; i < end; i++) {
+        if (isHomopolymer(hashNext(shape, start + i))) continue;
 
         auto hits = getOccurrences(index, shape);
 
-        for (const auto& hit : hits)
-        {
+        for (const auto& hit : hits) {
             size_t rIdx;
 
-            if ((rIdx = getValueI1(hit)) == qIdx)
-                continue;
+            if ((rIdx = getValueI1(hit)) == qIdx) continue;
 
             size_t j = getValueI2(hit);
             Seed<Simple> seed(i, j, TConfig::Size);
@@ -179,7 +161,7 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& see
     }
 }
 
-template<size_t TSize, typename TContainer>
+template <size_t TSize, typename TContainer>
 size_t CountSeeds(const TContainer& seeds)
 {
     using namespace seqan;
@@ -187,8 +169,7 @@ size_t CountSeeds(const TContainer& seeds)
     size_t count = length(seeds);
 
 #ifdef MERGESEEDS
-    for (const auto& seed : seeds)
-    {
+    for (const auto& seed : seeds) {
         count += seedSize(seed) - TSize;
     }
 #endif
@@ -196,29 +177,24 @@ size_t CountSeeds(const TContainer& seeds)
     return count;
 }
 
-template<size_t TSize>
+template <size_t TSize>
 void FilterSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& seeds,
                  const size_t nBest)
 {
     using namespace std;
 
-    if (seeds.size() <= nBest)
-        return;
+    if (seeds.size() <= nBest) return;
 
     // keep a priority queue of the biggest hits,
     // sorted ascendingly. Bump the least value if a new one is bigger.
     priority_queue<size_t, std::vector<size_t>, std::greater<size_t>> best;
 
-    for (const auto& kv : seeds)
-    {
+    for (const auto& kv : seeds) {
         size_t nSeeds = CountSeeds<TSize>(kv.second);
 
-        if (best.size() < nBest)
-        {
+        if (best.size() < nBest) {
             best.push(nSeeds);
-        }
-        else if (nSeeds > best.top())
-        {
+        } else if (nSeeds > best.top()) {
             best.pop();
             best.push(nSeeds);
         }
@@ -226,25 +202,20 @@ void FilterSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& s
 
     size_t minSize = best.top();
 
-    for (auto it = seeds.begin(); it != seeds.end(); )
-    {
-        if (CountSeeds<TSize>(it->second) < minSize)
-        {
+    for (auto it = seeds.begin(); it != seeds.end();) {
+        if (CountSeeds<TSize>(it->second) < minSize) {
             it = seeds.erase(it);
-        }
-        else
-        {
+        } else {
             ++it;
         }
     }
 }
 
-template<typename TAlignConfig, typename TScoring>
-seqan::Align<seqan::DnaString, seqan::ArrayGaps>
-SeedsToAlignment(const seqan::DnaString& seq1, const seqan::DnaString& seq2,
-                 const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds,
-                 const TScoring& scoring,
-                 const TAlignConfig& config)
+template <typename TAlignConfig, typename TScoring>
+seqan::Align<seqan::DnaString, seqan::ArrayGaps> SeedsToAlignment(
+    const seqan::DnaString& seq1, const seqan::DnaString& seq2,
+    const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds, const TScoring& scoring,
+    const TAlignConfig& config)
 {
     using namespace seqan;
 
@@ -262,19 +233,18 @@ SeedsToAlignment(const seqan::DnaString& seq1, const seqan::DnaString& seq2,
 }
 
 // TODO (lhepler) : investigate default values other than 10
-template<size_t   TSize  = 10,
-         typename TShape = seqan::UngappedShape<TSize>,
-         typename TIndex = seqan::IndexQGram<TShape>>
+template <size_t TSize = 10, typename TShape = seqan::UngappedShape<TSize>,
+          typename TIndex = seqan::IndexQGram<TShape>>
 struct FindSeedsConfig
 {
-    typedef TIndex    IndexType;
-    typedef TShape    ShapeType;
+    typedef TIndex IndexType;
+    typedef TShape ShapeType;
     static const size_t Size = TSize;
 };
 
 template <size_t TSize>
-seqan::String<seqan::Seed<seqan::Simple>>
-SparseAlign(const seqan::DnaString& seq1, const seqan::DnaString& seq2)
+seqan::String<seqan::Seed<seqan::Simple>> SparseAlign(const seqan::DnaString& seq1,
+                                                      const seqan::DnaString& seq2)
 {
     using namespace seqan;
 
@@ -290,8 +260,7 @@ SparseAlign(const seqan::DnaString& seq1, const seqan::DnaString& seq2)
 }
 
 template <size_t TSize>
-std::vector<std::pair<size_t, size_t>>
-SparseAlign(const std::string& seq1, const std::string& seq2)
+std::vector<std::pair<size_t, size_t>> SparseAlign(const std::string& seq1, const std::string& seq2)
 {
     using namespace seqan;
     using namespace std;
@@ -301,13 +270,12 @@ SparseAlign(const std::string& seq1, const std::string& seq2)
 
     vector<pair<size_t, size_t>> result;
 
-    for (const auto& s : chain)
-    {
+    for (const auto& s : chain) {
         result.push_back(make_pair(beginPositionH(s), beginPositionV(s)));
     }
 
     return result;
 }
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

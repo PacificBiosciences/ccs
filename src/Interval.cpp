@@ -58,5 +58,5 @@ ostream& operator<<(ostream& os, const Interval& interval)
     return os << '[' << interval.Left() << ", " << interval.Right() << ')';
 }
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

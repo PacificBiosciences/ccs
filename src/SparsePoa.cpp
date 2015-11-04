@@ -69,11 +69,12 @@ SdpAnchorVector SdpRangeFinder::FindAnchors(const std::string& consensusSequence
 }
 
 SparsePoa::SparsePoa()
-    : graph_(new PoaGraph()),
-      readPaths_(),
-      reverseComplemented_(),
-      rangeFinder_(new SdpRangeFinder())
-{}
+    : graph_(new PoaGraph())
+    , readPaths_()
+    , reverseComplemented_()
+    , rangeFinder_(new SdpRangeFinder())
+{
+}
 
 SparsePoa::~SparsePoa()
 {
@@ -81,27 +82,23 @@ SparsePoa::~SparsePoa()
     delete rangeFinder_;
 }
 
-SparsePoa::ReadKey
-SparsePoa::AddRead
-  (const std::string& readSequence, const PoaAlignmentOptions& /* alnOptions */, float minScoreToAdd)
+SparsePoa::ReadKey SparsePoa::AddRead(const std::string& readSequence,
+                                      const PoaAlignmentOptions& /* alnOptions */,
+                                      float minScoreToAdd)
 {
     AlignConfig config = DefaultPoaConfig(AlignMode::LOCAL);
     Path outputPath;
     ReadKey key = -1;
 
-    if (graph_->NumReads() == 0)
-    {
+    if (graph_->NumReads() == 0) {
         graph_->AddFirstRead(readSequence, &outputPath);
         readPaths_.push_back(outputPath);
         reverseComplemented_.push_back(false);
         key = graph_->NumReads() - 1;
-    }
-    else
-    {
+    } else {
         auto c = graph_->TryAddRead(readSequence, config, rangeFinder_);
 
-        if (c->Score() >= minScoreToAdd)
-        {
+        if (c->Score() >= minScoreToAdd) {
             graph_->CommitAdd(c, &outputPath);
             readPaths_.push_back(outputPath);
             reverseComplemented_.push_back(false);
@@ -114,42 +111,34 @@ SparsePoa::AddRead
     return key;
 }
 
-SparsePoa::ReadKey
-SparsePoa::OrientAndAddRead
-  (const std::string& readSequence, const PoaAlignmentOptions& /* alnOptions */, float minScoreToAdd)
+SparsePoa::ReadKey SparsePoa::OrientAndAddRead(const std::string& readSequence,
+                                               const PoaAlignmentOptions& /* alnOptions */,
+                                               float minScoreToAdd)
 {
     AlignConfig config = DefaultPoaConfig(AlignMode::LOCAL);
     Path outputPath;
     ReadKey key;
 
-    if (graph_->NumReads() == 0)
-    {
+    if (graph_->NumReads() == 0) {
         graph_->AddFirstRead(readSequence, &outputPath);
         readPaths_.push_back(outputPath);
         reverseComplemented_.push_back(false);
         key = graph_->NumReads() - 1;
-    }
-    else
-    {
+    } else {
         auto c1 = graph_->TryAddRead(readSequence, config, rangeFinder_);
         auto c2 = graph_->TryAddRead(ReverseComplement(readSequence), config, rangeFinder_);
 
-        if (c1->Score() >= c2->Score() && c1->Score() >= minScoreToAdd)
-        {
+        if (c1->Score() >= c2->Score() && c1->Score() >= minScoreToAdd) {
             graph_->CommitAdd(c1, &outputPath);
             readPaths_.push_back(outputPath);
             reverseComplemented_.push_back(false);
             key = graph_->NumReads() - 1;
-        }
-        else if (c2->Score() >= c1->Score() && c2->Score() >= minScoreToAdd)
-        {
+        } else if (c2->Score() >= c1->Score() && c2->Score() >= minScoreToAdd) {
             graph_->CommitAdd(c2, &outputPath);
             readPaths_.push_back(outputPath);
             reverseComplemented_.push_back(true);
             key = graph_->NumReads() - 1;
-        }
-        else
-        {
+        } else {
             key = -1;
         }
 
@@ -159,16 +148,14 @@ SparsePoa::OrientAndAddRead
     return key;
 }
 
-std::shared_ptr<const PoaConsensus>
-SparsePoa::FindConsensus(int minCoverage,
-                         std::vector<PoaAlignmentSummary>* summaries) const
+std::shared_ptr<const PoaConsensus> SparsePoa::FindConsensus(
+    int minCoverage, std::vector<PoaAlignmentSummary>* summaries) const
 {
     AlignConfig config = DefaultPoaConfig(AlignMode::LOCAL);
     std::shared_ptr<const PoaConsensus> pc(graph_->FindConsensus(config, minCoverage));
     std::string css = pc->Sequence;
 
     if (summaries != NULL) {
-
         summaries->clear();
 
         // digest the consensus path consensus into map(vtx, pos)
@@ -176,27 +163,22 @@ SparsePoa::FindConsensus(int minCoverage,
         std::map<Vertex, size_t> cssPosition;
 
         int i = 0;
-        for (Vertex v : pc->Path)
-        {
+        for (Vertex v : pc->Path) {
             cssPosition[v] = i;
             i++;
         }
 
-        for (size_t readId=0; readId < graph_->NumReads(); readId++)
-        {
+        for (size_t readId = 0; readId < graph_->NumReads(); readId++) {
             size_t readS = 0, readE = 0;
-            size_t cssS  = 0, cssE  = 0;
+            size_t cssS = 0, cssE = 0;
             bool foundStart = false;
 
             const std::vector<Vertex>& readPath = readPaths_[readId];
 
-            for (size_t readPos = 0; readPos < readPath.size(); readPos++)
-            {
+            for (size_t readPos = 0; readPos < readPath.size(); readPos++) {
                 Vertex v = readPath[readPos];
-                if (cssPosition.find(v) != cssPosition.end())
-                {
-                    if (!foundStart)
-                    {
+                if (cssPosition.find(v) != cssPosition.end()) {
+                    if (!foundStart) {
                         cssS = cssPosition[v];
                         readS = readPos;
                         foundStart = true;
@@ -222,28 +204,23 @@ SparsePoa::FindConsensus(int minCoverage,
     return pc;
 }
 
-std::string
-SparsePoa::ToGraphViz(int flags, const PoaConsensus* pc) const
+std::string SparsePoa::ToGraphViz(int flags, const PoaConsensus* pc) const
 {
     return graph_->ToGraphViz(flags, pc);
 }
 
-void
-SparsePoa::WriteGraphVizFile(const std::string& filename, int flags, const PoaConsensus* pc) const
+void SparsePoa::WriteGraphVizFile(const std::string& filename, int flags,
+                                  const PoaConsensus* pc) const
 {
     graph_->WriteGraphVizFile(filename, flags, pc);
 }
 
-void
-SparsePoa::PruneGraph(float /* minCoverageFraction */)
-{}
-
-void
-SparsePoa::repCheck()
+void SparsePoa::PruneGraph(float /* minCoverageFraction */) {}
+void SparsePoa::repCheck()
 {
     assert(graph_->NumReads() == readPaths_.size());
     assert(graph_->NumReads() == reverseComplemented_.size());
 }
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

@@ -37,8 +37,7 @@
 
 #include <seqan/seq_io.h>
 
-bool LoadFastaSequences(std::string fastaFname,
-                        std::vector<std::string>& ids,
+bool LoadFastaSequences(std::string fastaFname, std::vector<std::string>& ids,
                         std::vector<std::string>& seqs)
 {
     seqan::StringSet<seqan::CharString> sIds;
@@ -47,8 +46,12 @@ bool LoadFastaSequences(std::string fastaFname,
     seqan::SeqFileIn seqFileIn(fastaFname.c_str());
     readRecords(sIds, sSeqs, seqFileIn);
 
-    for (auto& sId  : sIds)  {  ids.push_back(toCString(sId));  }
-    for (auto& sSeq : sSeqs) { seqs.push_back(toCString(sSeq)); }
+    for (auto& sId : sIds) {
+        ids.push_back(toCString(sId));
+    }
+    for (auto& sSeq : sSeqs) {
+        seqs.push_back(toCString(sSeq));
+    }
 
     return true;
 }

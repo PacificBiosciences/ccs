@@ -50,8 +50,9 @@ ConsensusSettings::ConsensusSettings(const optparse::Values& options)
     , MinPredictedAccuracy{options.get(OptionNames::MinPredictedAccuracy)}
     , MinZScore{options.get(OptionNames::MinZScore)}
     , MaxDropFraction{options.get(OptionNames::MaxDropFraction)}
-    , Directional{false} // options.get("directional")}
-{ }
+    , Directional{false}  // options.get("directional")}
+{
+}
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

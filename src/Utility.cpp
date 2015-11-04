@@ -53,10 +53,9 @@ namespace CCS {
 string AbsolutePath(const string& path)
 {
     char buf[PATH_MAX + 1];
-    char *res = realpath(path.c_str(), buf);
+    char* res = realpath(path.c_str(), buf);
 
-    if (res != nullptr)
-    {
+    if (res != nullptr) {
         string abspath(res);
         return abspath;
     }
@@ -75,17 +74,14 @@ void FlattenFofn(vector<string>& res, const string& file)
     using boost::algorithm::iends_with;
     using boost::algorithm::trim;
 
-    if (iends_with(file, ".fofn"))
-    {
+    if (iends_with(file, ".fofn")) {
         ifstream fofn(file);
         string line;
-        while (getline(fofn, line))
-        {
+        while (getline(fofn, line)) {
             trim(line);
             FlattenFofn(res, line);
         }
-    }
-    else if (iends_with(file, ".bam"))
+    } else if (iends_with(file, ".bam"))
         res.push_back(file);
     else
         throw invalid_argument("not a .fofn or .bam file!");
@@ -95,13 +91,12 @@ vector<string> FlattenFofn(const vector<string>& files)
 {
     vector<string> res;
 
-    for (const auto& file : files)
-    {
+    for (const auto& file : files) {
         FlattenFofn(res, file);
     }
 
     return res;
 }
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

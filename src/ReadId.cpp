@@ -57,13 +57,12 @@ ostream& operator<<(ostream& os, const ReadId& id)
 {
     os << *(id.MovieName) << '/' << id.HoleNumber;
 
-    if (id.ZmwInterval)
-    {
+    if (id.ZmwInterval) {
         os << '/' << id.ZmwInterval->Left() << '_' << id.ZmwInterval->Right();
     }
 
     return os;
 }
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

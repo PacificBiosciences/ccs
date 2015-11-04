@@ -55,10 +55,9 @@ TEST(IntervalTest, Merging)
 
     EXPECT_EQ(tree.size(), 1);
 
-    for (const auto& i : tree)
-    {
+    for (const auto& i : tree) {
         EXPECT_EQ(i.Right(), 5);
-        EXPECT_EQ(i.Left(),  1);
+        EXPECT_EQ(i.Left(), 1);
     }
 }
 
@@ -76,10 +75,9 @@ TEST(IntervalTest, Merging2)
 
     EXPECT_EQ(tree.size(), 1);
 
-    for (const auto& i : tree)
-    {
+    for (const auto& i : tree) {
         EXPECT_EQ(i.Right(), 11);
-        EXPECT_EQ(i.Left(),  1);
+        EXPECT_EQ(i.Left(), 1);
     }
 }
 
@@ -99,8 +97,7 @@ TEST(IntervalTest, Iteration)
     Interval interval(0, 11);
     size_t i = interval.Left();
 
-    for (const auto j : interval)
-    {
+    for (const auto j : interval) {
         EXPECT_EQ(j, i++);
     }
 }
@@ -120,9 +117,8 @@ TEST(IntervalTest, Gaps)
     size_t l = 3;
     size_t r = 5;
 
-    for (const auto& i : gaps)
-    {
-        EXPECT_EQ(i.Left(),  l);
+    for (const auto& i : gaps) {
+        EXPECT_EQ(i.Left(), l);
         EXPECT_EQ(i.Right(), r);
 
         l += 4;
@@ -140,9 +136,8 @@ TEST(IntervalTest, Gaps2)
 
     EXPECT_EQ(gaps.size(), 1);
 
-    for (auto& i : gaps)
-    {
-        EXPECT_EQ(i.Left(),  9);
+    for (auto& i : gaps) {
+        EXPECT_EQ(i.Left(), 9);
         EXPECT_EQ(i.Right(), 11);
     }
 
@@ -153,9 +148,8 @@ TEST(IntervalTest, Gaps2)
     size_t l = 1;
     size_t r = 3;
 
-    for (const auto& i : gaps)
-    {
-        EXPECT_EQ(i.Left(),  l);
+    for (const auto& i : gaps) {
+        EXPECT_EQ(i.Left(), l);
         EXPECT_EQ(i.Right(), r);
 
         l += 8;
@@ -166,9 +160,8 @@ TEST(IntervalTest, Gaps2)
 
     EXPECT_EQ(gaps.size(), 1);
 
-    for (const auto& i : gaps)
-    {
-        EXPECT_EQ(i.Left(),  11);
+    for (const auto& i : gaps) {
+        EXPECT_EQ(i.Left(), 11);
         EXPECT_EQ(i.Right(), 15);
     }
 }
@@ -184,9 +177,8 @@ TEST(IntervalTest, Gaps3)
 
     EXPECT_EQ(gaps.size(), 1);
 
-    for (const auto& i : gaps)
-    {
-        EXPECT_EQ(i.Left(),  5);
+    for (const auto& i : gaps) {
+        EXPECT_EQ(i.Left(), 5);
         EXPECT_EQ(i.Right(), 7);
     }
 }
@@ -198,9 +190,8 @@ TEST(IntervalTest, ZMW25300)
     tree.Insert(Interval(252, 295));
     tree.Insert(Interval(293, 338));
 
-    for (const auto& i : tree)
-    {
-        EXPECT_EQ(i.Left(),  252);
+    for (const auto& i : tree) {
+        EXPECT_EQ(i.Left(), 252);
         EXPECT_EQ(i.Right(), 338);
     }
 }
@@ -209,34 +200,29 @@ TEST(IntervalTest, FromString)
 {
     Interval a = Interval::FromString("1");
 
-    EXPECT_EQ(a.Left(),  1);
+    EXPECT_EQ(a.Left(), 1);
     EXPECT_EQ(a.Right(), 2);
 
     IntervalTree tree = IntervalTree::FromString("1,3-4");
 
     size_t l = 1, r = 2;
 
-    for (const auto& i : tree)
-    {
-        EXPECT_EQ(i.Left(),  l);
+    for (const auto& i : tree) {
+        EXPECT_EQ(i.Left(), l);
         EXPECT_EQ(i.Right(), r);
         l = 3;
         r = 5;
     }
 
-    EXPECT_THROW({
-        IntervalTree tree = IntervalTree::FromString("A,15-22");
-    }, std::invalid_argument);
+    EXPECT_THROW({ IntervalTree tree = IntervalTree::FromString("A,15-22"); },
+                 std::invalid_argument);
 
-    EXPECT_THROW({
-        IntervalTree tree = IntervalTree::FromString("15-2");
-    }, std::invalid_argument);
+    EXPECT_THROW({ IntervalTree tree = IntervalTree::FromString("15-2"); }, std::invalid_argument);
 
     tree = IntervalTree::FromString("2-2");
 
-    for (const auto& i : tree)
-    {
-        EXPECT_EQ(i.Left(),  2);
+    for (const auto& i : tree) {
+        EXPECT_EQ(i.Left(), 2);
         EXPECT_EQ(i.Right(), 3);
     }
 }

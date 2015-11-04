@@ -45,26 +45,14 @@ using std::chrono::milliseconds;
 namespace PacBio {
 namespace CCS {
 
-Timer::Timer()
-{
-    Restart();
-}
-
+Timer::Timer() { Restart(); }
 float Timer::ElapsedMilliseconds() const
 {
     auto tock = steady_clock::now();
     return std::chrono::duration_cast<milliseconds>(tock - tick).count();
 }
 
-float Timer::ElapsedSeconds() const
-{
-    return ElapsedMilliseconds() / 1000;
-}
-
-void Timer::Restart()
-{
-    tick = steady_clock::now();
-}
-
-} // namespace CCS
-} // namespace PacBio
+float Timer::ElapsedSeconds() const { return ElapsedMilliseconds() / 1000; }
+void Timer::Restart() { tick = steady_clock::now(); }
+}  // namespace CCS
+}  // namespace PacBio

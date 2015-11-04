@@ -55,5 +55,5 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> tick;
 };
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

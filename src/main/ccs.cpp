@@ -72,66 +72,58 @@ using boost::none;
 using boost::optional;
 using optparse::OptionParser;
 
-
 // these strings are part of the BAM header, they CANNOT contain newlines
 #define VERSION "2.0.0"
 #define DESCRIPTION "Generate circular consensus sequences (ccs) from subreads."
 
-
 namespace PacBio {
 namespace CCS {
 namespace OptionNames {
-    constexpr auto ForceOutput  = "force";
-    constexpr auto PbIndex      = "pbi";
-    constexpr auto Zmws         = "zmws";
-    constexpr auto MinSnr       = "minSnr";
-    constexpr auto MinReadScore = "minReadScore";
-    constexpr auto ReportFile   = "reportFile";
-    constexpr auto NumThreads   = "numThreads";
-    constexpr auto LogFile      = "logFile";
-    constexpr auto LogLevel     = "logLevel";
-} // namespace OptionNames
-} // namespace CCS
-} // namespace PacBio
+constexpr auto ForceOutput = "force";
+constexpr auto PbIndex = "pbi";
+constexpr auto Zmws = "zmws";
+constexpr auto MinSnr = "minSnr";
+constexpr auto MinReadScore = "minReadScore";
+constexpr auto ReportFile = "reportFile";
+constexpr auto NumThreads = "numThreads";
+constexpr auto LogFile = "logFile";
+constexpr auto LogLevel = "logLevel";
+}  // namespace OptionNames
+}  // namespace CCS
+}  // namespace PacBio
 
-
-typedef ReadType<ReadId>           Subread;
+typedef ReadType<ReadId> Subread;
 typedef ChunkType<ReadId, Subread> Chunk;
-typedef ConsensusType<ReadId>      CCS;
-typedef ResultType<CCS>            Results;
-
+typedef ConsensusType<ReadId> CCS;
+typedef ResultType<CCS> Results;
 
 const auto CircularConsensus = &Consensus<Chunk, CCS>;
-
 
 void Writer(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts, Results&& results)
 {
     counts += results;
 
-    for (const auto& ccs : results)
-    {
+    for (const auto& ccs : results) {
         BamRecordImpl record;
         TagCollection tags;
-        stringstream  name;
+        stringstream name;
 
         // some defaults values
         record.Bin(0)
-              .InsertSize(0)
-              .MapQuality(255)
-              .MatePosition(-1)
-              .MateReferenceId(-1)
-              .Position(-1)
-              .ReferenceId(-1)
-              .Flag(0)
-              .SetMapped(false);
+            .InsertSize(0)
+            .MapQuality(255)
+            .MatePosition(-1)
+            .MateReferenceId(-1)
+            .Position(-1)
+            .ReferenceId(-1)
+            .Flag(0)
+            .SetMapped(false);
 
         name << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs";
 
         vector<float> snr = {
-            static_cast<float>(ccs.SignalToNoise.A),
-            static_cast<float>(ccs.SignalToNoise.C),
-            static_cast<float>(ccs.SignalToNoise.G),
-            static_cast<float>(ccs.SignalToNoise.T) };
+            static_cast<float>(ccs.SignalToNoise.A), static_cast<float>(ccs.SignalToNoise.C),
+            static_cast<float>(ccs.SignalToNoise.G), static_cast<float>(ccs.SignalToNoise.T)};
 
         tags["RG"] = MakeReadGroupId(*(ccs.Id.MovieName), "CCS");
         tags["zm"] = static_cast<int32_t>(ccs.Id.HoleNumber);
@@ -154,58 +146,50 @@ void Writer(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts, 
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
 #endif
 
-        record.Name(name.str())
-              .SetSequenceAndQualities(ccs.Sequence, ccs.Qualities)
-              .Tags(tags);
+        record.Name(name.str()).SetSequenceAndQualities(ccs.Sequence, ccs.Qualities).Tags(tags);
 
         int64_t offset;
         ccsBam.Write(record, &offset);
 
-        if (ccsPbi)
-            ccsPbi->AddRecord(record, offset);
+        if (ccsPbi) ccsPbi->AddRecord(record, offset);
     }
     ccsBam.TryFlush();
 }
 
-
 Results WriterThread(WorkQueue<Results>& queue, BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi)
 {
     Results counts;
-    while (queue.ConsumeWith(Writer, ref(ccsBam), ref(ccsPbi), ref(counts)));
+    while (queue.ConsumeWith(Writer, ref(ccsBam), ref(ccsPbi), ref(counts)))
+        ;
     return counts;
 }
 
-
-BamHeader PrepareHeader(const OptionParser& parser, int argc, char **argv, const vector<string>& files)
+BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv,
+                        const vector<string>& files)
 {
     using boost::algorithm::join;
 
     ProgramInfo program(parser.prog() + "-" + VERSION);
     program.Name(parser.prog())
-           .CommandLine(parser.prog() + " " + join(vector<string>(argv + 1, argv + argc), " "))
-           .Description(DESCRIPTION)
-           .Version(VERSION);
+        .CommandLine(parser.prog() + " " + join(vector<string>(argv + 1, argv + argc), " "))
+        .Description(DESCRIPTION)
+        .Version(VERSION);
 
     BamHeader header;
-    header.PacBioBamVersion("3.0.1")
-          .SortOrder("unknown")
-          .Version("1.5")
-          .AddProgram(program);
+    header.PacBioBamVersion("3.0.1").SortOrder("unknown").Version("1.5").AddProgram(program);
 
-    for (const auto& file : files)
-    {
+    for (const auto& file : files) {
         BamFile bam(file);
 
-        for (const auto& rg : bam.Header().ReadGroups())
-        {
+        for (const auto& rg : bam.Header().ReadGroups()) {
             if (rg.ReadType() != "SUBREAD")
                 parser.error("invalid input file, READTYPE must be SUBREAD");
 
             ReadGroupInfo readGroup(rg.MovieName(), "CCS");
             readGroup.BindingKit(rg.BindingKit())
-                     .SequencingKit(rg.SequencingKit())
-                     .BasecallerVersion(rg.BasecallerVersion())
-                     .FrameRateHz(rg.FrameRateHz());
+                .SequencingKit(rg.SequencingKit())
+                .BasecallerVersion(rg.BasecallerVersion())
+                .FrameRateHz(rg.FrameRateHz());
 
             header.AddReadGroup(readGroup);
         }
@@ -214,17 +198,14 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char **argv, const
     return header;
 }
 
-
 size_t ThreadCount(int n)
 {
     const int m = thread::hardware_concurrency();
 
-    if (n < 1)
-        return max(1, m + n);
+    if (n < 1) return max(1, m + n);
 
     return min(m, n);
 }
-
 
 void WriteResultsReport(ostream& report, const Results& counts)
 {
@@ -232,33 +213,32 @@ void WriteResultsReport(ostream& report, const Results& counts)
 
     report << fixed << setprecision(2);
 
-    report << "Success -- CCS generated," << counts.Success
-           << "," << 100.0 * counts.Success / total << '%' << endl;
+    report << "Success -- CCS generated," << counts.Success << "," << 100.0 * counts.Success / total
+           << '%' << endl;
 
-    report << "Failed -- Below SNR threshold," << counts.PoorSNR
-           << "," << 100.0 * counts.PoorSNR / total << '%' << endl;
+    report << "Failed -- Below SNR threshold," << counts.PoorSNR << ","
+           << 100.0 * counts.PoorSNR / total << '%' << endl;
 
-    report << "Failed -- No usable subreads," << counts.NoSubreads
-           << "," << 100.0 * counts.NoSubreads / total << '%' << endl;
+    report << "Failed -- No usable subreads," << counts.NoSubreads << ","
+           << 100.0 * counts.NoSubreads / total << '%' << endl;
 
-    report << "Failed -- Insert size too small," << counts.TooShort
-           << "," << 100.0 * counts.TooShort / total << '%' << endl;
+    report << "Failed -- Insert size too small," << counts.TooShort << ","
+           << 100.0 * counts.TooShort / total << '%' << endl;
 
-    report << "Failed -- Not enough full passes," << counts.TooFewPasses
-           << "," << 100.0 * counts.TooFewPasses / total << '%' << endl;
+    report << "Failed -- Not enough full passes," << counts.TooFewPasses << ","
+           << 100.0 * counts.TooFewPasses / total << '%' << endl;
 
-    report << "Failed -- Too many unusable subreads," << counts.TooManyUnusable
-           << "," << 100.0 * counts.TooManyUnusable / total << '%' << endl;
+    report << "Failed -- Too many unusable subreads," << counts.TooManyUnusable << ","
+           << 100.0 * counts.TooManyUnusable / total << '%' << endl;
 
-    report << "Failed -- CCS did not converge," << counts.NonConvergent
-           << "," << 100.0 * counts.NonConvergent / total << '%' << endl;
+    report << "Failed -- CCS did not converge," << counts.NonConvergent << ","
+           << 100.0 * counts.NonConvergent / total << '%' << endl;
 
-    report << "Failed -- CCS below minimum predicted accuracy," << counts.PoorQuality
-           << "," << 100.0 * counts.PoorQuality / total << '%' << endl;
+    report << "Failed -- CCS below minimum predicted accuracy," << counts.PoorQuality << ","
+           << 100.0 * counts.PoorQuality / total << '%' << endl;
 }
 
-
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     using boost::algorithm::join;
     using boost::make_optional;
@@ -268,39 +248,64 @@ int main(int argc, char **argv)
     // args and options
     //
     //
-    auto parser = OptionParser()
-        .usage("usage: %prog [OPTIONS] OUTPUT FILES...")
-        .version("%prog " VERSION "\nCopyright (c) 2014-2015 Pacific Biosciences, Inc.\nLicense: 3-BSD")
-        .description(DESCRIPTION "\nAdditional documentation: http://github.com/PacificBiosciences/pbccs");
+    auto parser =
+        OptionParser()
+            .usage("usage: %prog [OPTIONS] OUTPUT FILES...")
+            .version("%prog " VERSION
+                     "\nCopyright (c) 2014-2015 Pacific Biosciences, Inc.\nLicense: 3-BSD")
+            .description(DESCRIPTION
+                         "\nAdditional documentation: http://github.com/PacificBiosciences/pbccs");
 
-    const vector<string> logLevels = { "TRACE", "DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRITICAL", "FATAL" };
+    const vector<string> logLevels = {"TRACE", "DEBUG", "INFO",     "NOTICE",
+                                      "WARN",  "ERROR", "CRITICAL", "FATAL"};
     const string em = "--";
 
-    parser.add_option(em + OptionNames::ForceOutput).action("store_true").help("Overwrite OUTPUT file if present.");
-    parser.add_option(em + OptionNames::PbIndex).action("store_true").help("Generate a .pbi file for the OUTPUT file.");
-    parser.add_option(em + OptionNames::Zmws).help("Generate CCS for the provided comma-separated holenumber ranges only. Default = all");
-    parser.add_option(em + OptionNames::MinSnr).type("float").set_default(4).help("Minimum SNR of input subreads. Default = %default");
-    parser.add_option(em + OptionNames::MinReadScore).type("float").set_default(0.75).help("Minimum read score of input subreads. Default = %default");
+    parser.add_option(em + OptionNames::ForceOutput)
+        .action("store_true")
+        .help("Overwrite OUTPUT file if present.");
+    parser.add_option(em + OptionNames::PbIndex)
+        .action("store_true")
+        .help("Generate a .pbi file for the OUTPUT file.");
+    parser.add_option(em + OptionNames::Zmws)
+        .help(
+            "Generate CCS for the provided comma-separated holenumber ranges only. Default = all");
+    parser.add_option(em + OptionNames::MinSnr)
+        .type("float")
+        .set_default(4)
+        .help("Minimum SNR of input subreads. Default = %default");
+    parser.add_option(em + OptionNames::MinReadScore)
+        .type("float")
+        .set_default(0.75)
+        .help("Minimum read score of input subreads. Default = %default");
 
     ConsensusSettings::AddOptions(&parser);
 
-    parser.add_option(em + OptionNames::ReportFile).set_default("ccs_report.csv").help("Where to write the results report. Default = %default");
-    parser.add_option(em + OptionNames::NumThreads).type("int").set_default(0).help("Number of threads to use, 0 means autodetection. Default = %default");
-    // parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to submit simultaneously. Default = %default");
+    parser.add_option(em + OptionNames::ReportFile)
+        .set_default("ccs_report.csv")
+        .help("Where to write the results report. Default = %default");
+    parser.add_option(em + OptionNames::NumThreads)
+        .type("int")
+        .set_default(0)
+        .help("Number of threads to use, 0 means autodetection. Default = %default");
+    // parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to
+    // submit simultaneously. Default = %default");
     parser.add_option(em + OptionNames::LogFile).help("Log to a file, instead of STDERR.");
-    parser.add_option(em + OptionNames::LogLevel).choices(logLevels.begin(), logLevels.end()).set_default("INFO").help("Set log level. Default = %default");
+    parser.add_option(em + OptionNames::LogLevel)
+        .choices(logLevels.begin(), logLevels.end())
+        .set_default("INFO")
+        .help("Set log level. Default = %default");
 
     const auto options = parser.parse_args(argc, argv);
-          auto files   = parser.args();
+    auto files = parser.args();
 
     const ConsensusSettings settings(options);
 
-    const bool forceOutput   = options.get(OptionNames::ForceOutput);
-    const bool pbIndex       = options.get(OptionNames::PbIndex);
-    const float minSnr       = options.get(OptionNames::MinSnr);
+    const bool forceOutput = options.get(OptionNames::ForceOutput);
+    const bool pbIndex = options.get(OptionNames::PbIndex);
+    const float minSnr = options.get(OptionNames::MinSnr);
     const float minReadScore = static_cast<float>(options.get(OptionNames::MinReadScore));
-    const size_t nThreads    = ThreadCount(options.get(OptionNames::NumThreads));
-    const size_t chunkSize   = 1;  // static_cast<size_t>(options.get("chunkSize"));
+    const size_t nThreads = ThreadCount(options.get(OptionNames::NumThreads));
+    const size_t chunkSize = 1;  // static_cast<size_t>(options.get("chunkSize"));
 
     if (static_cast<int>(options.get(OptionNames::MinPasses)) < 1)
         parser.error("option --minPasses: invalid value: must be >= 1");
@@ -310,13 +315,9 @@ int main(int argc, char **argv)
     //
     optional<Whitelist> whitelist(none);
     const string wlspec(options.get(OptionNames::Zmws));
-    try
-    {
-        if (!wlspec.empty())
-            whitelist = Whitelist(wlspec);
-    }
-    catch (...)
-    {
+    try {
+        if (!wlspec.empty()) whitelist = Whitelist(wlspec);
+    } catch (...) {
         parser.error("option --zmws: invalid specification: '" + wlspec + "'");
     }
 
@@ -348,13 +349,10 @@ int main(int argc, char **argv)
         string logLevel(options.get(OptionNames::LogLevel));
         string logFile(options.get(OptionNames::LogFile));
 
-        if (!logFile.empty())
-        {
+        if (!logFile.empty()) {
             logStream.open(logFile);
             Logging::Logger::Default(new Logging::Logger(logStream, logLevel));
-        }
-        else
-        {
+        } else {
             Logging::Logger::Default(new Logging::Logger(cerr, logLevel));
         }
         Logging::InstallSignalHandlers();
@@ -368,11 +366,11 @@ int main(int argc, char **argv)
     unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
     map<string, shared_ptr<string>> movieNames;
 
-    if (pbIndex)
-        ccsPbi.reset(new PbiBuilder(outputFile + ".pbi"));
+    if (pbIndex) ccsPbi.reset(new PbiBuilder(outputFile + ".pbi"));
 
     WorkQueue<Results> workQueue(nThreads);
-    future<Results> writer = async(launch::async, WriterThread, ref(workQueue), ref(ccsBam), ref(ccsPbi));
+    future<Results> writer =
+        async(launch::async, WriterThread, ref(workQueue), ref(ccsBam), ref(ccsPbi));
     size_t poorSNR = 0, tooFewPasses = 0;
 
     const auto avail = PacBio::Consensus::SupportedChemistries();
@@ -386,12 +384,10 @@ int main(int argc, char **argv)
         const set<string> used = ds.SequencingChemistries();
         vector<string> unavail;
 
-        set_difference(used.begin(), used.end(),
-                       avail.begin(), avail.end(),
+        set_difference(used.begin(), used.end(), avail.begin(), avail.end(),
                        back_inserter(unavail));
 
-        if (!unavail.empty())
-        {
+        if (!unavail.empty()) {
             PBLOG_FATAL << "Unsupported chemistries found: " << join(unavail, ", ");
             exit(-1);
         }
@@ -406,92 +402,68 @@ int main(int argc, char **argv)
     optional<int32_t> holeNumber(none);
     bool skipZmw = false;
 
-    for (const auto& read : query)
-    {
+    for (const auto& read : query) {
         const string movieName = read.MovieName();
 
-        if (movieNames.find(movieName) == movieNames.end())
-        {
+        if (movieNames.find(movieName) == movieNames.end()) {
             movieNames[movieName] = make_shared<string>(movieName);
         }
 
-        if (!holeNumber || *holeNumber != read.HoleNumber())
-        {
-            if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses)
-            {
+        if (!holeNumber || *holeNumber != read.HoleNumber()) {
+            if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses) {
                 PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
-                            << ", insufficient number of passes ("
-                            << chunk->back().Reads.size() << '<' << settings.MinPasses << ')';
+                            << ", insufficient number of passes (" << chunk->back().Reads.size()
+                            << '<' << settings.MinPasses << ')';
                 tooFewPasses += 1;
                 chunk->pop_back();
             }
 
-            if (chunk && chunk->size() >= chunkSize)
-            {
+            if (chunk && chunk->size() >= chunkSize) {
                 workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
                 chunk.reset(new vector<Chunk>());
             }
 
             holeNumber = read.HoleNumber();
             auto snr = read.SignalToNoise();
-            if (whitelist && !whitelist->Contains(movieName, *holeNumber))
-            {
+            if (whitelist && !whitelist->Contains(movieName, *holeNumber)) {
                 skipZmw = true;
-            }
-            else if (*min_element(snr.begin(), snr.end()) < minSnr)
-            {
-                PBLOG_DEBUG << "Skipping ZMW " << movieName << '/' << *holeNumber << ", fails SNR threshold (" << minSnr << ')';
+            } else if (*min_element(snr.begin(), snr.end()) < minSnr) {
+                PBLOG_DEBUG << "Skipping ZMW " << movieName << '/' << *holeNumber
+                            << ", fails SNR threshold (" << minSnr << ')';
                 poorSNR += 1;
                 skipZmw = true;
-            }
-            else
-            {
+            } else {
                 skipZmw = false;
-                chunk->emplace_back(
-                    Chunk
-                    {
-                        ReadId(movieNames[movieName], *holeNumber),
-                        vector<Subread>(),
-                        SNR(snr[0], snr[1], snr[2], snr[3]),
-                        read.ReadGroup().SequencingChemistry()
-                    });
+                chunk->emplace_back(Chunk{ReadId(movieNames[movieName], *holeNumber),
+                                          vector<Subread>(), SNR(snr[0], snr[1], snr[2], snr[3]),
+                                          read.ReadGroup().SequencingChemistry()});
             }
         }
 
-        if (skipZmw)
-            continue;
+        if (skipZmw) continue;
 
-        if (static_cast<float>(read.ReadAccuracy()) < minReadScore)
-        {
-            PBLOG_DEBUG << "Skipping read " << read.FullName()
-                        << ", insufficient read accuracy ("
+        if (static_cast<float>(read.ReadAccuracy()) < minReadScore) {
+            PBLOG_DEBUG << "Skipping read " << read.FullName() << ", insufficient read accuracy ("
                         << read.ReadAccuracy() << '<' << minReadScore << ')';
             continue;
         }
 
         chunk->back().Reads.emplace_back(
-            Subread
-            {
-                ReadId(movieNames[movieName], *holeNumber, Interval(read.QueryStart(), read.QueryEnd())),
-                read.Sequence(),
-                read.LocalContextFlags(),
-                read.ReadAccuracy()
-            });
+            Subread{ReadId(movieNames[movieName], *holeNumber,
+                           Interval(read.QueryStart(), read.QueryEnd())),
+                    read.Sequence(), read.LocalContextFlags(), read.ReadAccuracy()});
     }
 
     // if the last chunk doesn't have enough passes, skip it
-    if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses)
-    {
-        PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
-                    << ", insufficient number of passes ("
+    if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses) {
+        PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id << ", insufficient number of passes ("
                     << chunk->back().Reads.size() << '<' << settings.MinPasses << ')';
         tooFewPasses += 1;
         chunk->pop_back();
     }
 
     // run the remaining tasks
-    if (chunk && !chunk->empty())
-    {
+    if (chunk && !chunk->empty()) {
         workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
     }
 
@@ -505,12 +477,9 @@ int main(int argc, char **argv)
     counts.TooFewPasses += tooFewPasses;
     const string reportFile(options.get(OptionNames::ReportFile));
 
-    if (reportFile == "-")
-    {
+    if (reportFile == "-") {
         WriteResultsReport(cout, counts);
-    }
-    else
-    {
+    } else {
         ofstream stream(reportFile);
         WriteResultsReport(stream, counts);
     }

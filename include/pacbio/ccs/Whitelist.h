@@ -52,13 +52,10 @@ namespace CCS {
 class Whitelist
 {
 public:
-    Whitelist(const std::string& spec)
-        : all(false)
-        , globalZmws(boost::none)
+    Whitelist(const std::string& spec) : all(false), globalZmws(boost::none)
     {
         // if we're all or *:*, then set all and break out
-        if (spec == "all" || spec == "*:*")
-        {
+        if (spec == "all" || spec == "*:*") {
             all = true;
             return;
         }
@@ -66,8 +63,7 @@ public:
         std::vector<std::string> mspecs;
         boost::split(mspecs, spec, boost::is_any_of(";"));
 
-        for (const auto& mspec : mspecs)
-        {
+        for (const auto& mspec : mspecs) {
             // no craziness policy
             if (mspec == "all" || mspec == "*:*" || globalZmws)
                 throw std::invalid_argument("invalid whitelist specification");
@@ -76,27 +72,22 @@ public:
             boost::split(parts, mspec, boost::is_any_of(":"));
 
             // only 1 part, it's a ZMW range
-            if (parts.size() == 1)
-            {
-                if (movieZmws.empty())
-                {
+            if (parts.size() == 1) {
+                if (movieZmws.empty()) {
                     globalZmws = IntervalTree::FromString(parts[0]);
                     continue;
                 }
             }
             // two parts, but *:_? again, it's just a ZMW range
-            else if (parts.size() == 2 && parts[0] == "*")
-            {
-                if (movieZmws.empty())
-                {
+            else if (parts.size() == 2 && parts[0] == "*") {
+                if (movieZmws.empty()) {
                     globalZmws = IntervalTree::FromString(parts[1]);
                     continue;
                 }
             }
             // two parts, either _:_ or _:*?
             //   either grab a range from the movie or everything, respectively
-            else if (parts.size() == 2 && movieZmws.find(parts[0]) == movieZmws.end())
-            {
+            else if (parts.size() == 2 && movieZmws.find(parts[0]) == movieZmws.end()) {
                 if (parts[1] == "*")
                     movieZmws[parts[0]] = boost::none;
                 else
@@ -112,15 +103,12 @@ public:
 
     bool Contains(const std::string& movieName, int32_t holeNumber) const
     {
-        if (all)
-            return true;
+        if (all) return true;
 
-        if (globalZmws)
-            return globalZmws->Contains(holeNumber);
+        if (globalZmws) return globalZmws->Contains(holeNumber);
 
         auto it = movieZmws.find(movieName);
-        if (it != movieZmws.end())
-            return !it->second || it->second->Contains(holeNumber);
+        if (it != movieZmws.end()) return !it->second || it->second->Contains(holeNumber);
 
         return false;
     }
@@ -131,5 +119,5 @@ private:
     std::map<std::string, boost::optional<IntervalTree>> movieZmws;
 };
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

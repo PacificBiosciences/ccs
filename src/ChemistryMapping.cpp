@@ -56,46 +56,36 @@ ChemistryMapping::ChemistryMapping(const std::string& mappingXML)
 
     ptree pt;
 
-    if (!FileExists(mappingXML))
-        throw BadMappingXMLException("File does not exist: " + mappingXML);
+    if (!FileExists(mappingXML)) throw BadMappingXMLException("File does not exist: " + mappingXML);
 
     read_xml(mappingXML, pt);
 
-    try
-    {
-        mapping[ChemistryTriple::Null()] = pt.get<string>("MappingTable.DefaultSequencingChemistry");
+    try {
+        mapping[ChemistryTriple::Null()] =
+            pt.get<string>("MappingTable.DefaultSequencingChemistry");
 
-        BOOST_FOREACH(ptree::value_type &v, pt.get_child("MappingTable"))
-        {
-            if (v.first.compare("Mapping") == 0)
-            {
+        BOOST_FOREACH (ptree::value_type& v, pt.get_child("MappingTable")) {
+            if (v.first.compare("Mapping") == 0) {
                 ChemistryTriple entry(v.second.get<string>("BindingKit"),
                                       v.second.get<string>("SequencingKit"),
                                       v.second.get<string>("SoftwareVersion"));
                 mapping[entry] = v.second.get<string>("SequencingChemistry");
             }
         }
-    }
-    catch (...)
-    {
+    } catch (...) {
         throw BadMappingXMLException("Could not parse mapping xml!");
     }
 }
 
-string ChemistryMapping::MapTriple(const ChemistryTriple& triple,
-                                   const std::string& fallback) const
+string ChemistryMapping::MapTriple(const ChemistryTriple& triple, const std::string& fallback) const
 {
-    try
-    {
+    try {
         return mapping.at(triple);
-    }
-    catch (const out_of_range& e)
-    {
-        if (fallback.empty())
-            throw;
+    } catch (const out_of_range& e) {
+        if (fallback.empty()) throw;
         return fallback;
     }
 }
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

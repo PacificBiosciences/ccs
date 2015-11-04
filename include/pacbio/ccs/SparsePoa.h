@@ -59,10 +59,8 @@ namespace CCS {
 class SdpRangeFinder : public PacBio::Consensus::detail::SdpRangeFinder
 {
 protected:
-    virtual
-    PacBio::Consensus::detail::SdpAnchorVector
-    FindAnchors(const std::string& consensusSequence,
-                const std::string& readSequence) const final;
+    virtual PacBio::Consensus::detail::SdpAnchorVector FindAnchors(
+        const std::string& consensusSequence, const std::string& readSequence) const final;
 };
 
 //
@@ -82,7 +80,8 @@ struct PoaAlignmentSummary
         , ExtentOnConsensus(0, 0)
         , AlignmentScore{0}
         , AlignmentIdentity{0}
-    {}
+    {
+    }
 };
 
 struct PoaAlignmentOptions
@@ -102,7 +101,6 @@ public:
     //    -1: read could not be inserted into POA graph
     using ReadKey = int;
 
-
 public:
     SparsePoa();
     ~SparsePoa();
@@ -112,21 +110,21 @@ public:
     // "forward" convention
     //
     ReadKey AddRead(const std::string& readSequence,
-                    const PoaAlignmentOptions& alnOptions=PoaAlignmentOptions(),
-                    float minScoreToAdd=0);
+                    const PoaAlignmentOptions& alnOptions = PoaAlignmentOptions(),
+                    float minScoreToAdd = 0);
 
     //
     // Find better orientation, (fwd or RC) and add as such
     //
     ReadKey OrientAndAddRead(const std::string& readSequence,
-                             const PoaAlignmentOptions& alnOptions=PoaAlignmentOptions(),
-                             float minScoreToAdd=0);
+                             const PoaAlignmentOptions& alnOptions = PoaAlignmentOptions(),
+                             float minScoreToAdd = 0);
 
     //
     // Walk the POA and get the optimal consensus path
     //
-    std::shared_ptr<const PacBio::Consensus::PoaConsensus>
-    FindConsensus(int minCoverage, std::vector<PoaAlignmentSummary>* summaries=NULL) const;
+    std::shared_ptr<const PacBio::Consensus::PoaConsensus> FindConsensus(
+        int minCoverage, std::vector<PoaAlignmentSummary>* summaries = NULL) const;
 
     //
     // Serialize the POA graph to std::string
@@ -137,8 +135,7 @@ public:
     //
     // Serialize the POA graph to a file
     //
-    void WriteGraphVizFile(const std::string& filename,
-                           int flags = 0,
+    void WriteGraphVizFile(const std::string& filename, int flags = 0,
                            const PacBio::Consensus::PoaConsensus* pc = nullptr) const;
 
     //
@@ -159,5 +156,5 @@ private:
     SdpRangeFinder* rangeFinder_;
 };
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

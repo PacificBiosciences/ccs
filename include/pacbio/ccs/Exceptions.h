@@ -43,24 +43,17 @@
 namespace PacBio {
 namespace CCS {
 
-class BadMappingXMLException
-    : public std::runtime_error
+class BadMappingXMLException : public std::runtime_error
 {
 public:
-    BadMappingXMLException(const std::string& msg)
-        : std::runtime_error(msg)
-    {}
+    BadMappingXMLException(const std::string& msg) : std::runtime_error(msg) {}
 };
 
-
-class BadChemistryTriple
-    : public std::runtime_error
+class BadChemistryTriple : public std::runtime_error
 {
 public:
-    BadChemistryTriple(const std::string& msg)
-        : std::runtime_error(msg)
-    {}
+    BadChemistryTriple(const std::string& msg) : std::runtime_error(msg) {}
 };
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

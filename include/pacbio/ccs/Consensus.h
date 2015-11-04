@@ -62,27 +62,23 @@
 #include <pacbio/ccs/SparsePoa.h>
 #include <pacbio/ccs/Timer.h>
 
-
 namespace PacBio {
 namespace CCS {
-
 
 using SNR = PacBio::Consensus::SNR;
 using QualityValues = PacBio::BAM::QualityValues;
 using LocalContextFlags = PacBio::BAM::LocalContextFlags;
 using Accuracy = PacBio::BAM::Accuracy;
 
-
 namespace OptionNames {
-    // constexpr auto MaxPoaCoverage       = "maxPoaCoverage";
-    constexpr auto MinLength            = "minLength";
-    constexpr auto MinPasses            = "minPasses";
-    constexpr auto MinPredictedAccuracy = "minPredictedAccuracy";
-    constexpr auto MinZScore            = "minZScore";
-    constexpr auto MaxDropFraction      = "maxDropFraction";
-    // constexpr auto Directional          = "directional";
-} // namespace OptionNames
-
+// constexpr auto MaxPoaCoverage       = "maxPoaCoverage";
+constexpr auto MinLength = "minLength";
+constexpr auto MinPasses = "minPasses";
+constexpr auto MinPredictedAccuracy = "minPredictedAccuracy";
+constexpr auto MinZScore = "minZScore";
+constexpr auto MaxDropFraction = "maxDropFraction";
+// constexpr auto Directional          = "directional";
+}  // namespace OptionNames
 
 struct ConsensusSettings
 {
@@ -92,27 +88,46 @@ struct ConsensusSettings
     double MinPredictedAccuracy;
     double MinZScore;
     double MaxDropFraction;
-    bool   Directional;
+    bool Directional;
 
     ConsensusSettings(const optparse::Values& options);
 
-    static
-    void AddOptions(optparse::OptionParser * const parser)
+    static void AddOptions(optparse::OptionParser* const parser)
     {
         const std::string em = "--";
         // TODO(lhepler) implement alignment to POA and directional support
-        // parser->add_option(em + OptionNames::MaxPoaCoverage).type("int").set_default(1024).help("Maximum number of subreads to use when building POA. Default = %default");
-        parser->add_option(em + OptionNames::MinLength).type("int").set_default(10).help("Minimum length of subreads to use for generating CCS. Default = %default");
-        parser->add_option(em + OptionNames::MinPasses).type("int").set_default(3).help("Minimum number of subreads required to generate CCS. Default = %default");
-        parser->add_option(em + OptionNames::MinPredictedAccuracy).type("float").set_default(0.90).help("Minimum predicted accuracy in [0, 1]. Default = %default");
-        parser->add_option(em + OptionNames::MinZScore).type("float").set_default(-5.0).help("Minimum z-score to use a subread. NaN disables this filter. Default = %default");
-        parser->add_option(em + OptionNames::MaxDropFraction).type("float").set_default(0.34).help("Maximum fraction of subreads that can be dropped before giving up. Default = %default");
-        // parser->add_option(em + OptionNames::Directional).action("store_true").set_default("0").help("Generate a consensus for each strand. Default = false");
+        // parser->add_option(em +
+        // OptionNames::MaxPoaCoverage).type("int").set_default(1024).help("Maximum number of
+        // subreads to use when building POA. Default = %default");
+        parser->add_option(em + OptionNames::MinLength)
+            .type("int")
+            .set_default(10)
+            .help("Minimum length of subreads to use for generating CCS. Default = %default");
+        parser->add_option(em + OptionNames::MinPasses)
+            .type("int")
+            .set_default(3)
+            .help("Minimum number of subreads required to generate CCS. Default = %default");
+        parser->add_option(em + OptionNames::MinPredictedAccuracy)
+            .type("float")
+            .set_default(0.90)
+            .help("Minimum predicted accuracy in [0, 1]. Default = %default");
+        parser->add_option(em + OptionNames::MinZScore)
+            .type("float")
+            .set_default(-5.0)
+            .help("Minimum z-score to use a subread. NaN disables this filter. Default = %default");
+        parser->add_option(em + OptionNames::MaxDropFraction)
+            .type("float")
+            .set_default(0.34)
+            .help(
+                "Maximum fraction of subreads that can be dropped before giving up. Default = "
+                "%default");
+        // parser->add_option(em +
+        // OptionNames::Directional).action("store_true").set_default("0").help("Generate a
+        // consensus for each strand. Default = false");
     }
 };
 
-
-template<typename TId>
+template <typename TId>
 struct ReadType
 {
     TId Id;
@@ -124,8 +139,7 @@ struct ReadType
     // std::string Chemistry;
 };
 
-
-template<typename TId, typename TRead>
+template <typename TId, typename TRead>
 struct ChunkType
 {
     TId Id;
@@ -134,8 +148,7 @@ struct ChunkType
     std::string Chemistry;
 };
 
-
-template<typename TId>
+template <typename TId>
 struct ConsensusType
 {
     TId Id;
@@ -152,8 +165,7 @@ struct ConsensusType
     float ElapsedMilliseconds;
 };
 
-
-template<typename TConsensus>
+template <typename TConsensus>
 class ResultType : public std::vector<TConsensus>
 {
 public:
@@ -177,69 +189,55 @@ public:
         , NonConvergent{0}
         , PoorQuality{0}
         , Other{0}
-    { }
-
-    ResultType<TConsensus>&
-    operator+=(const ResultType<TConsensus>& other)
     {
-        Success         += other.Success;
-        PoorSNR         += other.PoorSNR;
-        NoSubreads      += other.NoSubreads;
-        TooShort        += other.TooShort;
+    }
+
+    ResultType<TConsensus>& operator+=(const ResultType<TConsensus>& other)
+    {
+        Success += other.Success;
+        PoorSNR += other.PoorSNR;
+        NoSubreads += other.NoSubreads;
+        TooShort += other.TooShort;
         TooManyUnusable += other.TooManyUnusable;
-        TooFewPasses    += other.TooFewPasses;
-        NonConvergent   += other.NonConvergent;
-        PoorQuality     += other.PoorQuality;
-        Other           += other.Other;
+        TooFewPasses += other.TooFewPasses;
+        NonConvergent += other.NonConvergent;
+        PoorQuality += other.PoorQuality;
+        Other += other.Other;
         return *this;
     }
 
     size_t Total() const
     {
-        return
-            ( Success
-            + PoorSNR
-            + NoSubreads
-            + TooShort
-            + TooManyUnusable
-            + TooFewPasses
-            + NonConvergent
-            + PoorQuality
-            + Other );
+        return (Success + PoorSNR + NoSubreads + TooShort + TooManyUnusable + TooFewPasses +
+                NonConvergent + PoorQuality + Other);
     }
 };
 
+namespace {  // anonymous
 
-namespace { // anonymous
-
-template<typename T>
+template <typename T>
 float Median(std::vector<T>* vs)
 {
     const size_t n = vs->size();
     std::sort(vs->begin(), vs->end());
-    if (n % 2 == 1)
-        return static_cast<float>(vs->at(n / 2));
+    if (n % 2 == 1) return static_cast<float>(vs->at(n / 2));
     return 0.5 * (vs->at(n / 2 - 1) + vs->at(n / 2));
 }
 
-template<typename TRead>
-std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
-                                      const size_t minLength)
+template <typename TRead>
+std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads, const size_t minLength)
 {
     std::vector<const TRead*> results;
 
-    if (reads.empty())
-        return results;
+    if (reads.empty()) return results;
 
     std::vector<size_t> lengths;
     size_t longest = 0;
 
     // get the lengths for all full-length subreads
-    for (const auto& read : reads)
-    {
+    for (const auto& read : reads) {
         longest = std::max(longest, read.Seq.length());
-        if (read.Flags & BAM::ADAPTER_BEFORE &&
-            read.Flags & BAM::ADAPTER_AFTER)
+        if (read.Flags & BAM::ADAPTER_BEFORE && read.Flags & BAM::ADAPTER_AFTER)
             lengths.emplace_back(read.Seq.length());
     }
 
@@ -248,13 +246,11 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
     size_t maxLen = 2 * static_cast<size_t>(median);
 
     // if it's too short, return nothing
-    if (median < static_cast<float>(minLength))
-        return results;
+    if (median < static_cast<float>(minLength)) return results;
 
     results.reserve(reads.size());
 
-    for (const auto& read : reads)
-    {
+    for (const auto& read : reads) {
         // if the median exists, then this filters stuff,
         //   otherwise it's twice the longest read and is always true
         if (read.Seq.length() < maxLen)
@@ -267,72 +263,61 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
     // End-to-end reads take priority, hence the lexicographical sort;
     //   always take the read with the least deviation from the median.
     //   In the case of no median, longer reads are prioritized.
-    const auto lexForm =
-        [median] (const TRead* read)
-        {
-            const float l = static_cast<float>(read->Seq.length());
-            const float v = std::min(l / median, median / l);
+    const auto lexForm = [median](const TRead* read) {
+        const float l = static_cast<float>(read->Seq.length());
+        const float v = std::min(l / median, median / l);
 
-            if (read->Flags & BAM::ADAPTER_BEFORE &&
-                read->Flags & BAM::ADAPTER_AFTER)
-                return std::make_tuple(v, 0.0f);
+        if (read->Flags & BAM::ADAPTER_BEFORE && read->Flags & BAM::ADAPTER_AFTER)
+            return std::make_tuple(v, 0.0f);
 
-            return std::make_tuple(0.0f, v);
-        };
+        return std::make_tuple(0.0f, v);
+    };
 
-    std::stable_sort(results.begin(),
-                     results.end(),
-                     [&lexForm] (const TRead* lhs, const TRead* rhs)
-                     {
-                        if (lhs == nullptr) return false;
-                        else if (rhs == nullptr) return true;
+    std::stable_sort(results.begin(), results.end(),
+                     [&lexForm](const TRead* lhs, const TRead* rhs) {
+                         if (lhs == nullptr)
+                             return false;
+                         else if (rhs == nullptr)
+                             return true;
 
-                        return lexForm(lhs) > lexForm(rhs);
+                         return lexForm(lhs) > lexForm(rhs);
                      });
 
     return results;
 }
 
-template<typename TRead>
-boost::optional<PacBio::Consensus::MappedRead>
-ExtractMappedRead(const TRead& read,
-                  const std::string& chem,
-                  const PoaAlignmentSummary& summary,
-                  const size_t poaLength,
-                  const size_t minLength)
+template <typename TRead>
+boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(const TRead& read,
+                                                                 const std::string& chem,
+                                                                 const PoaAlignmentSummary& summary,
+                                                                 const size_t poaLength,
+                                                                 const size_t minLength)
 {
     using PacBio::Consensus::StrandEnum;
 
-    const size_t tplStart  = summary.ExtentOnConsensus.Left();
-    const size_t tplEnd    = summary.ExtentOnConsensus.Right();
+    const size_t tplStart = summary.ExtentOnConsensus.Left();
+    const size_t tplEnd = summary.ExtentOnConsensus.Right();
     const size_t readStart = summary.ExtentOnRead.Left();
-    const size_t readEnd   = summary.ExtentOnRead.Right();
+    const size_t readEnd = summary.ExtentOnRead.Right();
 
-    if (readStart > readEnd || readEnd - readStart < minLength)
-    {
-        PBLOG_DEBUG << "Skipping read " << read.Id
-                    << ", too short (<" << minLength << ')';
+    if (readStart > readEnd || readEnd - readStart < minLength) {
+        PBLOG_DEBUG << "Skipping read " << read.Id << ", too short (<" << minLength << ')';
         return boost::none;
     }
 
     PacBio::Consensus::MappedRead mappedRead(
-            PacBio::Consensus::Read(read.Id, read.Seq.substr(readStart, readEnd - readStart), chem),
-            summary.ReverseComplementedRead ? StrandEnum::REVERSE : StrandEnum::FORWARD,
-            tplStart,
-            tplEnd,
-            (tplStart == 0) ? true : false,
-            (tplEnd == poaLength) ? true : false);
+        PacBio::Consensus::Read(read.Id, read.Seq.substr(readStart, readEnd - readStart), chem),
+        summary.ReverseComplementedRead ? StrandEnum::REVERSE : StrandEnum::FORWARD, tplStart,
+        tplEnd, (tplStart == 0) ? true : false, (tplEnd == poaLength) ? true : false);
 
     return boost::make_optional(mappedRead);
 }
 
-inline
-std::string QVsToASCII(const std::vector<int>& qvs)
+inline std::string QVsToASCII(const std::vector<int>& qvs)
 {
     std::string res;
 
-    for (const int qv : qvs)
-    {
+    for (const int qv : qvs) {
         res.push_back(static_cast<char>(std::min(std::max(0, qv), 93) + 33));
     }
 
@@ -348,14 +333,12 @@ bool ReadAccuracyDescending(const std::pair<size_t, const TRead*>& a,
 }
 #endif
 
-} // namespace anonymous
+}  // namespace anonymous
 
-
-template<typename TRead>
+template <typename TRead>
 std::string PoaConsensus(const std::vector<const TRead*>& reads,
                          std::vector<SparsePoa::ReadKey>* readKeys,
-                         std::vector<PoaAlignmentSummary>* summaries,
-                         const size_t maxPoaCov)
+                         std::vector<PoaAlignmentSummary>* summaries, const size_t maxPoaCov)
 {
     SparsePoa poa;
     size_t cov = 0;
@@ -375,14 +358,12 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
     readKeys->clear();
     // readKeys->resize(sorted.size());
 
-    for (const auto read : reads)
-    {
+    for (const auto read : reads) {
         SparsePoa::ReadKey key = (read == nullptr) ? -1 : poa.OrientAndAddRead(read->Seq);
         // SparsePoa::ReadKey key = poa.OrientAndAddRead(read.second->Seq);
         // readKeys->at(read.first) = key;
         readKeys->emplace_back(key);
-        if (key >= 0 && (++cov) >= maxPoaCov)
-            break;
+        if (key >= 0 && (++cov) >= maxPoaCov) break;
     }
 
     // at least 50% of the reads should cover
@@ -391,10 +372,9 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
     return poa.FindConsensus(minCov, &(*summaries))->Sequence;
 }
 
-
 // pass unique_ptr by reference to satisfy finickyness wrt move semantics in <future>
 //   but then take ownership here with a local unique_ptr
-template<typename TChunk, typename TResult>
+template <typename TChunk, typename TResult>
 ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                               const ConsensusSettings& settings)
 {
@@ -403,54 +383,43 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
     auto chunks(std::move(chunksRef));
     ResultType<TResult> results;
 
-    if (!chunks)
-        return results;
+    if (!chunks) return results;
 
-    for (const auto& chunk : *chunks)
-    {
-        try
-        {
+    for (const auto& chunk : *chunks) {
+        try {
             Timer timer;
             auto reads = FilterReads(chunk.Reads, settings.MinLength);
 
-            if (reads.empty() || std::accumulate(reads.begin(), reads.end(), 0, std::plus<bool>()) == 0)
-            {
+            if (reads.empty() ||
+                std::accumulate(reads.begin(), reads.end(), 0, std::plus<bool>()) == 0) {
                 results.NoSubreads += 1;
-                PBLOG_DEBUG << "Skipping " << chunk.Id
-                            << ", no high quality subreads available";
+                PBLOG_DEBUG << "Skipping " << chunk.Id << ", no high quality subreads available";
                 continue;
             }
             /* If it is not possible to exceed the minPasses requirement, we will bail here before
                generating the POA, filling the matrices and performing all the other checks */
             size_t possiblePasses = 0;
-            for (size_t i = 0; i < reads.size(); ++i)
-            {
-                if (reads[i] != nullptr &&
-                    reads[i]->Flags & BAM::ADAPTER_BEFORE &&
-                    reads[i]->Flags & BAM::ADAPTER_AFTER)
-                {
+            for (size_t i = 0; i < reads.size(); ++i) {
+                if (reads[i] != nullptr && reads[i]->Flags & BAM::ADAPTER_BEFORE &&
+                    reads[i]->Flags & BAM::ADAPTER_AFTER) {
                     possiblePasses++;
                 }
             }
-            if (possiblePasses < settings.MinPasses)
-            {
+            if (possiblePasses < settings.MinPasses) {
                 results.TooFewPasses += 1;
-                PBLOG_DEBUG << "Skipping " << chunk.Id
-                << ", not enough possible passes ("
-                << possiblePasses << '<' << settings.MinPasses << ')';
+                PBLOG_DEBUG << "Skipping " << chunk.Id << ", not enough possible passes ("
+                            << possiblePasses << '<' << settings.MinPasses << ')';
                 continue;
             }
 
             std::vector<SparsePoa::ReadKey> readKeys;
             std::vector<PoaAlignmentSummary> summaries;
-            std::string poaConsensus = PoaConsensus(reads, &readKeys, &summaries,
-                                                    settings.MaxPoaCoverage);
+            std::string poaConsensus =
+                PoaConsensus(reads, &readKeys, &summaries, settings.MaxPoaCoverage);
 
-            if (poaConsensus.length() < settings.MinLength)
-            {
+            if (poaConsensus.length() < settings.MinLength) {
                 results.TooShort += 1;
-                PBLOG_DEBUG << "Skipping " << chunk.Id
-                            << ", initial consensus too short (<"
+                PBLOG_DEBUG << "Skipping " << chunk.Id << ", initial consensus too short (<"
                             << settings.MinLength << ')';
                 continue;
             }
@@ -463,54 +432,40 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             size_t nPasses = 0, nDropped = 0;
 
             // If this ZMW could possibly pass,  add the reads to the integrator
-            for (size_t i = 0; i < nReads; ++i)
-            {
+            for (size_t i = 0; i < nReads; ++i) {
                 // skip unadded reads
-                if (readKeys[i] < 0)
-                    continue;
+                if (readKeys[i] < 0) continue;
 
-                if (auto mr = ExtractMappedRead(*reads[i],
-                                                chunk.Chemistry,
-                                                summaries[readKeys[i]],
-                                                poaConsensus.length(),
-                                                settings.MinLength))
-                {
+                if (auto mr = ExtractMappedRead(*reads[i], chunk.Chemistry, summaries[readKeys[i]],
+                                                poaConsensus.length(), settings.MinLength)) {
                     auto status = ai.AddRead(*mr);
 
                     // increment the status count
                     statusCounts[static_cast<size_t>(status)] += 1;
 
-                    if (status == AddReadResult::SUCCESS &&
-                        reads[i]->Flags & BAM::ADAPTER_BEFORE &&
-                        reads[i]->Flags & BAM::ADAPTER_AFTER)
-                    {
+                    if (status == AddReadResult::SUCCESS && reads[i]->Flags & BAM::ADAPTER_BEFORE &&
+                        reads[i]->Flags & BAM::ADAPTER_AFTER) {
                         ++nPasses;
-                    }
-                    else if (status != AddReadResult::SUCCESS)
-                    {
+                    } else if (status != AddReadResult::SUCCESS) {
                         ++nDropped;
-                        PBLOG_DEBUG << "Skipping read " << mr->Name
-                                    << ", " << status;
+                        PBLOG_DEBUG << "Skipping read " << mr->Name << ", " << status;
                     }
                 }
             }
 
-            if (nPasses < settings.MinPasses)
-            {
+            if (nPasses < settings.MinPasses) {
                 results.TooFewPasses += 1;
-                PBLOG_DEBUG << "Skipping " << chunk.Id
-                            << ", insufficient number of passes ("
+                PBLOG_DEBUG << "Skipping " << chunk.Id << ", insufficient number of passes ("
                             << nPasses << '<' << settings.MinPasses << ')';
                 continue;
             }
 
             const double fracDropped = static_cast<double>(nDropped) / nReads;
-            if (fracDropped > settings.MaxDropFraction)
-            {
+            if (fracDropped > settings.MaxDropFraction) {
                 results.TooManyUnusable += 1;
                 PBLOG_DEBUG << "Skipping " << chunk.Id
-                            << ", too high a fraction of unusable subreads ("
-                            << fracDropped << '>' << settings.MaxDropFraction << ')';
+                            << ", too high a fraction of unusable subreads (" << fracDropped << '>'
+                            << settings.MaxDropFraction << ')';
                 continue;
             }
 
@@ -522,61 +477,41 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             bool polished;
             std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
 
-            if (!polished)
-            {
+            if (!polished) {
                 results.NonConvergent += 1;
-                PBLOG_DEBUG << "Skipping " << chunk.Id
-                            << ", failed to converge";
+                PBLOG_DEBUG << "Skipping " << chunk.Id << ", failed to converge";
                 continue;
             }
 
             // compute predicted accuracy
             double predAcc = 0.0;
             std::vector<int> qvs = ConsensusQVs(ai);
-            for (const int qv : qvs)
-            {
+            for (const int qv : qvs) {
                 predAcc += pow(10.0, static_cast<double>(qv) / -10.0);
             }
             predAcc = 1.0 - predAcc / qvs.size();
 
-            if (predAcc < settings.MinPredictedAccuracy)
-            {
+            if (predAcc < settings.MinPredictedAccuracy) {
                 results.PoorQuality += 1;
                 PBLOG_DEBUG << "Skipping " << chunk.Id
-                            << ", failed to meet minimum predicted accuracy ("
-                            << predAcc << '<' << settings.MinPredictedAccuracy << ')';
+                            << ", failed to meet minimum predicted accuracy (" << predAcc << '<'
+                            << settings.MinPredictedAccuracy << ')';
                 continue;
             }
 
             // return resulting sequence!!
             results.Success += 1;
-            results.emplace_back(
-                TResult
-                {
-                    chunk.Id,
-                    std::string(ai),
-                    QVsToASCII(qvs),
-                    nPasses,
-                    predAcc,
-                    zAvg,
-                    zScores,
-                    statusCounts,
-                    nTested,
-                    nApplied,
-                    chunk.SignalToNoise,
-                    timer.ElapsedMilliseconds()
-                });
-        }
-        catch (...)
-        {
+            results.emplace_back(TResult{chunk.Id, std::string(ai), QVsToASCII(qvs), nPasses,
+                                         predAcc, zAvg, zScores, statusCounts, nTested, nApplied,
+                                         chunk.SignalToNoise, timer.ElapsedMilliseconds()});
+        } catch (...) {
             results.Other += 1;
-            PBLOG_ERROR << "Skipping " << chunk.Id
-                        << ", caught exception during processing";
+            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught exception during processing";
         }
     }
 
     return results;
 }
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

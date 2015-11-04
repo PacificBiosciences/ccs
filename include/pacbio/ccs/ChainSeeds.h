@@ -43,10 +43,9 @@
 namespace PacBio {
 namespace CCS {
 
-void
-ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
-           const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
-           const int matchReward = 3);
+void ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
+                const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
+                const int matchReward = 3);
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio

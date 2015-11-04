@@ -61,10 +61,9 @@ TEST(WhitelistTest, CrazyTests)
 
 TEST(WhitelistTest, SingleRange)
 {
-    Whitelist wls[] = { Whitelist("1-3"), Whitelist("*:1-3") };
+    Whitelist wls[] = {Whitelist("1-3"), Whitelist("*:1-3")};
 
-    for (const auto& wl : wls)
-    {
+    for (const auto& wl : wls) {
         EXPECT_TRUE(wl.Contains("", 1) && wl.Contains("", 2) && wl.Contains("", 3));
         EXPECT_FALSE(wl.Contains("", 0) || wl.Contains("", 4));
     }

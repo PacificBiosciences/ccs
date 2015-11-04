@@ -55,22 +55,13 @@ struct SnrInfo
     const float G;
     const float T;
 
-    SnrInfo(float a, float c, float g, float t)
-        : A(a), C(c), G(g), T(t)
-    {}
-
+    SnrInfo(float a, float c, float g, float t) : A(a), C(c), G(g), T(t) {}
     // comes in TGAC from the instrument, usually
-    SnrInfo(float *snr)
-        : SnrInfo(snr[2], snr[3], snr[1], snr[0])
-    {}
-
-    float Min() const
-    {
-        return std::min(std::min(A, C), std::min(G, T));
-    }
+    SnrInfo(float* snr) : SnrInfo(snr[2], snr[3], snr[1], snr[0]) {}
+    float Min() const { return std::min(std::min(A, C), std::min(G, T)); }
 };
 
 std::vector<std::string> FlattenFofn(const std::vector<std::string>& files);
 
-} // namespace CCS
-} // namespace PacBio
+}  // namespace CCS
+}  // namespace PacBio
