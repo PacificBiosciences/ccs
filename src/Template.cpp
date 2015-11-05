@@ -165,7 +165,8 @@ void Template::Reset()
 
 void Template::ApplyMutation(const Mutation& mut)
 {
-    if (!InRange(mut.Start(), mut.End())) return;
+    // update mappings even if the mutation isn't in range
+    if (!InRange(mut.Start(), mut.End())) return AbstractTemplate::ApplyMutation(mut);
 
     const size_t i = mut.Start() - start_;
 
