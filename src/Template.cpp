@@ -165,7 +165,13 @@ void Template::Reset()
 
 void Template::ApplyMutation(const Mutation& mut)
 {
-    if (!InRange(mut.Start(), mut.End())) return;
+    if (!InRange(mut.Start(), mut.End())) {
+        // update the start_ and end_ mappings
+        /* Note: A deletetion prior to the range spanned by this template
+           still affects the start/end */
+        AbstractTemplate::ApplyMutation(mut);
+        return;
+    }
 
     const size_t i = mut.Start() - start_;
 
