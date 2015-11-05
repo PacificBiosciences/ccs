@@ -165,42 +165,41 @@ void Template::Reset()
 
 void Template::ApplyMutation(const Mutation& mut)
 {
-    // update mappings even if the mutation isn't in range
-    if (!InRange(mut.Start(), mut.End())) return AbstractTemplate::ApplyMutation(mut);
+    if (InRange(mut.Start(), mut.End())) {
+        const size_t i = mut.Start() - start_;
 
-    const size_t i = mut.Start() - start_;
+        // TODO(lhepler): The following should never happen, but does.
+        //     find the root cause, fix it, and nuke this line
+        if (i > tpl_.size() || (i == tpl_.size() && mut.Type == MutationType::DELETION)) return;
 
-    // TODO(lhepler): The following should never happen, but does.
-    //     find the root cause, fix it, and nuke this line
-    if (i > tpl_.size() || (i == tpl_.size() && mut.Type == MutationType::DELETION)) return;
+        if (mut.Type == MutationType::INSERTION) {
+            if (i > 0) tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, mut.Base})[0];
 
-    if (mut.Type == MutationType::INSERTION) {
-        if (i > 0) tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, mut.Base})[0];
-
-        if (i < tpl_.size())
-            tpl_.insert(tpl_.begin() + i, cfg_->Populate({mut.Base, tpl_[i].Base})[0]);
-        else
-            tpl_.emplace_back(TemplatePosition{mut.Base, 0.0, 0.0, 0.0, 0.0});
-    } else if (mut.Type == MutationType::SUBSTITUTION) {
-        if (i > 0) tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, mut.Base})[0];
-
-        if (i + 1 < tpl_.size())
-            tpl_[i] = cfg_->Populate({mut.Base, tpl_[i + 1].Base})[0];
-        else
-            tpl_[i].Base = mut.Base;
-    } else if (mut.Type == MutationType::DELETION) {
-        tpl_.erase(tpl_.begin() + i);
-
-        if (i > 0) {
             if (i < tpl_.size())
-                tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, tpl_[i].Base})[0];
+                tpl_.insert(tpl_.begin() + i, cfg_->Populate({mut.Base, tpl_[i].Base})[0]);
             else
-                tpl_[i - 1] = TemplatePosition{tpl_[i - 1].Base, 0.0, 0.0, 0.0, 0.0};
-        }
-    } else
-        throw std::invalid_argument(
-            "invalid mutation type! must be DELETION, INSERTION, or "
-            "SUBSTITUTION");
+                tpl_.emplace_back(TemplatePosition{mut.Base, 0.0, 0.0, 0.0, 0.0});
+        } else if (mut.Type == MutationType::SUBSTITUTION) {
+            if (i > 0) tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, mut.Base})[0];
+
+            if (i + 1 < tpl_.size())
+                tpl_[i] = cfg_->Populate({mut.Base, tpl_[i + 1].Base})[0];
+            else
+                tpl_[i].Base = mut.Base;
+        } else if (mut.Type == MutationType::DELETION) {
+            tpl_.erase(tpl_.begin() + i);
+
+            if (i > 0) {
+                if (i < tpl_.size())
+                    tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, tpl_[i].Base})[0];
+                else
+                    tpl_[i - 1] = TemplatePosition{tpl_[i - 1].Base, 0.0, 0.0, 0.0, 0.0};
+            }
+        } else
+            throw std::invalid_argument(
+                "invalid mutation type! must be DELETION, INSERTION, or "
+                "SUBSTITUTION");
+    }
 
     // update the start_ and end_ mappings
     AbstractTemplate::ApplyMutation(mut);
