@@ -6,10 +6,7 @@ import os.path
 import sys
 
 from distutils import sysconfig
-from distutils.command.build import build as dbuild
-from distutils.command.build_py import build_py as dbuild_py
 from distutils.command.clean import clean as dclean
-from distutils.command.install import install as dinstall
 from distutils.errors import CompileError
 from setuptools import setup
 from setuptools.dist import Distribution
@@ -19,54 +16,43 @@ from tempfile import mkdtemp
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
 swigLib = os.path.join(thisDir, "swig", "lib")
+modName = "_ConsensusCore2.so"
 
-def cleanAll(self):
-    cleaner = dclean(self.distribution)
-    cleaner.all = True
-    cleaner.finalize_options()
-    cleaner.run()
-    rmtree(swigLib, ignore_errors=True)
-
-class MyBuild(dbuild_py):
+class MyClean(dclean):
     def run(self):
-        buildDir = mkdtemp()
-        try:
-            cleanAll(self)
-            env = os.environ.copy()
-            cmake = env.get("CMAKE_COMMAND", "cmake")
-            boost = env.get("Boost_INCLUDE_DIRS", None)
-            swig = env.get("SWIG_COMMAND", None)
-            cmds = [cmake,
-                    "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
-                    "-DPYTHON_SWIG=1",
-                    "-DPYTHON_EXECUTABLE={0}".format(sys.executable)]
-            if boost is not None:
-                cmds.append("-DBoost_INCLUDE_DIRS={0}".format(boost))
-            if swig is not None:
-                cmds.append("-DSWIG_COMMAND={0}".format(swig))
-            cmds.append(thisDir)
-            print("running command: {0}".format(" ".join(cmds)), file=sys.stderr)
-            retcode = Popen(cmds, cwd=buildDir, env=env).wait()
-            if (retcode != 0):
-                raise CompileError("failed to configure the ConsensusCore2 with CMake!")
-            print("running command: make", file=sys.stderr)
-            retcode = Popen(["make"], cwd=buildDir).wait()
-            if (retcode != 0):
-                raise CompileError("failed to compile or link ConsensusCore2!")
-        finally:
-            rmtree(buildDir)
-            try: super(MyBuild, self).run()
-            except TypeError: dbuild_py.run(self)
-
-class MyInstall(dinstall):
-    def run(self):
-        try: super(MyInstall, self).run()
-        except TypeError: dinstall.run(self)
-        finally: cleanAll(self)
+        rmtree(swigLib, ignore_errors=True)
+        dclean.run(self)
 
 class MyDist(Distribution):
     def has_ext_modules(self):
         return True
+
+if not os.path.exists(os.path.join(swigLib, modName)):
+    buildDir = mkdtemp()
+    try:
+        env = os.environ.copy()
+        cmake = env.get("CMAKE_COMMAND", "cmake")
+        boost = env.get("Boost_INCLUDE_DIRS", None)
+        swig = env.get("SWIG_COMMAND", None)
+        cmds = [cmake,
+                "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
+                "-DPYTHON_SWIG=1",
+                "-DPYTHON_EXECUTABLE={0}".format(sys.executable)]
+        if boost is not None:
+            cmds.append("-DBoost_INCLUDE_DIRS={0}".format(boost))
+        if swig is not None:
+            cmds.append("-DSWIG_COMMAND={0}".format(swig))
+        cmds.append(thisDir)
+        # print("running command: {0}".format(" ".join(cmds)), file=sys.stderr)
+        retcode = Popen(cmds, cwd=buildDir, env=env).wait()
+        if (retcode != 0):
+            raise RuntimeError("failed to configure the ConsensusCore2 with CMake!")
+        # print("running command: make", file=sys.stderr)
+        retcode = Popen(["make"], cwd=buildDir).wait()
+        if (retcode != 0):
+            raise RuntimeError("failed to compile or link ConsensusCore2!")
+    finally:
+        rmtree(buildDir)
 
 setup(
     name="ConsensusCore2",
@@ -78,9 +64,9 @@ setup(
     license="BSD",
     packages=["ConsensusCore2"],
     package_dir={"ConsensusCore2": swigLib},
-    package_data={"ConsensusCore2": ["_ConsensusCore2.so"]},
+    package_data={"ConsensusCore2": [modName]},
     install_requires=["numpy >= 1.6.0"],
     setup_requires=["numpy >= 1.6.0"],
     distclass=MyDist,
-    cmdclass={"build_py": MyBuild}
+    cmdclass={"clean": MyClean}
     )
