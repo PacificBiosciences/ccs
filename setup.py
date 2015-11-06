@@ -43,11 +43,11 @@ if not os.path.exists(os.path.join(swigLib, modName)):
         if swig is not None:
             cmds.append("-DSWIG_COMMAND={0}".format(swig))
         cmds.append(thisDir)
-        # print("running command: {0}".format(" ".join(cmds)), file=sys.stderr)
+        print("Running command {0}".format(" ".join(cmds)), file=sys.stderr)
         retcode = Popen(cmds, cwd=buildDir, env=env).wait()
         if (retcode != 0):
             raise RuntimeError("failed to configure the ConsensusCore2 with CMake!")
-        # print("running command: make", file=sys.stderr)
+        print("Running command make", file=sys.stderr)
         retcode = Popen(["make"], cwd=buildDir).wait()
         if (retcode != 0):
             raise RuntimeError("failed to compile or link ConsensusCore2!")
