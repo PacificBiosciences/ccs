@@ -99,7 +99,8 @@ typedef ResultType<CCS> Results;
 
 const auto CircularConsensus = &Consensus<Chunk, CCS>;
 
-void Writer(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts, Results&& results)
+void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts,
+                     Results&& results)
 {
     counts += results;
 
@@ -156,10 +157,35 @@ void Writer(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts, 
     ccsBam.TryFlush();
 }
 
-Results WriterThread(WorkQueue<Results>& queue, BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi)
+Results BamWriterThread(WorkQueue<Results>& queue, unique_ptr<BamWriter>&& ccsBam,
+                        unique_ptr<PbiBuilder>&& ccsPbi)
 {
     Results counts;
-    while (queue.ConsumeWith(Writer, ref(ccsBam), ref(ccsPbi), ref(counts)))
+    while (queue.ConsumeWith(WriteBamRecords, ref(*ccsBam), ref(ccsPbi), ref(counts)))
+        ;
+    return counts;
+}
+
+void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
+{
+    counts += results;
+
+    for (const auto& ccs : results) {
+        ccsFastq << '@' << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs"
+                 << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy << '\n';
+        ccsFastq << ccs.Sequence << '\n';
+        ccsFastq << "+\n";
+        ccsFastq << ccs.Qualities << '\n';
+    }
+
+    ccsFastq.flush();
+}
+
+Results FastqWriterThread(WorkQueue<Results>& queue, const string& fname)
+{
+    ofstream ccsFastq(fname);
+    Results counts;
+    while (queue.ConsumeWith(WriteFastqRecords, ref(ccsFastq), ref(counts)))
         ;
     return counts;
 }
@@ -361,18 +387,6 @@ int main(int argc, char** argv)
     // start processing chunks!
     //
     //
-    BamWriter ccsBam(outputFile, PrepareHeader(parser, argc, argv, files));
-    unique_ptr<PbiBuilder> ccsPbi(nullptr);
-    unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
-    map<string, shared_ptr<string>> movieNames;
-
-    if (pbIndex) ccsPbi.reset(new PbiBuilder(outputFile + ".pbi"));
-
-    WorkQueue<Results> workQueue(nThreads);
-    future<Results> writer =
-        async(launch::async, WriterThread, ref(workQueue), ref(ccsBam), ref(ccsPbi));
-    size_t poorSNR = 0, tooFewPasses = 0;
-
     const auto avail = PacBio::Consensus::SupportedChemistries();
 
     PBLOG_DEBUG << "Found consensus models for: (" << join(avail, ", ") << ')';
@@ -397,8 +411,24 @@ int main(int argc, char** argv)
 
     EntireFileQuery query(ds);
 
-    // use make_optional here to get around spurious warnings from gcc:
-    //   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47679
+    WorkQueue<Results> workQueue(nThreads);
+    size_t poorSNR = 0, tooFewPasses = 0;
+
+    future<Results> writer;
+
+    const string outputExt = FileExtension(outputFile);
+    if (outputExt == "bam") {
+        unique_ptr<BamWriter> ccsBam(
+            new BamWriter(outputFile, PrepareHeader(parser, argc, argv, files)));
+        unique_ptr<PbiBuilder> ccsPbi(pbIndex ? new PbiBuilder(outputFile + ".pbi") : nullptr);
+        writer = async(launch::async, BamWriterThread, ref(workQueue), move(ccsBam), move(ccsPbi));
+    } else if (outputExt == "fastq" || outputExt == "fq")
+        writer = async(launch::async, FastqWriterThread, ref(workQueue), ref(outputFile));
+    else
+        parser.error("OUTPUT: invalid file extension: '" + outputExt + "'");
+
+    unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
+    map<string, shared_ptr<string>> movieNames;
     optional<int32_t> holeNumber(none);
     bool skipZmw = false;
 

@@ -69,6 +69,25 @@ bool FileExists(const string& path)
     return stat(path.c_str(), &buffer) == 0;
 }
 
+string FileExtension(const string& path)
+{
+    size_t fileStart = path.find_last_of("/");
+
+    if (fileStart == string::npos) fileStart = 0;
+
+    // increment beyond the '/'
+    ++fileStart;
+
+    size_t extStart = path.substr(fileStart, path.length() - fileStart).find_last_of(".");
+
+    if (extStart == string::npos) return "";
+
+    // increment beyond '.'
+    ++extStart;
+
+    return path.substr(fileStart + extStart, path.length() - fileStart - extStart);
+}
+
 void FlattenFofn(vector<string>& res, const string& file)
 {
     using boost::algorithm::iends_with;

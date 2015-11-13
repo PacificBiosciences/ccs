@@ -48,7 +48,7 @@
 #include <pacbio/consensus/poa/PoaConsensus.h>
 
 #include "TestData.h"
-#include "TestUtils.h"
+#include "TestUtility.h"
 
 using std::vector;
 using std::string;
