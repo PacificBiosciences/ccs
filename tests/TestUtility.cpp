@@ -33,9 +33,16 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: David Alexander
+// Author: David Alexander, Lance Hepler
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <seqan/seq_io.h>
+
+#include <pacbio/ccs/Utility.h>
+
+#include "TestUtility.h"
 
 bool LoadFastaSequences(std::string fastaFname, std::vector<std::string>& ids,
                         std::vector<std::string>& seqs)
@@ -54,4 +61,14 @@ bool LoadFastaSequences(std::string fastaFname, std::vector<std::string>& ids,
     }
 
     return true;
+}
+
+TEST(UtilityTest, TestFileExtension)
+{
+    using PacBio::CCS::FileExtension;
+
+    EXPECT_EQ("bar", FileExtension("/path/to/foo.bar"));
+    EXPECT_EQ("bar", FileExtension("/foo.bar"));
+    EXPECT_EQ("bar", FileExtension("foo.bar"));
+    EXPECT_EQ("", FileExtension("foo"));
 }
