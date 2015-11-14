@@ -63,6 +63,7 @@
 #include <pacbio/ccs/Whitelist.h>
 #include <pacbio/ccs/WorkQueue.h>
 #include <pacbio/ccs/Utility.h>
+#include <pacbio/ccs/GitSHA1.h> 
 
 using namespace std;
 using namespace PacBio::BAM;
@@ -278,6 +279,7 @@ int main(int argc, char** argv)
         OptionParser()
             .usage("usage: %prog [OPTIONS] OUTPUT FILES...")
             .version("%prog " VERSION
+                     "\nSHA: " CCS_GIT_SHA1
                      "\nCopyright (c) 2014-2015 Pacific Biosciences, Inc.\nLicense: 3-BSD")
             .description(DESCRIPTION
                          "\nAdditional documentation: http://github.com/PacificBiosciences/pbccs");
