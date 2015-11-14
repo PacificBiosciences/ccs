@@ -1,4 +1,4 @@
-
+#define CC2_GIT_SHA1 "@CC2_GIT_SHA1@"
 #include <string>
 
 namespace PacBio {
@@ -6,12 +6,10 @@ namespace Consensus {
 
 struct Version
 {
-    static size_t Major = @PacBioConsensus_VERSION_MAJOR@;
-    static size_t Minor = @PacBioConsensus_VERSION_MINOR@;
-    static size_t Patch = @PacBioConsensus_VERSION_PATCH@;
+    const size_t Major = @PacBioConsensus_VERSION_MAJOR@;
+    const size_t Minor = @PacBioConsensus_VERSION_MINOR@;
+    const size_t Patch = @PacBioConsensus_VERSION_PATCH@;
 
-    static operator std::string()
-    { return "@PacBioConsensus_VERSION@"; }
 };
 
 }  // namespace Consensus
