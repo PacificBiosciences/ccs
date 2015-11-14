@@ -65,6 +65,8 @@
 #include <pacbio/ccs/Utility.h>
 #include <pacbio/ccs/GitSHA1.h> 
 
+#include <pacbio/consensus/Version.h>
+
 using namespace std;
 using namespace PacBio::BAM;
 using namespace PacBio::CCS;
@@ -279,7 +281,8 @@ int main(int argc, char** argv)
         OptionParser()
             .usage("usage: %prog [OPTIONS] OUTPUT FILES...")
             .version("%prog " VERSION
-                     "\nSHA: " CCS_GIT_SHA1
+                     "\nCCS SHA: " CCS_GIT_SHA1
+                     "\nCC2 SHA: " CC2_GIT_SHA1
                      "\nCopyright (c) 2014-2015 Pacific Biosciences, Inc.\nLicense: 3-BSD")
             .description(DESCRIPTION
                          "\nAdditional documentation: http://github.com/PacificBiosciences/pbccs");
