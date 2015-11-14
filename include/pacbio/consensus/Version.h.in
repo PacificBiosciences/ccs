@@ -1,4 +1,4 @@
-
+#define CC2_GIT_SHA1 "@CC2_GIT_SHA1@"
 #include <string>
 
 namespace PacBio {

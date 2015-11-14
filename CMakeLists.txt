@@ -24,6 +24,13 @@ set(PacBioConsensus_TestsDir          ${PacBioConsensus_RootDir}/tests)
 
 file(MAKE_DIRECTORY                   ${PacBioConsensus_LibDir})
 
+## ADD THE GIT SHA
+list(APPEND CMAKE_MODULE_PATH "${PacBioConsensus_RootDir}/third-party/cmake/")
+message("${CMAKE_MODULE_PATH}")
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC CC2_GIT_SHA1)
+
+
 configure_file(
     ${PacBioConsensus_IncludeDir}/pacbio/consensus/Version.h.in
     ${PacBioConsensus_IncludeDir}/pacbio/consensus/Version.h
