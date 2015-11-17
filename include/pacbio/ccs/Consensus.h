@@ -224,12 +224,16 @@ float Median(std::vector<T>* vs)
     return 0.5 * (vs->at(n / 2 - 1) + vs->at(n / 2));
 }
 
+
+    
 template <typename TRead>
-std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads, const size_t minLength)
+std::pair<std::vector<const TRead*>, size_t> FilterReads(const std::vector<TRead>& reads, const size_t minLength)
 {
+    // This is a count of subreads removed for bing too short, or too long.
+    size_t size_filtered_reads = 0;
     std::vector<const TRead*> results;
 
-    if (reads.empty()) return results;
+    if (reads.empty()) return std::make_pair(results, size_filtered_reads);
 
     std::vector<size_t> lengths;
     size_t longest = 0;
@@ -246,17 +250,22 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads, const siz
     size_t maxLen = 2 * static_cast<size_t>(median);
 
     // if it's too short, return nothing
-    if (median < static_cast<float>(minLength)) return results;
-
+    if (median < static_cast<float>(minLength)) {
+        size_filtered_reads += reads.size();
+        return std::make_pair(results, size_filtered_reads);
+    }
     results.reserve(reads.size());
 
     for (const auto& read : reads) {
         // if the median exists, then this filters stuff,
         //   otherwise it's twice the longest read and is always true
-        if (read.Seq.length() < maxLen)
+        if (read.Seq.length() < maxLen) {
             results.emplace_back(&read);
-        else
+        }
+        else {
             results.emplace_back(nullptr);
+            size_filtered_reads++;
+        }
     }
 
     // TODO(lhepler): incorporate per-subread quality here
@@ -283,7 +292,7 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads, const siz
                          return lexForm(lhs) > lexForm(rhs);
                      });
 
-    return results;
+    return std::make_pair(results, size_filtered_reads);
 }
 
 template <typename TRead>
@@ -388,8 +397,12 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
     for (const auto& chunk : *chunks) {
         try {
             Timer timer;
-            auto reads = FilterReads(chunk.Reads, settings.MinLength);
-
+            std::vector<int32_t> statusCounts(static_cast<int>(AddReadResult::OTHER) + 1, 0);
+            
+            auto readsAndFilteredCount = FilterReads(chunk.Reads, settings.MinLength);
+            auto reads = readsAndFilteredCount.first;
+            statusCounts[static_cast<size_t>(AddReadResult::SIZE_FILTER)] += readsAndFilteredCount.second;
+            
             if (reads.empty() ||
                 std::accumulate(reads.begin(), reads.end(), 0, std::plus<bool>()) == 0) {
                 results.NoSubreads += 1;
@@ -427,7 +440,6 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             // setup the arrow integrator
             IntegratorConfig cfg(settings.MinZScore, 12.5);
             MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise, chunk.Chemistry);
-            std::vector<int32_t> statusCounts(static_cast<int>(AddReadResult::OTHER) + 1, 0);
             const size_t nReads = readKeys.size();
             size_t nPasses = 0, nDropped = 0;
 
