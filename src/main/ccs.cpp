@@ -144,8 +144,7 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["zs"] = zScores;
         tags["rs"] = ccs.StatusCounts;
 
-#if 1
-        // TODO(lhepler) remove these before release
+#if 0
         tags["ms"] = ccs.ElapsedMilliseconds;
         tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
