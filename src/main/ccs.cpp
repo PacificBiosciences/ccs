@@ -54,6 +54,7 @@
 #include <pbbam/BamWriter.h>
 #include <pbbam/EntireFileQuery.h>
 #include <pbbam/PbiBuilder.h>
+#include <pbbam/ReadGroupInfo.h>
 
 #include <pacbio/ccs/Consensus.h>
 #include <pacbio/ccs/ExecUtils.h>
@@ -400,7 +401,14 @@ int main(int argc, char** argv)
 
     // test that all input chemistries are supported
     {
-        const set<string> used = ds.SequencingChemistries();
+        set<string> used;
+        try {
+            used = ds.SequencingChemistries();
+        }
+        catch(InvalidSequencingChemistryException& e) {
+            PBLOG_FATAL << e.what();
+            exit(-1);
+        }
         vector<string> unavail;
 
         set_difference(used.begin(), used.end(), avail.begin(), avail.end(),
