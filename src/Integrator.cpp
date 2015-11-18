@@ -14,6 +14,9 @@ std::set<std::string> SupportedChemistries() { return ModelFactory::SupportedChe
 IntegratorConfig::IntegratorConfig(const double minZScore, const double scoreDiff)
     : MinZScore{minZScore}, ScoreDiff{scoreDiff}
 {
+    if (ScoreDiff < 0) {
+        throw std::runtime_error("Score diff must be > 0");
+    }
 }
 
 AbstractIntegrator::AbstractIntegrator(const IntegratorConfig& cfg) : cfg_{cfg} {}
