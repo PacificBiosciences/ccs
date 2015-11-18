@@ -45,6 +45,7 @@ set_target_properties(test_pbccs PROPERTIES
 )
 target_link_libraries(test_pbccs
     pbccs
+    ${PBBAM_LIBRARIES}
     ${PBCONSENSUS_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
