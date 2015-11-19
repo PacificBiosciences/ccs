@@ -302,7 +302,7 @@ int main(int argc, char** argv)
             "Generate CCS for the provided comma-separated holenumber ranges only. Default = all");
     parser.add_option(em + OptionNames::MinSnr)
         .type("float")
-        .set_default(4)
+        .set_default(3.75) // See https://github.com/PacificBiosciences/pbccs/issues/86 for a more detailed discussion of this default.
         .help("Minimum SNR of input subreads. Default = %default");
     parser.add_option(em + OptionNames::MinReadScore)
         .type("float")
