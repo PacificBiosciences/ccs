@@ -58,7 +58,7 @@ include_directories(SYSTEM
 
 # Make release with debug the default, helps tests pass by being fast enough
 IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, 
+  SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build,
       options are: Debug Release Profile RelWithDebInfo" FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
