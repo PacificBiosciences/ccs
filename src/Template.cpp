@@ -41,47 +41,111 @@ void AbstractTemplate::ApplyMutations(std::vector<Mutation>* const muts)
 std::pair<double, double> AbstractTemplate::NormalParameters() const
 {
     double mean = 0.0, var = 0.0;
-
+    /* Brute forcing this for clarity of code as I don't think this is limiting.
+     Should profiling show this is a problem, we can use the fact that there are only
+     8 possible dinucleotide contexts and so we can multiply instead of performing repeated addition.
+     e.g. A + B + A + A + B = 3 * A + 2 * B, so we could avoid the nested add step */
+ 
+    // Now sum up the mean and variance
     for (size_t i = 0; (i + 1) < Length(); ++i) {
         double m, v;
         std::tie(m, v) = SiteNormalParameters(i);
         mean += m;
-        var += v;
+        /* Add the variance, note that the sites are independent so
+           Var (A + B) = Var(A) + Var(B) as Cov(A,B) = 0 */
+        var += v; // Add the variance (note sites are indpe
     }
-
     return std::make_pair(mean, var);
 }
 
 size_t AbstractTemplate::TrueLength() const { return end_ - start_; }
+    
+/* See PBEP #4 for a write-up of this code and an explanation of the algorithm.
+     
+     The R script below can be used to validate the moments are calculated correctly by
+     comparing to a brute-force simulation
+     
+     # Sample Parameters
+     p_m  = 0.95583140484751283
+     p_d  = 0.00097238955012494488
+     p_b  = 0.029256323818866534
+     p_s  = 0.013939881783495679
+     eps  = 0.00505052456472967
+     
+     # Expected Results
+     mean  = -0.27568172991312162
+     var = 1.019204780302317
+     
+     pmE = p_m / (p_m + p_d)
+     exitLL <- function() {
+     if (runif(1) < pmE) {
+     if (runif(1) < eps) {
+     return( log(p_m) + log(eps) + log(1/3))
+     } else {
+     return(log(p_m) + log(1-eps))
+     }
+     } else {
+     return(log(p_d))
+     }
+     }
+     
+     insertLL <- function() {
+     LL <- 0
+     pbI = p_b / (p_b + p_s)
+     while (runif(1) < (p_b + p_s)) {
+     if (runif(1) < pbI) {
+     LL <- LL + log(p_b)
+     } else {
+     LL <- LL + log(p_s) + log(1/3)
+     }
+     }
+     return(LL)
+     }
+     
+     getSamp <- function() {
+     return(insertLL() + exitLL())
+     }
+     res = replicate(5000000, getSamp())
+     mean(res)
+     var(res)
+*/
 std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i) const
 {
+    //TODO (ndelaney): This probably needs to be matched to the specific model being used.
     // std::log(1.0/3);
     constexpr double lgThird = -1.0986122886681098;
-
     const auto params = (*this)[i];
-
-    const double p_m = params.Match, l_m = std::log(p_m), l2_m = l_m * l_m;
-    const double p_d = params.Deletion, l_d = std::log(p_d), l2_d = l_d * l_d;
-    const double p_b = params.Branch, l_b = std::log(p_b), l2_b = l_b * l_b;
-    const double p_s = params.Stick, l_s = std::log(p_s), l2_s = l_s * l_s;
-
     const double eps = 1.0 - BaseEmissionPr(MoveType::MATCH, params.Base, params.Base);
-    const double E_M = (1.0 - eps) * 0.0 + eps * lgThird, E2_M = eps * lgThird * lgThird;
-    const double E_D = 0.0, E2_D = E_D * E_D;
-    const double E_B = 0.0, E2_B = E_B * E_B;
-    const double E_S = lgThird, E2_S = E_S * E_S;
-
-    auto ENN = [=](const double l_m, const double l_d, const double l_b, const double l_s,
-                   const double E_M, const double E_D, const double E_B, const double E_S) {
-        const double E_MD = (l_m + E_M) * p_m / (p_m + p_d) + (l_d + E_D) * p_d / (p_m + p_d);
-        const double E_I = (l_b + E_B) * p_b / (p_b + p_s) + (l_s + E_S) * p_s / (p_b + p_s);
-        const double E_BS = E_I * (p_s + p_b) / (p_m + p_d);
-        return E_MD + E_BS;
-    };
-
-    const double mean = ENN(l_m, l_d, l_b, l_s, E_M, E_D, E_B, E_S);
-    const double var = ENN(l2_m, l2_d, l2_b, l2_s, E2_M, E2_D, E2_B, E2_S) - mean * mean;
-
+    
+    const double p_m = params.Match,     l_m = std::log(p_m),  l2_m = l_m * l_m;
+    const double p_d = params.Deletion,  l_d = std::log(p_d),  l2_d = l_d * l_d;
+    const double p_b = params.Branch,    l_b = std::log(p_b),  l2_b = l_b * l_b;
+    const double p_s = params.Stick,     l_s = std::log(p_s),  l2_s = l_s * l_s;
+    
+    const double lgeps = std::log(eps);
+    const double lg1minusEps = std::log(1.0 - eps);
+    
+    // First moment expectations (zero terms used for clarity)
+    const double E_M = (1.0 - eps) * lg1minusEps   + eps * (lgThird + lgeps);
+    const double E_D = 0.0;
+    const double E_B = 0.0;
+    const double E_S = lgThird;
+    
+    // Calculate first moment
+    const double E_MD = (l_m + E_M) * p_m / (p_m + p_d) + (l_d + E_D) * p_d / (p_m + p_d);
+    const double E_I  = (l_b + E_B) * p_b / (p_b + p_s) + (l_s + E_S) * p_s / (p_b + p_s);
+    const double E_BS = E_I * (p_s + p_b) / (p_m + p_d);
+    const double mean = E_MD + E_BS;
+    
+    // Calculate second momment
+    // Key expansion used repeatedly here: (A + B)^2 = A^2 + 2AB + B^2
+    const double E2_M = (1.0 - eps) * pow(lg1minusEps, 2.0)  + eps * pow(lgThird + lgeps, 2.0);
+    const double E2_MD = (l2_m + 2 * l_m * E_M + E2_M) * p_m / (p_m + p_d) + l2_d * p_d / (p_m + p_d);
+    const double E2_S = pow(lgThird, 2.0);
+    const double E2_I = l2_b * p_b / (p_b + p_s) + (l2_s + 2 * E_S * l_s + E2_S ) * p_s / (p_b + p_s);
+    const double E2_BS = E2_I * (p_s + p_b) / (p_m + p_d);
+    const double moment2 = E2_BS + 2 * E_BS * E_MD + E2_MD;
+    const double var = moment2 - mean * mean;
     return std::make_pair(mean, var);
 }
 

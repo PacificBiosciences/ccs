@@ -35,6 +35,7 @@ AddReadResult AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tp
     try {
         eval.reset(new Evaluator(std::move(tpl), read, cfg_.ScoreDiff));
         const double zScore = eval->ZScore();
+        assert(std::isfinite(zScore));
         if (!std::isnan(cfg_.MinZScore) && (!std::isfinite(zScore) || zScore < cfg_.MinZScore)) {
             eval.reset(nullptr);
             result = AddReadResult::POOR_ZSCORE;
