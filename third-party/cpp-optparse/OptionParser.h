@@ -69,6 +69,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
+#include <limits>
 
 namespace optparse {
 
@@ -106,8 +107,17 @@ class Value {
     template<typename T,
              typename = typename std::enable_if<std::is_arithmetic<T>::value>::type>
     operator T() {
-        T t;
-        if (valid && (std::istringstream(str) >> t)) return t;
+        T t;        
+        if (valid && (std::istringstream(str) >> t)) {
+            return t;
+        } else if (std::is_floating_point<T>::value)
+        {
+            // Hacky work around for NaN values, istringstream
+            // only handles this in some implementations.
+            if (str == "NaN" || str == "nan") {
+                return std::numeric_limits<T>::quiet_NaN();
+            }
+        }
         throw InvalidValueCast();
     }
 

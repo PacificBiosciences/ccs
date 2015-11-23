@@ -484,7 +484,7 @@ string Option::check_type(const string& opt, const string& val) const {
   }
   else if (type() == "float" || type() == "double") {
     double t;
-    if (not (ss >> t))
+    if (not (ss >> t) && ss.str() != "NaN" && ss.str() != "nan" )
       err << _("option") << " " << opt << ": " << _("invalid floating-point value") << ": '" << val << "'";
   }
   else if (type() == "choice") {
