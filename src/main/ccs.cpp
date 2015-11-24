@@ -135,10 +135,6 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["np"] = static_cast<int32_t>(ccs.NumPasses);
         tags["rq"] = static_cast<float>(ccs.PredictedAccuracy);
         tags["sn"] = snr;
-        if (ccs.Barcodes) {
-            vector<uint16_t> bcs {ccs.Barcodes->first, ccs.Barcodes->second};
-            tags["bc"] = bcs;
-        }
 
         // TODO(lhepler) maybe remove one day
         tags["za"] = static_cast<float>(ccs.AvgZScore);
@@ -148,7 +144,11 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["zs"] = zScores;
         tags["rs"] = ccs.StatusCounts;
 
-#if 0
+#if DIAGNOSTICS
+        if (ccs.Barcodes) {
+            vector<uint16_t> bcs {ccs.Barcodes->first, ccs.Barcodes->second};
+            tags["bc"] = bcs;
+        }
         tags["ms"] = ccs.ElapsedMilliseconds;
         tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
@@ -178,9 +178,11 @@ void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
     counts += results;
     for (const auto& ccs : results) {        ccsFastq << '@' << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs"
         << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy;
+#if DIAGNOSTICS
         if( ccs.Barcodes) {
             ccsFastq << " bc:" << ccs.Barcodes->first << "-" << ccs.Barcodes->second;
         }
+#endif
         ccsFastq << '\n';
         ccsFastq << ccs.Sequence << '\n';
         ccsFastq << "+\n";
