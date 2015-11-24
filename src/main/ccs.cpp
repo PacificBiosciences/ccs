@@ -135,6 +135,10 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["np"] = static_cast<int32_t>(ccs.NumPasses);
         tags["rq"] = static_cast<float>(ccs.PredictedAccuracy);
         tags["sn"] = snr;
+        if (ccs.Barcodes) {
+            vector<uint16_t> bcs {ccs.Barcodes->first, ccs.Barcodes->second};
+            tags["bc"] = bcs;
+        }
 
         // TODO(lhepler) maybe remove one day
         tags["za"] = static_cast<float>(ccs.AvgZScore);
@@ -172,10 +176,12 @@ Results BamWriterThread(WorkQueue<Results>& queue, unique_ptr<BamWriter>&& ccsBa
 void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
 {
     counts += results;
-
-    for (const auto& ccs : results) {
-        ccsFastq << '@' << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs"
-                 << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy << '\n';
+    for (const auto& ccs : results) {        ccsFastq << '@' << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs"
+        << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy;
+        if( ccs.Barcodes) {
+            ccsFastq << " bc:" << ccs.Barcodes->first << "-" << ccs.Barcodes->second;
+        }
+        ccsFastq << '\n';
         ccsFastq << ccs.Sequence << '\n';
         ccsFastq << "+\n";
         ccsFastq << ccs.Qualities << '\n';
@@ -443,6 +449,7 @@ int main(int argc, char** argv)
     map<string, shared_ptr<string>> movieNames;
     optional<int32_t> holeNumber(none);
     bool skipZmw = false;
+    boost::optional<std::pair<uint16_t, uint16_t>> barcodes(boost::none);
 
     for (const auto& read : query) {
         const string movieName = read.MovieName();
@@ -450,8 +457,9 @@ int main(int argc, char** argv)
         if (movieNames.find(movieName) == movieNames.end()) {
             movieNames[movieName] = make_shared<string>(movieName);
         }
-
+        // Have we started a new ZMW?
         if (!holeNumber || *holeNumber != read.HoleNumber()) {
+            
             if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses) {
                 PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
                             << ", insufficient number of passes (" << chunk->back().Reads.size()
@@ -467,6 +475,9 @@ int main(int argc, char** argv)
 
             holeNumber = read.HoleNumber();
             auto snr = read.SignalToNoise();
+            if(read.HasBarcodes()) {
+                barcodes = read.Barcodes();
+            }
             if (whitelist && !whitelist->Contains(movieName, *holeNumber)) {
                 skipZmw = true;
             } else if (*min_element(snr.begin(), snr.end()) < minSnr) {
@@ -478,7 +489,7 @@ int main(int argc, char** argv)
                 skipZmw = false;
                 chunk->emplace_back(Chunk{ReadId(movieNames[movieName], *holeNumber),
                                           vector<Subread>(), SNR(snr[0], snr[1], snr[2], snr[3]),
-                                          read.ReadGroup().SequencingChemistry()});
+                                          read.ReadGroup().SequencingChemistry(), barcodes});
             }
         }
 
@@ -488,6 +499,17 @@ int main(int argc, char** argv)
             PBLOG_DEBUG << "Skipping read " << read.FullName() << ", insufficient read accuracy ("
                         << read.ReadAccuracy() << '<' << minReadScore << ')';
             continue;
+        }
+        // Check that barcode matches the previous ones
+        if (barcodes) {
+            // if not, set the barcodes to the flag and stop checking them.
+            if(!read.HasBarcodes() || read.Barcodes() != barcodes) {
+                
+                barcodes->first = UINT16_MAX;
+                barcodes->second = UINT16_MAX;
+                chunk->back().Barcodes = barcodes;
+                barcodes = boost::none;
+            }
         }
 
         chunk->back().Reads.emplace_back(

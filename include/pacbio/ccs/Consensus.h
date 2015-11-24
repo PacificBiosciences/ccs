@@ -146,6 +146,7 @@ struct ChunkType
     std::vector<TRead> Reads;
     SNR SignalToNoise;
     std::string Chemistry;
+    boost::optional<std::pair<uint16_t, uint16_t>> Barcodes;
 };
 
 template <typename TId>
@@ -163,6 +164,7 @@ struct ConsensusType
     size_t MutationsApplied;
     SNR SignalToNoise;
     float ElapsedMilliseconds;
+    boost::optional<std::pair<uint16_t, uint16_t>> Barcodes;
 };
 
 template <typename TConsensus>
@@ -515,7 +517,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             results.Success += 1;
             results.emplace_back(TResult{chunk.Id, std::string(ai), QVsToASCII(qvs), nPasses,
                                          predAcc, zAvg, zScores, statusCounts, nTested, nApplied,
-                                         chunk.SignalToNoise, timer.ElapsedMilliseconds()});
+                                         chunk.SignalToNoise, timer.ElapsedMilliseconds(), chunk.Barcodes});
         } catch (...) {
             results.Other += 1;
             PBLOG_ERROR << "Skipping " << chunk.Id << ", caught exception during processing";
