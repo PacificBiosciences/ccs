@@ -53,6 +53,13 @@ set(PacBioCCS_VERSION
     "${PacBioCCS_VERSION_MAJOR}.${PacBioCCS_VERSION_MINOR}.${PacBioCCS_VERSION_PATCH}"
 )
 
+# Output diagnostic information if we are defined as producing an internal build.
+if(NOT DIAGNOSTICS)
+set(DIAGNOSTICS 0)
+endif()
+add_definitions(-DDIAGNOSTICS=${DIAGNOSTICS})
+
+
 # main project paths
 set(PacBioCCS_RootDir           ${PacBioCCS_SOURCE_DIR})
 set(PacBioCCS_ParentDir         ${PacBioCCS_RootDir}/..)
