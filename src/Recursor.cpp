@@ -87,8 +87,6 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
     alpha.FinishEditingColumn(0, 0, 1);
     // End initial conditions
 
-    // NOPE:
-    // int hintBeginRow = 1, hintEndRow = I - 1;
     size_t hintBeginRow = 1, hintEndRow = 1;
     auto prevTransProbs = TemplatePosition{'-', 0, 0, 0, 0};
 
@@ -215,8 +213,6 @@ void Recursor::FillBeta(const M& guide, M& beta) const
 
     // Totally arbitray decision here...
     size_t hintBeginRow = I, hintEndRow = I;
-    // NOPE:
-    // int hintBeginRow = std::min(0, I - 45), hintEndRow = I;
 
     // Recursively calculate [Probability transition to next state] *
     // [Probability of emission at that state] * [Probability from that state]
@@ -655,18 +651,10 @@ size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
 
     // if we use too much space, do at least one more round
     // to take advantage of rebanding
-    // std::cout << "Alpha Used: " << a.UsedEntries() << "  Beta Used:  " << b.UsedEntries() <<
-    // std::endl;
     if (a.UsedEntries() >= maxSize || b.UsedEntries() >= maxSize) {
         FillAlpha(b, a);
-        // std::cout << "Alpha Used: " << a.UsedEntries() << "  Beta Used:  " << b.UsedEntries() <<
-        // std::endl;
         FillBeta(a, b);
-        // std::cout << "Alpha Used: " << a.UsedEntries() << "  Beta Used:  " << b.UsedEntries() <<
-        // std::endl;
         FillAlpha(b, a);
-        // std::cout << "Alpha Used: " << a.UsedEntries() << "  Beta Used:  " << b.UsedEntries() <<
-        // std::endl;
         flipflops += 3;
     }
 
@@ -683,17 +671,10 @@ size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
             FillBeta(a, b);
 
         ++flipflops;
-        // std::cout << "Alpha Used: " << a.UsedEntries() << "  Beta Used:  " << b.UsedEntries() <<
-        // std::endl;
     }
 
-    if (std::abs(1.0 - alphaV / betaV) > ALPHA_BETA_MISMATCH_TOLERANCE) {
-        // LDEBUG << "Could not mate alpha, beta.  Read: " << read_.Name << "
-        // Tpl: Was wrapped, improve debugging to pring";
-        // std::cout << "Mismatch : " << mismatch_percentage << "% Alpha " <<
-        // alphaV << " Beta " << betaV << std::endl;
+    if (std::abs(1.0 - alphaV / betaV) > ALPHA_BETA_MISMATCH_TOLERANCE)
         throw AlphaBetaMismatch();
-    }
 
     return flipflops;
 }
