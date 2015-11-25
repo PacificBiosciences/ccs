@@ -125,9 +125,9 @@ public:
 
     void ExtendBeta(const M& beta, size_t endColumn, M& ext, int lengthDiff = 0) const;
 
-    //
-    // Constructors
-    //
+    // \brief Construct a Recursor from a Template and a MappedRead,
+    // The scoreDiff here is passed in negative logScale and converted
+    // to the appropriate divisor.
     Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
              double scoreDiff = 12.5);
 
@@ -139,10 +139,8 @@ private:
     /// of the maximum path through each and the inputs for column j.
     bool RangeGuide(size_t j, const M& guide, const M& matrix, size_t* beginRow,
                     size_t* endRow) const;
-    /* TODO: These two are totally redundant.  We will need to either enforce the scaling we will
-      use or expand the template typing to properly handle either case.  The RangeGuide function
-      determines the minimum score by either diving or subtracting depending on the scale. */
-    double scoreDiff_;  // Should be >1
+    // The RangeGuide function determines the minimum score by dividing out scoreDiff_
+    double scoreDiff_;  // reciprocal of "natural scale"
 };
 
 }  // namespace Consensus
