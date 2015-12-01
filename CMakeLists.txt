@@ -137,11 +137,8 @@ add_subdirectory(src)
 # testing
 add_subdirectory(${PacBioCCS_TestsDir})
 
-## ADD THE GIT SHA
-list(APPEND CMAKE_MODULE_PATH "${PacBioCCS_RootDir}/third-party/cmake/")
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-configure_file("${PacBioCCS_IncludeDir}/pacbio/ccs/GitSHA1.h.in" "${PacBioCCS_IncludeDir}/pacbio/ccs/GitSHA1.h" @ONLY)
-list(APPEND SOURCES "${PacBioCCS_IncludeDir}/pacbio/ccs/GitSHA1.h")
-
-
+# find the git sha1
+list(APPEND CMAKE_MODULE_PATH "${PacBioConsensus_RootDir}/cmake")
+include(FindGitSha1)
+find_git_sha1(CCS_GIT_SHA1)
+configure_file("${PacBioCCS_IncludeDir}/pacbio/ccs/Version.h.in" "${PacBioCCS_IncludeDir}/pacbio/ccs/Version.h" @ONLY)
