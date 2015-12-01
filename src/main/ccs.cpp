@@ -64,7 +64,7 @@
 #include <pacbio/ccs/Whitelist.h>
 #include <pacbio/ccs/WorkQueue.h>
 #include <pacbio/ccs/Utility.h>
-#include <pacbio/ccs/GitSHA1.h> 
+#include <pacbio/ccs/Version.h>
 
 #include <pacbio/consensus/Version.h>
 
@@ -77,7 +77,6 @@ using boost::optional;
 using optparse::OptionParser;
 
 // these strings are part of the BAM header, they CANNOT contain newlines
-#define VERSION "2.0.0"
 #define DESCRIPTION "Generate circular consensus sequences (ccs) from subreads."
 
 namespace PacBio {
@@ -206,11 +205,11 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv,
 {
     using boost::algorithm::join;
 
-    ProgramInfo program(parser.prog() + "-" + VERSION);
+    ProgramInfo program(parser.prog() + "-" + CCS_VERSION);
     program.Name(parser.prog())
         .CommandLine(parser.prog() + " " + join(vector<string>(argv + 1, argv + argc), " "))
         .Description(DESCRIPTION)
-        .Version(VERSION);
+        .Version(CCS_VERSION);
 
     BamHeader header;
     header.PacBioBamVersion("3.0.1").SortOrder("unknown").Version("1.5").AddProgram(program);
@@ -285,16 +284,18 @@ int main(int argc, char** argv)
     // args and options
     //
     //
+    // clang-format off
+    //   clang messes with the way the arg to version() is formatted..
     auto parser =
         OptionParser()
             .usage("usage: %prog [OPTIONS] OUTPUT FILES...")
-            .version("%prog " VERSION
-                     "\nCCS SHA: " CCS_GIT_SHA1
-                     "\nCC2 SHA: " CC2_GIT_SHA1
+            .version("%prog " CCS_VERSION " (commit " CCS_GIT_SHA1 ")"
+                     "\nConsensusCore2 " CC2_VERSION " (commit " CC2_GIT_SHA1 ")"
                      "\nCopyright (c) 2014-2015 Pacific Biosciences, Inc.\nLicense: 3-BSD")
             .description(DESCRIPTION
                          "\nAdditional documentation: http://github.com/PacificBiosciences/pbccs");
-
+    // clang-format on
+    //
     const vector<string> logLevels = {"TRACE", "DEBUG", "INFO",     "NOTICE",
                                       "WARN",  "ERROR", "CRITICAL", "FATAL"};
     const string em = "--";
@@ -310,7 +311,8 @@ int main(int argc, char** argv)
             "Generate CCS for the provided comma-separated holenumber ranges only. Default = all");
     parser.add_option(em + OptionNames::MinSnr)
         .type("float")
-        .set_default(3.75) // See https://github.com/PacificBiosciences/pbccs/issues/86 for a more detailed discussion of this default.
+        .set_default(3.75)  // See https://github.com/PacificBiosciences/pbccs/issues/86 for a more
+                            // detailed discussion of this default.
         .help("Minimum SNR of input subreads. Default = %default");
     parser.add_option(em + OptionNames::MinReadScore)
         .type("float")
@@ -411,8 +413,7 @@ int main(int argc, char** argv)
         set<string> used;
         try {
             used = ds.SequencingChemistries();
-        }
-        catch(InvalidSequencingChemistryException& e) {
+        } catch (InvalidSequencingChemistryException& e) {
             PBLOG_FATAL << e.what();
             exit(-1);
         }
