@@ -1,15 +1,19 @@
-#define CC2_GIT_SHA1 "@CC2_GIT_SHA1@"
 #include <string>
+
+#define CC2_GIT_SHA1 "@CC2_GIT_SHA1@"
+#define CC2_VERSION  "@PacBioConsensus_VERSION@"
 
 namespace PacBio {
 namespace Consensus {
 
 struct Version
 {
-    const size_t Major = @PacBioConsensus_VERSION_MAJOR@;
-    const size_t Minor = @PacBioConsensus_VERSION_MINOR@;
-    const size_t Patch = @PacBioConsensus_VERSION_PATCH@;
+    static const size_t Major = @PacBioConsensus_VERSION_MAJOR@;
+    static const size_t Minor = @PacBioConsensus_VERSION_MINOR@;
+    static const size_t Patch = @PacBioConsensus_VERSION_PATCH@;
 
+    static std::string ToString()
+    { return CC2_VERSION; }
 };
 
 }  // namespace Consensus
