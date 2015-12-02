@@ -166,24 +166,24 @@ def get_parser():
                 description="Minimum SNR of input subreads")
     p.add_float(Constants.MIN_READ_SCORE_ID, "minReadScore",
                 default=Constants.MIN_READ_SCORE_DEFAULT,
-                name="Minimum read score",
+                name="Minimum Read Score",
                 description="Minimum read score of input subreads")
     p.add_int(Constants.MIN_LENGTH_ID, "minLength",
               default=Constants.MIN_LENGTH_DEFAULT,
-              name="Minimum length",
+              name="Minimum Length",
               description="Minimum length of subreads to use for generating CCS")
     p.add_int(Constants.MIN_PASSES_ID, "minPasses",
               default=Constants.MIN_PASSES_DEFAULT,
-              name="Minimum passes",
+              name="Minimum Number of Passes",
               description="Minimum number of subreads required to generate CCS")
     p.add_float(Constants.MIN_PREDICTED_ACCURACY_ID, "minPredictedAccuracy",
                 default=Constants.MIN_PREDICTED_ACCURACY_DEFAULT,
-                name="Min. predicted accuracy",
+                name="Minimum Predicted Accuracy",
                 description="Minimum predicted accuracy in [0, 1]")
     p.add_float(Constants.MIN_ZSCORE_ID, "minZScore",
                 default=Constants.MIN_ZSCORE_DEFAULT,
-                name="Min. Z-score",
-                description="Minimum z-score to use a subread")
+                name="Minimum Z Score",
+                description="Minimum Z score to use a subread")
     p.add_float(Constants.MAX_DROP_FRAC_ID, "maxDropFraction",
                 default=Constants.MAX_DROP_FRAC_DEFAULT,
                 name="Max. dropped fraction",
