@@ -31,7 +31,8 @@ include_directories(SYSTEM
 # and the original ConsensusCore used it by default.
 # We could use python -c "print(sysconfig.get_config_var('CCSHARED'))",
 # but it's honestly unnecessary and requires providing PYTHON_EXECUTABLE
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioConsensus_CXX_FLAGS} -fPIC")
+target_compile_options(pbconsensus PUBLIC -fPIC)
+add_compile_options(-fPIC)
 
 # ConsensusCore2_wrap.cxx
 set(SWIG_COMMAND swig CACHE PATH "swig path")
