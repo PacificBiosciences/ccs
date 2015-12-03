@@ -186,7 +186,7 @@ def get_parser():
                 description="Minimum Z score to use a subread")
     p.add_float(Constants.MAX_DROP_FRAC_ID, "maxDropFraction",
                 default=Constants.MAX_DROP_FRAC_DEFAULT,
-                name="Max. dropped fraction",
+                name="Maximum Dropped Fraction",
                 description="Maximum fraction of subreads that can be dropped before " +
                 "giving up")
     return p
