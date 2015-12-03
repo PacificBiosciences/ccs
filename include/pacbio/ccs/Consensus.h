@@ -179,7 +179,7 @@ public:
     size_t TooManyUnusable;
     size_t NonConvergent;
     size_t PoorQuality;
-    size_t Other;
+    size_t ExceptionThrown;
 
     ResultType()
         : Success{0}
@@ -190,7 +190,7 @@ public:
         , TooManyUnusable{0}
         , NonConvergent{0}
         , PoorQuality{0}
-        , Other{0}
+        , ExceptionThrown{0}
     {
     }
 
@@ -204,14 +204,15 @@ public:
         TooFewPasses += other.TooFewPasses;
         NonConvergent += other.NonConvergent;
         PoorQuality += other.PoorQuality;
-        Other += other.Other;
+        ExceptionThrown += other.ExceptionThrown;
+        
         return *this;
     }
 
     size_t Total() const
     {
         return (Success + PoorSNR + NoSubreads + TooShort + TooManyUnusable + TooFewPasses +
-                NonConvergent + PoorQuality + Other);
+                NonConvergent + PoorQuality + ExceptionThrown);
     }
 };
 
@@ -518,9 +519,18 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             results.emplace_back(TResult{chunk.Id, std::string(ai), QVsToASCII(qvs), nPasses,
                                          predAcc, zAvg, zScores, statusCounts, nTested, nApplied,
                                          chunk.SignalToNoise, timer.ElapsedMilliseconds(), chunk.Barcodes});
-        } catch (...) {
-            results.Other += 1;
-            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught exception during processing";
+        }
+        catch (const std::exception &exc) {
+            results.ExceptionThrown += 1;
+            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught exception during processing"
+                        << "\nException was: " << exc.what();
+
+        }
+        catch (...) {
+            // This should NEVER happen.  Only here as a guard, if this is ever printed someone goofed
+            // up by throwing something that didn't derive from std::exception.
+            results.ExceptionThrown += 1;
+            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught unknown exception type during processing";
         }
     }
 
