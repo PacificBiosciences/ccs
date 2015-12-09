@@ -48,30 +48,27 @@ typedef ReadType<ReadId> Subread;
 TEST(ConsensusTest, TestReadFilter)
 {
     std::vector<Subread> data;
-    std::string fullRead = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    std::string seq =
+        "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     auto movieName = std::make_shared<std::string>("fakeName");
     LocalContextFlags flags = LocalContextFlags::ADAPTER_BEFORE | LocalContextFlags::ADAPTER_AFTER;
-    for(int i=0; i<10; i++) {
-
-    auto read = Subread{ReadId(movieName, 1,
-                    Interval(0, fullRead.size())),
-                    fullRead, flags, .99};
-    data.emplace_back(read);
+    for (int i = 0; i < 10; i++) {
+        data.emplace_back(
+            Subread{ReadId(movieName, 1, Interval(0, seq.size())), seq, flags, .99});
     }
     // Nothing filtered
-    auto result = FilterReads(data, 10);
-    EXPECT_EQ(0, result.second);
-    
-    // All removed
-    auto result2 = FilterReads(data, 1000);
-    EXPECT_EQ(10, result2.second);
-    
-    // Just one 
-    auto longRead = fullRead + fullRead + fullRead;
-    data.emplace_back(Subread{ReadId(movieName, 1,
-                    Interval(0, fullRead.size())),
-                    longRead, flags, .99});
-    auto result3 = FilterReads(data, 10);
-    EXPECT_EQ(1, result3.second);
+    int32_t nFiltered;
+    auto result = FilterReads(data, 10, &nFiltered);
+    EXPECT_EQ(0, nFiltered);
 
+    // All removed
+    auto result2 = FilterReads(data, 1000, &nFiltered);
+    EXPECT_EQ(10, nFiltered);
+
+    // Just one
+    auto longSeq = seq + seq + seq;
+    data.emplace_back(
+        Subread{ReadId(movieName, 1, Interval(0, longSeq.size())), longSeq, flags, .99});
+    auto result3 = FilterReads(data, 10, &nFiltered);
+    EXPECT_EQ(1, nFiltered);
 }
