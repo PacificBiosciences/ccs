@@ -398,7 +398,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
     for (const auto& chunk : *chunks) {
         try {
             Timer timer;
-            constexpr auto SIZE_FILTER = static_cast<size_t>(AddReadResult::OTHER) + 1;
+            constexpr auto SIZE_FILTER = static_cast<size_t>(AddReadResult::SIZE) ;
             std::vector<int32_t> statusCounts(SIZE_FILTER + 1, 0);
 
             auto reads = FilterReads(chunk.Reads, settings.MinLength, &statusCounts[SIZE_FILTER]);
