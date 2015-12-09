@@ -400,11 +400,12 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
     for (const auto& chunk : *chunks) {
         try {
             Timer timer;
-            std::vector<int32_t> statusCounts(static_cast<int>(AddReadResult::OTHER) + 1, 0);
+            constexpr auto SIZE_FILTER = static_cast<size_t>(AddReadResult::OTHER) + 1;
+            std::vector<int32_t> statusCounts(SIZE_FILTER + 1, 0);
             
             auto readsAndFilteredCount = FilterReads(chunk.Reads, settings.MinLength);
             auto reads = readsAndFilteredCount.first;
-            statusCounts[static_cast<size_t>(AddReadResult::SIZE_FILTER)] += readsAndFilteredCount.second;
+            statusCounts[SIZE_FILTER] += readsAndFilteredCount.second;
             
             if (reads.empty() ||
                 std::accumulate(reads.begin(), reads.end(), 0, std::plus<bool>()) == 0) {
