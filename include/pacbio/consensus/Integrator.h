@@ -27,7 +27,15 @@ enum struct AddReadResult : uint8_t
     SUCCESS,
     ALPHA_BETA_MISMATCH,
     POOR_ZSCORE,
-    OTHER
+    OTHER,
+    /* 
+     This enum is used in other places to
+     both size an array and index into it.  So
+     users can know the number of elements needed in 
+     an array that could count valus of this enum, this
+     should always be the last value in the enum.
+     */
+    SIZE
 };
 
 inline std::ostream& operator<<(std::ostream& os, AddReadResult result)
