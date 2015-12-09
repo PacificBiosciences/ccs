@@ -33,8 +33,6 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-
-
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <pacbio/ccs/Consensus.h>
@@ -53,8 +51,7 @@ TEST(ConsensusTest, TestReadFilter)
     auto movieName = std::make_shared<std::string>("fakeName");
     LocalContextFlags flags = LocalContextFlags::ADAPTER_BEFORE | LocalContextFlags::ADAPTER_AFTER;
     for (int i = 0; i < 10; i++) {
-        data.emplace_back(
-            Subread{ReadId(movieName, 1, Interval(0, seq.size())), seq, flags, .99});
+        data.emplace_back(Subread{ReadId(movieName, 1, Interval(0, seq.size())), seq, flags, .99});
     }
     // Nothing filtered
     int32_t nFiltered;

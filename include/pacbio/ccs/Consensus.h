@@ -205,7 +205,7 @@ public:
         NonConvergent += other.NonConvergent;
         PoorQuality += other.PoorQuality;
         ExceptionThrown += other.ExceptionThrown;
-        
+
         return *this;
     }
 
@@ -515,19 +515,17 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             results.Success += 1;
             results.emplace_back(TResult{chunk.Id, std::string(ai), QVsToASCII(qvs), nPasses,
                                          predAcc, zAvg, zScores, statusCounts, nTested, nApplied,
-                                         chunk.SignalToNoise, timer.ElapsedMilliseconds(), chunk.Barcodes});
-        }
-        catch (const std::exception &exc) {
+                                         chunk.SignalToNoise, timer.ElapsedMilliseconds(),
+                                         chunk.Barcodes});
+        } catch (const std::exception& e) {
             results.ExceptionThrown += 1;
-            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught exception during processing"
-                        << "\nException was: " << exc.what();
-
-        }
-        catch (...) {
-            // This should NEVER happen.  Only here as a guard, if this is ever printed someone goofed
+            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught exception: '" << e.what() << "\'";
+        } catch (...) {
+            // This should NEVER happen. Only here as a guard, if this is ever printed someone
+            // goofed
             // up by throwing something that didn't derive from std::exception.
             results.ExceptionThrown += 1;
-            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught unknown exception type during processing";
+            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught unknown exception type";
         }
     }
 

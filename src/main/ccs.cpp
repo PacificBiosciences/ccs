@@ -145,7 +145,7 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
 
 #if DIAGNOSTICS
         if (ccs.Barcodes) {
-            vector<uint16_t> bcs {ccs.Barcodes->first, ccs.Barcodes->second};
+            vector<uint16_t> bcs{ccs.Barcodes->first, ccs.Barcodes->second};
             tags["bc"] = bcs;
         }
         tags["ms"] = ccs.ElapsedMilliseconds;
@@ -175,10 +175,11 @@ Results BamWriterThread(WorkQueue<Results>& queue, unique_ptr<BamWriter>&& ccsBa
 void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
 {
     counts += results;
-    for (const auto& ccs : results) {        ccsFastq << '@' << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs"
-        << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy;
+    for (const auto& ccs : results) {
+        ccsFastq << '@' << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs"
+                 << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy;
 #if DIAGNOSTICS
-        if( ccs.Barcodes) {
+        if (ccs.Barcodes) {
             ccsFastq << " bc:" << ccs.Barcodes->first << "-" << ccs.Barcodes->second;
         }
 #endif
@@ -272,10 +273,9 @@ void WriteResultsReport(ostream& report, const Results& counts)
 
     report << "Failed -- CCS below minimum predicted accuracy," << counts.PoorQuality << ","
            << 100.0 * counts.PoorQuality / total << '%' << endl;
-    
+
     report << "Failed -- Exception thrown during processing," << counts.ExceptionThrown << ","
            << 100.0 * counts.ExceptionThrown / total << '%' << endl;
-    
 }
 
 int main(int argc, char** argv)
@@ -466,7 +466,6 @@ int main(int argc, char** argv)
         }
         // Have we started a new ZMW?
         if (!holeNumber || *holeNumber != read.HoleNumber()) {
-            
             if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses) {
                 PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
                             << ", insufficient number of passes (" << chunk->back().Reads.size()
@@ -482,7 +481,7 @@ int main(int argc, char** argv)
 
             holeNumber = read.HoleNumber();
             auto snr = read.SignalToNoise();
-            if(read.HasBarcodes()) {
+            if (read.HasBarcodes()) {
                 barcodes = read.Barcodes();
             }
             if (whitelist && !whitelist->Contains(movieName, *holeNumber)) {
@@ -510,8 +509,7 @@ int main(int argc, char** argv)
         // Check that barcode matches the previous ones
         if (barcodes) {
             // if not, set the barcodes to the flag and stop checking them.
-            if(!read.HasBarcodes() || read.Barcodes() != barcodes) {
-                
+            if (!read.HasBarcodes() || read.Barcodes() != barcodes) {
                 barcodes->first = UINT16_MAX;
                 barcodes->second = UINT16_MAX;
                 chunk->back().Barcodes = barcodes;
