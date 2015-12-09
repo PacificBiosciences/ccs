@@ -205,7 +205,7 @@ public:
         NonConvergent += other.NonConvergent;
         PoorQuality += other.PoorQuality;
         ExceptionThrown += other.ExceptionThrown;
-        
+
         return *this;
     }
 
@@ -227,16 +227,15 @@ float Median(std::vector<T>* vs)
     return 0.5 * (vs->at(n / 2 - 1) + vs->at(n / 2));
 }
 
-
-    
 template <typename TRead>
-std::pair<std::vector<const TRead*>, size_t> FilterReads(const std::vector<TRead>& reads, const size_t minLength)
+std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads, const size_t minLength,
+                                      int32_t* nFiltered)
 {
     // This is a count of subreads removed for bing too short, or too long.
-    size_t size_filtered_reads = 0;
+    *nFiltered = 0;
     std::vector<const TRead*> results;
 
-    if (reads.empty()) return std::make_pair(results, size_filtered_reads);
+    if (reads.empty()) return results;
 
     std::vector<size_t> lengths;
     size_t longest = 0;
@@ -254,8 +253,8 @@ std::pair<std::vector<const TRead*>, size_t> FilterReads(const std::vector<TRead
 
     // if it's too short, return nothing
     if (median < static_cast<float>(minLength)) {
-        size_filtered_reads += reads.size();
-        return std::make_pair(results, size_filtered_reads);
+        *nFiltered += reads.size();
+        return results;
     }
     results.reserve(reads.size());
 
@@ -264,10 +263,9 @@ std::pair<std::vector<const TRead*>, size_t> FilterReads(const std::vector<TRead
         //   otherwise it's twice the longest read and is always true
         if (read.Seq.length() < maxLen) {
             results.emplace_back(&read);
-        }
-        else {
+        } else {
             results.emplace_back(nullptr);
-            size_filtered_reads++;
+            (*nFiltered)++;
         }
     }
 
@@ -295,7 +293,7 @@ std::pair<std::vector<const TRead*>, size_t> FilterReads(const std::vector<TRead
                          return lexForm(lhs) > lexForm(rhs);
                      });
 
-    return std::make_pair(results, size_filtered_reads);
+    return results;
 }
 
 template <typename TRead>
@@ -402,11 +400,9 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             Timer timer;
             constexpr auto SIZE_FILTER = static_cast<size_t>(AddReadResult::OTHER) + 1;
             std::vector<int32_t> statusCounts(SIZE_FILTER + 1, 0);
-            
-            auto readsAndFilteredCount = FilterReads(chunk.Reads, settings.MinLength);
-            auto reads = readsAndFilteredCount.first;
-            statusCounts[SIZE_FILTER] += readsAndFilteredCount.second;
-            
+
+            auto reads = FilterReads(chunk.Reads, settings.MinLength, &statusCounts[SIZE_FILTER]);
+
             if (reads.empty() ||
                 std::accumulate(reads.begin(), reads.end(), 0, std::plus<bool>()) == 0) {
                 results.NoSubreads += 1;
@@ -519,19 +515,17 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
             results.Success += 1;
             results.emplace_back(TResult{chunk.Id, std::string(ai), QVsToASCII(qvs), nPasses,
                                          predAcc, zAvg, zScores, statusCounts, nTested, nApplied,
-                                         chunk.SignalToNoise, timer.ElapsedMilliseconds(), chunk.Barcodes});
-        }
-        catch (const std::exception &exc) {
+                                         chunk.SignalToNoise, timer.ElapsedMilliseconds(),
+                                         chunk.Barcodes});
+        } catch (const std::exception& e) {
             results.ExceptionThrown += 1;
-            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught exception during processing"
-                        << "\nException was: " << exc.what();
-
-        }
-        catch (...) {
-            // This should NEVER happen.  Only here as a guard, if this is ever printed someone goofed
+            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught exception: '" << e.what() << "\'";
+        } catch (...) {
+            // This should NEVER happen. Only here as a guard, if this is ever printed someone
+            // goofed
             // up by throwing something that didn't derive from std::exception.
             results.ExceptionThrown += 1;
-            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught unknown exception type during processing";
+            PBLOG_ERROR << "Skipping " << chunk.Id << ", caught unknown exception type";
         }
     }
 

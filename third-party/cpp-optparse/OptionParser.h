@@ -60,16 +60,18 @@
 #ifndef OPTIONPARSER_H_
 #define OPTIONPARSER_H_
 
-#include <string>
-#include <vector>
+#include <algorithm>
+#include <cctype>
+#include <iostream>
+#include <limits>
 #include <list>
 #include <map>
 #include <set>
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
-#include <limits>
+#include <vector>
 
 namespace optparse {
 
@@ -107,16 +109,17 @@ class Value {
     template<typename T,
              typename = typename std::enable_if<std::is_arithmetic<T>::value>::type>
     operator T() {
-        T t;        
-        if (valid && (std::istringstream(str) >> t)) {
+        T t;
+        if (valid && (std::istringstream(str) >> t))
             return t;
-        } else if (std::is_floating_point<T>::value)
+        else if (valid && std::is_floating_point<T>::value)
         {
-            // Hacky work around for NaN values, istringstream
-            // only handles this in some implementations.
-            if (str == "NaN" || str == "nan") {
+            std::string lc(str);
+            std::transform(lc.begin(), lc.end(), lc.begin(), ::tolower);
+            if (lc == "inf")
+                return std::numeric_limits<T>::infinity();
+            else if (lc == "nan")
                 return std::numeric_limits<T>::quiet_NaN();
-            }
         }
         throw InvalidValueCast();
     }
