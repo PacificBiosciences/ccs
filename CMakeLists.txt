@@ -53,14 +53,11 @@ include_directories(SYSTEM
     ${Boost_INCLUDE_DIRS}
 )
 
-
-# Make release with debug the default, helps tests pass by being fast enough
+# make release with debug the default, helps tests pass by being fast enough
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build,
       options are: Debug Release Profile RelWithDebInfo" FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
-
-
 
 # flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioConsensus_CXX_FLAGS}")
@@ -87,7 +84,12 @@ elseif(UNIX)
     SET(POST_LINK -Wl,-no-whole-archive)
 endif()
 
-set(PBCONSENSUS_LIBRARIES ${PRE_LINK} pbconsensus ${POST_LINK} CACHE INTERNAL "" FORCE)
+# because we can be a dependency, set this in the parent scope if so
+if(${ROOT_PROJECT_NAME} STREQUAL "PacBioConsensus")
+    set(PBCONSENSUS_LIBRARIES ${PRE_LINK} pbconsensus ${POST_LINK})
+else()
+    set(PBCONSENSUS_LIBRARIES ${PBCONSENSUS_LIBRARIES} PARENT_SCOPE)
+endif()
 
 # swig
 if (PYTHON_SWIG)
