@@ -133,8 +133,10 @@ def _process_csv(csv_file, report_file):
         for line in f.read().splitlines():
             fields = line.split(",")
             label = re.sub(".*\ \-\-\ ", "", fields[0])
-            a = Attribute(Constants.REPORT_FIELDS[label], int(fields[1]),
-                          name=label)
+            field_id = Constants.REPORT_FIELDS.get(label, None)
+            if field_id is None:
+                field_id = re.sub("\ ", "_", label.lower())
+            a = Attribute(field_id, int(fields[1]), name=label)
             attributes.append(a)
     r = Report("pbccs_tasks_ccs", attributes=attributes)
     r.write_json(report_file)
