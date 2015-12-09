@@ -27,7 +27,6 @@ enum struct AddReadResult : uint8_t
     SUCCESS,
     ALPHA_BETA_MISMATCH,
     POOR_ZSCORE,
-    SIZE_FILTER,
     OTHER
 };
 
