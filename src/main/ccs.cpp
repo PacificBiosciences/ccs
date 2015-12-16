@@ -274,7 +274,7 @@ void WriteResultsReport(ostream& report, const Results& counts)
     report << "Failed -- CCS below minimum predicted accuracy," << counts.PoorQuality << ","
            << 100.0 * counts.PoorQuality / total << '%' << endl;
 
-    report << "Failed -- Exception thrown during processing," << counts.ExceptionThrown << ","
+    report << "Failed -- Unknown error during processing," << counts.ExceptionThrown << ","
            << 100.0 * counts.ExceptionThrown / total << '%' << endl;
 }
 
