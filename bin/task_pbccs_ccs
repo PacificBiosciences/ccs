@@ -29,7 +29,7 @@ class Constants(object):
     DRIVER_EXE = "task_pbccs_ccs --resolved-tool-contract "
     #
     MIN_SNR_ID = "pbccs.task_options.min_snr"
-    MIN_SNR_DEFAULT = 4
+    MIN_SNR_DEFAULT = 3.75
     MIN_READ_SCORE_ID = "pbccs.task_options.min_read_score"
     MIN_READ_SCORE_DEFAULT = 0.75
     MIN_LENGTH_ID = "pbccs.task_options.min_length"
