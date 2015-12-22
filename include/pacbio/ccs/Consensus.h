@@ -77,6 +77,8 @@ constexpr auto MinPasses = "minPasses";
 constexpr auto MinPredictedAccuracy = "minPredictedAccuracy";
 constexpr auto MinZScore = "minZScore";
 constexpr auto MaxDropFraction = "maxDropFraction";
+constexpr auto PoaOnly = "poaOnly";
+
 // constexpr auto Directional          = "directional";
 }  // namespace OptionNames
 
@@ -89,6 +91,7 @@ struct ConsensusSettings
     double MinZScore;
     double MaxDropFraction;
     bool Directional;
+    bool PoaOnly;
 
     ConsensusSettings(const optparse::Values& options);
 
@@ -121,6 +124,11 @@ struct ConsensusSettings
             .help(
                 "Maximum fraction of subreads that can be dropped before giving up. Default = "
                 "%default");
+        parser->add_option(em + OptionNames::PoaOnly)
+        .action("store_true")
+        .help("Only output the initial template derived from the POA (faster, less accurate");
+        
+
         // parser->add_option(em +
         // OptionNames::Directional).action("store_true").set_default("0").help("Generate a
         // consensus for each strand. Default = false");
@@ -436,6 +444,18 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                             << settings.MinLength << ')';
                 continue;
             }
+            
+            if (settings.PoaOnly) {
+                /* Generate dummy QVs, will use 
+                 * 5 = ASCII 53 = 33 + 20
+                 */
+                std::string qvs(poaConsensus.length(), '5');
+                results.Success += 1;
+                results.emplace_back(TResult{chunk.Id, poaConsensus, qvs, 0,
+                    0, 0, std::vector<double>(1), statusCounts, 0, 0,
+                    chunk.SignalToNoise, timer.ElapsedMilliseconds(),
+                    chunk.Barcodes});
+            } else {
 
             // setup the arrow integrator
             IntegratorConfig cfg(settings.MinZScore, 12.5);
@@ -517,6 +537,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                                          predAcc, zAvg, zScores, statusCounts, nTested, nApplied,
                                          chunk.SignalToNoise, timer.ElapsedMilliseconds(),
                                          chunk.Barcodes});
+            }
         } catch (const std::exception& e) {
             results.ExceptionThrown += 1;
             PBLOG_ERROR << "Skipping " << chunk.Id << ", caught exception: '" << e.what() << "\'";
