@@ -35,24 +35,80 @@
 
 // Author: Brett Bowman
 
-#include "../include/laamm/fastaparser/FastaEntry.h"
-#include "../include/laamm/fastaparser/FastaReader.h"
+#include <seqan/seq_io.h>
 #include "../include/laamm/chimera/ChimeraLabeler.h"
 
-using PBSeqAnalysis::PBChimera::FastaReader;
 using PBSeqAnalysis::PBChimera::ChimeraLabeler;
+
+/// Seprates a string on a specified delimiter
+///
+/// \param s      Input string
+/// \param delim  Delimiter character
+///
+/// \return Vector of sub-strings of the input string
+std::vector<std::string> Split(const std::string& s, char delim)
+{
+    std::vector<std::string> elems;
+    std::stringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
+    return elems;
+}
+
+uint32_t ParseNumReads(const std::string id)
+{
+    const auto& parts = Split(id, '_');
+    const auto& numReadsString = parts[3].substr(8);
+    const uint32_t numReads = std::stoi(numReadsString);
+    return numReads;
+}
+
+std::vector<uint32_t> ParseNumReads(const seqan::StringSet<seqan::CharString> ids)
+{
+    using namespace seqan;
+
+    std::vector<uint32_t> retval;
+    for (size_t i = 0; i < length(ids); ++i)
+        retval.push_back(ParseNumReads(toCString(ids[i])));
+    return retval;
+}
 
 int main(int argc, char const ** argv)
 {
+    using namespace seqan;
+
     if (argc != 2)
         return 1;  // Invalid number of arguments.
 
+    // Get the input file
+    std::string inputFile(argv[1]);
+    SeqFileIn inputHandle(inputFile.c_str());
+    
     // Parse the records
-    auto records = FastaReader::ReadRecords(argv[1]);
+    StringSet<CharString> ids;
+    StringSet<Dna5String> seqs;
+    readRecords(ids, seqs, inputHandle);
+        
+    // Declare the vectors we'll use to actually perform the Chimera-labeling
+    auto idList   = std::make_shared<std::vector<std::string>>();
+    auto seqList  = std::make_shared<std::vector<Dna5String>>();
+
+    // Parse the NumReads from the Record Ids
+    const auto& numReads = ParseNumReads(ids);
+
+    for (size_t i = 0; i < length(ids); ++i)
+    {
+        idList->push_back(toCString(static_cast<CharString>(ids[i])));
+        seqList->push_back(static_cast<Dna5String>(ids[i]));
+    }
+
+    auto sizeList = std::make_shared<std::vector<uint32_t>>(numReads);
 
     // Label the Records
     ChimeraLabeler chimeraLabeler(1.0f);
-    auto labels = chimeraLabeler.Label(records);
+    auto labels = chimeraLabeler.Label(idList, seqList, sizeList);
 
     // Display the results
     std::cout << "SequenceId,IsChimera,ChimeraScore,"
