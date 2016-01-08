@@ -37,8 +37,9 @@
 
 #include <seqan/seq_io.h>
 #include "../include/laamm/chimera/ChimeraLabeler.h"
+#include "../include/laamm/chimera/ChimeraResultWriter.h"
 
-using PacBio::Chimera::ChimeraLabeler;
+using namespace PacBio::Chimera;
 
 /// Seprates a string on a specified delimiter
 ///
@@ -109,13 +110,8 @@ int main(int argc, char const ** argv)
     auto labels = chimeraLabeler.Label(idList, seqList, numReads);
 
     // Display the results
-    std::cout << "SequenceId,IsChimera,ChimeraScore,"
-              << "ParentSequenceA,ParentSequenceB,CrossoverPosition"
-              << std::endl;
-    for (const auto& label : labels)
-    {
-        std::cout << label << std::endl;
-    }
+    ChimeraResultWriter csvWriter("temp.csv");
+    csvWriter.WriteResults(labels);
 
     return 0;
 }
