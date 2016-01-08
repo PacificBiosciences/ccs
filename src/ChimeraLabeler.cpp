@@ -36,8 +36,9 @@
 // Author: Brett Bowman
 
 #include <seqan/seq_io.h>
-#include "../include/pacbio/chimera/ChimeraLabeler.h"
-#include "../include/pacbio/chimera/ChimeraResultWriter.h"
+
+#include "pacbio/chimera/ChimeraLabeler.h"
+#include "pacbio/chimera/ChimeraResultWriter.h"
 
 using namespace PacBio::Chimera;
 
