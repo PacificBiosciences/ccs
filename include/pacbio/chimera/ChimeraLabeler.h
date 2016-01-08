@@ -51,14 +51,14 @@
 namespace PacBio {
 namespace Chimera {
 
-/*
- * Chimera detector - this is an implementation of the UCHIME algorithm, with a few generalizations:
- * Edgar, Robert C., et al. "UCHIME improves sensitivity and speed of chimera detection." Bioinformatics 27.16 (2011): 2194-2200.
- *
- * Notes: We do full length alignments between the database and the test sequence, then find the best scoring splice site for each pair of database - test seq alignments
- * This is probably not as scalable as doing chunkwise alignments and only considering the best alignment to each chunk, but it's presumably more sensitive...
- * May need to speed this up (and lot's of other things) if the number of haplotypes gets very large.
- */
+///
+/// Chimera detector - this is an implementation of the UCHIME algorithm, with a few generalizations:
+/// Edgar, Robert C., et al. "UCHIME improves sensitivity and speed of chimera detection." Bioinformatics 27.16 (2011): 2194-2200.
+///
+/// Notes: We do full length alignments between the database and the test sequence, then find the best scoring splice site for each pair of database - test seq alignments
+/// This is probably not as scalable as doing chunkwise alignments and only considering the best alignment to each chunk, but it's presumably more sensitive...
+/// May need to speed this up (and lot's of other things) if the number of haplotypes gets very large.
+///
 class ChimeraLabeler
 {
 public:  // structors
@@ -94,17 +94,16 @@ private:  // Instance variables
     const TScore scoringScheme = TScore(2, -5, -3, -3);
 
 public:  // non-modifying methods
-    /*
-     * @brief Label a vector of sequence records as Chimeric or not.
-     *        Main entry-point.
-     *
-     * @param A vector of all of the available sequence ids as strings
-     * @param A vector of all of the available sequences as Dna5Strings
-     * @param A vector of all of the available sequence "sizes" or prevalence levels
-     *
-     * @return A set of labels representing the chimeric parents (if any) for
-     *         each input sequence
-     */
+    /// \brief Label a vector of sequence records as Chimeric or not.
+    ///        Main entry-point.
+    ///
+    /// \param A vector of all of the available sequence ids as strings
+    /// \param A vector of all of the available sequences as Dna5Strings
+    /// \param A vector of all of the available sequence "sizes" or prevalence levels
+    ///
+    /// \return A set of labels representing the chimeric parents (if any) for
+    ///         each input sequence
+    ///
     std::vector<ChimeraLabel> Label(const std::vector<std::string>& idList,
                                     const std::vector<seqan::Dna5String>& seqList2,
                                     const std::vector<uint32_t>& sizeList)
@@ -194,13 +193,12 @@ public:  // non-modifying methods
     }
 
 private:
-    /*
-     * @brief Append all of the reverse-complements to the end of a vector of sequences
-     *
-     * @param A vector of N DNA sequences
-     *
-     * @return A vector of 2*N DNA sequences
-     */
+    /// \brief Append all of the reverse-complements to the end of a vector of sequences
+    ///
+    /// \param A vector of N DNA sequences
+    ///
+    /// \return A vector of 2*N DNA sequences
+    ///
     void AddReverseComplements(std::vector<seqan::Dna5String>& seqList)
     {
         for (const auto& sequence : seqList)
@@ -212,16 +210,15 @@ private:
         return;
     }
 
-    /*
-     * @brief Find the most probable parents for a possible chimera
-     *
-     * @param A vector of all of the available sequences
-     * @param A vector of indices of non-chimeric sequences in that vector
-     * @param The index of the current sequence to be tested
-     *
-     * @return A set of indices representing the best scoring parents for the
-     *         various regions of the current sequences
-     */
+    /// \brief Find the most probable parents for a possible chimera
+    /// 
+    /// \param A vector of all of the available sequences
+    /// \param A vector of indices of non-chimeric sequences in that vector
+    /// \param The index of the current sequence to be tested
+    ///
+    /// \return A set of indices representing the best scoring parents for the
+    ///         various regions of the current sequences
+    ///
     std::vector<uint32_t> FindParents(const std::vector<seqan::Dna5String>& sequences,
                                       const std::vector<uint32_t>& nonChimericIdx,
                                       const uint32_t index)
@@ -280,18 +277,17 @@ private:
         return output;
     }
 
-    /*
-     * @brief Identify the highest-scoring chimeric explaination for a query
-     *        from a list of
-     *
-     * @param A pointer to a vector of sequences
-     * @param A pointer to a vector of sequence ids
-     * @param An unsigned int for the index of the query in the above vectors
-     * @param A vector of unsigned ints for
-     *
-     * @return A ChimeraLabel for the highest-scoring chimeric explaination
-     *         for a given query
-     */
+    /// \brief Identify the highest-scoring chimeric explaination for a query
+    ///        from a list of
+    ///
+    /// \param A pointer to a vector of sequences
+    /// \param A pointer to a vector of sequence ids
+    /// \param An unsigned int for the index of the query in the above vectors
+    /// \param A vector of unsigned ints for
+    ///
+    /// \return A ChimeraLabel for the highest-scoring chimeric explaination
+    ///         for a given query
+    ///
     ChimeraLabel TestPossibleChimera(
             const std::vector<seqan::Dna5String>& sequences,
             const std::vector<std::string>& ids,
@@ -349,15 +345,14 @@ private:
         return bestLabel;
     }
 
-    /*
-     * @brief Generate an MSA of a query sequence and all possible parents
-     *
-     * @param A pointer to a vector of possible sequences
-     * @param An unsigned int for the index of the query in the vector of sequences
-     * @param A vector of unsigned ints for the indices of all possible parents
-     *
-     * @return a pointer to an MSA
-     */
+    /// \brief Generate an MSA of a query sequence and all possible parents
+    ///
+    /// \param A pointer to a vector of possible sequences
+    /// \param An unsigned int for the index of the query in the vector of sequences
+    /// \param A vector of unsigned ints for the indices of all possible parents
+    ///
+    /// \return a pointer to an MSA
+    ///
     TAlign GetMultiSequenceAlignment(
             const std::vector<seqan::Dna5String>& sequences,
             const uint32_t index,
@@ -381,19 +376,18 @@ private:
         return align;
     }
 
-    /*
-     * @brief Scan an MSA of sequences for all possible chimeric break-points
-     *        that could explain the query as a composite of the parents
-     *
-     * @param A pointer to an MSA of sequences
-     * @param A string for the name of the Query
-     * @param A string for the name of the first parent
-     * @param A string for the name of the second parent
-     * @param An unsigned int for the row-index of the first parent
-     * @param An unsigned int for the row-index of the second parent
-     *
-     * @return A ChimeraLabel of the highest-scoring possible chimera
-     */
+    /// \brief Scan an MSA of sequences for all possible chimeric break-points
+    ///        that could explain the query as a composite of the parents
+    ///
+    /// \param A pointer to an MSA of sequences
+    /// \param A string for the name of the Query
+    /// \param A string for the name of the first parent
+    /// \param A string for the name of the second parent
+    /// \param An unsigned int for the row-index of the first parent
+    /// \param An unsigned int for the row-index of the second parent
+    ///
+    /// \return A ChimeraLabel of the highest-scoring possible chimera
+    ///
     ChimeraLabel ScorePossibleChimera(
             const TAlign& alignment,
             const std::string& queryId,
@@ -549,20 +543,19 @@ private:
                     maxChimeraCrossover, maxChimeraScore);
     }
 
-    /*
-     * @brief Calculates the H-score for a chimeric alignment as per Edgar(2011)
-     *
-     * @param An unsigned int of votes for left-side similarity
-     * @param An unsigned int of votes against left-side similarity
-     * @param An unsigned int of votes neither for or against the left side
-     * @param An unsigned int of votes for right-side similarity
-     * @param An unsigned int of votes against right-side similarity
-     * @param An unsigned int of votes neither for or against the right side
-     *
-     * @return A double representing the strength of the similarity between the query
-     *         sequence and a hypothetical chimera composed of left and right segments
-     *         taken from existing sequences
-     */
+    /// \brief Calculates the H-score for a chimeric alignment as per Edgar(2011)
+    ///
+    /// \param An unsigned int of votes for left-side similarity
+    /// \param An unsigned int of votes against left-side similarity
+    /// \param An unsigned int of votes neither for or against the left side
+    /// \param An unsigned int of votes for right-side similarity
+    /// \param An unsigned int of votes against right-side similarity
+    /// \param An unsigned int of votes neither for or against the right side
+    ///
+    /// \return A double representing the strength of the similarity between the query
+    ///         sequence and a hypothetical chimera composed of left and right segments
+    ///         taken from existing sequences
+    ///
     inline double ScoreBreakPoint(const uint32_t leftYesVotes,
                                   const uint32_t leftNoVotes,
                                   const uint32_t leftAbsVotes,
@@ -580,17 +573,16 @@ private:
         return leftScore * rightScore;
     }
 
-    /*
-     * @brief Calculates the H-score for a pairwise alignment segment,
-     *        as per Edgar(2011)
-     *
-     * @param An unsigned int of votes for similarity
-     * @param An unsigned int of votes against similarity
-     * @param An unsigned int of votes neither for nor against
-     *
-     * @return A double representing the strength of the similarity between two
-     *         sequences
-     */
+    /// \brief Calculates the H-score for a pairwise alignment segment,
+    ///        as per Edgar(2011)
+    ///
+    /// \param An unsigned int of votes for similarity
+    /// \param An unsigned int of votes against similarity
+    /// \param An unsigned int of votes neither for nor against
+    ///
+    /// \return A double representing the strength of the similarity between two
+    ///         sequences
+    ///
     inline double ScoreSegment(const uint32_t yesVotes,
                                const uint32_t noVotes,
                                const uint32_t absVotes)

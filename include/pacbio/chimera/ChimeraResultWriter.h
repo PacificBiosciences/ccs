@@ -44,6 +44,9 @@
 namespace PacBio {
 namespace Chimera {
 
+///
+/// \brief Write out to file a series ChimeraLabels in human-readable form
+///
 class ChimeraResultWriter
 {
 public:

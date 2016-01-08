@@ -43,9 +43,9 @@
 namespace PacBio {
 namespace Chimera {
 
-/**
- * @brief Label that annotates a read for a single chimeric breakpoint
- */
+///
+/// \brief Label that annotates a read for a single chimeric breakpoint
+///
 struct ChimeraLabel {
     // Instance variables
     std::string sequenceId;
