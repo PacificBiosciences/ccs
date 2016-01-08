@@ -136,7 +136,7 @@ public:  // non-modifying methods
         seqan::Dna5String sequence;
 
         // Declare containers for tracking non-Chimeric parents
-        auto nonChimeras = std::make_shared<std::vector<uint32_t>>();
+        std::vector<uint32_t> nonChimeras;
         std::vector<uint32_t> parentIds;
 
         // Iterate over each Fasta record in order of their size
@@ -186,8 +186,8 @@ public:  // non-modifying methods
             }
 
             // Add the current index and it's RC to known non-chimeras
-            nonChimeras->push_back(i);
-            nonChimeras->push_back(i+N);
+            nonChimeras.push_back(i);
+            nonChimeras.push_back(i+N);
         }
 
         return output;  // Implicit move semantics take care that ChimeraLabels are moved.
@@ -223,7 +223,7 @@ private:
      *         various regions of the current sequences
      */
     std::vector<uint32_t> FindParents(const std::vector<seqan::Dna5String>& sequences,
-                                      const std::shared_ptr<std::vector<uint32_t>>& nonChimericIdx,
+                                      const std::vector<uint32_t>& nonChimericIdx,
                                       const uint32_t index)
     {
         // Declare the output variable and the set we will build it from
@@ -254,10 +254,10 @@ private:
             uint32_t maxParent  = 0;
 
             // iterate over each non-Chimeric sequence
-            for (size_t i = 0; i < nonChimericIdx->size(); ++i)
+            for (size_t i = 0; i < nonChimericIdx.size(); ++i)
             {
                 // Fill out the alignment with the current parents
-                testParent = nonChimericIdx->at(i);
+                testParent = nonChimericIdx[i];
                 seqan::assignSource(seqan::row(align, 1), 
                         sequences[testParent]);
                 score = seqan::localAlignment(align, scoringScheme);
