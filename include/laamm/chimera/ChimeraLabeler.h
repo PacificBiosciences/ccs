@@ -105,53 +105,51 @@ public:  // non-modifying methods
      * @return A set of labels representing the chimeric parents (if any) for
      *         each input sequence
      */
-    std::vector<ChimeraLabel> Label(const std::shared_ptr<std::vector<std::string>>& idList,
-                                    const std::shared_ptr<std::vector<seqan::Dna5String>>& seqList,
-                                    const std::shared_ptr<std::vector<uint32_t>>& sizeList)
+    std::vector<ChimeraLabel> Label(const std::vector<std::string>& idList,
+                                    const std::vector<seqan::Dna5String>& seqList2,
+                                    const std::vector<uint32_t>& sizeList)
     {
         // Declare the output vector now
         std::vector<ChimeraLabel> output;
 
         // Sanity-check the sizes of the vectors we've been give.  All three should be
         // of the same size
-        if (idList->size() != seqList->size())
+        if (idList.size() != seqList2.size())
             throw std::runtime_error("Sizes of Id List and Sequence List do not match!");
-        if (idList->size() != sizeList->size())
+        if (idList.size() != sizeList.size())
             throw std::runtime_error("Sizes of Id List and Size List do not match!");
 
         // Sanity-check the ordering of the sizes.
-        for (size_t i = 1; i < sizeList->size(); ++i)
-        {
-            if (sizeList->at(i) > sizeList->at(i-1))
+        for (size_t i = 1; i < sizeList.size(); ++i)
+            if (sizeList[i] > sizeList[i-1])
                 throw std::runtime_error("Sequences are not sorted by size!");
-        }
-
 
         // Add the reverse complements for each sequence
+        std::vector<seqan::Dna5String> seqList;
+        for (const auto& sequence : seqList2)
+            seqList.push_back(sequence);
         AddReverseComplements(seqList);
 
         // Declare loop variables
-        uint32_t N = idList->size();
+        uint32_t N = idList.size();
         std::string id;
         seqan::Dna5String sequence;
-        uint32_t size;
 
         // Declare containers for tracking non-Chimeric parents
         auto nonChimeras = std::make_shared<std::vector<uint32_t>>();
         std::vector<uint32_t> parentIds;
 
         // Iterate over each Fasta record in order of their size
-        for (uint32_t i = 0; i < idList->size(); ++i)
+        for (uint32_t i = 0; i < idList.size(); ++i)
         {
             // Pull out the current Id / Sequence / Size
-            id       = idList->at(i);
-            sequence = seqList->at(i);
-            size     = sizeList->at(i);
+            id       = idList[i];
+            sequence = seqList[i];
 
             std::cerr << "Analyzing sequence #" << i + 1
-                      << " of " << idList->size()
-                      << ", '" << id << "'"
-                      << " supported by " << size << " reads"
+                      << " of " << idList.size()
+                      << ", '" << id << "', supported by "
+                      << sizeList[i] << " reads"
                       << std::endl;
 
             // First two sequences do not have enough parents, assumed real
@@ -203,13 +201,13 @@ private:
      *
      * @return A vector of 2*N DNA sequences
      */
-    void AddReverseComplements(const std::shared_ptr<std::vector<seqan::Dna5String>>& seqList)
+    void AddReverseComplements(std::vector<seqan::Dna5String>& seqList)
     {
-        for (const auto& sequence : *seqList)
+        for (const auto& sequence : seqList)
         {
             auto revComSeq = sequence;
             seqan::reverseComplement(revComSeq);
-            seqList->push_back(revComSeq);
+            seqList.push_back(revComSeq);
         }
         return;
     }
@@ -224,7 +222,7 @@ private:
      * @return A set of indices representing the best scoring parents for the
      *         various regions of the current sequences
      */
-    std::vector<uint32_t> FindParents(const std::shared_ptr<std::vector<seqan::Dna5String>>& sequences,
+    std::vector<uint32_t> FindParents(const std::vector<seqan::Dna5String>& sequences,
                                       const std::shared_ptr<std::vector<uint32_t>>& nonChimericIdx,
                                       const uint32_t index)
     {
@@ -237,7 +235,7 @@ private:
         seqan::resize(rows(align), 2);
 
         // Pre-calculate the size of each chunk
-        uint32_t chunkSize = seqan::length(sequences->at(index)) / chunks;
+        uint32_t chunkSize = seqan::length(sequences[index]) / chunks;
 
         // Iterate over each chunk, aligning it to all possible parents
         for (uint32_t i = 0; i < chunks; ++i)
@@ -245,7 +243,7 @@ private:
             // Initialize the alignment with the current sequence chunk
             uint32_t chunkStart = i * chunkSize;
             uint32_t chunkEnd   = chunkStart + chunkSize;
-            const auto chunkSeq = infix(sequences->at(index), 
+            const auto chunkSeq = infix(sequences[index], 
                     chunkStart, chunkEnd);
             seqan::assignSource(seqan::row(align, 0), chunkSeq);
 
@@ -261,7 +259,7 @@ private:
                 // Fill out the alignment with the current parents
                 testParent = nonChimericIdx->at(i);
                 seqan::assignSource(seqan::row(align, 1), 
-                        sequences->at(testParent));
+                        sequences[testParent]);
                 score = seqan::localAlignment(align, scoringScheme);
 
                 // If the current parent is better than the best, keep it
@@ -295,8 +293,8 @@ private:
      *         for a given query
      */
     ChimeraLabel TestPossibleChimera(
-            const std::shared_ptr<std::vector<seqan::Dna5String>>& sequences,
-            const std::shared_ptr<std::vector<std::string>>& ids,
+            const std::vector<seqan::Dna5String>& sequences,
+            const std::vector<std::string>& ids,
             const uint32_t index,
             const std::vector<uint32_t>& possibleParents)
     {
@@ -307,12 +305,12 @@ private:
                 possibleParents);
 
         // Initialize two Labels - one for the max and one for the loop variable
-        std::string id = ids->at(index);
+        std::string id = ids[index];
         ChimeraLabel bestLabel(id);
         ChimeraLabel label;
 
         // Loop variables for the names of the identified parents
-        const uint32_t idCount = ids->size();
+        const uint32_t idCount = ids.size();
         std::string parentA;
         std::string parentB;
 
@@ -321,18 +319,18 @@ private:
         {
             uint32_t parentAIdx = possibleParents[i];
             if (parentAIdx >= idCount)
-                parentA = ids->at(parentAIdx-idCount);
+                parentA = ids[parentAIdx-idCount];
             else
-                parentA = ids->at(parentAIdx);
+                parentA = ids[parentAIdx];
 
             // Iterate over all possible "Parent B"'s
             for (uint32_t j = 0; j < i; ++j)
             {
                 uint32_t parentBIdx = possibleParents[j];
                 if (parentBIdx >= idCount)
-                    parentB = ids->at(parentBIdx-idCount);
+                    parentB = ids[parentBIdx-idCount];
                 else
-                    parentB = ids->at(parentBIdx);
+                    parentB = ids[parentBIdx];
 
                 // For a given ParentA and ParentB, what is the maximum
                 //     possible Chimera score?
@@ -361,21 +359,21 @@ private:
      * @return a pointer to an MSA
      */
     TAlign GetMultiSequenceAlignment(
-            const std::shared_ptr<std::vector<seqan::Dna5String>>& sequences,
+            const std::vector<seqan::Dna5String>& sequences,
             const uint32_t index,
             const std::vector<uint32_t>& parentIds)
     {
         // Initialize the alignment with the query sequence
         TAlign align;
         seqan::resize(rows(align), parentIds.size()+1);
-        seqan::assignSource(seqan::row(align, 0), sequences->at(index));
+        seqan::assignSource(seqan::row(align, 0), sequences[index]);
 
         // Successively add each parent to the alignment
         for (uint32_t i = 1; i <= parentIds.size(); ++i)
         {
             uint32_t parentIdx = parentIds[i-1];
             seqan::assignSource(seqan::row(align, i), 
-                    sequences->at(parentIdx));
+                    sequences[parentIdx]);
         }
 
         // Perform the alignment operation and return

@@ -92,23 +92,21 @@ int main(int argc, char const ** argv)
     readRecords(ids, seqs, inputHandle);
         
     // Declare the vectors we'll use to actually perform the Chimera-labeling
-    auto idList   = std::make_shared<std::vector<std::string>>();
-    auto seqList  = std::make_shared<std::vector<Dna5String>>();
+    std::vector<std::string> idList;
+    std::vector<Dna5String> seqList;
 
     // Parse the NumReads from the Record Ids
     const auto& numReads = ParseNumReads(ids);
 
     for (size_t i = 0; i < length(ids); ++i)
     {
-        idList->push_back(toCString(static_cast<CharString>(ids[i])));
-        seqList->push_back(static_cast<Dna5String>(ids[i]));
+        idList.push_back(toCString(static_cast<CharString>(ids[i])));
+        seqList.push_back(static_cast<Dna5String>(seqs[i]));
     }
-
-    auto sizeList = std::make_shared<std::vector<uint32_t>>(numReads);
 
     // Label the Records
     ChimeraLabeler chimeraLabeler(1.0f);
-    auto labels = chimeraLabeler.Label(idList, seqList, sizeList);
+    auto labels = chimeraLabeler.Label(idList, seqList, numReads);
 
     // Display the results
     std::cout << "SequenceId,IsChimera,ChimeraScore,"
