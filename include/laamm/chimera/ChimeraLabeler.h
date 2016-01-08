@@ -46,7 +46,6 @@
 #include <algorithm>
 #include <string>
 
-#include "../fastaparser/FastaEntry.h"
 #include "ChimeraLabel.h"
 
 namespace PBSeqAnalysis {
@@ -135,6 +134,7 @@ public:  // non-modifying methods
         uint32_t N = idList->size();
         std::string id;
         seqan::Dna5String sequence;
+        uint32_t size;
 
         // Declare containers for tracking non-Chimeric parents
         auto nonChimeras = std::make_shared<std::vector<uint32_t>>();
@@ -146,10 +146,12 @@ public:  // non-modifying methods
             // Pull out the current Id / Sequence / Size
             id       = idList->at(i);
             sequence = seqList->at(i);
+            size     = sizeList->at(i);
 
             std::cerr << "Analyzing sequence #" << i + 1
                       << " of " << idList->size()
                       << ", '" << id << "'"
+                      << " supported by " << size << " reads"
                       << std::endl;
 
             // First two sequences do not have enough parents, assumed real
@@ -191,34 +193,6 @@ public:  // non-modifying methods
         }
 
         return output;  // Implicit move semantics take care that ChimeraLabels are moved.
-    }
-
-    /*
-     * @brief Label a vector of sequence records as Chimeric or not.
-     *        Alternate entry-point for the command-line utility.
-     *
-     * @param A vector of all of the available sequences as FastaEntry records
-     *
-     * @return A set of labels representing the chimeric parents (if any) for
-     *         each input sequence
-     */
-    std::vector<ChimeraLabel> Label(const std::shared_ptr<std::vector<FastaEntry>>& recordList)
-    {
-        // Declare the vectors we'll use to actually perform the Chimera-labeling
-        auto idList   = std::make_shared<std::vector<std::string>>();
-        auto seqList  = std::make_shared<std::vector<seqan::Dna5String>>();
-        auto sizeList = std::make_shared<std::vector<uint32_t>>();
-
-        // Convert my custom sequence record-type into more API-friendly vectors
-        for (const auto& record : *recordList)
-        {
-            idList->push_back(record.id);
-            seqList->push_back(record.sequence);
-            sizeList->push_back(record.size);
-        }
-
-        // Call the primary version of Label with the new vectors
-        return Label(idList, seqList, sizeList);
     }
 
 private:
