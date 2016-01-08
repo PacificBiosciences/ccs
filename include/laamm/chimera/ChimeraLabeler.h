@@ -48,8 +48,8 @@
 
 #include "ChimeraLabel.h"
 
-namespace PBSeqAnalysis {
-namespace PBChimera {
+namespace PacBio {
+namespace Chimera {
 
 /*
  * Chimera detector - this is an implementation of the UCHIME algorithm, with a few generalizations:
@@ -599,5 +599,5 @@ private:
     }
 };
 
-}  // namespace PBChimera
-}  // namespace PBSeqAnalysis
+}  // namespace Chimera
+}  // namespace PacBio

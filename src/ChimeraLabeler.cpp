@@ -38,7 +38,7 @@
 #include <seqan/seq_io.h>
 #include "../include/laamm/chimera/ChimeraLabeler.h"
 
-using PBSeqAnalysis::PBChimera::ChimeraLabeler;
+using PacBio::Chimera::ChimeraLabeler;
 
 /// Seprates a string on a specified delimiter
 ///

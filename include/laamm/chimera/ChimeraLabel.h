@@ -40,8 +40,8 @@
 #include <stdbool.h>
 #include <string>
 
-namespace PBSeqAnalysis {
-namespace PBChimera {
+namespace PacBio {
+namespace Chimera {
 
 /**
  * @brief Label that annotates a read for a single chimeric breakpoint
@@ -127,5 +127,5 @@ std::ostream& operator<<(std::ostream &o, const ChimeraLabel& label)
     return o;
 }
 
-}  // namespace PBChimera
-}  // namespace PBSeqAnalysis
+}  // namespace Chimera
+}  // namespace PacBio
