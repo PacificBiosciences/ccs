@@ -25,19 +25,21 @@ set(pbchimera_LibDir        ${pbchimera_RootDir}/lib)
 set(pbchimera_IncludeDir    ${pbchimera_RootDir}/include)
 set(pbchimera_SourceDir     ${pbchimera_RootDir}/src)
 set(pbchimera_TestsDir      ${pbchimera_RootDir}/tests)
-set(pbchimera_ThirdPartyDir ${pbchimera_RootDir}/third-party)
 #file(MAKE_DIRECTORY ${pbchimera_LibDir})
 
 find_package( ZLIB REQUIRED )
 
 # Include directories
-set(SEQAN_IncludeDir        ${pbchimera_ThirdPartyDir}/seqan-library-2.0.0/include)
+set(SEQAN_IncludeDir        ${pbchimera_RootDir}/../seqan/include)
 
 # shared CXX flags for src & tests
 include(CheckCXXCompilerFlag)
 set(pbchimera_CXX_FLAGS "-std=c++11 -Wall -Wextra -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${pbchimera_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "-lz")
+
+# set this compiler definition to prevent unhygenic seqan behavior
+add_definitions(-DSEQAN_NO_GLOBAL_EXCEPTION_HANDLER)
 
 include_directories(
     ${ZLIB_INCLUDE_DIRS}
