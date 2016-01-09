@@ -42,41 +42,6 @@
 
 using namespace PacBio::Chimera;
 
-/// Seprates a string on a specified delimiter
-///
-/// \param s      Input string
-/// \param delim  Delimiter character
-///
-/// \return Vector of sub-strings of the input string
-std::vector<std::string> Split(const std::string& s, char delim)
-{
-    std::vector<std::string> elems;
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-    return elems;
-}
-
-uint32_t ParseNumReads(const std::string id)
-{
-    const auto& parts = Split(id, '_');
-    const auto& numReadsString = parts[3].substr(8);
-    const uint32_t numReads = std::stoi(numReadsString);
-    return numReads;
-}
-
-std::vector<uint32_t> ParseNumReads(const seqan::StringSet<seqan::CharString> ids)
-{
-    using namespace seqan;
-
-    std::vector<uint32_t> retval;
-    for (size_t i = 0; i < length(ids); ++i)
-        retval.push_back(ParseNumReads(toCString(ids[i])));
-    return retval;
-}
-
 int main(int argc, char const ** argv)
 {
     using namespace seqan;
@@ -97,9 +62,6 @@ int main(int argc, char const ** argv)
     std::vector<std::string> idList;
     std::vector<Dna5String> seqList;
 
-    // Parse the NumReads from the Record Ids
-    const auto& numReads = ParseNumReads(ids);
-
     for (size_t i = 0; i < length(ids); ++i)
     {
         idList.push_back(toCString(static_cast<CharString>(ids[i])));
@@ -108,7 +70,7 @@ int main(int argc, char const ** argv)
 
     // Label the Records
     ChimeraLabeler chimeraLabeler(1.0f);
-    auto labels = chimeraLabeler.Label(idList, seqList, numReads);
+    auto labels = chimeraLabeler.Label(idList, seqList);
 
     // Display the results
     ChimeraResultWriter csvWriter("temp.csv");

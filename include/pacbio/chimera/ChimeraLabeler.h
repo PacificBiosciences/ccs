@@ -50,6 +50,27 @@
 
 namespace PacBio {
 namespace Chimera {
+    
+namespace {
+
+    /// Seprates a string on a specified delimiter
+    ///
+    /// \param s      Input string
+    /// \param delim  Delimiter character
+    ///
+    /// \return Vector of sub-strings of the input string
+    static std::vector<std::string> Split(const std::string& s, char delim)
+    {
+        std::vector<std::string> elems;
+        std::stringstream ss(s);
+        std::string item;
+        while (std::getline(ss, item, delim)) {
+            elems.push_back(item);
+        }
+        return elems;
+    }
+
+} // Anonymous namespace
 
 ///
 /// Chimera detector - this is an implementation of the UCHIME algorithm, with a few generalizations:
@@ -94,6 +115,23 @@ private:  // Instance variables
     const TScore scoringScheme = TScore(2, -5, -3, -3);
 
 public:  // non-modifying methods
+
+    /// \brief Label a vector of sequence records as Chimeric or not.
+    ///        Secondary entry-point.
+    ///
+    /// \param A vector of all of the available sequence ids as strings
+    /// \param A vector of all of the available sequences as Dna5Strings
+    ///
+    /// \return A set of labels representing the chimeric parents (if any) for
+    ///         each input sequence
+    ///
+    std::vector<ChimeraLabel> Label(const std::vector<std::string>& idList,
+                                    const std::vector<seqan::Dna5String>& seqList2)
+    {
+        std::vector<uint32_t> sizeList = ParseNumReads(idList);
+        return Label(idList, seqList2, sizeList);
+    }
+
     /// \brief Label a vector of sequence records as Chimeric or not.
     ///        Main entry-point.
     ///
@@ -542,6 +580,26 @@ private:
             return ChimeraLabel(queryId, parentBId, parentAId,
                     maxChimeraCrossover, maxChimeraScore);
     }
+
+public:  // Public Static Methods
+
+    static uint32_t ParseNumReads(const std::string id)
+    {
+        const auto& parts = Split(id, '_');
+        const auto& numReadsString = parts[3].substr(8);
+        const uint32_t numReads = std::stoi(numReadsString);
+        return numReads;
+    }
+
+    static std::vector<uint32_t> ParseNumReads(const std::vector<std::string> ids)
+    {
+        std::vector<uint32_t> retval;
+        for (size_t i = 0; i < ids.size(); ++i)
+            retval.emplace_back(ParseNumReads(ids[i]));
+        return retval;
+    }
+
+private:  // Inlined methods
 
     /// \brief Calculates the H-score for a chimeric alignment as per Edgar(2011)
     ///
