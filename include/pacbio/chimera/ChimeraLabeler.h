@@ -126,10 +126,29 @@ public:  // non-modifying methods
     ///         each input sequence
     ///
     std::vector<ChimeraLabel> Label(const std::vector<std::string>& idList,
-                                    const std::vector<seqan::Dna5String>& seqList2)
+                                    const std::vector<std::string>& seqList)
     {
         std::vector<uint32_t> sizeList = ParseNumReads(idList);
-        return Label(idList, seqList2, sizeList);
+        std::vector<seqan::Dna5String> dnaStringList;
+        for (const auto& seq : seqList)
+            dnaStringList.emplace_back(seq);
+        return Label(idList, dnaStringList, sizeList);
+    }
+
+    /// \brief Label a vector of sequence records as Chimeric or not.
+    ///        Secondary entry-point.
+    ///
+    /// \param A vector of all of the available sequence ids as strings
+    /// \param A vector of all of the available sequences as Dna5Strings
+    ///
+    /// \return A set of labels representing the chimeric parents (if any) for
+    ///         each input sequence
+    ///
+    std::vector<ChimeraLabel> Label(const std::vector<std::string>& idList,
+                                    const std::vector<seqan::Dna5String>& seqList)
+    {
+        std::vector<uint32_t> sizeList = ParseNumReads(idList);
+        return Label(idList, seqList, sizeList);
     }
 
     /// \brief Label a vector of sequence records as Chimeric or not.
@@ -278,8 +297,7 @@ private:
             // Initialize the alignment with the current sequence chunk
             uint32_t chunkStart = i * chunkSize;
             uint32_t chunkEnd   = chunkStart + chunkSize;
-            const auto chunkSeq = infix(sequences[index], 
-                    chunkStart, chunkEnd);
+            const auto chunkSeq = infix(sequences[index], chunkStart, chunkEnd);
             seqan::assignSource(seqan::row(align, 0), chunkSeq);
 
             // Initialize loop variables;
