@@ -77,7 +77,7 @@ constexpr auto MinPasses = "minPasses";
 constexpr auto MinPredictedAccuracy = "minPredictedAccuracy";
 constexpr auto MinZScore = "minZScore";
 constexpr auto MaxDropFraction = "maxDropFraction";
-constexpr auto PoaOnly = "poaOnly";
+constexpr auto noPolish = "noPolish";
 
 // constexpr auto Directional          = "directional";
 }  // namespace OptionNames
@@ -91,7 +91,7 @@ struct ConsensusSettings
     double MinZScore;
     double MaxDropFraction;
     bool Directional;
-    bool PoaOnly;
+    bool noPolish;
 
     ConsensusSettings(const optparse::Values& options);
 
@@ -124,7 +124,7 @@ struct ConsensusSettings
             .help(
                 "Maximum fraction of subreads that can be dropped before giving up. Default = "
                 "%default");
-        parser->add_option(em + OptionNames::PoaOnly)
+        parser->add_option(em + OptionNames::noPolish)
         .action("store_true")
         .help("Only output the initial template derived from the POA (faster, less accurate");
         
@@ -445,7 +445,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 continue;
             }
             
-            if (settings.PoaOnly) {
+            if (settings.noPolish) {
                 /* Generate dummy QVs, will use 
                  * 5 = ASCII 53 = 33 + 20
                  */
