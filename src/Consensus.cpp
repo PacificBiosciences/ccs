@@ -51,6 +51,7 @@ ConsensusSettings::ConsensusSettings(const optparse::Values& options)
     , MinZScore{options.get(OptionNames::MinZScore)}
     , MaxDropFraction{options.get(OptionNames::MaxDropFraction)}
     , Directional{false}  // options.get("directional")}
+    , NoPolish(options.get(OptionNames::noPolish))
 {
 }
 

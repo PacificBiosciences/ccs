@@ -91,7 +91,7 @@ struct ConsensusSettings
     double MinZScore;
     double MaxDropFraction;
     bool Directional;
-    bool noPolish;
+    bool NoPolish;
 
     ConsensusSettings(const optparse::Values& options);
 
@@ -126,7 +126,7 @@ struct ConsensusSettings
                 "%default");
         parser->add_option(em + OptionNames::noPolish)
         .action("store_true")
-        .help("Only output the initial template derived from the POA (faster, less accurate");
+        .help("Only output the initial template derived from the POA (faster, less accurate).");
         
 
         // parser->add_option(em +
@@ -445,7 +445,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                 continue;
             }
             
-            if (settings.noPolish) {
+            if (settings.NoPolish) {
                 /* Generate dummy QVs, will use 
                  * 5 = ASCII 53 = 33 + 20
                  */
