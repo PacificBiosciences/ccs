@@ -108,7 +108,6 @@ private:  // Type definitions
 
 private:  // Instance variables
     const double minChimeraScore;
-    const double minParentScore = 1.0f;
     const uint32_t beta = 4;
     const double pseudocount = 2.0f;
     const uint32_t chunks = 4;
@@ -125,14 +124,14 @@ public:  // non-modifying methods
     /// \return A set of labels representing the chimeric parents (if any) for
     ///         each input sequence
     ///
-    std::vector<ChimeraLabel> Label(const std::vector<std::string>& idList,
-                                    const std::vector<std::string>& seqList)
+    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& idList,
+                                            const std::vector<std::string>& seqList,
+                                            const std::vector<uint32_t>& sizeList)
     {
-        std::vector<uint32_t> sizeList = ParseNumReads(idList);
         std::vector<seqan::Dna5String> dnaStringList;
         for (const auto& seq : seqList)
             dnaStringList.emplace_back(seq);
-        return Label(idList, dnaStringList, sizeList);
+        return LabelChimeras(idList, dnaStringList, sizeList);
     }
 
     /// \brief Label a vector of sequence records as Chimeric or not.
@@ -144,11 +143,30 @@ public:  // non-modifying methods
     /// \return A set of labels representing the chimeric parents (if any) for
     ///         each input sequence
     ///
-    std::vector<ChimeraLabel> Label(const std::vector<std::string>& idList,
-                                    const std::vector<seqan::Dna5String>& seqList)
+    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& idList,
+                                            const std::vector<std::string>& seqList)
     {
         std::vector<uint32_t> sizeList = ParseNumReads(idList);
-        return Label(idList, seqList, sizeList);
+        std::vector<seqan::Dna5String> dnaStringList;
+        for (const auto& seq : seqList)
+            dnaStringList.emplace_back(seq);
+        return LabelChimeras(idList, dnaStringList, sizeList);
+    }
+
+    /// \brief Label a vector of sequence records as Chimeric or not.
+    ///        Secondary entry-point.
+    ///
+    /// \param A vector of all of the available sequence ids as strings
+    /// \param A vector of all of the available sequences as Dna5Strings
+    ///
+    /// \return A set of labels representing the chimeric parents (if any) for
+    ///         each input sequence
+    ///
+    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& idList,
+                                            const std::vector<seqan::Dna5String>& seqList)
+    {
+        std::vector<uint32_t> sizeList = ParseNumReads(idList);
+        return LabelChimeras(idList, seqList, sizeList);
     }
 
     /// \brief Label a vector of sequence records as Chimeric or not.
@@ -161,16 +179,20 @@ public:  // non-modifying methods
     /// \return A set of labels representing the chimeric parents (if any) for
     ///         each input sequence
     ///
-    std::vector<ChimeraLabel> Label(const std::vector<std::string>& idList,
-                                    const std::vector<seqan::Dna5String>& seqList2,
-                                    const std::vector<uint32_t>& sizeList)
+    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& idList,
+                                            const std::vector<seqan::Dna5String>& seqList,
+                                            const std::vector<uint32_t>& sizeList)
     {
         // Declare the output vector now
         std::vector<ChimeraLabel> output;
 
+#ifdef PBLOG_INFO
+            PBLOG_INFO << "Analyzing " << idList.size() << " sequences for PCR Chimeras" ;
+#endif
+
         // Sanity-check the sizes of the vectors we've been give.  All three should be
         // of the same size
-        if (idList.size() != seqList2.size())
+        if (idList.size() != seqList.size())
             throw std::runtime_error("Sizes of Id List and Sequence List do not match!");
         if (idList.size() != sizeList.size())
             throw std::runtime_error("Sizes of Id List and Size List do not match!");
@@ -181,10 +203,22 @@ public:  // non-modifying methods
                 throw std::runtime_error("Sequences are not sorted by size!");
 
         // Add the reverse complements for each sequence
-        std::vector<seqan::Dna5String> seqList;
-        for (const auto& sequence : seqList2)
-            seqList.push_back(sequence);
-        AddReverseComplements(seqList);
+        std::vector<seqan::Dna5String> sequences;
+        for (const auto& sequence : seqList)
+            sequences.push_back(sequence);
+        AddReverseComplements(sequences);
+
+        // If we have less than 3 sequences, assume all are real
+        if (idList.size() < 3)
+        {
+#ifdef PBLOG_INFO
+            PBLOG_INFO << "Cannot detect Chimeras with less than 3 sequences,"
+                       << " skipping...";
+#endif
+            for (const auto& id : idList)
+                output.emplace_back(id);
+            return output;
+        }
 
         // Declare loop variables
         uint32_t N = idList.size();
@@ -200,13 +234,13 @@ public:  // non-modifying methods
         {
             // Pull out the current Id / Sequence / Size
             id       = idList[i];
-            sequence = seqList[i];
+            sequence = sequences[i];
 
-            std::cerr << "Analyzing sequence #" << i + 1
-                      << " of " << idList.size()
-                      << ", '" << id << "', supported by "
-                      << sizeList[i] << " reads"
-                      << std::endl;
+#ifdef PBLOG_INFO
+            PBLOG_INFO << "Analyzing sequence #" << i + 1 << " of " 
+                       << idList.size() << ", '" << id 
+                       << "', supported by " << sizeList[i] << " reads";
+#endif
 
             // First two sequences do not have enough parents, assumed real
             if (output.size() < 2)
@@ -217,7 +251,7 @@ public:  // non-modifying methods
             else  // Otherwise we align
             {
                 // Find probable parents from the highest scoring SW templates
-                parentIds = FindParents(seqList, nonChimeras, i);
+                parentIds = FindParents(sequences, nonChimeras, i);
 
                 // If there is only one high scoring parent, then the sequence
                 //    probably represents a true allele and we keep it.
@@ -228,7 +262,7 @@ public:  // non-modifying methods
                 }
                 else  // Otherwise we need to test it for chimerism
                 {
-                    auto label = TestPossibleChimera(seqList, idList, i, 
+                    auto label = TestPossibleChimera(sequences, idList, i, 
                             parentIds);
 
                     // If the score is high enough, set the flag and save it
@@ -245,6 +279,11 @@ public:  // non-modifying methods
             nonChimeras.push_back(i);
             nonChimeras.push_back(i+N);
         }
+
+#ifdef PBLOG_INFO
+            PBLOG_INFO << "Found " << idList.size() - (nonChimeras.size() / 2)
+                       << " PCR Chimeras from " << idList.size() << " sequences"; 
+#endif
 
         return output;  // Implicit move semantics take care that ChimeraLabels are moved.
     }
