@@ -451,7 +451,7 @@ ResultType<TResult> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
                  */
                 std::string qvs(poaConsensus.length(), '5');
                 results.Success += 1;
-                results.emplace_back(TResult{chunk.Id, poaConsensus, qvs, 0,
+                results.emplace_back(TResult{chunk.Id, poaConsensus, qvs, possiblePasses,
                     0, 0, std::vector<double>(1), statusCounts, 0, 0,
                     chunk.SignalToNoise, timer.ElapsedMilliseconds(),
                     chunk.Barcodes});
