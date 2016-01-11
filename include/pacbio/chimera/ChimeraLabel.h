@@ -99,33 +99,34 @@ struct ChimeraLabel {
     ChimeraLabel& operator=(const ChimeraLabel& rhs) = default;
     // Destructor
     ~ChimeraLabel() = default;
+
+    friend std::ostream& operator<<(std::ostream &o, const ChimeraLabel& label)
+    {
+        // Stream the Sequence Id first
+        o << label.sequenceId << ",";
+
+        // Then a human-readable representation of the flag
+        if (label.chimeraFlag)
+            o << "True"       << ",";
+        else
+            o << "False"      << ",";
+
+        // The score is only meaningfully defined > 0
+        if (label.score > 0.0f)
+            o << label.score  << ",";
+        else
+            o << "NaN"        << ",";
+
+        // Finally the parents and the putative crossover
+        o << label.leftParentId  << ","
+          << label.rightParentId << ","
+          << label.crossover;
+
+        // Return the stream reference
+        return o;
+    }
+
 };
-
-std::ostream& operator<<(std::ostream &o, const ChimeraLabel& label)
-{
-    // Stream the Sequence Id first
-    o << label.sequenceId << ",";
-
-    // Then a human-readable representation of the flag
-    if (label.chimeraFlag)
-        o << "True"       << ",";
-    else
-        o << "False"      << ",";
-
-    // The score is only meaningfully defined > 0
-    if (label.score > 0.0f)
-        o << label.score  << ",";
-    else
-        o << "NaN"        << ",";
-
-    // Finally the parents and the putative crossover
-    o << label.leftParentId  << ","
-      << label.rightParentId << ","
-      << label.crossover;
-
-    // Return the stream reference
-    return o;
-}
 
 }  // namespace Chimera
 }  // namespace PacBio
