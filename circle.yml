@@ -1,6 +1,8 @@
 dependencies:
     cache_directories:
         - "_deps/cmake-3.3.0-Linux-x86_64"
+        - "_deps/seqan"
+        - "_deps/ConsensusCore2"
     pre:
         - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test ; sudo apt-get update ; sudo apt-get install g++-4.8
         - if [ ! -d _deps ] ; then mkdir _deps ; fi
