@@ -5,6 +5,9 @@
 project(PacBioChimera CXX C)
 cmake_minimum_required(VERSION 2.8)
 
+#set magic variable
+set(ROOT_PROJECT_NAME ${PROJECT_NAME} CACHE STRING "root project name")
+
 # project version
 set(PacBioChimera_MAJOR_VERSION 0)
 set(PacBioChimera_MINOR_VERSION 0)
@@ -24,7 +27,7 @@ set(PacBioChimera_DocsDir       ${PacBioChimera_RootDir}/docs)
 set(PacBioChimera_LibDir        ${PacBioChimera_RootDir}/lib)
 set(PacBioChimera_IncludeDir    ${PacBioChimera_RootDir}/include)
 set(PacBioChimera_SourceDir     ${PacBioChimera_RootDir}/src)
-set(PacBioChimera_TestsDir      ${PacBioChimera_RootDir}/tests)
+set(PacBioChimera_TestsDir      ${PacBioChimera_RootDir}/test)
 
 # External include directories
 set(SEQAN_IncludeDir            ${PacBioChimera_RootDir}/../seqan/include)
@@ -51,4 +54,10 @@ set(PacBioChimera_INCLUDE_DIRS
     FORCE
 )
 
+# Add the sub-directory with
 add_subdirectory(src)
+
+# gmock/gtest
+if (GMOCK_RootDir)
+    add_subdirectory(test/unit)
+endif()
