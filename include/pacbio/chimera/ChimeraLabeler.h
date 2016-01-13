@@ -37,14 +37,15 @@
 
 #pragma once
 
-#include <seqan/sequence.h>
-#include <seqan/graph_msa.h>
-
+#include <limits>
 #include <vector>
 #include <set>
 #include <iostream>
 #include <algorithm>
 #include <string>
+
+#include <seqan/sequence.h>
+#include <seqan/graph_msa.h>
 
 #include "ChimeraLabel.h"
 
@@ -116,7 +117,21 @@ private:  // Instance variables
     const bool verbose_;
     const TScore scoringScheme_ = TScore(2, -5, -3, -3);
 
-public:  // non-modifying methods
+private:  // State variables
+    std::vector<std::string> ids_;
+    std::vector<seqan::Dna5String> nonChimeras_;
+    uint32_t minSize_   = std::numeric_limits<uint32_t>::max();
+    size_t numAnalyzed_ = 0;
+
+public:  // Modifying methods
+
+    void clear()
+    {
+        ids_.clear();
+        nonChimeras_.clear();
+        minSize_     = std::numeric_limits<uint32_t>::max();
+        numAnalyzed_ = 0;
+    }
 
     /// \brief Label a vector of sequence records as Chimeric or not.
     ///        Secondary entry-point.
@@ -182,124 +197,114 @@ public:  // non-modifying methods
     /// \return A set of labels representing the chimeric parents (if any) for
     ///         each input sequence
     ///
-    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& idList,
-                                            const std::vector<seqan::Dna5String>& seqList,
-                                            const std::vector<uint32_t>& sizeList)
+    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& ids,
+                                            const std::vector<seqan::Dna5String>& seqs,
+                                            const std::vector<uint32_t>& sizes)
     {
         // Declare the output vector now
         std::vector<ChimeraLabel> output;
 
-        // Sanity-check the sizes of the vectors we've been give.  All three should be
-        // of the same size
-        if (idList.size() != seqList.size())
-            throw std::runtime_error("Sizes of Id List and Sequence List do not match!");
-        if (idList.size() != sizeList.size())
-            throw std::runtime_error("Sizes of Id List and Size List do not match!");
-
-        // Sanity-check the ordering of the sizes.
-        for (size_t i = 1; i < sizeList.size(); ++i)
-            if (sizeList[i] > sizeList[i-1])
-                throw std::runtime_error("Sequences are not sorted by size!");
-
-        // Add the reverse complements for each sequence
-        std::vector<seqan::Dna5String> sequences;
-        for (const auto& sequence : seqList)
-            sequences.push_back(sequence);
-        AddReverseComplements(sequences);
-
-        // If we have less than 3 sequences, assume all are real
-        if (idList.size() < 3)
-        {
-#ifdef PBLOG_INFO
-            PBLOG_INFO << "Cannot detect Chimeras with less than 3 sequences,"
-                       << " skipping...";
-#endif
-            for (const auto& id : idList)
-                output.emplace_back(id);
-            return output;
-        }
-
-        // Declare loop variables
-        uint32_t N = idList.size();
-        std::string id;
-        seqan::Dna5String sequence;
-
-        // Declare containers for tracking non-Chimeric parents
-        std::vector<uint32_t> nonChimeras;
-        std::vector<uint32_t> parentIds;
-
         // Iterate over each Fasta record in order of their size
-        for (uint32_t i = 0; i < idList.size(); ++i)
+        for (uint32_t i = 0; i < ids.size(); ++i)
         {
-            // Pull out the current Id / Sequence / Size
-            id       = idList[i];
-            sequence = sequences[i];
-
-            // First two sequences do not have enough parents, assumed real
-            if (output.size() < 2)
-            {
-                if (verbose_)
-                    std::cout << "Consensus '" << id << "' is abundant, assumed real" << std::endl;
-#ifdef PBLOG_INFO
-                PBLOG_INFO << "Consensus '" << id << "' is abundant, assumed real";
-#endif
-                // Create a default label for the assumed-non-chimeric read
-                output.emplace_back(id);
-            }
-            else  // Otherwise we align
-            {
-                // Find probable parents from the highest scoring SW templates
-                parentIds = FindParents(sequences, nonChimeras, i);
-
-                // If there is only one high scoring parent, then the sequence
-                //    probably represents a true allele and we keep it.
-                if (parentIds.size() == 1)
-                {
-                    if (verbose_)
-                        std::cout << "Consensus '" << id << "' has only one proposed parent, assumed real" << std::endl;
-#ifdef PBLOG_INFO
-                    PBLOG_INFO << "Consensus '" << id << "' has only one proposed parent, assumed real";
-#endif
-                    // Add a default label for the non-chimeric read
-                    output.emplace_back(id);
-                }
-                else  // Otherwise we need to test it for chimerism
-                {
-                    auto label = TestPossibleChimera(sequences, idList, i, 
-                            parentIds);
-                    
-                    if (verbose_)
-                        std::cout << "Consensus '" << id << "' has as possible cross-over at " 
-                                  << label.crossover << " with a score of " << label.score << std::endl;
-#ifdef PBLOG_INFO
-                        PBLOG_INFO << "Consensus '" << id << "' has as possible cross-over at " 
-                                   << label.crossover << " with a score of " << label.score;
-#endif
-
-                    // If the score is high enough, set the flag and save it
-                    if (label.score > minChimeraScore) {
-                        label.chimeraFlag = true;
-                        output.push_back(label);
-                    } else { // Otherwise add the default label
-                        output.emplace_back(id);
-                    }
-                }
-            }
-
-            // Add the current index and it's RC to known non-chimeras
-            nonChimeras.push_back(i);
-            nonChimeras.push_back(i+N);
+            ChimeraLabel label = LabelChimera(ids[i], seqs[i], sizes[i]);
+            output.push_back(label);
         }
 
-#ifdef PBLOG_INFO
-            PBLOG_INFO << "Found " << idList.size() - (nonChimeras.size() / 2)
-                       << " PCR Chimeras from " << idList.size() << " sequences"; 
-#endif
-
-        return output;  // Implicit move semantics take care that ChimeraLabels are moved.
+        return output;
     }
 
-private:
+    ChimeraLabel LabelChimera(const std::string& id,
+                              const seqan::Dna5String& sequence,
+                              const uint32_t size)
+    {
+        ChimeraLabel label(id);
+
+        // Error-out if sequences are presented out of order
+        if (size > minSize_)
+            throw std::runtime_error("Sequences analyzed out of order!");
+
+        // Declare containers for tracking non-Chimeric parents
+        std::vector<uint32_t> parentIds;
+
+        // First two sequences do not have enough parents, assumed real
+        if (ids_.size() < 2)
+        {
+            if (verbose_)
+                std::cout << "Consensus '" << id << "' is abundant, assumed real" << std::endl;
+#ifdef PBLOG_INFO
+            PBLOG_INFO << "Consensus '" << id << "' is abundant, assumed real";
+#endif
+            // Create a default label for the assumed-non-chimeric read
+            AddNonChimera(id, sequence, size);
+            return label;
+        }
+        else  // Otherwise we align
+        {
+            // Find probable parents from the highest scoring SW templates
+            parentIds = FindParents(sequence);
+
+            // If there is only one high scoring parent, then the sequence
+            //    probably represents a true allele and we keep it.
+            if (parentIds.size() == 1)
+            {
+                if (verbose_)
+                    std::cout << "Consensus '" << id << "' has only one proposed parent, assumed real" << std::endl;
+#ifdef PBLOG_INFO
+                PBLOG_INFO << "Consensus '" << id << "' has only one proposed parent, assumed real";
+#endif
+                // Add a default label for the non-chimeric read
+                AddNonChimera(id, sequence, size);
+                return label;
+            }
+            else  // Otherwise we need to test it for chimerism
+            {
+                auto label = TestPossibleChimera(id, sequence, parentIds);
+                
+                if (verbose_)
+                    std::cout << "Consensus '" << id << "' has a possible cross-over at " 
+                              << label.crossover << " with a score of " << label.score << std::endl;
+                    std::cout << "Possible parents are '" << label.leftParentId << "' and '"
+                              << label.rightParentId << "'" << std::endl;
+#ifdef PBLOG_INFO
+                    PBLOG_INFO << "Consensus '" << id << "' has a possible cross-over at " 
+                               << label.crossover << " with a score of " << label.score;
+                    PBLOG_INFO << "Possible parents are '" << label.leftParentId << "' and '"
+                               << label.rightParentId << "'";
+#endif
+
+                // If the score is high enough, set the flag 
+                if (label.score > minChimeraScore) {
+                    label.chimeraFlag = true;
+                } else {
+                    AddNonChimera(id, sequence, size);
+                }
+
+                return label;
+            }
+        }
+    }
+
+
+private:  // non-modifying methods
+
+    void AddNonChimera(const std::string& id,
+                       const seqan::Dna5String sequence,
+                       const uint32_t size)
+    {
+        ids_.push_back(id);
+        nonChimeras_.push_back(sequence);
+        AddReverseComplement(sequence);
+        minSize_ = std::min(size, minSize_);
+    }
+
+    void AddReverseComplement(const seqan::Dna5String& sequence)
+    {
+        seqan::Dna5String revComSeq = sequence;
+        seqan::reverseComplement(revComSeq);
+        nonChimeras_.push_back(revComSeq);
+    }
+
     /// \brief Append all of the reverse-complements to the end of a vector of sequences
     ///
     /// \param A vector of N DNA sequences
@@ -326,9 +331,7 @@ private:
     /// \return A set of indices representing the best scoring parents for the
     ///         various regions of the current sequences
     ///
-    std::vector<uint32_t> FindParents(const std::vector<seqan::Dna5String>& sequences,
-                                      const std::vector<uint32_t>& nonChimericIdx,
-                                      const uint32_t index)
+    std::vector<uint32_t> FindParents(const seqan::Dna5String& sequence)
     {
         // Declare the output variable and the set we will build it from
         std::vector<uint32_t> output;
@@ -339,7 +342,7 @@ private:
         seqan::resize(rows(align), 2);
 
         // Pre-calculate the size of each chunk
-        uint32_t chunkSize = seqan::length(sequences[index]) / chunks;
+        uint32_t chunkSize = seqan::length(sequence) / chunks;
 
         // Iterate over each chunk, aligning it to all possible parents
         for (uint32_t i = 0; i < chunks; ++i)
@@ -347,29 +350,26 @@ private:
             // Initialize the alignment with the current sequence chunk
             uint32_t chunkStart = i * chunkSize;
             uint32_t chunkEnd   = chunkStart + chunkSize;
-            const auto chunkSeq = infix(sequences[index], chunkStart, chunkEnd);
+            const auto chunkSeq = infix(sequence, chunkStart, chunkEnd);
             seqan::assignSource(seqan::row(align, 0), chunkSeq);
 
             // Initialize loop variables;
             uint32_t score      = 0;
             uint32_t maxScore   = 0;
-            uint32_t testParent = 0;
             uint32_t maxParent  = 0;
 
             // iterate over each non-Chimeric sequence
-            for (size_t i = 0; i < nonChimericIdx.size(); ++i)
+            for (size_t i = 0; i < nonChimeras_.size(); ++i)
             {
                 // Fill out the alignment with the current parents
-                testParent = nonChimericIdx[i];
-                seqan::assignSource(seqan::row(align, 1), 
-                        sequences[testParent]);
+                seqan::assignSource(seqan::row(align, 1), nonChimeras_[i]);
                 score = seqan::localAlignment(align, scoringScheme_);
 
                 // If the current parent is better than the best, keep it
                 if (score > maxScore)
                 {
                     maxScore = score;
-                    maxParent = testParent;
+                    maxParent = i;
                 }
             }
 
@@ -378,8 +378,7 @@ private:
         }
 
         // Convert the set of parents to a vector for down-stream use
-        std::move(parentIds.begin(), parentIds.end(), 
-                  std::back_inserter(output));
+        std::move(parentIds.begin(), parentIds.end(), std::back_inserter(output));
         return output;
     }
 
@@ -395,24 +394,20 @@ private:
     ///         for a given query
     ///
     ChimeraLabel TestPossibleChimera(
-            const std::vector<seqan::Dna5String>& sequences,
-            const std::vector<std::string>& ids,
-            const uint32_t index,
+            const std::string& id,
+            const seqan::Dna5String& sequence,
             const std::vector<uint32_t>& possibleParents)
     {
         // First we align the query to all of the possible parents
         //  auto alignments = GetFullAlignments(sequences, index, 
         //     possibleParents);
-        auto alignments = GetMultiSequenceAlignment(sequences, index, 
-                possibleParents);
+        auto alignments = GetMultiSequenceAlignment(sequence, possibleParents);
 
         // Initialize two Labels - one for the max and one for the loop variable
-        std::string id = ids[index];
         ChimeraLabel bestLabel(id);
-        ChimeraLabel label;
 
         // Loop variables for the names of the identified parents
-        const uint32_t idCount = ids.size();
+        const uint32_t idCount = ids_.size();
         std::string parentA;
         std::string parentB;
 
@@ -420,31 +415,23 @@ private:
         for (uint32_t i = 1; i < possibleParents.size(); ++i)
         {
             uint32_t parentAIdx = possibleParents[i];
-            if (parentAIdx >= idCount)
-                parentA = ids[parentAIdx-idCount];
-            else
-                parentA = ids[parentAIdx];
+            parentA = ids_[parentAIdx/2];
 
             // Iterate over all possible "Parent B"'s
             for (uint32_t j = 0; j < i; ++j)
             {
                 uint32_t parentBIdx = possibleParents[j];
-                if (parentBIdx >= idCount)
-                    parentB = ids[parentBIdx-idCount];
-                else
-                    parentB = ids[parentBIdx];
+                parentB = ids_[parentBIdx/2];
 
                 // For a given ParentA and ParentB, what is the maximum
                 //     possible Chimera score?
-                label = ScorePossibleChimera(alignments, id,
-                                             parentA, parentB,
-                                             i+1, j+1);
+                ChimeraLabel label = ScorePossibleChimera(alignments, id,
+                                                          parentA, parentB,
+                                                          i+1, j+1);
 
                 // Keep the highest scoring label
                 if (label.score > bestLabel.score)
-                {
                     bestLabel = std::move(label);
-                }
             }
         }
 
@@ -460,21 +447,19 @@ private:
     /// \return a pointer to an MSA
     ///
     TAlign GetMultiSequenceAlignment(
-            const std::vector<seqan::Dna5String>& sequences,
-            const uint32_t index,
+            const seqan::Dna5String& sequence,
             const std::vector<uint32_t>& parentIds)
     {
         // Initialize the alignment with the query sequence
         TAlign align;
         seqan::resize(rows(align), parentIds.size()+1);
-        seqan::assignSource(seqan::row(align, 0), sequences[index]);
+        seqan::assignSource(seqan::row(align, 0), sequence);
 
         // Successively add each parent to the alignment
         for (uint32_t i = 1; i <= parentIds.size(); ++i)
         {
             uint32_t parentIdx = parentIds[i-1];
-            seqan::assignSource(seqan::row(align, i), 
-                    sequences[parentIdx]);
+            seqan::assignSource(seqan::row(align, i), nonChimeras_[parentIdx]);
         }
 
         // Perform the alignment operation and return
