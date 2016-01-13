@@ -10,9 +10,7 @@ dependencies:
 test:
     pre:
         - mkdir _build
-        - ls $(readlink -f _deps)
-        - ls $(readlink -f _deps/seqan)
         - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DSEQAN_IncludeDir=$(readlink -f ../_deps/seqan/include) -DGMOCK_RootDir=$(readlink -f ../_deps/ConsensusCore2/third-party/gmock-1.7.0)  ..
     override:
         - pushd _build ; make 
-        - pushd _build ; make VERBOSE=1 check
+        - pushd _build ; make check
