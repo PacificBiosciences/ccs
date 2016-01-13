@@ -85,10 +85,10 @@ class ChimeraLabeler
 {
 public:  // structors
     // Default constructor
-    explicit ChimeraLabeler(double minChimeraScoreArg,
-                            bool verbose)
+    explicit ChimeraLabeler(double minChimeraScoreArg = 1.0,
+                            bool verboseArg           = false)
             : minChimeraScore(minChimeraScoreArg)
-            , verbose_(verbose)
+            , verbose(verboseArg)
             {};
     // Move constructor
     ChimeraLabeler(ChimeraLabeler&& src) = delete;
@@ -111,11 +111,11 @@ private:  // Type definitions
 
 private:  // Instance variables
     const double minChimeraScore;
-    const uint32_t beta = 4;
-    const double pseudocount = 2.0f;
-    const uint32_t chunks = 4;
-    const bool verbose_;
-    const TScore scoringScheme_ = TScore(2, -5, -3, -3);
+    const uint32_t beta          = 4;
+    const double pseudocount     = 2.0;
+    const uint32_t chunks        = 4;
+    const bool verbose;
+    const TScore scoringScheme = TScore(2, -5, -3, -3);
 
 private:  // State variables
     std::vector<std::string> ids_;
@@ -230,7 +230,7 @@ public:  // Modifying methods
         // First two sequences do not have enough parents, assumed real
         if (ids_.size() < 2)
         {
-            if (verbose_)
+            if (verbose)
                 std::cout << "Consensus '" << id << "' is abundant, assumed real" << std::endl;
 #ifdef PBLOG_INFO
             PBLOG_INFO << "Consensus '" << id << "' is abundant, assumed real";
@@ -248,7 +248,7 @@ public:  // Modifying methods
             //    probably represents a true allele and we keep it.
             if (parentIds.size() == 1)
             {
-                if (verbose_)
+                if (verbose)
                     std::cout << "Consensus '" << id << "' has only one proposed parent, assumed real" << std::endl;
 #ifdef PBLOG_INFO
                 PBLOG_INFO << "Consensus '" << id << "' has only one proposed parent, assumed real";
@@ -261,7 +261,7 @@ public:  // Modifying methods
             {
                 auto label = TestPossibleChimera(id, sequence, parentIds);
                 
-                if (verbose_)
+                if (verbose)
                     std::cout << "Consensus '" << id << "' has a possible cross-over at " 
                               << label.crossover << " with a score of " << label.score << std::endl;
                     std::cout << "Possible parents are '" << label.leftParentId << "' and '"
@@ -363,7 +363,7 @@ private:  // non-modifying methods
             {
                 // Fill out the alignment with the current parents
                 seqan::assignSource(seqan::row(align, 1), nonChimeras_[i]);
-                score = seqan::localAlignment(align, scoringScheme_);
+                score = seqan::localAlignment(align, scoringScheme);
 
                 // If the current parent is better than the best, keep it
                 if (score > maxScore)
@@ -407,7 +407,6 @@ private:  // non-modifying methods
         ChimeraLabel bestLabel(id);
 
         // Loop variables for the names of the identified parents
-        const uint32_t idCount = ids_.size();
         std::string parentA;
         std::string parentB;
 
@@ -463,7 +462,7 @@ private:  // non-modifying methods
         }
 
         // Perform the alignment operation and return
-        seqan::globalMsaAlignment(align, scoringScheme_);
+        seqan::globalMsaAlignment(align, scoringScheme);
         return align;
     }
 
