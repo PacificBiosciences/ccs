@@ -114,16 +114,16 @@ private:  // Type definitions
 
 private:  // Instance variables
     const double minChimeraScore;
-    const uint32_t beta;
+    const size_t beta;
     const double pseudocount;
-    const uint32_t chunks;
+    const size_t chunks;
     const bool verbose;
     const TScore scoringScheme = TScore(2, -5, -3, -3);
 
 private:  // State variables
     std::vector<std::string> ids_;
     std::vector<seqan::Dna5String> nonChimeras_;
-    uint32_t minSize_   = std::numeric_limits<uint32_t>::max();
+    size_t minSize_   = std::numeric_limits<size_t>::max();
     size_t numAnalyzed_ = 0;
 
 public:  // Modifying methods
@@ -134,7 +134,7 @@ public:  // Modifying methods
     {
         ids_.clear();
         nonChimeras_.clear();
-        minSize_     = std::numeric_limits<uint32_t>::max();
+        minSize_     = std::numeric_limits<size_t>::max();
         numAnalyzed_ = 0;
     }
 
@@ -150,7 +150,7 @@ public:  // Modifying methods
     ///
     std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& idList,
                                             const std::vector<std::string>& seqList,
-                                            const std::vector<uint32_t>& sizeList)
+                                            const std::vector<size_t>& sizeList)
     {
         std::vector<seqan::Dna5String> dnaStringList;
         for (const auto& seq : seqList)
@@ -170,7 +170,7 @@ public:  // Modifying methods
     std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& idList,
                                             const std::vector<std::string>& seqList)
     {
-        std::vector<uint32_t> sizeList = ParseNumReads(idList);
+        std::vector<size_t> sizeList = ParseNumReads(idList);
         std::vector<seqan::Dna5String> dnaStringList;
         for (const auto& seq : seqList)
             dnaStringList.emplace_back(seq);
@@ -189,7 +189,7 @@ public:  // Modifying methods
     std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& idList,
                                             const std::vector<seqan::Dna5String>& seqList)
     {
-        std::vector<uint32_t> sizeList = ParseNumReads(idList);
+        std::vector<size_t> sizeList = ParseNumReads(idList);
         return LabelChimeras(idList, seqList, sizeList);
     }
 
@@ -205,13 +205,13 @@ public:  // Modifying methods
     ///
     std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& ids,
                                             const std::vector<seqan::Dna5String>& seqs,
-                                            const std::vector<uint32_t>& sizes)
+                                            const std::vector<size_t>& sizes)
     {
         // Declare the output vector now
         std::vector<ChimeraLabel> output;
 
         // Iterate over each Fasta record in order of their size
-        for (uint32_t i = 0; i < ids.size(); ++i)
+        for (size_t i = 0; i < ids.size(); ++i)
         {
             ChimeraLabel label = LabelChimera(ids[i], seqs[i], sizes[i]);
             output.push_back(label);
@@ -231,7 +231,7 @@ public:  // Modifying methods
     ///
     ChimeraLabel LabelChimera(const std::string& id,
                               const seqan::Dna5String& sequence,
-                              const uint32_t size)
+                              const size_t size)
     {
         ChimeraLabel label(id);
 
@@ -240,7 +240,7 @@ public:  // Modifying methods
             throw std::runtime_error("Sequences analyzed out of order!");
 
         // Declare containers for tracking non-Chimeric parents
-        std::vector<uint32_t> parentIds;
+        std::vector<size_t> parentIds;
 
         // First two sequences do not have enough parents, assumed real
         if (ids_.size() < 2)
@@ -311,7 +311,7 @@ private:  // non-modifying methods
     ///
     void AddNonChimera(const std::string& id,
                        const seqan::Dna5String sequence,
-                       const uint32_t size)
+                       const size_t size)
     {
         ids_.push_back(id);
         nonChimeras_.push_back(sequence);
@@ -339,32 +339,32 @@ private:  // non-modifying methods
     /// \return A set of indices representing the best scoring parents for the
     ///         various regions of the current sequences
     ///
-    std::vector<uint32_t> FindParents(const seqan::Dna5String& sequence)
+    std::vector<size_t> FindParents(const seqan::Dna5String& sequence)
     {
         // Declare the output variable and the set we will build it from
-        std::vector<uint32_t> output;
-        std::set<uint32_t> parentIds;
+        std::vector<size_t> output;
+        std::set<size_t> parentIds;
 
         // Initialize the pairwise-alignment object we will be reusing
         TAlign align;
         seqan::resize(rows(align), 2);
 
         // Pre-calculate the size of each chunk
-        uint32_t chunkSize = seqan::length(sequence) / chunks;
+        size_t chunkSize = seqan::length(sequence) / chunks;
 
         // Iterate over each chunk, aligning it to all possible parents
-        for (uint32_t i = 0; i < chunks; ++i)
+        for (size_t i = 0; i < chunks; ++i)
         {
             // Initialize the alignment with the current sequence chunk
-            uint32_t chunkStart = i * chunkSize;
-            uint32_t chunkEnd   = chunkStart + chunkSize;
+            size_t chunkStart = i * chunkSize;
+            size_t chunkEnd   = chunkStart + chunkSize;
             const auto chunkSeq = infix(sequence, chunkStart, chunkEnd);
             seqan::assignSource(seqan::row(align, 0), chunkSeq);
 
             // Initialize loop variables;
-            uint32_t score      = 0;
-            uint32_t maxScore   = 0;
-            uint32_t maxParent  = 0;
+            size_t score      = 0;
+            size_t maxScore   = 0;
+            size_t maxParent  = 0;
 
             // iterate over each non-Chimeric sequence
             for (size_t i = 0; i < nonChimeras_.size(); ++i)
@@ -404,7 +404,7 @@ private:  // non-modifying methods
     ChimeraLabel TestPossibleChimera(
             const std::string& id,
             const seqan::Dna5String& sequence,
-            const std::vector<uint32_t>& possibleParents)
+            const std::vector<size_t>& possibleParents)
     {
         // First we align the query to all of the possible parents
         //  auto alignments = GetFullAlignments(sequences, index, 
@@ -419,15 +419,15 @@ private:  // non-modifying methods
         std::string parentB;
 
         // Iterate over all possible "Parent A"'s
-        for (uint32_t i = 1; i < possibleParents.size(); ++i)
+        for (size_t i = 1; i < possibleParents.size(); ++i)
         {
-            uint32_t parentAIdx = possibleParents[i];
+            size_t parentAIdx = possibleParents[i];
             parentA = ids_[parentAIdx/2];
 
             // Iterate over all possible "Parent B"'s
-            for (uint32_t j = 0; j < i; ++j)
+            for (size_t j = 0; j < i; ++j)
             {
-                uint32_t parentBIdx = possibleParents[j];
+                size_t parentBIdx = possibleParents[j];
                 parentB = ids_[parentBIdx/2];
 
                 // For a given ParentA and ParentB, what is the maximum
@@ -455,7 +455,7 @@ private:  // non-modifying methods
     ///
     TAlign GetMultiSequenceAlignment(
             const seqan::Dna5String& sequence,
-            const std::vector<uint32_t>& parentIds)
+            const std::vector<size_t>& parentIds)
     {
         // Initialize the alignment with the query sequence
         TAlign align;
@@ -463,9 +463,9 @@ private:  // non-modifying methods
         seqan::assignSource(seqan::row(align, 0), sequence);
 
         // Successively add each parent to the alignment
-        for (uint32_t i = 1; i <= parentIds.size(); ++i)
+        for (size_t i = 1; i <= parentIds.size(); ++i)
         {
-            uint32_t parentIdx = parentIds[i-1];
+            size_t parentIdx = parentIds[i-1];
             seqan::assignSource(seqan::row(align, i), nonChimeras_[parentIdx]);
         }
 
@@ -491,8 +491,8 @@ private:  // non-modifying methods
             const std::string& queryId,
             const std::string& parentAId,
             const std::string& parentBId,
-            const uint32_t firstIdx,
-            const uint32_t secondIdx)
+            const size_t firstIdx,
+            const size_t secondIdx)
     {
         // Second, extract references to the rows we need to inspect
         const TRow& queryRow = seqan::row(alignment,         0);
@@ -509,12 +509,12 @@ private:  // non-modifying methods
         TRowIterC qEnd = seqan::end(queryRow);
 
         // Count variables
-        uint32_t rightA   = 0;
-        uint32_t rightB   = 0;
-        uint32_t rightAbs = 0;
-        uint32_t leftA    = 0;
-        uint32_t leftB    = 0;
-        uint32_t leftAbs  = 0;
+        size_t rightA   = 0;
+        size_t rightB   = 0;
+        size_t rightAbs = 0;
+        size_t leftA    = 0;
+        size_t leftB    = 0;
+        size_t leftAbs  = 0;
 
         // First we iterate once, counting up the total number of A/B/Abs votes
         //    to initialize the counts for the right-hand segment
@@ -546,12 +546,12 @@ private:  // non-modifying methods
 
         // Initialize variables for the maximum chimera
         double maxChimeraScore = 0.0f;
-        uint32_t maxChimeraCrossover = 0;
+        size_t maxChimeraCrossover = 0;
         orientation_t maxChimeraOrientation = NA;
 
         // And per-iteration variables
         double abScore, baScore, chimeraScore;
-        uint32_t chimeraCrossover = 0;
+        size_t chimeraCrossover = 0;
         orientation_t chimeraOrientation;
 
         // Second time we iterate, we subtract from the right
@@ -649,11 +649,11 @@ public:  // Public Static Methods
     ///
     /// \return The support for that sequence, as an integer
     ///
-    static uint32_t ParseNumReads(const std::string id)
+    static size_t ParseNumReads(const std::string id)
     {
         const auto& parts = Split(id, '_');
         const auto& numReadsString = parts[3].substr(8);
-        const uint32_t numReads = std::stoi(numReadsString);
+        const size_t numReads = std::stoi(numReadsString);
         return numReads;
     }
 
@@ -663,9 +663,9 @@ public:  // Public Static Methods
     ///
     /// \return The support for those sequences, as integers
     ///
-    static std::vector<uint32_t> ParseNumReads(const std::vector<std::string> ids)
+    static std::vector<size_t> ParseNumReads(const std::vector<std::string> ids)
     {
-        std::vector<uint32_t> retval;
+        std::vector<size_t> retval;
         for (size_t i = 0; i < ids.size(); ++i)
             retval.emplace_back(ParseNumReads(ids[i]));
         return retval;
@@ -686,12 +686,12 @@ private:  // Inlined methods
     ///         sequence and a hypothetical chimera composed of left and right segments
     ///         taken from existing sequences
     ///
-    inline double ScoreBreakPoint(const uint32_t leftYesVotes,
-                                  const uint32_t leftNoVotes,
-                                  const uint32_t leftAbsVotes,
-                                  const uint32_t rightYesVotes,
-                                  const uint32_t rightNoVotes,
-                                  const uint32_t rightAbsVotes)
+    inline double ScoreBreakPoint(const size_t leftYesVotes,
+                                  const size_t leftNoVotes,
+                                  const size_t leftAbsVotes,
+                                  const size_t rightYesVotes,
+                                  const size_t rightNoVotes,
+                                  const size_t rightAbsVotes)
     {
         // Score the left and right segments independently
         double leftScore = ScoreSegment(leftYesVotes, leftNoVotes,
@@ -713,9 +713,9 @@ private:  // Inlined methods
     /// \return A double representing the strength of the similarity between two
     ///         sequences
     ///
-    inline double ScoreSegment(const uint32_t yesVotes,
-                               const uint32_t noVotes,
-                               const uint32_t absVotes)
+    inline double ScoreSegment(const size_t yesVotes,
+                               const size_t noVotes,
+                               const size_t absVotes)
     {
         return yesVotes / (beta * (noVotes + pseudocount) + absVotes);
     }
