@@ -11,7 +11,7 @@ include_directories(
 )
 
 include_directories(SYSTEM
-    ${GMOCK_IncludeDir}
+    ${GMOCK_RootDir}
 )
 
 file(GLOB PacBioChimeraTests_CPP "*.cpp")
