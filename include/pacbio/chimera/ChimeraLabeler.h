@@ -88,6 +88,9 @@ public:  // structors
     explicit ChimeraLabeler(double minChimeraScoreArg = 1.0,
                             bool verboseArg           = false)
             : minChimeraScore(minChimeraScoreArg)
+            , beta(4)
+            , pseudocount(2.0)
+            , chunks(4)
             , verbose(verboseArg)
             {};
     // Move constructor
@@ -111,9 +114,9 @@ private:  // Type definitions
 
 private:  // Instance variables
     const double minChimeraScore;
-    const uint32_t beta          = 4;
-    const double pseudocount     = 2.0;
-    const uint32_t chunks        = 4;
+    const uint32_t beta;
+    const double pseudocount;
+    const uint32_t chunks;
     const bool verbose;
     const TScore scoringScheme = TScore(2, -5, -3, -3);
 
@@ -125,6 +128,8 @@ private:  // State variables
 
 public:  // Modifying methods
 
+    /// \brief Clear and reset all stateful variables to default
+    ///
     void clear()
     {
         ids_.clear();
@@ -136,8 +141,9 @@ public:  // Modifying methods
     /// \brief Label a vector of sequence records as Chimeric or not.
     ///        Secondary entry-point.
     ///
-    /// \param A vector of all of the available sequence ids as strings
-    /// \param A vector of all of the available sequences as Dna5Strings
+    /// \param A vector of all of the sequence ids as strings
+    /// \param A vector of all of the sequences as strings
+    /// \param A vector of integers, representing the support for each sequence
     ///
     /// \return A set of labels representing the chimeric parents (if any) for
     ///         each input sequence
@@ -155,8 +161,8 @@ public:  // Modifying methods
     /// \brief Label a vector of sequence records as Chimeric or not.
     ///        Secondary entry-point.
     ///
-    /// \param A vector of all of the available sequence ids as strings
-    /// \param A vector of all of the available sequences as Dna5Strings
+    /// \param A vector of all of the sequence ids as strings
+    /// \param A vector of all of the sequences as strings
     ///
     /// \return A set of labels representing the chimeric parents (if any) for
     ///         each input sequence
@@ -174,8 +180,8 @@ public:  // Modifying methods
     /// \brief Label a vector of sequence records as Chimeric or not.
     ///        Secondary entry-point.
     ///
-    /// \param A vector of all of the available sequence ids as strings
-    /// \param A vector of all of the available sequences as Dna5Strings
+    /// \param A vector of all the sequence ids as strings
+    /// \param A vector of all the sequences as Dna5Strings
     ///
     /// \return A set of labels representing the chimeric parents (if any) for
     ///         each input sequence
@@ -190,9 +196,9 @@ public:  // Modifying methods
     /// \brief Label a vector of sequence records as Chimeric or not.
     ///        Main entry-point.
     ///
-    /// \param A vector of all of the available sequence ids as strings
-    /// \param A vector of all of the available sequences as Dna5Strings
-    /// \param A vector of all of the available sequence "sizes" or prevalence levels
+    /// \param A vector of all the sequence ids as strings
+    /// \param A vector of all the sequences as Dna5Strings
+    /// \param A vector of integers, representing the support for each sequence
     ///
     /// \return A set of labels representing the chimeric parents (if any) for
     ///         each input sequence
@@ -214,6 +220,15 @@ public:  // Modifying methods
         return output;
     }
 
+    /// \brief Label a vector of sequence records as Chimeric or not.
+    ///        Main entry-point.
+    ///
+    /// \param The Id of the sequence as a string
+    /// \param The sequence itself
+    /// \param The support for the sequence, as an integer
+    ///
+    /// \return A label for whether and how the query is chimeric
+    ///
     ChimeraLabel LabelChimera(const std::string& id,
                               const seqan::Dna5String& sequence,
                               const uint32_t size)
@@ -273,7 +288,7 @@ public:  // Modifying methods
                                << label.rightParentId << "'";
 #endif
 
-                // If the score is high enough, set the flag 
+                // If the score is high enough, set the flag, otherwise we add it to our reference
                 if (label.score > minChimeraScore) {
                     label.chimeraFlag = true;
                 } else {
@@ -288,6 +303,12 @@ public:  // Modifying methods
 
 private:  // non-modifying methods
 
+    /// \brief Add a non-chimeric sequence to th
+    ///
+    /// \param The sequence Id as a string
+    /// \param The sequence itself, as a Dna5String
+    /// \param It's level of coverage or support
+    ///
     void AddNonChimera(const std::string& id,
                        const seqan::Dna5String sequence,
                        const uint32_t size)
@@ -297,29 +318,16 @@ private:  // non-modifying methods
         AddReverseComplement(sequence);
         minSize_ = std::min(size, minSize_);
     }
-
+    
+    /// \brief Add the reverse-complement of a Sequence to the references
+    ///
+    /// \param The sequence itself, as a Dna5String
+    ///
     void AddReverseComplement(const seqan::Dna5String& sequence)
     {
         seqan::Dna5String revComSeq = sequence;
         seqan::reverseComplement(revComSeq);
         nonChimeras_.push_back(revComSeq);
-    }
-
-    /// \brief Append all of the reverse-complements to the end of a vector of sequences
-    ///
-    /// \param A vector of N DNA sequences
-    ///
-    /// \return A vector of 2*N DNA sequences
-    ///
-    void AddReverseComplements(std::vector<seqan::Dna5String>& seqList)
-    {
-        for (const auto& sequence : seqList)
-        {
-            auto revComSeq = sequence;
-            seqan::reverseComplement(revComSeq);
-            seqList.push_back(revComSeq);
-        }
-        return;
     }
 
     /// \brief Find the most probable parents for a possible chimera
@@ -635,6 +643,12 @@ private:  // non-modifying methods
 
 public:  // Public Static Methods
 
+    /// \brief Parse the number of reads supporting a sequence from it's Id
+    ///
+    /// \param The Id to be parsed as a string
+    ///
+    /// \return The support for that sequence, as an integer
+    ///
     static uint32_t ParseNumReads(const std::string id)
     {
         const auto& parts = Split(id, '_');
@@ -643,6 +657,12 @@ public:  // Public Static Methods
         return numReads;
     }
 
+    /// \brief Parse the number of reads supporting a vector of sequences from their Ids
+    ///
+    /// \param The vector of Ids to be parsed as strings
+    ///
+    /// \return The support for those sequences, as integers
+    ///
     static std::vector<uint32_t> ParseNumReads(const std::vector<std::string> ids)
     {
         std::vector<uint32_t> retval;
