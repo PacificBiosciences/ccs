@@ -54,6 +54,8 @@ set(PacBioChimera_INCLUDE_DIRS
     FORCE
 )
 
+find_package(Threads REQUIRED)
+
 # Add the sub-directory with
 add_subdirectory(src)
 
