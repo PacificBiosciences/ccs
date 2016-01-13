@@ -84,8 +84,10 @@ class ChimeraLabeler
 {
 public:  // structors
     // Default constructor
-    explicit ChimeraLabeler(double minChimeraScoreArg)
+    explicit ChimeraLabeler(double minChimeraScoreArg,
+                            bool verbose)
             : minChimeraScore(minChimeraScoreArg)
+            , verbose_(verbose)
             {};
     // Move constructor
     ChimeraLabeler(ChimeraLabeler&& src) = delete;
@@ -111,7 +113,8 @@ private:  // Instance variables
     const uint32_t beta = 4;
     const double pseudocount = 2.0f;
     const uint32_t chunks = 4;
-    const TScore scoringScheme = TScore(2, -5, -3, -3);
+    const bool verbose_;
+    const TScore scoringScheme_ = TScore(2, -5, -3, -3);
 
 public:  // non-modifying methods
 
@@ -186,10 +189,6 @@ public:  // non-modifying methods
         // Declare the output vector now
         std::vector<ChimeraLabel> output;
 
-#ifdef PBLOG_INFO
-            PBLOG_INFO << "Analyzing " << idList.size() << " sequences for PCR Chimeras" ;
-#endif
-
         // Sanity-check the sizes of the vectors we've been give.  All three should be
         // of the same size
         if (idList.size() != seqList.size())
@@ -236,15 +235,14 @@ public:  // non-modifying methods
             id       = idList[i];
             sequence = sequences[i];
 
-#ifdef PBLOG_INFO
-            PBLOG_INFO << "Analyzing sequence #" << i + 1 << " of " 
-                       << idList.size() << ", '" << id 
-                       << "', supported by " << sizeList[i] << " reads";
-#endif
-
             // First two sequences do not have enough parents, assumed real
             if (output.size() < 2)
             {
+                if (verbose_)
+                    std::cout << "Consensus '" << id << "' is abundant, assumed real" << std::endl;
+#ifdef PBLOG_INFO
+                PBLOG_INFO << "Consensus '" << id << "' is abundant, assumed real";
+#endif
                 // Create a default label for the assumed-non-chimeric read
                 output.emplace_back(id);
             }
@@ -257,6 +255,11 @@ public:  // non-modifying methods
                 //    probably represents a true allele and we keep it.
                 if (parentIds.size() == 1)
                 {
+                    if (verbose_)
+                        std::cout << "Consensus '" << id << "' has only one proposed parent, assumed real" << std::endl;
+#ifdef PBLOG_INFO
+                    PBLOG_INFO << "Consensus '" << id << "' has only one proposed parent, assumed real";
+#endif
                     // Add a default label for the non-chimeric read
                     output.emplace_back(id);
                 }
@@ -264,6 +267,14 @@ public:  // non-modifying methods
                 {
                     auto label = TestPossibleChimera(sequences, idList, i, 
                             parentIds);
+                    
+                    if (verbose_)
+                        std::cout << "Consensus '" << id << "' has as possible cross-over at " 
+                                  << label.crossover << " with a score of " << label.score << std::endl;
+#ifdef PBLOG_INFO
+                        PBLOG_INFO << "Consensus '" << id << "' has as possible cross-over at " 
+                                   << label.crossover << " with a score of " << label.score;
+#endif
 
                     // If the score is high enough, set the flag and save it
                     if (label.score > minChimeraScore) {
@@ -352,7 +363,7 @@ private:
                 testParent = nonChimericIdx[i];
                 seqan::assignSource(seqan::row(align, 1), 
                         sequences[testParent]);
-                score = seqan::localAlignment(align, scoringScheme);
+                score = seqan::localAlignment(align, scoringScheme_);
 
                 // If the current parent is better than the best, keep it
                 if (score > maxScore)
@@ -467,7 +478,7 @@ private:
         }
 
         // Perform the alignment operation and return
-        seqan::globalMsaAlignment(align, scoringScheme);
+        seqan::globalMsaAlignment(align, scoringScheme_);
         return align;
     }
 
