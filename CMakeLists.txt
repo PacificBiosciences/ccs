@@ -30,7 +30,7 @@ set(PacBioChimera_SourceDir     ${PacBioChimera_RootDir}/src)
 set(PacBioChimera_TestsDir      ${PacBioChimera_RootDir}/test)
 
 # External include directories
-set(SEQAN_IncludeDir            ${PacBioChimera_RootDir}/../seqan/include)
+set(SEQAN_IncludeDir            ${PacBioChimera_RootDir}/../seqan/include CACHE PATH "Seqan directory")
 
 # set this compiler definition to prevent unhygenic seqan behavior
 add_definitions(-DSEQAN_NO_GLOBAL_EXCEPTION_HANDLER)
