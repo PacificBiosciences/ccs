@@ -7,6 +7,7 @@ file(MAKE_DIRECTORY  ${PacBioChimera_TestsDir}/bin)
 
 include_directories(
     ${PacBioChimera_IncludeDir}
+    ${GMOCK_RootDir}
 )
 
 include_directories(SYSTEM

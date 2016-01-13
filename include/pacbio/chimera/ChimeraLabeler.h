@@ -277,10 +277,12 @@ public:  // Modifying methods
                 auto label = TestPossibleChimera(id, sequence, parentIds);
                 
                 if (verbose)
+                {
                     std::cout << "Consensus '" << id << "' has a possible cross-over at " 
                               << label.crossover << " with a score of " << label.score << std::endl;
                     std::cout << "Possible parents are '" << label.leftParentId << "' and '"
                               << label.rightParentId << "'" << std::endl;
+                }
 #ifdef PBLOG_INFO
                     PBLOG_INFO << "Consensus '" << id << "' has a possible cross-over at " 
                                << label.crossover << " with a score of " << label.score;
