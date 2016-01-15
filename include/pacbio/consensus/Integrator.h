@@ -57,8 +57,8 @@ public:
     virtual operator std::string() const = 0;
 
     virtual double LL(const Mutation& mut);
+    virtual double LL() const;
 
-    double LL() const;
     double AvgZScore() const;
     std::vector<double> ZScores() const;
 
@@ -99,8 +99,8 @@ public:
     operator std::string() const;
 
     double LL(const Mutation& mut);
-
     inline double LL() const { return AbstractIntegrator::LL(); }
+
     void ApplyMutation(const Mutation& mut);
     void ApplyMutations(std::vector<Mutation>* muts);
 
