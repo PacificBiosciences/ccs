@@ -28,10 +28,10 @@ enum struct AddReadResult : uint8_t
     ALPHA_BETA_MISMATCH,
     POOR_ZSCORE,
     OTHER,
-    /* 
+    /*
      This enum is used in other places to
      both size an array and index into it.  So
-     users can know the number of elements needed in 
+     users can know the number of elements needed in
      an array that could count valus of this enum, this
      should always be the last value in the enum.
      */
@@ -100,7 +100,6 @@ public:
 
     double LL(const Mutation& mut);
     inline double LL() const { return AbstractIntegrator::LL(); }
-
     void ApplyMutation(const Mutation& mut);
     void ApplyMutations(std::vector<Mutation>* muts);
 
