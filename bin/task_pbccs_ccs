@@ -42,6 +42,8 @@ class Constants(object):
     MIN_ZSCORE_DEFAULT = -5
     MAX_DROP_FRAC_ID = "pbccs.task_options.max_drop_fraction"
     MAX_DROP_FRAC_DEFAULT = 0.34
+    NO_POLISH_ID="pbccs.task_options.no_polish"
+    NO_POLISH_DEFAULT=False
     #
     REPORT_FIELDS = {
         "CCS generated": "num_ccs_reads",
@@ -86,6 +88,7 @@ def resolved_tool_contract_runner(rtc):
         "--maxDropFraction=%g" % rtc.task.options[Constants.MAX_DROP_FRAC_ID],
         "--minPredictedAccuracy=%g" % \
             rtc.task.options[Constants.MIN_PREDICTED_ACCURACY_ID],
+        "--noPolish" if rtc.task.options[Constants.NO_POLISH_ID] else "",
         output_file,
     ]
     zmwRanges = ds.zmwRanges
@@ -191,6 +194,10 @@ def get_parser():
                 name="Maximum Dropped Fraction",
                 description="Maximum fraction of subreads that can be dropped before " +
                 "giving up")
+    p.add_boolean(Constants.NO_POLISH_ID, "noPolish",
+                  default=Constants.NO_POLISH_DEFAULT,
+                  name="No Polish CCS",
+                  description="Only output the initial template derived from the POA")
     return p
 
 
