@@ -106,7 +106,7 @@ public:
 
     AddReadResult AddRead(const MappedRead& read);
 
-private:
+protected:
     std::string mdl_;
     Template fwdTpl_;
     Template revTpl_;
@@ -126,11 +126,12 @@ public:
 
     AddReadResult AddRead(const MappedRead& read, const SNR& snr);
 
-private:
-    friend struct std::hash<MultiMolecularIntegrator>;
-
+protected:
     std::string fwdTpl_;
     std::string revTpl_;
+
+private:
+    friend struct std::hash<MultiMolecularIntegrator>;
 };
 
 }  // namespace Consensus
