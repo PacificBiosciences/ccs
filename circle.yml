@@ -16,12 +16,13 @@ dependencies:
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/seqan.git
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbccs.git
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbsparse.git
+        - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbchimera.git
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pblaa.git
         - pip install "numpy>=1.6.0"
     override:
         - echo "Building PBBAM"
         - mkdir _build_bam
-        - pushd _build_bam ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_build_tests=OFF ../_rev_deps/pbbam
+        - pushd _build_bam ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_build_docs=OFF -DPacBioBAM_build_tests=OFF -DPacBioBAM_build_tools=OFF ../_rev_deps/pbbam
         - pushd _build_bam ; make
 test:
     pre:
@@ -40,6 +41,6 @@ test:
         - pushd _build_ccs ; make check
         - echo "Building PBLAA"
         - mkdir _build_laa
-        - pushd _build_laa ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_rev_deps/seqan/include) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_RootDir=$(readlink -f ../_rev_deps/pbbam) -DPBBAM_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbbam/include) -DPBBAM_LIBRARIES=$(readlink -f ../_rev_deps/pbbam/lib/libpbbam.a) -DPacBioConsensus_RootDir=$(readlink -f ..) -DPBCONSENSUS_INCLUDE_DIRS=$(readlink -f ../include) -DPBCONSENSUS_LIBRARIES="-Wl,-whole-archive /home/ubuntu/ConsensusCore2/lib/libpbconsensus.a -Wl,-no-whole-archive" -DPBCCS_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbccs/include) -DPBCCS_LIBRARIES=$(readlink -f ../_rev_deps/pbccs/lib/libpbccs.a) ../_rev_deps/pblaa
+        - pushd _build_laa ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_rev_deps/seqan/include) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_RootDir=$(readlink -f ../_rev_deps/pbbam) -DPBBAM_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbbam/include) -DPBBAM_LIBRARIES=$(readlink -f ../_rev_deps/pbbam/lib/libpbbam.a) -DPacBioConsensus_RootDir=$(readlink -f ..) -DPBCONSENSUS_INCLUDE_DIRS=$(readlink -f ../include) -DPBCONSENSUS_LIBRARIES="-Wl,-whole-archive /home/ubuntu/ConsensusCore2/lib/libpbconsensus.a -Wl,-no-whole-archive" -DPBCCS_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbccs/include) -DPBCCS_LIBRARIES=$(readlink -f ../_rev_deps/pbccs/lib/libpbccs.a) -DPacBioChimera_RootDir=$(readlink -f ../_rev_deps/pbchimera) ../_rev_deps/pblaa
         - pushd _build_laa ; make
         - pushd _build_laa ; make check
