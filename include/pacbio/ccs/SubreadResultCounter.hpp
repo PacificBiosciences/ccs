@@ -33,30 +33,43 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+#ifndef SubreadResultCounter_hpp
+#define SubreadResultCounter_hpp
 
-#include <limits>
+#include <stdlib.h>
+#include <vector>
+#include <iostream>
 
-#include <pacbio/ccs/Consensus.h>
+#include <pacbio/consensus/Integrator.h>
 
 namespace PacBio {
 namespace CCS {
 
-// TODO(lhepler) fix directional
-ConsensusSettings::ConsensusSettings(const optparse::Values& options)
-    : MaxPoaCoverage{std::numeric_limits<size_t>::max()}
-    , MinLength{options.get(OptionNames::MinLength)}
-    , MinPasses{options.get(OptionNames::MinPasses)}
-    , MinPredictedAccuracy{options.get(OptionNames::MinPredictedAccuracy)}
-    , MinZScore{options.get(OptionNames::MinZScore)}
-    , MaxDropFraction{options.get(OptionNames::MaxDropFraction)}
-    , Directional{false}  // options.get("directional")}
-    , NoPolish(options.get(OptionNames::noPolish))
-    , MinReadScore(static_cast<float>(options.get(OptionNames::MinReadScore)))
-    , MinSNR(static_cast<double>(options.get(OptionNames::MinSnr)))
-                            
-{
+// A class to store and report on the results of what happens to subreads.
+class SubreadResultCounter {
+public:
+    int32_t Success;
+    int32_t AlphaBetaMismatch;
+    int32_t BelowMinQual;
+    int32_t FilteredBySize;
+    int32_t ZMWBelowMinSNR;
+    int32_t ZMWNotEnoughSubReads;
+    int32_t PoorZScore;
+    int32_t Other;
+    
+    std::vector<int32_t> ReturnCountsAsArray() const;
+    void AddResult(PacBio::Consensus::AddReadResult);
+    /* Certain conditions may make reads that were on their 
+       way to success go to the garbage bin, in this case we reassign
+       all the success reads to the other category */
+    void AssignSuccessToOther();
+    void CombineWithOtherResult(const SubreadResultCounter& other);
+    SubreadResultCounter& operator+=(const SubreadResultCounter& other);
+    void WriteResultsReport(std::ostream& report) const;
+    int32_t Total() const;
+    
+};
+}
 }
 
-}  // namespace CCS
-}  // namespace PacBio
+#endif /* SubreadResultCounter_hpp */
