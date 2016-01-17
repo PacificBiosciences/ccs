@@ -72,6 +72,19 @@ int32_t SubreadResultCounter::Total() const {
     return (AlphaBetaMismatch + Success + BelowMinQual + FilteredBySize + Other + PoorZScore + ZMWBelowMinSNR + ZMWNotEnoughSubReads);
 }
 
+SubreadResultCounter::SubreadResultCounter() :
+        Success{0},
+        AlphaBetaMismatch{0},
+        BelowMinQual{0},
+        FilteredBySize{0},
+        ZMWBelowMinSNR{0},
+        ZMWNotEnoughSubReads{0},
+        PoorZScore{0},
+        Other{0}
+
+{}
+
+
 void SubreadResultCounter::WriteResultsReport(std::ostream& report) const
 {
     using namespace std;

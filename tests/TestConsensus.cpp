@@ -37,9 +37,11 @@
 #include <gtest/gtest.h>
 #include <pacbio/ccs/Consensus.h>
 #include <pacbio/ccs/ReadId.h>
+#include <pacbio/ccs/SubreadResultCounter.hpp>
 #include <vector>
 #include <pbbam/LocalContextFlags.h>
 #include <pbbam/Accuracy.h>
+
 using namespace PacBio::CCS;
 typedef ReadType<ReadId> Subread;
 
@@ -53,19 +55,30 @@ TEST(ConsensusTest, TestReadFilter)
     for (int i = 0; i < 10; i++) {
         data.emplace_back(Subread{ReadId(movieName, 1, Interval(0, seq.size())), seq, flags, .99});
     }
+
+    ConsensusSettings settings{};
+    settings.MinLength = 10;
+
     // Nothing filtered
-    int32_t nFiltered;
-    auto result = FilterReads(data, 10, &nFiltered);
-    EXPECT_EQ(0, nFiltered);
+    SubreadResultCounter counter{};
+    auto result = FilterReads(data, settings, counter);
+    EXPECT_EQ(0, counter.FilteredBySize);
+    // reset
+    counter.Success=0;
 
     // All removed
-    auto result2 = FilterReads(data, 1000, &nFiltered);
-    EXPECT_EQ(10, nFiltered);
+    settings.MinLength = 1000;
+    auto result2 = FilterReads(data, settings, counter);
+    EXPECT_EQ(10, counter.FilteredBySize);
+    EXPECT_EQ(0, counter.Success);
+    counter.FilteredBySize = 0;
+    counter.Success =0;
 
     // Just one
     auto longSeq = seq + seq + seq;
+    settings.MinLength = 10;
     data.emplace_back(
         Subread{ReadId(movieName, 1, Interval(0, longSeq.size())), longSeq, flags, .99});
-    auto result3 = FilterReads(data, 10, &nFiltered);
-    EXPECT_EQ(1, nFiltered);
+    auto result3 = FilterReads(data, settings, counter);
+    EXPECT_EQ(1, counter.FilteredBySize);
 }

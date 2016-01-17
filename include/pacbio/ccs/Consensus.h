@@ -101,6 +101,7 @@ struct ConsensusSettings
     double MinSNR;
 
     ConsensusSettings(const optparse::Values& options);
+    ConsensusSettings() = default;
 
     static void AddOptions(optparse::OptionParser* const parser)
     {
@@ -267,8 +268,9 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads, const Con
     // get the lengths for all full-length subreads
     for (const auto& read : reads) {
         longest = std::max(longest, read.Seq.length());
-        if (read.Flags & BAM::ADAPTER_BEFORE && read.Flags & BAM::ADAPTER_AFTER &
-            read.ReadAccuracy >= settings.MinReadScore)
+        if ( (read.Flags & BAM::ADAPTER_BEFORE) &&
+             (read.Flags & BAM::ADAPTER_AFTER) &&
+              read.ReadAccuracy >= settings.MinReadScore)
             lengths.emplace_back(read.Seq.length());
     }
 

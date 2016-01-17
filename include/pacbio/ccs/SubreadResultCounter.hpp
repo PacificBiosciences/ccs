@@ -57,6 +57,7 @@ public:
     int32_t PoorZScore;
     int32_t Other;
     
+    SubreadResultCounter();
     std::vector<int32_t> ReturnCountsAsArray() const;
     void AddResult(PacBio::Consensus::AddReadResult);
     /* Certain conditions may make reads that were on their 
