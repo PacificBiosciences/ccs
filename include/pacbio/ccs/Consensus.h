@@ -445,15 +445,7 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
         }
         
         auto reads = FilterReads(chunk.Reads, settings, result.SubreadCounter);
-        
-        // Do we bail on the whole ZMW due to bad SNR?
-        if (result.SubreadCounter.ZMWBelowMinSNR > 0)
-        {
-            result.PoorSNR += 1;
-            PBLOG_DEBUG << "Skipping ZMW " << chunk.Id
-            << ", fails SNR threshold.";
-            return result;
-        }
+
         if (reads.empty() ||  // Check if subread are present
             std::accumulate(reads.begin(), reads.end(), 0, std::plus<bool>()) == 0) {
             result.NoSubreads += 1;
@@ -477,7 +469,7 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
         }
         if (possiblePasses < settings.MinPasses) {
             result.TooFewPasses += 1;
-            result.SubreadCounter.Other += activeReads;
+            result.SubreadCounter.ZMWNotEnoughSubReads += activeReads;
             PBLOG_DEBUG << "Skipping " << chunk.Id << ", not enough possible passes ("
                         << possiblePasses << '<' << settings.MinPasses << ')';
             return result;
