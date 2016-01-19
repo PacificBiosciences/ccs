@@ -246,9 +246,9 @@ public:  // Modifying methods
         if (ids_.size() < 2)
         {
             if (verbose)
-                std::cout << "Consensus '" << id << "' is abundant, assumed real" << std::endl;
+                std::cout << "consensus '" << id << "' is abundant, assumed real" << std::endl;
 #ifdef PBLOG_DEBUG
-            PBLOG_DEBUG << "Consensus '" << id << "' is abundant, assumed real";
+            PBLOG_DEBUG << "consensus '" << id << "' is abundant, assumed real";
 #endif
             // Create a default label for the assumed-non-chimeric read
             AddNonChimera(id, sequence, size);
@@ -264,9 +264,9 @@ public:  // Modifying methods
             if (parentIds.size() == 1)
             {
                 if (verbose)
-                    std::cout << "Consensus '" << id << "' has only one proposed parent, assumed real" << std::endl;
+                    std::cout << "consensus '" << id << "' has only one proposed parent, assumed real" << std::endl;
 #ifdef PBLOG_DEBUG
-                PBLOG_DEBUG << "Consensus '" << id << "' has only one proposed parent, assumed real";
+                PBLOG_DEBUG << "consensus '" << id << "' has only one proposed parent, assumed real";
 #endif
                 // Add a default label for the non-chimeric read
                 AddNonChimera(id, sequence, size);
@@ -278,16 +278,16 @@ public:  // Modifying methods
                 
                 if (verbose)
                 {
-                    std::cout << "Consensus '" << id << "' has a possible cross-over at " 
+                    std::cout << "consensus '" << id << "' has a possible cross-over at " 
                               << label.crossover << " with a score of " << label.score << std::endl;
-                    std::cout << "Possible parents are '" << label.leftParentId << "' and '"
+                    std::cout << "possible parents are '" << label.leftParentId << "' and '"
                               << label.rightParentId << "'" << std::endl;
                 }
 #ifdef PBLOG_DEBUG
-                    PBLOG_DEBUG << "Consensus '" << id << "' has a possible cross-over at " 
-                               << label.crossover << " with a score of " << label.score;
-                    PBLOG_DEBUG << "Possible parents are '" << label.leftParentId << "' and '"
-                               << label.rightParentId << "'";
+                    PBLOG_DEBUG << "consensus '" << id << "' has a possible cross-over at " 
+                                << label.crossover << " with a score of " << label.score;
+                    PBLOG_DEBUG << "possible parents are '" << label.leftParentId << "' and '"
+                                << label.rightParentId << "'";
 #endif
 
                 // If the score is high enough, set the flag, otherwise we add it to our reference
