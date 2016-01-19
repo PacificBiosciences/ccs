@@ -42,39 +42,37 @@
 
 using namespace PacBio::Chimera;
 
-int main(int argc, char const ** argv)
-{
-    using namespace seqan;
+int main(int argc, char const **argv) {
+  using namespace seqan;
 
-    if (argc != 2)
-        return 1;  // Invalid number of arguments.
+  if (argc != 2)
+    return 1; // Invalid number of arguments.
 
-    // Get the input file
-    std::string inputFile(argv[1]);
-    SeqFileIn inputHandle(inputFile.c_str());
-    
-    // Parse the records
-    StringSet<CharString> ids;
-    StringSet<Dna5String> seqs;
-    readRecords(ids, seqs, inputHandle);
-        
-    // Declare the vectors we'll use to actually perform the Chimera-labeling
-    std::vector<std::string> idList;
-    std::vector<Dna5String> seqList;
+  // Get the input file
+  std::string inputFile(argv[1]);
+  SeqFileIn inputHandle(inputFile.c_str());
 
-    for (size_t i = 0; i < length(ids); ++i)
-    {
-        idList.push_back(toCString(static_cast<CharString>(ids[i])));
-        seqList.push_back(static_cast<Dna5String>(seqs[i]));
-    }
+  // Parse the records
+  StringSet<CharString> ids;
+  StringSet<Dna5String> seqs;
+  readRecords(ids, seqs, inputHandle);
 
-    // Label the Records
-    ChimeraLabeler chimeraLabeler(1.0f, true);
-    auto labels = chimeraLabeler.LabelChimeras(idList, seqList);
+  // Declare the vectors we'll use to actually perform the Chimera-labeling
+  std::vector<std::string> idList;
+  std::vector<Dna5String> seqList;
 
-    // Display the results
-    ChimeraResultWriter csvWriter("temp.csv");
-    csvWriter.WriteResults(labels);
+  for (size_t i = 0; i < length(ids); ++i) {
+    idList.push_back(toCString(static_cast<CharString>(ids[i])));
+    seqList.push_back(static_cast<Dna5String>(seqs[i]));
+  }
 
-    return 0;
+  // Label the Records
+  ChimeraLabeler chimeraLabeler(1.0f, true);
+  auto labels = chimeraLabeler.LabelChimeras(idList, seqList);
+
+  // Display the results
+  ChimeraResultWriter csvWriter("temp.csv");
+  csvWriter.WriteResults(labels);
+
+  return 0;
 }
