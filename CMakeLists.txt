@@ -2,6 +2,10 @@
 # CMake build script for the pbchimera library.
 ########################################################################
 
+if (POLICY CMP0048)
+    cmake_policy(SET CMP0048 OLD)
+endif()
+
 project(PacBioChimera CXX C)
 cmake_minimum_required(VERSION 2.8)
 
@@ -9,11 +13,11 @@ cmake_minimum_required(VERSION 2.8)
 set(ROOT_PROJECT_NAME ${PROJECT_NAME} CACHE STRING "root project name")
 
 # project version
-set(PacBioChimera_MAJOR_VERSION 0)
-set(PacBioChimera_MINOR_VERSION 0)
-set(PacBioChimera_PATCH_VERSION 1)
+set(PacBioChimera_VERSION_MAJOR 0)
+set(PacBioChimera_VERSION_MINOR 0)
+set(PacBioChimera_VERSION_PATCH 1)
 set(PacBioChimera_VERSION
-  "${PacBioChimera_MAJOR_VERSION}.${PacBioChimera_MINOR_VERSION}.${PacBioChimera_PATCH_VERSION}"
+  "${PacBioChimera_VERSION_MAJOR}.${PacBioChimera_VERSION_MINOR}.${PacBioChimera_VERSION_PATCH}"
 )
 
 # build-time options
@@ -63,3 +67,9 @@ add_subdirectory(src)
 if (GMOCK_RootDir)
     add_subdirectory(test/unit)
 endif()
+
+# find the git sha1
+list(APPEND CMAKE_MODULE_PATH "${PacBioChimera_RootDir}/cmake")
+include(FindGitSha1)
+find_git_sha1(CHIMERA_GIT_SHA1)
+configure_file("${PacBioChimera_IncludeDir}/pacbio/chimera/Version.h.in" "${PacBioChimera_IncludeDir}/pacbio/chimera/Version.h" @ONLY)
