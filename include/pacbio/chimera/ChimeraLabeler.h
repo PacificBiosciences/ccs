@@ -247,8 +247,8 @@ public:  // Modifying methods
         {
             if (verbose)
                 std::cout << "Consensus '" << id << "' is abundant, assumed real" << std::endl;
-#ifdef PBLOG_INFO
-            PBLOG_INFO << "Consensus '" << id << "' is abundant, assumed real";
+#ifdef PBLOG_DEBUG
+            PBLOG_DEBUG << "Consensus '" << id << "' is abundant, assumed real";
 #endif
             // Create a default label for the assumed-non-chimeric read
             AddNonChimera(id, sequence, size);
@@ -265,8 +265,8 @@ public:  // Modifying methods
             {
                 if (verbose)
                     std::cout << "Consensus '" << id << "' has only one proposed parent, assumed real" << std::endl;
-#ifdef PBLOG_INFO
-                PBLOG_INFO << "Consensus '" << id << "' has only one proposed parent, assumed real";
+#ifdef PBLOG_DEBUG
+                PBLOG_DEBUG << "Consensus '" << id << "' has only one proposed parent, assumed real";
 #endif
                 // Add a default label for the non-chimeric read
                 AddNonChimera(id, sequence, size);
@@ -283,10 +283,10 @@ public:  // Modifying methods
                     std::cout << "Possible parents are '" << label.leftParentId << "' and '"
                               << label.rightParentId << "'" << std::endl;
                 }
-#ifdef PBLOG_INFO
-                    PBLOG_INFO << "Consensus '" << id << "' has a possible cross-over at " 
+#ifdef PBLOG_DEBUG
+                    PBLOG_DEBUG << "Consensus '" << id << "' has a possible cross-over at " 
                                << label.crossover << " with a score of " << label.score;
-                    PBLOG_INFO << "Possible parents are '" << label.leftParentId << "' and '"
+                    PBLOG_DEBUG << "Possible parents are '" << label.leftParentId << "' and '"
                                << label.rightParentId << "'";
 #endif
 
