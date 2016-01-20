@@ -29,11 +29,11 @@ if(NOT HTSLIB_INCLUDE_DIRS OR
                      REQUIRED)
     elseif(Bifx_RootDir)
         find_package(htslib
-                     PATHS ${Bifx_RootDir}/staging/PostPrimary/htslib
+                     PATHS ${Bifx_RootDir}/lib/cpp/htslib
                      REQUIRED)
     else()
         find_package(htslib
-                     PATHS ${PacBioCCS_SOURCE_DIR}/../../../staging/PostPrimary/htslib
+                     PATHS ${PacBioCCS_SOURCE_DIR}/../../../lib/cpp/htslib
                      REQUIRED)
     endif()
 endif()
@@ -83,7 +83,7 @@ file(MAKE_DIRECTORY             ${PacBioCCS_LibDir})
 set(Bifx_RootDir                ${PacBioCCS_RootDir}/../../.. CACHE PATH "smrtanalysis/bioinformatics path")
 
 # pbbam
-set(PacBioBAM_RootDir           ${Bifx_RootDir}/staging/PostPrimary/pbbam CACHE PATH "pbbam source path")
+set(PacBioBAM_RootDir           ${Bifx_RootDir}/lib/cpp/pbbam CACHE PATH "pbbam source path")
 set(PacBioBAM_IncludeDir        ${PacBioBAM_RootDir}/include)
 
 # disable extra pbbam stuff for now
