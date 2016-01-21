@@ -58,7 +58,7 @@ std::vector<TemplatePosition> SP1C1NoCovModel::Populate(const std::string& tpl) 
 
         if (b > 3) throw std::invalid_argument("invalid character in sequence!");
 
-        const bool hpAdd = tpl[i - 1] == tpl[i] ? 4 : 0;
+        const bool hpAdd = tpl[i - 1] != tpl[i] ? 4 : 0;
         const auto params = SP1C1NoCovParams[b + hpAdd];
         
         result.emplace_back(TemplatePosition{
