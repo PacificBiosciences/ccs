@@ -5,6 +5,9 @@ endif()
 set(__find_python_inc_lib YES)
 
 function(find_python_inc_lib _PYTHON_INC _PYTHON_LIB)
+    if (${_PYTHON_INC} AND ${_PYTHON_LIB})
+        return()
+    endif()
     # find the executable
     if (NOT PYTHON_EXECUTABLE)
         find_package(PythonInterp REQUIRED)

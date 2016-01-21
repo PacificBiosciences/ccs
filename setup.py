@@ -34,6 +34,8 @@ if not os.path.exists(os.path.join(swigLib, modName)):
         cmake = env.get("CMAKE_COMMAND", "cmake")
         boost = env.get("Boost_INCLUDE_DIRS", None)
         swig = env.get("SWIG_COMMAND", None)
+        pyinc = env.get("PYTHON_INCLUDE_DIRS", None)
+        pylib = env.get("PYTHON_LIBRARIES", None)
         cmds = [cmake,
                 "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
                 "-DPYTHON_SWIG=1",
@@ -42,13 +44,21 @@ if not os.path.exists(os.path.join(swigLib, modName)):
             cmds.append("-DBoost_INCLUDE_DIRS={0}".format(boost))
         if swig is not None:
             cmds.append("-DSWIG_COMMAND={0}".format(swig))
+        if pyinc is not None:
+            cmds.append("-DPYTHON_INCLUDE_DIRS={0}".format(pyinc))
+        if pylib is not None:
+            cmds.append("-DPYTHON_LIBRARIES={0}".format(pylib))
         cmds.append(thisDir)
         print("Running command {0}".format(" ".join(cmds)), file=sys.stderr)
         retcode = Popen(cmds, cwd=buildDir, env=env).wait()
         if (retcode != 0):
             raise RuntimeError("failed to configure the ConsensusCore2 with CMake!")
         print("Running command make", file=sys.stderr)
-        retcode = Popen(["make"], cwd=buildDir).wait()
+        verbose = env.get("VERBOSE", None)
+        cmds = ["make"]
+        if verbose:
+            cmds.append("VERBOSE=1")
+        retcode = Popen(cmds, cwd=buildDir).wait()
         if (retcode != 0):
             raise RuntimeError("failed to compile or link ConsensusCore2!")
     finally:
