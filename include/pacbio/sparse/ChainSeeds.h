@@ -181,7 +181,11 @@ long LinkScore(const seqan::Seed<seqan::Simple>& lhs,
     // nonMatchPenalty = # of non-anchor, on-diagonal bases * nonMatchPenalty
     long nonMatches = fwd - matches;
     long nonMatchScorePenalty = nonMatches * config.nonMatchPenalty;
-    
+   
+    // Ignore any linkage over a certain size, no matter the score
+    if (nonMatches > config.maxSeedGap)
+        return -1;
+
     // indelPenalty = difference in the seed diagonals * indelScore
     long diagL = Diagonal(lhs);
     long diagR = Diagonal(rhs);

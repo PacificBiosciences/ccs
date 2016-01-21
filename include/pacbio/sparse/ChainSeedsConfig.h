@@ -47,6 +47,7 @@ static const int    MATCH_SCORE       =  5;
 static const int    NON_MATCH_PENALTY =  0;
 static const int    INSERTION_PENALTY = -4;
 static const int    DELETION_PENALTY  = -8;
+static const int    MAX_SEED_GAP      = 200;
 
 /// A simple struct for represting a complete specialization for an
 ///  implementation of the Baker-Giancarlo SDP algorithm.  Templating
@@ -61,13 +62,15 @@ struct ChainSeedsConfig
                      const int matchScoreArg,
                      const int nonMatchPenaltyArg,
                      const int insertionPenaltyArg,
-                     const int deletionPenaltyArg)
+                     const int deletionPenaltyArg,
+                     const int maxSeedGapArg)
         : numCandidates(numCandidatesArg)
         , minScore(minScoreArg)
         , matchScore(matchScoreArg)
         , nonMatchPenalty(nonMatchPenaltyArg)
         , insertionPenalty(insertionPenaltyArg)
         , deletionPenalty(deletionPenaltyArg)
+        , maxSeedGap(maxSeedGapArg)
         {}
 
     // Abbreviated constructors
@@ -78,6 +81,7 @@ struct ChainSeedsConfig
         , nonMatchPenalty(NON_MATCH_PENALTY)
         , insertionPenalty(INSERTION_PENALTY)
         , deletionPenalty(DELETION_PENALTY)
+        , maxSeedGap(MAX_SEED_GAP)
         {}
 
     ChainSeedsConfig()
@@ -87,6 +91,7 @@ struct ChainSeedsConfig
         , nonMatchPenalty(NON_MATCH_PENALTY)
         , insertionPenalty(INSERTION_PENALTY)
         , deletionPenalty(DELETION_PENALTY)
+        , maxSeedGap(MAX_SEED_GAP)
         {}
 
     size_t numCandidates;
@@ -95,6 +100,7 @@ struct ChainSeedsConfig
     int nonMatchPenalty;
     int insertionPenalty;
     int deletionPenalty;
+    int maxSeedGap;
 };
 
 }}  // PacBio::SparseAlignment
