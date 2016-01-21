@@ -19,7 +19,7 @@ public:
     P6C4NoCovModel(const SNR& snr);
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
     double BaseEmissionPr(MoveType move, char from, char to) const;
-    double CovEmissionPr(MoveType move, uint8_t cov) const;
+    double CovEmissionPr(MoveType move, uint8_t cov, const char from, const char to) const;
     double UndoCounterWeights(size_t nEmissions) const;
 
     static std::string Name() { return "P6-C4"; }
@@ -82,7 +82,7 @@ P6C4NoCovModel::P6C4NoCovModel(const SNR& snr) : snr_(snr), counterWeight_{1.0}
                 baseEmission += BaseEmissionPr(moves[m], bases[i], bases[j]);
 
         for (uint8_t c = 0; c < 20; ++c)
-            covEmission += CovEmissionPr(moves[m], c);
+            covEmission += CovEmissionPr(moves[m], c, 0, 0);
     }
 
     baseEmission /= (3 * 4 * 4);
@@ -148,7 +148,7 @@ double P6C4NoCovModel::BaseEmissionPr(MoveType move, const char from, const char
     return pr / 3.0;
 }
 
-double P6C4NoCovModel::CovEmissionPr(MoveType move, const uint8_t) const
+double P6C4NoCovModel::CovEmissionPr(MoveType move, const uint8_t, const char from, const char to) const
 {
     assert(move != MoveType::DELETION);
     return 1.0 * counterWeight_;

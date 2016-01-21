@@ -63,7 +63,7 @@ public:
     virtual ~ModelConfig() {}
     virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
     virtual double BaseEmissionPr(MoveType move, char from, char to) const = 0;
-    virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
+    virtual double CovEmissionPr(MoveType move, uint8_t cov, const char from, const char to) const = 0;
     // folded into CovEmissionPr for now:
     //   virtual double CounterWeight() const = 0;
     virtual double UndoCounterWeights(size_t nEmissions) const = 0;
