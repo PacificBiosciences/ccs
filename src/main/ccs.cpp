@@ -85,8 +85,6 @@ namespace OptionNames {
 constexpr auto ForceOutput = "force";
 constexpr auto PbIndex = "pbi";
 constexpr auto Zmws = "zmws";
-constexpr auto MinSnr = "minSnr";
-constexpr auto MinReadScore = "minReadScore";
 constexpr auto ReportFile = "reportFile";
 constexpr auto NumThreads = "numThreads";
 constexpr auto LogFile = "logFile";
@@ -97,10 +95,9 @@ constexpr auto LogLevel = "logLevel";
 
 typedef ReadType<ReadId> Subread;
 typedef ChunkType<ReadId, Subread> Chunk;
-typedef ConsensusType<ReadId> CCS;
-typedef ResultType<CCS> Results;
+typedef ResultType<ConsensusType> Results;
 
-const auto CircularConsensus = &Consensus<Chunk, CCS>;
+const auto CircularConsensus = &Consensus<Chunk>;
 
 void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts,
                      Results&& results)
@@ -249,7 +246,9 @@ void WriteResultsReport(ostream& report, const Results& counts)
     size_t total = counts.Total();
 
     report << fixed << setprecision(2);
-
+    
+    report << "ZMW Yield" << endl;
+    
     report << "Success -- CCS generated," << counts.Success << "," << 100.0 * counts.Success / total
            << '%' << endl;
 
@@ -276,6 +275,11 @@ void WriteResultsReport(ostream& report, const Results& counts)
 
     report << "Failed -- Unknown error during processing," << counts.ExceptionThrown << ","
            << 100.0 * counts.ExceptionThrown / total << '%' << endl;
+    report << endl << endl;
+    
+    // Now output the per-subread yield report.
+    counts.SubreadCounter.WriteResultsReport(report);
+    
 }
 
 int main(int argc, char** argv)
@@ -313,15 +317,6 @@ int main(int argc, char** argv)
     parser.add_option(em + OptionNames::Zmws)
         .help(
             "Generate CCS for the provided comma-separated holenumber ranges only. Default = all");
-    parser.add_option(em + OptionNames::MinSnr)
-        .type("float")
-        .set_default(3.75)  // See https://github.com/PacificBiosciences/pbccs/issues/86 for a more
-                            // detailed discussion of this default.
-        .help("Minimum SNR of input subreads. Default = %default");
-    parser.add_option(em + OptionNames::MinReadScore)
-        .type("float")
-        .set_default(0.75)
-        .help("Minimum read score of input subreads. Default = %default");
 
     ConsensusSettings::AddOptions(&parser);
 
@@ -347,9 +342,9 @@ int main(int argc, char** argv)
 
     const bool forceOutput = options.get(OptionNames::ForceOutput);
     const bool pbIndex = options.get(OptionNames::PbIndex);
-    const float minSnr = options.get(OptionNames::MinSnr);
-    const float minReadScore = static_cast<float>(options.get(OptionNames::MinReadScore));
     const size_t nThreads = ThreadCount(options.get(OptionNames::NumThreads));
+    /* This assumption is now hard coded into the code,
+     * we will always use a chunkSize of 1 */
     const size_t chunkSize = 1;  // static_cast<size_t>(options.get("chunkSize"));
 
     if (static_cast<int>(options.get(OptionNames::MinPasses)) < 1)
@@ -437,8 +432,7 @@ int main(int argc, char** argv)
     EntireFileQuery query(ds);
 
     WorkQueue<Results> workQueue(nThreads);
-    size_t poorSNR = 0, tooFewPasses = 0;
-
+    
     future<Results> writer;
 
     const string outputExt = FileExtension(outputFile);
@@ -466,30 +460,17 @@ int main(int argc, char** argv)
         }
         // Have we started a new ZMW?
         if (!holeNumber || *holeNumber != read.HoleNumber()) {
-            if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses) {
-                PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id
-                            << ", insufficient number of passes (" << chunk->back().Reads.size()
-                            << '<' << settings.MinPasses << ')';
-                tooFewPasses += 1;
-                chunk->pop_back();
-            }
-
+           
             if (chunk && chunk->size() >= chunkSize) {
                 workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
                 chunk.reset(new vector<Chunk>());
             }
-
             holeNumber = read.HoleNumber();
             auto snr = read.SignalToNoise();
             if (read.HasBarcodes()) {
                 barcodes = read.Barcodes();
             }
             if (whitelist && !whitelist->Contains(movieName, *holeNumber)) {
-                skipZmw = true;
-            } else if (*min_element(snr.begin(), snr.end()) < minSnr) {
-                PBLOG_DEBUG << "Skipping ZMW " << movieName << '/' << *holeNumber
-                            << ", fails SNR threshold (" << minSnr << ')';
-                poorSNR += 1;
                 skipZmw = true;
             } else {
                 skipZmw = false;
@@ -501,11 +482,6 @@ int main(int argc, char** argv)
 
         if (skipZmw) continue;
 
-        if (static_cast<float>(read.ReadAccuracy()) < minReadScore) {
-            PBLOG_DEBUG << "Skipping read " << read.FullName() << ", insufficient read accuracy ("
-                        << read.ReadAccuracy() << '<' << minReadScore << ')';
-            continue;
-        }
         // Check that barcode matches the previous ones
         if (barcodes) {
             // if not, set the barcodes to the flag and stop checking them.
@@ -523,13 +499,6 @@ int main(int argc, char** argv)
                     read.Sequence(), read.LocalContextFlags(), read.ReadAccuracy()});
     }
 
-    // if the last chunk doesn't have enough passes, skip it
-    if (chunk && !chunk->empty() && chunk->back().Reads.size() < settings.MinPasses) {
-        PBLOG_DEBUG << "Skipping ZMW " << chunk->back().Id << ", insufficient number of passes ("
-                    << chunk->back().Reads.size() << '<' << settings.MinPasses << ')';
-        tooFewPasses += 1;
-        chunk->pop_back();
-    }
 
     // run the remaining tasks
     if (chunk && !chunk->empty()) {
@@ -542,8 +511,6 @@ int main(int argc, char** argv)
     // wait for the writer thread and get the results counter
     //   then add in the snr/minPasses counts and write the report
     auto counts = writer.get();
-    counts.PoorSNR += poorSNR;
-    counts.TooFewPasses += tooFewPasses;
     const string reportFile(options.get(OptionNames::ReportFile));
 
     if (reportFile == "-") {
