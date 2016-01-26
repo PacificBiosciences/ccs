@@ -127,7 +127,7 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
         });
     }
 
-    result.emplace_back(TemplatePosition{tpl.back(), 0.0, 0.0, 0.0, 0.0});
+    result.emplace_back(TemplatePosition{tpl.back(), 1.0, 0.0, 0.0, 0.0});
 
     return result;
 }
@@ -148,7 +148,8 @@ double P6C4NoCovModel::BaseEmissionPr(MoveType move, const char from, const char
     return pr / 3.0;
 }
 
-double P6C4NoCovModel::CovEmissionPr(MoveType move, const uint8_t, const char from, const char to) const
+double P6C4NoCovModel::CovEmissionPr(MoveType move, const uint8_t, const char from,
+                                     const char to) const
 {
     assert(move != MoveType::DELETION);
     return 1.0 * counterWeight_;
