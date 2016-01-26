@@ -56,18 +56,7 @@ namespace {  // anonymous
     
     // Generate a 'NC' context for a random base.
     inline char GenerateDifferentBase(char nextBase) {
-        switch (nextBase) {
-            case 'A':
-                return 'C';
-            case 'C':
-                return 'G';
-            case 'G':
-                return 'T';
-            case 'T':
-                return 'A';
-            default: // should be an exception
-                return 'A';
-        }
+        return 4;
     }
 
 inline Interval RangeUnion(const Interval& range1, const Interval& range2)
@@ -105,7 +94,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
 
     size_t hintBeginRow = 1, hintEndRow = 1;
     auto prevTransProbs = TemplatePosition{'-', 0, 0, 0, 0};
-    char prevTplBase = 'N';
+    char prevTplBase = 4;
 
     for (int j = 1; j < J; ++j)  // Note due to offset with reads and otherwise, this is ugly-ish
     {
@@ -130,7 +119,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
         for (i = beginRow; i < I && (score >= thresholdScore || i < requiredEndRow); ++i) {
             const char curReadBase = read_.Seq[i - 1];
             // TODO: Terrible hack right now to emit this guy as teh IQV
-            const uint8_t curReadIqv = read_.Seq[i - 1];
+            const uint8_t curReadIqv = read_.Cov[i - 1];
             double thisMoveScore = 0.0;
             score = 0.0;
             // Match:
@@ -211,7 +200,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
         // end in the homopolymer state for now.
         auto likelihood = alpha(I - 1, J - 1) *
                           tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, read_.Seq[I - 1]) *
-                          tpl_->CovEmissionPr(MoveType::MATCH, read_.Seq[I - 1], prevTplBase, currTplBase);
+                          tpl_->CovEmissionPr(MoveType::MATCH, read_.Cov[I - 1], prevTplBase, currTplBase);
         alpha.StartEditingColumn(J, I, I + 1);
         alpha.Set(I, J, likelihood);
         alpha.FinishEditingColumn(J, I, I + 1);
@@ -255,7 +244,7 @@ void Recursor::FillBeta(const M& guide, M& beta) const
         int beginRow, endRow = hintEndRow;
         for (i = endRow - 1; i > 0 && (score >= thresholdScore || i >= requiredBeginRow); --i) {
             const char nextReadBase = read_.Seq[i];
-            const uint8_t nextReadIqv = read_.Seq[i];
+            const uint8_t nextReadIqv = read_.Cov[i];
             double thisMoveScore;
             score = 0.0;
 
@@ -331,7 +320,7 @@ void Recursor::FillBeta(const M& guide, M& beta) const
         auto match_emission_prob =
             tpl_->BaseEmissionPr(MoveType::MATCH, (*tpl_)[0].Base, read_.Seq[0]);
         auto prevBase = GenerateDifferentBase(read_.Seq[0]);
-        match_emission_prob *= tpl_->CovEmissionPr(MoveType::MATCH, read_.Seq[0], prevBase, (*tpl_)[0].Base);
+        match_emission_prob *= tpl_->CovEmissionPr(MoveType::MATCH, read_.Cov[0], prevBase, (*tpl_)[0].Base);
         beta.Set(0, 0, match_emission_prob * beta(1, 1) );
         beta.FinishEditingColumn(0, 0, 1);
     }
@@ -368,7 +357,7 @@ double Recursor::LinkAlphaBeta(const M& alpha, size_t alphaColumn, const M& beta
     for (int i = usedBegin; i < usedEnd; i++) {
         if (i < I) {
             const char readBase = read_.Seq[i];
-            const uint8_t readIqv = read_.Seq[i];
+            const uint8_t readIqv = read_.Cov[i];
             double match_prob =
                 prevTplParams.Match * tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, readBase);
             // Incorporate
@@ -467,7 +456,7 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
 
         for (i = beginRow; i < endRow; i++) {
             const char currReadBase = read_.Seq[i - 1];
-            const uint8_t currReadIqv = read_.Seq[i - 1];
+            const uint8_t currReadIqv = read_.Cov[i - 1];
             double thisMoveScore = 0.0;
 
             // Match:
@@ -480,7 +469,7 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
                     // TODO: Remove this branch bottleneck...
                     auto prevTplBase = GenerateDifferentBase(currTplBase);
                     thisMoveScore = emission_prob *
-                            tpl_->CovEmissionPr(MoveType::MATCH, currReadBase,
+                            tpl_->CovEmissionPr(MoveType::MATCH, currReadIqv,
                                                 prevTplBase, currTplParams.Base);  // prev should be 1, so no
                                                     // need for explicit prev +
                                                     // e.Match_Just_Emission
@@ -600,10 +589,10 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
 
         for (int i = endRow - 1; i >= beginRow; i--) {
             char nextReadBase = '-';
-            unsigned char nextReadIqv = 0;
+            unsigned char nextReadIqv = 4;
             if (i < I) {
                 nextReadBase = read_.Seq[i];
-                nextReadIqv = read_.Seq[i];
+                nextReadIqv = read_.Cov[i];
             }
             double thisMoveScore = 0.0;
             double score = 0.0;
@@ -670,7 +659,7 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
         auto fakebp = GenerateDifferentBase((*tpl_)[0].Base);
         const double match_emission_prob =
             tpl_->BaseEmissionPr(MoveType::MATCH, (*tpl_)[0].Base, read_.Seq[0]) *
-            tpl_->CovEmissionPr(MoveType::MATCH, read_.Seq[0], fakebp, (*tpl_)[0].Base);
+            tpl_->CovEmissionPr(MoveType::MATCH, read_.Cov[0], fakebp, (*tpl_)[0].Base);
         ext.Set(0, 0, match_trans_prob * match_emission_prob);
         ext.FinishEditingColumn(0, 0, 1);
     }
