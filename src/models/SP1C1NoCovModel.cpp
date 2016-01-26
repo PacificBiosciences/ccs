@@ -124,12 +124,10 @@ double SP1C1NoCovModel::CovEmissionPr(MoveType move, uint8_t nuc, char from, cha
 {
     from = detail::TranslationTable[from];
     to = detail::TranslationTable[to];
-    nuc = detail::TranslationTable[nuc];
     assert(move != MoveType::DELETION);
-    if (from > 3) throw std::invalid_argument("invalid character in sequence- from!");
-    if (to > 3) throw std::invalid_argument("invalid character in sequence - to!");
-    if (nuc > 3) throw std::invalid_argument("invalid character in sequence - nuc!");
-
+    if (from > 4 || to > 3 || nuc > 3) {
+     throw std::invalid_argument("invalid character in sequence");   
+    }
     // Which row do we want?
     const int hpAdd = from != to ? 4 : 0;
     const auto row = to + hpAdd;
