@@ -53,6 +53,7 @@
 
 #include <pbbam/BamWriter.h>
 #include <pbbam/EntireFileQuery.h>
+#include <pbbam/PbiFilterQuery.h>
 #include <pbbam/PbiBuilder.h>
 #include <pbbam/ReadGroupInfo.h>
 
@@ -199,7 +200,7 @@ Results FastqWriterThread(WorkQueue<Results>& queue, const string& fname)
 }
 
 BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv,
-                        const vector<string>& files)
+                        const DataSet& ds)
 {
     using boost::algorithm::join;
 
@@ -212,9 +213,7 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv,
     BamHeader header;
     header.PacBioBamVersion("3.0.1").SortOrder("unknown").Version("1.5").AddProgram(program);
 
-    for (const auto& file : files) {
-        BamFile bam(file);
-
+    for (const auto& bam : ds.BamFiles()) {
         for (const auto& rg : bam.Header().ReadGroups()) {
             if (rg.ReadType() != "SUBREAD")
                 parser.error("invalid input file, READTYPE must be SUBREAD");
@@ -327,8 +326,6 @@ int main(int argc, char** argv)
         .type("int")
         .set_default(0)
         .help("Number of threads to use, 0 means autodetection. Default = %default");
-    // parser.add_option("--chunkSize").type("int").set_default(5).help("Number of CCS jobs to
-    // submit simultaneously. Default = %default");
     parser.add_option(em + OptionNames::LogFile).help("Log to a file, instead of STDERR.");
     parser.add_option(em + OptionNames::LogLevel)
         .choices(logLevels.begin(), logLevels.end())
@@ -343,9 +340,7 @@ int main(int argc, char** argv)
     const bool forceOutput = options.get(OptionNames::ForceOutput);
     const bool pbIndex = options.get(OptionNames::PbIndex);
     const size_t nThreads = ThreadCount(options.get(OptionNames::NumThreads));
-    /* This assumption is now hard coded into the code,
-     * we will always use a chunkSize of 1 */
-    const size_t chunkSize = 1;  // static_cast<size_t>(options.get("chunkSize"));
+    const size_t chunkSize = 1;
 
     if (static_cast<int>(options.get(OptionNames::MinPasses)) < 1)
         parser.error("option --minPasses: invalid value: must be >= 1");
@@ -429,16 +424,21 @@ int main(int argc, char** argv)
         PBLOG_DEBUG << "Using consensus models for: (" << join(used, ", ") << ')';
     }
 
-    EntireFileQuery query(ds);
+
+    const auto filter = PbiFilter::FromDataSet(ds);
+    unique_ptr<internal::IQuery> query(nullptr);
+    if (filter.IsEmpty())
+        query.reset(new EntireFileQuery(ds));
+    else
+        query.reset(new PbiFilterQuery(filter, ds));
 
     WorkQueue<Results> workQueue(nThreads);
-    
     future<Results> writer;
 
     const string outputExt = FileExtension(outputFile);
     if (outputExt == "bam") {
         unique_ptr<BamWriter> ccsBam(
-            new BamWriter(outputFile, PrepareHeader(parser, argc, argv, files)));
+            new BamWriter(outputFile, PrepareHeader(parser, argc, argv, ds)));
         unique_ptr<PbiBuilder> ccsPbi(pbIndex ? new PbiBuilder(outputFile + ".pbi") : nullptr);
         writer = async(launch::async, BamWriterThread, ref(workQueue), move(ccsBam), move(ccsPbi));
     } else if (outputExt == "fastq" || outputExt == "fq")
@@ -452,7 +452,7 @@ int main(int argc, char** argv)
     bool skipZmw = false;
     boost::optional<std::pair<uint16_t, uint16_t>> barcodes(boost::none);
 
-    for (const auto& read : query) {
+    for (const auto& read : *query) {
         const string movieName = read.MovieName();
 
         if (movieNames.find(movieName) == movieNames.end()) {

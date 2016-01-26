@@ -88,8 +88,8 @@ set(PacBioBAM_IncludeDir        ${PacBioBAM_RootDir}/include)
 
 # disable extra pbbam stuff for now
 set(PacBioBAM_build_docs        OFF CACHE BOOL "build pbbam docs" FORCE)
-set(PacBioBAM_build_pbindex     OFF CACHE BOOL "build pbbam pbindex" FORCE)
 set(PacBioBAM_build_tests       OFF CACHE BOOL "build pbbam tests" FORCE)
+set(PacBioBAM_build_tools       OFF CACHE BOOL "build pbbam tools" FORCE)
 
 # pbconsensus
 set(PacBioConsensus_RootDir     ${PacBioCCS_ParentDir}/ConsensusCore2 CACHE PATH "ConsensusCore2 source path")
