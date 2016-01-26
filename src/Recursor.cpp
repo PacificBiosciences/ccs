@@ -53,6 +53,22 @@ typedef std::pair<size_t, size_t> Interval;
 namespace PacBio {
 namespace Consensus {
 namespace {  // anonymous
+    
+    // Generate a 'NC' context for a random base.
+    inline char GenerateDifferentBase(char nextBase) {
+        switch (nextBase) {
+            case 'A':
+                return 'C';
+            case 'C':
+                return 'G';
+            case 'G':
+                return 'T';
+            case 'T':
+                return 'A';
+            default: // should be an exception
+                return 'A';
+        }
+    }
 
 inline Interval RangeUnion(const Interval& range1, const Interval& range2)
 {
@@ -136,9 +152,8 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
                 alpha(i - 1, j - 1) *
                 tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, curReadBase);
             if (i == 1 && j == 1) {  // TODO: Remove this branch bottleneck...
-                thisMoveScore = match_prev_and_emission_prob;  // Only the emission, since
-                                                               // we require a match to
-                                                               // start
+                prevTplBase = GenerateDifferentBase(currTplBase);
+                thisMoveScore = match_prev_and_emission_prob * tpl_->CovEmissionPr(MoveType::MATCH, curReadIqv, prevTplBase, currTplBase);
             } else if (i != 1 && j != 1) {
                 thisMoveScore = match_prev_and_emission_prob * prevTransProbs.Match *
                 tpl_->CovEmissionPr(MoveType::MATCH, curReadIqv, prevTplBase, currTplBase);
@@ -260,7 +275,9 @@ void Recursor::FillBeta(const M& guide, M& beta) const
             } else if ((i + 1) == I && ((j + 1) == J)) {
                 thisMoveScore = match_prev_emission_prob *
                                 tpl_->CovEmissionPr(MoveType::MATCH,
-                                                    nextReadIqv, currTransProbs.Base, nextTplBase);  // TODO: Redundant on first pass?
+                                                    nextReadIqv,
+                                                    currTransProbs.Base,
+                                                    nextTplBase);  // TODO: Redundant on first pass?
                 score = Combine(score, thisMoveScore);
             }
 
@@ -313,8 +330,9 @@ void Recursor::FillBeta(const M& guide, M& beta) const
         beta.StartEditingColumn(0, 0, 1);
         auto match_emission_prob =
             tpl_->BaseEmissionPr(MoveType::MATCH, (*tpl_)[0].Base, read_.Seq[0]);
-        // NO COVARIATE EMISSION FOR FIRST ONE
-        beta.Set(0, 0, match_emission_prob * beta(1, 1));
+        auto prevBase = GenerateDifferentBase(read_.Seq[0]);
+        match_emission_prob *= tpl_->CovEmissionPr(MoveType::MATCH, read_.Seq[0], prevBase, (*tpl_)[0].Base);
+        beta.Set(0, 0, match_emission_prob * beta(1, 1) );
         beta.FinishEditingColumn(0, 0, 1);
     }
 }
@@ -458,8 +476,12 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
                 auto emission_prob =
                     tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, currReadBase);
                 
-                if (i == 1 && j == 1) {             // TODO: Remove this branch bottleneck...
-                    thisMoveScore = emission_prob;  // prev should be 1, so no
+                if (i == 1 && j == 1) {
+                    // TODO: Remove this branch bottleneck...
+                    auto prevTplBase = GenerateDifferentBase(currTplBase);
+                    thisMoveScore = emission_prob *
+                            tpl_->CovEmissionPr(MoveType::MATCH, currReadBase,
+                                                prevTplBase, currTplParams.Base);  // prev should be 1, so no
                                                     // need for explicit prev +
                                                     // e.Match_Just_Emission
                 } else if (i < maxDownMovePossible && j < maxLeftMovePossible) {
@@ -598,8 +620,20 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
                     tpl_->BaseEmissionPr(MoveType::MATCH, nextTplBase, nextReadBase);
 
                 // First and last have to start with an emission
-                if (((i + 1) == I && (jp + 1) == J) || (i == 0 && j == firstColumn))
-                    thisMoveScore = next * emission_prob;
+                // TODO: So ugly we need to clean this up!
+                // All these checks should be reorganized, redundand subexpressions
+                // combined.
+                if ((i + 1) == I && (jp + 1) == J)
+                {
+                    thisMoveScore = next * emission_prob *
+                    tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv, currTplParams.Base, nextTplBase);
+                }
+                else if ((i == 0 && j == firstColumn)) {
+                    auto fakebp = GenerateDifferentBase(nextTplBase);
+                    thisMoveScore = next * emission_prob *
+                    tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv, fakebp, nextTplBase);
+                }
+                
                 else if (j > firstColumn && i > 0)
                     thisMoveScore = next * currTplParams.Match * emission_prob *
                     tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv, currTplParams.Base, nextTplBase);
@@ -633,8 +667,10 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
     {
         ext.StartEditingColumn(0, 0, 1);
         const double match_trans_prob = (lastExtColumn == 0) ? beta(1, lastColumn + 1) : ext(1, 1);
+        auto fakebp = GenerateDifferentBase((*tpl_)[0].Base);
         const double match_emission_prob =
-            tpl_->BaseEmissionPr(MoveType::MATCH, (*tpl_)[0].Base, read_.Seq[0]);
+            tpl_->BaseEmissionPr(MoveType::MATCH, (*tpl_)[0].Base, read_.Seq[0]) *
+            tpl_->CovEmissionPr(MoveType::MATCH, read_.Seq[0], fakebp, (*tpl_)[0].Base);
         ext.Set(0, 0, match_trans_prob * match_emission_prob);
         ext.FinishEditingColumn(0, 0, 1);
     }
