@@ -34,7 +34,7 @@ public:
 
     // access model configuration
     virtual double BaseEmissionPr(MoveType move, char from, char to) const = 0;
-    virtual double CovEmissionPr(MoveType move, uint8_t cov) const = 0;
+    virtual double CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const = 0;
     virtual double UndoCounterWeights(size_t nEmissions) const = 0;
 
     std::pair<double, double> NormalParameters() const;
@@ -73,7 +73,7 @@ public:
     void ApplyMutation(const Mutation& mut);
 
     inline double BaseEmissionPr(MoveType move, char from, char to) const;
-    inline double CovEmissionPr(MoveType move, uint8_t cov) const;
+    inline double CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const;
     inline double UndoCounterWeights(size_t nEmissions) const;
 
 private:
@@ -102,7 +102,7 @@ public:
     void ApplyMutation(const Mutation& mut);
 
     inline double BaseEmissionPr(MoveType move, char from, char to) const;
-    inline double CovEmissionPr(MoveType move, uint8_t cov) const;
+    inline double CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const;
     inline double UndoCounterWeights(size_t nEmissions) const;
 
 private:
@@ -138,9 +138,9 @@ double Template::BaseEmissionPr(MoveType move, char from, char to) const
     return cfg_->BaseEmissionPr(move, from, to);
 }
 
-double Template::CovEmissionPr(MoveType move, uint8_t cov) const
+double Template::CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const
 {
-    return cfg_->CovEmissionPr(move, cov);
+    return cfg_->CovEmissionPr(move, cov, from, to);
 }
 
 double Template::UndoCounterWeights(size_t nEmissions) const
@@ -179,9 +179,9 @@ double VirtualTemplate::BaseEmissionPr(MoveType move, char from, char to) const
     return master_.cfg_->BaseEmissionPr(move, from, to);
 }
 
-double VirtualTemplate::CovEmissionPr(MoveType move, uint8_t cov) const
+double VirtualTemplate::CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const
 {
-    return master_.cfg_->CovEmissionPr(move, cov);
+    return master_.cfg_->CovEmissionPr(move, cov, from, to);
 }
 
 double VirtualTemplate::UndoCounterWeights(size_t nEmissions) const

@@ -1,2 +1,4 @@
+builddir/*
+*.a
 build/*
 xcode/*

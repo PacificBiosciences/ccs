@@ -88,14 +88,15 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
     // End initial conditions
 
     size_t hintBeginRow = 1, hintEndRow = 1;
-    auto prevTransProbs = TemplatePosition{'-', 0, 0, 0, 0};
+    auto prevTransProbs = TemplatePosition{'N', 1, 0, 0, 0};
+    char prevTplBase = 'N';
 
     for (int j = 1; j < J; ++j)  // Note due to offset with reads and otherwise, this is ugly-ish
     {
         // Load up the transition parameters for this context
+
         auto currTransProbs = (*tpl_)[j - 1];
         auto currTplBase = currTransProbs.Base;
-
         this->RangeGuide(j, guide, alpha, &hintBeginRow, &hintEndRow);
 
         size_t requiredEndRow = min(I, hintEndRow);
@@ -112,6 +113,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
         // transition to new state] * [Probability of emission]
         for (i = beginRow; i < I && (score >= thresholdScore || i < requiredEndRow); ++i) {
             const char curReadBase = read_.Seq[i - 1];
+            // TODO: Terrible hack right now to emit this guy as teh IQV
             const uint8_t curReadIqv = read_.Cov[i - 1];
             double thisMoveScore = 0.0;
             score = 0.0;
@@ -130,18 +132,13 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
 
               ***********  EDGE_CONDITION ************
              */
-            double match_prev_and_emission_prob =
-                alpha(i - 1, j - 1) *
-                tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, curReadBase);
-            if (i == 1 && j == 1) {  // TODO: Remove this branch bottleneck...
-                thisMoveScore = match_prev_and_emission_prob;  // Only the emission, since
-                                                               // we require a match to
-                                                               // start
-            } else if (i != 1 && j != 1) {
-                thisMoveScore = match_prev_and_emission_prob * prevTransProbs.Match;
+            {
+                thisMoveScore =
+                    alpha(i - 1, j - 1) * prevTransProbs.Match *
+                    tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, curReadBase) *
+                    tpl_->CovEmissionPr(MoveType::MATCH, curReadIqv, prevTplBase, currTplBase);
             }
-            score =
-                Combine(score, thisMoveScore * tpl_->CovEmissionPr(MoveType::MATCH, curReadIqv));
+            score = Combine(score, thisMoveScore);
 
             // Stick or Branch:
             if (i > 1)  // Due to pinning, can't "insert" first or last read base
@@ -152,7 +149,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
                     (curReadBase == nextTplBase) ? currTransProbs.Branch : currTransProbs.Stick;
                 thisMoveScore = alpha(i - 1, j) * trans_emission_prob *
                                 tpl_->BaseEmissionPr(move, nextTplBase, curReadBase) *
-                                tpl_->CovEmissionPr(move, curReadIqv);
+                                tpl_->CovEmissionPr(move, curReadIqv, currTplBase, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
@@ -172,6 +169,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
         }
         endRow = i;
         prevTransProbs = currTransProbs;
+        prevTplBase = currTplBase;
         // Now, revise the hints to tell the caller where the mass of the
         // distribution really lived in this column.
         hintEndRow = endRow;
@@ -189,9 +187,12 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
      * information */
     {
         auto currTplBase = (*tpl_)[J - 1].Base;
-        auto likelihood = alpha(I - 1, J - 1) *
-                          tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, read_.Seq[I - 1]) *
-                          tpl_->CovEmissionPr(MoveType::MATCH, read_.Cov[I - 1]);
+        auto prevTplBase = (*tpl_)[J - 2].Base;
+        // end in the homopolymer state for now.
+        auto likelihood =
+            alpha(I - 1, J - 1) *
+            tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, read_.Seq[I - 1]) *
+            tpl_->CovEmissionPr(MoveType::MATCH, read_.Cov[I - 1], prevTplBase, currTplBase);
         alpha.StartEditingColumn(J, I, I + 1);
         alpha.Set(I, J, likelihood);
         alpha.FinishEditingColumn(J, I, I + 1);
@@ -250,12 +251,14 @@ void Recursor::FillBeta(const M& guide, M& beta) const
                 tpl_->BaseEmissionPr(MoveType::MATCH, nextTplBase, nextReadBase);
             if ((i + 1) < I) {
                 thisMoveScore = match_prev_emission_prob * currTransProbs.Match *
-                                tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv);
+                                tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv,
+                                                    currTransProbs.Base, nextTplBase);
                 score = Combine(score, thisMoveScore);
             } else if ((i + 1) == I && ((j + 1) == J)) {
-                thisMoveScore = match_prev_emission_prob *
-                                tpl_->CovEmissionPr(MoveType::MATCH,
-                                                    nextReadIqv);  // TODO: Redundant on first pass?
+                thisMoveScore =
+                    match_prev_emission_prob *
+                    tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv, currTransProbs.Base,
+                                        nextTplBase);  // TODO: Redundant on first pass?
                 score = Combine(score, thisMoveScore);
             }
 
@@ -266,9 +269,10 @@ void Recursor::FillBeta(const M& guide, M& beta) const
                 const MoveType move = nextBasesMatch ? MoveType::BRANCH : MoveType::STICK;
                 auto trans_emission_prob =
                     nextBasesMatch ? currTransProbs.Branch : currTransProbs.Stick;
-                thisMoveScore = beta(i + 1, j) * trans_emission_prob *
-                                tpl_->BaseEmissionPr(move, nextTplBase, nextReadBase) *
-                                tpl_->CovEmissionPr(move, nextReadIqv);
+                thisMoveScore =
+                    beta(i + 1, j) * trans_emission_prob *
+                    tpl_->BaseEmissionPr(move, nextTplBase, nextReadBase) *
+                    tpl_->CovEmissionPr(move, nextReadIqv, currTransProbs.Base, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
@@ -308,8 +312,9 @@ void Recursor::FillBeta(const M& guide, M& beta) const
         beta.StartEditingColumn(0, 0, 1);
         auto match_emission_prob =
             tpl_->BaseEmissionPr(MoveType::MATCH, (*tpl_)[0].Base, read_.Seq[0]);
-        auto match_iqv_emisson_prob = tpl_->CovEmissionPr(MoveType::MATCH, read_.Cov[0]);
-        beta.Set(0, 0, match_emission_prob * beta(1, 1) * match_iqv_emisson_prob);
+        match_emission_prob *=
+            tpl_->CovEmissionPr(MoveType::MATCH, read_.Cov[0], 'N', (*tpl_)[0].Base);
+        beta.Set(0, 0, match_emission_prob * beta(1, 1));
         beta.FinishEditingColumn(0, 0, 1);
     }
 }
@@ -350,7 +355,8 @@ double Recursor::LinkAlphaBeta(const M& alpha, size_t alphaColumn, const M& beta
                 prevTplParams.Match * tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, readBase);
             // Incorporate
             thisMoveScore = alpha(i, alphaColumn - 1) * match_prob * beta(i + 1, betaColumn) *
-                            tpl_->CovEmissionPr(MoveType::MATCH, readIqv);
+                            tpl_->CovEmissionPr(MoveType::MATCH, readIqv, prevTplParams.Base,
+                                                currTplParams.Base);
             v = Combine(v, thisMoveScore);
         }
 
@@ -433,7 +439,7 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
         // Grab values that will be useful for the whole column
         auto currTplParams = (*tpl_)[j - 1];
         auto currTplBase = currTplParams.Base;
-        TemplatePosition prevTplParams{'-', 0, 0, 0, 0};
+        TemplatePosition prevTplParams{'N', 1, 0, 0, 0};
         if (j > 1) {
             prevTplParams = (*tpl_)[j - 2];
         }
@@ -452,16 +458,16 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
                 double prev = extCol == 0 ? alpha(i - 1, j - 1) : ext(i - 1, extCol - 1);
                 auto emission_prob =
                     tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, currReadBase);
-                if (i == 1 && j == 1) {             // TODO: Remove this branch bottleneck...
-                    thisMoveScore = emission_prob;  // prev should be 1, so no
-                                                    // need for explicit prev +
-                                                    // e.Match_Just_Emission
-                } else if (i < maxDownMovePossible && j < maxLeftMovePossible) {
-                    thisMoveScore = prev * prevTplParams.Match * emission_prob;
+                if (i < maxDownMovePossible && j < maxLeftMovePossible) {
+                    thisMoveScore = prev * prevTplParams.Match * emission_prob *
+                                    tpl_->CovEmissionPr(MoveType::MATCH, currReadIqv,
+                                                        prevTplParams.Base, currTplParams.Base);
                 } else if (i == maxDownMovePossible && j == maxLeftMovePossible) {
-                    thisMoveScore = prev * emission_prob;
+                    thisMoveScore = prev * emission_prob *
+                                    tpl_->CovEmissionPr(MoveType::MATCH, currReadIqv,
+                                                        prevTplParams.Base, currTplParams.Base);
                 }
-                score = thisMoveScore * tpl_->CovEmissionPr(MoveType::MATCH, currReadIqv);
+                score = thisMoveScore;
             }
 
             // Stick or Branch:
@@ -472,7 +478,7 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
                     (nextTplBase == currReadBase) ? currTplParams.Branch : currTplParams.Stick;
                 thisMoveScore = ext(i - 1, extCol) * insert_emission_prob *
                                 tpl_->BaseEmissionPr(move, nextTplBase, currReadBase) *
-                                tpl_->CovEmissionPr(move, currReadIqv);
+                                tpl_->CovEmissionPr(move, currReadIqv, currTplBase, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
@@ -563,12 +569,12 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
         auto nextTplParams = (*tpl_)[jp];
         char nextTplBase = nextTplParams.Base;
 
-        TemplatePosition currTplParams{'-', 0, 0, 0, 0};
+        TemplatePosition currTplParams{'N', 1, 0, 0, 0};
         if (jp > 0) currTplParams = (*tpl_)[jp - 1];
 
         for (int i = endRow - 1; i >= beginRow; i--) {
-            char nextReadBase = '-';
-            unsigned char nextReadIqv = 0;
+            char nextReadBase = 'N';
+            uint8_t nextReadIqv = 4;
             if (i < I) {
                 nextReadBase = read_.Seq[i];
                 nextReadIqv = read_.Cov[i];
@@ -588,12 +594,15 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
                     tpl_->BaseEmissionPr(MoveType::MATCH, nextTplBase, nextReadBase);
 
                 // First and last have to start with an emission
-                if (((i + 1) == I && (jp + 1) == J) || (i == 0 && j == firstColumn))
-                    thisMoveScore = next * emission_prob;
-                else if (j > firstColumn && i > 0)
-                    thisMoveScore = next * currTplParams.Match * emission_prob;
-                double match = thisMoveScore * tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv);
-                score = Combine(score, match);
+                // TODO: So ugly we need to clean this up!
+                // All these checks should be reorganized, redundand subexpressions
+                // combined.
+                if (j > firstColumn && i > 0) {
+                    thisMoveScore = next * currTplParams.Match * emission_prob *
+                                    tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv,
+                                                        currTplParams.Base, nextTplBase);
+                    score = Combine(score, thisMoveScore);
+                }
             }
 
             // Stick or branch
@@ -601,9 +610,10 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
                 const MoveType move = nextBasesMatch ? MoveType::BRANCH : MoveType::STICK;
                 double insert_trans_emission_prob =
                     nextBasesMatch ? currTplParams.Branch : currTplParams.Stick;
-                thisMoveScore = ext(i + 1, extCol) * insert_trans_emission_prob *
-                                tpl_->BaseEmissionPr(move, nextTplBase, nextReadBase) *
-                                tpl_->CovEmissionPr(move, nextReadIqv);
+                thisMoveScore =
+                    ext(i + 1, extCol) * insert_trans_emission_prob *
+                    tpl_->BaseEmissionPr(move, nextTplBase, nextReadBase) *
+                    tpl_->CovEmissionPr(move, nextReadIqv, currTplParams.Base, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
@@ -624,9 +634,9 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
         ext.StartEditingColumn(0, 0, 1);
         const double match_trans_prob = (lastExtColumn == 0) ? beta(1, lastColumn + 1) : ext(1, 1);
         const double match_emission_prob =
-            tpl_->BaseEmissionPr(MoveType::MATCH, (*tpl_)[0].Base, read_.Seq[0]);
-        const double match_iqv_emisson_prob = tpl_->CovEmissionPr(MoveType::MATCH, read_.Cov[0]);
-        ext.Set(0, 0, match_trans_prob * match_emission_prob * match_iqv_emisson_prob);
+            tpl_->BaseEmissionPr(MoveType::MATCH, (*tpl_)[0].Base, read_.Seq[0]) *
+            tpl_->CovEmissionPr(MoveType::MATCH, read_.Cov[0], 'N', (*tpl_)[0].Base);
+        ext.Set(0, 0, match_trans_prob * match_emission_prob);
         ext.FinishEditingColumn(0, 0, 1);
     }
 }
