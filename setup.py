@@ -55,7 +55,7 @@ if not os.path.exists(os.path.join(swigLib, modName)):
             raise RuntimeError("failed to configure the ConsensusCore2 with CMake!")
         verbose = env.get("VERBOSE", None)
         cmds = ["make"]
-        if verbose:
+        if verbose is not None:
             cmds.append("VERBOSE=1")
         print("Running command {0}".format(" ".join(cmds)), file=sys.stderr)
         retcode = Popen(cmds, cwd=buildDir).wait()

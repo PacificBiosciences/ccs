@@ -31,7 +31,7 @@ test:
     override:
         - pushd _build ; make
         - pushd _build ; make check
-        - CC=gcc-4.8 CXX=g++-4.8 CMAKE_COMMAND=$(readlink -f _deps/cmake-3.3.0-Linux-x86_64/bin/cmake) Boost_INCLUDE_DIRS=$(readlink -f _deps/boost_1_58_0) SWIG_COMMAND=$(which swig3.0) pip install --verbose --upgrade --no-deps .
+        - CC=gcc-4.8 CXX=g++-4.8 CMAKE_COMMAND=$(readlink -f _deps/cmake-3.3.0-Linux-x86_64/bin/cmake) Boost_INCLUDE_DIRS=$(readlink -f _deps/boost_1_58_0) SWIG_COMMAND=$(which swig3.0) VERBOSE=1 pip install --verbose --upgrade --no-deps .
         - python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
     post:
         - echo "Building PBCCS"
