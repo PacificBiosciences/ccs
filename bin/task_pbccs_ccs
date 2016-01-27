@@ -27,6 +27,7 @@ class Constants(object):
     TOOL_ID = "pbccs.tasks.ccs"
     TOOL_NAME = "ccs"
     DRIVER_EXE = "task_pbccs_ccs --resolved-tool-contract "
+    CCS_EXE = os.environ.get("__PBTEST_CCS_EXE", "ccs")
     #
     MIN_SNR_ID = "pbccs.task_options.min_snr"
     MIN_SNR_DEFAULT = 3.75
@@ -74,7 +75,7 @@ def resolved_tool_contract_runner(rtc):
     report_file = rtc.task.output_files[1]
     csv_file = os.path.splitext(report_file)[0] + ".csv"
     args = [
-        "ccs",
+        Constants.CCS_EXE,
         "--pbi",
         "--force",
         "--logLevel=DEBUG",

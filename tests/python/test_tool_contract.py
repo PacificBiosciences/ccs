@@ -13,7 +13,7 @@ from pbcore.io import ConsensusReadSet
 CCS_DIR = op.dirname(op.dirname(op.dirname(__file__)))
 
 
-class CCSTestApp(pbcommand.testkit.PbTestApp):
+class TestCCSApp(pbcommand.testkit.PbTestApp):
     # FIXME eventually the 'ccs' binary should handle TCI directly
     DRIVER_BASE = op.join(CCS_DIR, "bin", "task_pbccs_ccs")
     REQUIRES_PBCORE = True
@@ -25,6 +25,7 @@ class CCSTestApp(pbcommand.testkit.PbTestApp):
         "pbccs.task_options.min_passes": 3,
         "pbccs.task_options.min_zscore": -5,
         "pbccs.task_options.max_drop_frac": 0.33,
+        "pbccs.task_options.no_polish": True,
     }
 
     def run_after(self, rtc, output_dir):
