@@ -21,7 +21,7 @@ from pbcommand.engine import run_cmd
 from pbcore.io import SubreadSet, ConsensusReadSet
 
 __version__ = "0.1"
-
+log = logging.getLogger(__name__)
 
 class Constants(object):
     TOOL_ID = "pbccs.tasks.ccs"
@@ -74,6 +74,7 @@ def resolved_tool_contract_runner(rtc):
     assert output_file.endswith(".bam")
     report_file = rtc.task.output_files[1]
     csv_file = os.path.splitext(report_file)[0] + ".csv"
+    log.info("CCS_EXE = {e}".format(e=Constants.CCS_EXE))
     args = [
         Constants.CCS_EXE,
         "--pbi",
@@ -211,7 +212,6 @@ def get_parser():
 
 def main(argv=sys.argv):
     logging.basicConfig(level=logging.INFO)
-    log = logging.getLogger()
     return pbparser_runner(
         argv=argv[1:],
         parser=get_parser(),
