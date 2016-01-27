@@ -53,8 +53,11 @@ add_library(_ConsensusCore2 MODULE
 
 target_link_libraries(_ConsensusCore2
     ${PBCONSENSUS_LIBRARIES}
-    "-undefined dynamic_lookup"
 )
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    target_link_libraries(_ConsensusCore2 "-Wl,-undefined,dynamic_lookup")
+endif()
 
 set_target_properties(_ConsensusCore2 PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${PacBioConsensus_SwigDir}/lib
