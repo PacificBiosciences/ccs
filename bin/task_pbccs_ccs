@@ -129,12 +129,19 @@ def resolved_tool_contract_runner(rtc):
     return 0
 
 
+# FIXME(nechols)(2016-01-26): this is evil
 def _process_csv(csv_file, report_file):
     logging.info("reading attributes from %s" % csv_file)
     attributes = []
     with open(csv_file) as f:
         for line in f.read().splitlines():
-            fields = line.split(",")
+            fields = line.strip().split(",")
+            if len(fields) == 0 or fields == ['']:
+                logging.critical("MISFORMED CSV LINE: {l}".format(l=line))
+                break
+            elif len(fields) < 2:
+                logging.critical("MISFORMED CSV LINE: {l}".format(l=line))
+                continue
             label = re.sub(".*\ \-\-\ ", "", fields[0])
             field_id = Constants.REPORT_FIELDS.get(label, None)
             if field_id is None:
@@ -158,9 +165,9 @@ def get_parser():
     p.add_input_file_type(FileTypes.DS_SUBREADS, "subread_set",
                           "SubreadSet", "Subread DataSet or .bam file")
     p.add_output_file_type(FileTypes.DS_CCS, "bam_output",
-                           name=".bam file",
-                           description="Output .bam file",
-                           default_name="ccs.bam")
+                           name="ConsensusReadSet",
+                           description="Output DataSet XML file",
+                           default_name="ccs.consensusreadset.xml")
     p.add_output_file_type(FileTypes.REPORT, "report_json",
                            name="JSON report",
                            description="JSON report",
