@@ -12,7 +12,7 @@ include_directories(
 )
 
 include(FindPythonPaths)
-find_python_inc_lib(PYTHON_INCLUDE_DIRS PYTHON_LIBRARIES)
+find_python_inc(PYTHON_INCLUDE_DIRS)
 find_numpy_inc(NUMPY_INCLUDE_DIRS)
 
 # Generate paths for test data
@@ -53,7 +53,7 @@ add_library(_ConsensusCore2 MODULE
 
 target_link_libraries(_ConsensusCore2
     ${PBCONSENSUS_LIBRARIES}
-    ${PYTHON_LIBRARIES}
+    "-undefined dynamic_lookup"
 )
 
 set_target_properties(_ConsensusCore2 PROPERTIES
