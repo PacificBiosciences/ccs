@@ -14,6 +14,9 @@ struct Version
 
     static std::string ToString()
     { return CCS_VERSION; }
+
+    static std::string GitSha1()
+    { return CCS_GIT_SHA1; }
 };
 
 }  // namespace CCS
