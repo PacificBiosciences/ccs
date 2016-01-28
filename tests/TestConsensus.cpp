@@ -33,14 +33,17 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+#include <vector>
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <pacbio/ccs/Consensus.h>
-#include <pacbio/ccs/ReadId.h>
-#include <pacbio/ccs/SubreadResultCounter.hpp>
-#include <vector>
+
 #include <pbbam/LocalContextFlags.h>
 #include <pbbam/Accuracy.h>
+
+#include <pacbio/ccs/Consensus.h>
+#include <pacbio/ccs/ReadId.h>
+#include <pacbio/ccs/SubreadResultCounter.h>
 
 using namespace PacBio::CCS;
 typedef ReadType<ReadId> Subread;
@@ -61,24 +64,24 @@ TEST(ConsensusTest, TestReadFilter)
 
     // Nothing filtered
     SubreadResultCounter counter{};
-    auto result = FilterReads(data, settings, counter);
+    auto result = FilterReads(data, settings, &counter);
     EXPECT_EQ(0, counter.FilteredBySize);
     // reset
-    counter.Success=0;
+    counter.Success = 0;
 
     // All removed
     settings.MinLength = 1000;
-    auto result2 = FilterReads(data, settings, counter);
+    auto result2 = FilterReads(data, settings, &counter);
     EXPECT_EQ(10, counter.FilteredBySize);
     EXPECT_EQ(0, counter.Success);
     counter.FilteredBySize = 0;
-    counter.Success =0;
+    counter.Success = 0;
 
     // Just one
     auto longSeq = seq + seq + seq;
     settings.MinLength = 10;
     data.emplace_back(
         Subread{ReadId(movieName, 1, Interval(0, longSeq.size())), longSeq, flags, .99});
-    auto result3 = FilterReads(data, settings, counter);
+    auto result3 = FilterReads(data, settings, &counter);
     EXPECT_EQ(1, counter.FilteredBySize);
 }

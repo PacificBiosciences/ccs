@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 
 """
 Test for tool contract interface support.
 """
 
+import os
 import unittest
 import os.path as op
 
@@ -11,7 +13,6 @@ import pbcore.data
 from pbcore.io import ConsensusReadSet
 
 CCS_DIR = op.dirname(op.dirname(op.dirname(__file__)))
-
 
 class TestCCSApp(pbcommand.testkit.PbTestApp):
     # FIXME eventually the 'ccs' binary should handle TCI directly
@@ -32,6 +33,7 @@ class TestCCSApp(pbcommand.testkit.PbTestApp):
         with ConsensusReadSet(rtc.task.output_files[0]) as ds_out:
             self.assertEqual(len(ds_out), 3)
 
-
 if __name__ == "__main__":
+    # add this to the environment to run the test locally
+    os.environ['__PBTEST_CCS_EXE'] = op.join(CCS_DIR, "bin", "ccs")
     unittest.main()

@@ -33,6 +33,8 @@ class Constants(object):
     MIN_SNR_DEFAULT = 3.75
     MIN_READ_SCORE_ID = "pbccs.task_options.min_read_score"
     MIN_READ_SCORE_DEFAULT = 0.75
+    MAX_LENGTH_ID = "pbccs.task_options.max_length"
+    MAX_LENGTH_DEFAULT = 7000
     MIN_LENGTH_ID = "pbccs.task_options.min_length"
     MIN_LENGTH_DEFAULT = 10
     MIN_PASSES_ID = "pbccs.task_options.min_passes"
@@ -50,6 +52,7 @@ class Constants(object):
         "CCS generated": "num_ccs_reads",
         "Below SNR threshold": "num_below_snr_threshold",
         "No usable subreads": "num_no_usable_subreads",
+        "Insert size too long": "num_insert_size_too_long",
         "Insert size too small": "num_insert_size_too_small",
         "Not enough full passes": "num_not_enough_full_passes",
         "Too many unusable subreads": "num_too_many_unusable_subreads",
@@ -84,6 +87,7 @@ def resolved_tool_contract_runner(rtc):
         "--numThreads=%d" % rtc.task.nproc,
         "--minSnr=%g" % rtc.task.options[Constants.MIN_SNR_ID],
         "--minReadScore=%g" % rtc.task.options[Constants.MIN_READ_SCORE_ID],
+        "--maxLength=%d" % rtc.task.options[Constants.MAX_LENGTH_ID],
         "--minLength=%d" % rtc.task.options[Constants.MIN_LENGTH_ID],
         "--minPasses=%d" % rtc.task.options[Constants.MIN_PASSES_ID],
         "--minZScore=%g" % rtc.task.options[Constants.MIN_ZSCORE_ID],
@@ -182,6 +186,10 @@ def get_parser():
                 default=Constants.MIN_READ_SCORE_DEFAULT,
                 name="Minimum Read Score",
                 description="Minimum read score of input subreads")
+    p.add_int(Constants.MAX_LENGTH_ID, "maxLength",
+              default=Constants.MAX_LENGTH_DEFAULT,
+              name="Maximum Length",
+              description="Maximum length of subreads to use for generating CCS")
     p.add_int(Constants.MIN_LENGTH_ID, "minLength",
               default=Constants.MIN_LENGTH_DEFAULT,
               name="Minimum Length",

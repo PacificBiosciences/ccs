@@ -33,21 +33,23 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#include <pacbio/ccs/SubreadResultCounter.hpp>
+#include <pacbio/ccs/SubreadResultCounter.h>
 #include <stdexcept>
 
 using namespace PacBio::Consensus;
 using namespace PacBio::CCS;
 
-std::vector<int32_t> SubreadResultCounter::ReturnCountsAsArray() const {
-        std::vector<int32_t> results {Success, AlphaBetaMismatch, BelowMinQual, PoorZScore,
-            FilteredBySize, Other};
+std::vector<int32_t> SubreadResultCounter::ReturnCountsAsArray() const
+{
+    std::vector<int32_t> results{Success,    AlphaBetaMismatch, BelowMinQual,
+                                 PoorZScore, FilteredBySize,    Other};
     return results;
 }
 
-void SubreadResultCounter::AddResult(AddReadResult result) {
+void SubreadResultCounter::AddResult(AddReadResult result)
+{
     switch (result) {
-        case AddReadResult::ALPHA_BETA_MISMATCH :
+        case AddReadResult::ALPHA_BETA_MISMATCH:
             AlphaBetaMismatch++;
             break;
         case AddReadResult::OTHER:
@@ -68,62 +70,63 @@ void SubreadResultCounter::AddResult(AddReadResult result) {
     }
 }
 
-int32_t SubreadResultCounter::Total() const {
-    return (AlphaBetaMismatch + Success + BelowMinQual + FilteredBySize + Other + PoorZScore + ZMWBelowMinSNR + ZMWNotEnoughSubReads);
+int32_t SubreadResultCounter::Total() const
+{
+    return (AlphaBetaMismatch + Success + BelowMinQual + FilteredBySize + Other + PoorZScore +
+            ZMWBelowMinSNR + ZMWNotEnoughSubReads);
 }
 
-SubreadResultCounter::SubreadResultCounter() :
-        Success{0},
-        AlphaBetaMismatch{0},
-        BelowMinQual{0},
-        FilteredBySize{0},
-        ZMWBelowMinSNR{0},
-        ZMWNotEnoughSubReads{0},
-        PoorZScore{0},
-        Other{0}
+SubreadResultCounter::SubreadResultCounter()
+    : Success{0}
+    , AlphaBetaMismatch{0}
+    , BelowMinQual{0}
+    , FilteredBySize{0}
+    , ZMWBelowMinSNR{0}
+    , ZMWNotEnoughSubReads{0}
+    , PoorZScore{0}
+    , Other{0}
 
-{}
-
+{
+}
 
 void SubreadResultCounter::WriteResultsReport(std::ostream& report) const
 {
     using namespace std;
-    double total = static_cast<float>(Total());    
+    double total = static_cast<float>(Total());
 
     report << "Subread Yield" << endl;
-    
-    report << "Success - Used for CCS," <<  Success << "," << 100.0 * Success / total
-    << '%' << endl;
-    
+
+    report << "Success - Used for CCS," << Success << "," << 100.0 * Success / total << '%' << endl;
+
     report << "Failed -- Below SNR threshold," << ZMWBelowMinSNR << ","
-    << 100.0 * ZMWBelowMinSNR / total << '%' << endl;
-    
+           << 100.0 * ZMWBelowMinSNR / total << '%' << endl;
+
     report << "Failed -- Alpha/Beta mismatch," << AlphaBetaMismatch << ","
-    << 100.0 * AlphaBetaMismatch / total << '%' << endl;
-    
+           << 100.0 * AlphaBetaMismatch / total << '%' << endl;
+
     report << "Failed -- Below minimum quality," << BelowMinQual << ","
-    << 100.0 * BelowMinQual / total << '%' << endl;
-    
+           << 100.0 * BelowMinQual / total << '%' << endl;
+
     report << "Failed -- Filtered by size," << FilteredBySize << ","
-    << 100.0 * FilteredBySize / total << '%' << endl;
-    
-    report << "Failed -- Z-Score too low," << PoorZScore << ","
-    << 100.0 * PoorZScore / total << '%' << endl;
-    
+           << 100.0 * FilteredBySize / total << '%' << endl;
+
+    report << "Failed -- Z-Score too low," << PoorZScore << "," << 100.0 * PoorZScore / total << '%'
+           << endl;
+
     report << "Failed -- From ZMW with too few passes," << ZMWNotEnoughSubReads << ","
-    << 100.0 * ZMWNotEnoughSubReads / total << '%' << endl;
-    
-    report << "Failed -- Other," << Other << ","
-    << 100.0 * Other / total << '%' << endl;
+           << 100.0 * ZMWNotEnoughSubReads / total << '%' << endl;
+
+    report << "Failed -- Other," << Other << "," << 100.0 * Other / total << '%' << endl;
 }
 
-
-void SubreadResultCounter::AssignSuccessToOther() {
+void SubreadResultCounter::AssignSuccessToOther()
+{
     Other += Success;
     Success = 0;
 }
 
-void SubreadResultCounter::CombineWithOtherResult(const SubreadResultCounter& other) {
+void SubreadResultCounter::CombineWithOtherResult(const SubreadResultCounter& other)
+{
     Success += other.Success;
     AlphaBetaMismatch += other.AlphaBetaMismatch;
     BelowMinQual += other.BelowMinQual;
@@ -139,4 +142,3 @@ SubreadResultCounter& SubreadResultCounter::operator+=(const SubreadResultCounte
     CombineWithOtherResult(other);
     return *this;
 }
-

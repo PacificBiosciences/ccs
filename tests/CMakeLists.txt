@@ -55,5 +55,6 @@ target_link_libraries(test_pbccs
 
 if (${ROOT_PROJECT_NAME} STREQUAL "PacBioCCS")
     add_custom_target(check test_pbccs
-        COMMAND ${PacBioCCS_RootDir}/scripts/cram.py ${PacBioCCS_TestsDir}/cram/*.t)
+        COMMAND ${PacBioCCS_RootDir}/scripts/cram.py ${PacBioCCS_TestsDir}/cram/*.t
+        COMMAND ${PacBioCCS_TestsDir}/python/test_tool_contract.py)
 endif()
