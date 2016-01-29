@@ -33,8 +33,7 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#ifndef SubreadResultCounter_hpp
-#define SubreadResultCounter_hpp
+#pragma once
 
 #include <stdlib.h>
 #include <vector>
@@ -46,7 +45,8 @@ namespace PacBio {
 namespace CCS {
 
 // A class to store and report on the results of what happens to subreads.
-class SubreadResultCounter {
+class SubreadResultCounter
+{
 public:
     int32_t Success;
     int32_t AlphaBetaMismatch;
@@ -56,11 +56,11 @@ public:
     int32_t ZMWNotEnoughSubReads;
     int32_t PoorZScore;
     int32_t Other;
-    
+
     SubreadResultCounter();
     std::vector<int32_t> ReturnCountsAsArray() const;
     void AddResult(PacBio::Consensus::AddReadResult);
-    /* Certain conditions may make reads that were on their 
+    /* Certain conditions may make reads that were on their
        way to success go to the garbage bin, in this case we reassign
        all the success reads to the other category */
     void AssignSuccessToOther();
@@ -68,9 +68,7 @@ public:
     SubreadResultCounter& operator+=(const SubreadResultCounter& other);
     void WriteResultsReport(std::ostream& report) const;
     int32_t Total() const;
-    
 };
-}
-}
 
-#endif /* SubreadResultCounter_hpp */
+}  // namespace CCS
+}  // namespace PacBio

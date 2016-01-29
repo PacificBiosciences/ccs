@@ -199,8 +199,7 @@ Results FastqWriterThread(WorkQueue<Results>& queue, const string& fname)
     return counts;
 }
 
-BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv,
-                        const DataSet& ds)
+BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv, const DataSet& ds)
 {
     using boost::algorithm::join;
 
@@ -245,9 +244,9 @@ void WriteResultsReport(ostream& report, const Results& counts)
     size_t total = counts.Total();
 
     report << fixed << setprecision(2);
-    
+
     report << "ZMW Yield" << endl;
-    
+
     report << "Success -- CCS generated," << counts.Success << "," << 100.0 * counts.Success / total
            << '%' << endl;
 
@@ -256,6 +255,9 @@ void WriteResultsReport(ostream& report, const Results& counts)
 
     report << "Failed -- No usable subreads," << counts.NoSubreads << ","
            << 100.0 * counts.NoSubreads / total << '%' << endl;
+
+    report << "Failed -- Insert size too long," << counts.TooLong << ","
+           << 100.0 * counts.TooShort / total << '%' << endl;
 
     report << "Failed -- Insert size too small," << counts.TooShort << ","
            << 100.0 * counts.TooShort / total << '%' << endl;
@@ -275,10 +277,9 @@ void WriteResultsReport(ostream& report, const Results& counts)
     report << "Failed -- Unknown error during processing," << counts.ExceptionThrown << ","
            << 100.0 * counts.ExceptionThrown / total << '%' << endl;
     report << endl << endl;
-    
+
     // Now output the per-subread yield report.
     counts.SubreadCounter.WriteResultsReport(report);
-    
 }
 
 int main(int argc, char** argv)
@@ -424,7 +425,6 @@ int main(int argc, char** argv)
         PBLOG_DEBUG << "Using consensus models for: (" << join(used, ", ") << ')';
     }
 
-
     const auto filter = PbiFilter::FromDataSet(ds);
     unique_ptr<internal::IQuery> query(nullptr);
     if (filter.IsEmpty())
@@ -460,7 +460,6 @@ int main(int argc, char** argv)
         }
         // Have we started a new ZMW?
         if (!holeNumber || *holeNumber != read.HoleNumber()) {
-           
             if (chunk && chunk->size() >= chunkSize) {
                 workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
                 chunk.reset(new vector<Chunk>());
@@ -498,7 +497,6 @@ int main(int argc, char** argv)
                            Interval(read.QueryStart(), read.QueryEnd())),
                     read.Sequence(), read.LocalContextFlags(), read.ReadAccuracy()});
     }
-
 
     // run the remaining tasks
     if (chunk && !chunk->empty()) {

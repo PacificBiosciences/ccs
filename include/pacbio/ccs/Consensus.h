@@ -62,7 +62,7 @@
 #include <pacbio/ccs/Logging.h>
 #include <pacbio/ccs/SparsePoa.h>
 #include <pacbio/ccs/Timer.h>
-#include <pacbio/ccs/SubreadResultCounter.hpp>
+#include <pacbio/ccs/SubreadResultCounter.h>
 #include <pacbio/ccs/ReadId.h>
 
 namespace PacBio {
@@ -75,6 +75,7 @@ using Accuracy = PacBio::BAM::Accuracy;
 
 namespace OptionNames {
 // constexpr auto MaxPoaCoverage       = "maxPoaCoverage";
+constexpr auto MaxLength = "maxLength";
 constexpr auto MinLength = "minLength";
 constexpr auto MinPasses = "minPasses";
 constexpr auto MinPredictedAccuracy = "minPredictedAccuracy";
@@ -90,6 +91,7 @@ constexpr auto MinSnr = "minSnr";
 struct ConsensusSettings
 {
     size_t MaxPoaCoverage;
+    size_t MaxLength;
     size_t MinLength;
     size_t MinPasses;
     double MinPredictedAccuracy;
@@ -101,7 +103,7 @@ struct ConsensusSettings
     double MinSNR;
 
     ConsensusSettings(const optparse::Values& options);
-    ConsensusSettings() = default;
+    ConsensusSettings();
 
     static void AddOptions(optparse::OptionParser* const parser)
     {
@@ -110,6 +112,10 @@ struct ConsensusSettings
         // parser->add_option(em +
         // OptionNames::MaxPoaCoverage).type("int").set_default(1024).help("Maximum number of
         // subreads to use when building POA. Default = %default");
+        parser->add_option(em + OptionNames::MaxLength)
+            .type("int")
+            .set_default(7000)
+            .help("Maximum length of subreads to use for generating CCS. Default = %default");
         parser->add_option(em + OptionNames::MinLength)
             .type("int")
             .set_default(10)
@@ -134,16 +140,17 @@ struct ConsensusSettings
                 "%default");
         parser->add_option(em + OptionNames::MinSnr)
             .type("float")
-            .set_default(3.75)  // See https://github.com/PacificBiosciences/pbccs/issues/86 for a more
-            // detailed discussion of this default.
+            .set_default(
+                3.75)  // See https://github.com/PacificBiosciences/pbccs/issues/86 for a more
+                       // detailed discussion of this default.
             .help("Minimum SNR of input subreads. Default = %default");
         parser->add_option(em + OptionNames::noPolish)
             .action("store_true")
             .help("Only output the initial template derived from the POA (faster, less accurate).");
         parser->add_option(em + OptionNames::MinReadScore)
-        .type("float")
-        .set_default(0.75)
-        .help("Minimum read score of input subreads. Default = %default");
+            .type("float")
+            .set_default(0.75)
+            .help("Minimum read score of input subreads. Default = %default");
 
         // parser->add_option(em +
         // OptionNames::Directional).action("store_true").set_default("0").help("Generate a
@@ -173,7 +180,6 @@ struct ChunkType
     boost::optional<std::pair<uint16_t, uint16_t>> Barcodes;
 };
 
-
 struct ConsensusType
 {
     ReadId Id;
@@ -198,6 +204,7 @@ public:
     size_t Success;
     size_t PoorSNR;
     size_t NoSubreads;
+    size_t TooLong;
     size_t TooShort;
     size_t TooFewPasses;
     size_t TooManyUnusable;
@@ -210,6 +217,7 @@ public:
         : Success{0}
         , PoorSNR{0}
         , NoSubreads{0}
+        , TooLong{0}
         , TooShort{0}
         , TooFewPasses{0}
         , TooManyUnusable{0}
@@ -225,6 +233,7 @@ public:
         Success += other.Success;
         PoorSNR += other.PoorSNR;
         NoSubreads += other.NoSubreads;
+        TooLong += other.TooLong;
         TooShort += other.TooShort;
         TooManyUnusable += other.TooManyUnusable;
         TooFewPasses += other.TooFewPasses;
@@ -254,8 +263,9 @@ float Median(std::vector<T>* vs)
 }
 
 template <typename TRead>
-std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads, const ConsensusSettings& settings,
-                                      SubreadResultCounter& resultCounter)
+std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
+                                      const ConsensusSettings& settings,
+                                      SubreadResultCounter* resultCounter)
 {
     // This is a count of subreads removed for bing too short, or too long.
     std::vector<const TRead*> results;
@@ -268,19 +278,18 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads, const Con
     // get the lengths for all full-length subreads
     for (const auto& read : reads) {
         longest = std::max(longest, read.Seq.length());
-        if ( (read.Flags & BAM::ADAPTER_BEFORE) &&
-             (read.Flags & BAM::ADAPTER_AFTER) &&
-              read.ReadAccuracy >= settings.MinReadScore)
+        if ((read.Flags & BAM::ADAPTER_BEFORE) && (read.Flags & BAM::ADAPTER_AFTER) &&
+            read.ReadAccuracy >= settings.MinReadScore)
             lengths.emplace_back(read.Seq.length());
     }
 
     // nonexistent median is just the greatest observed length
     const float median = lengths.empty() ? static_cast<float>(longest) : Median(&lengths);
-    size_t maxLen = 2 * static_cast<size_t>(median);
+    size_t maxLen = std::min(2 * static_cast<size_t>(median), settings.MaxLength);
 
     // if it's too short, return nothing
     if (median < static_cast<float>(settings.MinLength)) {
-        resultCounter.FilteredBySize += reads.size();
+        resultCounter->FilteredBySize += reads.size();
         return results;
     }
     results.reserve(reads.size());
@@ -290,13 +299,13 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads, const Con
         //   otherwise it's twice the longest read and is always true
 
         if (read.ReadAccuracy < settings.MinReadScore) {
-            resultCounter.BelowMinQual++;
+            resultCounter->BelowMinQual++;
             results.emplace_back(nullptr);
         } else if (read.Seq.length() < maxLen) {
             results.emplace_back(&read);
         } else {
+            resultCounter->FilteredBySize++;
             results.emplace_back(nullptr);
-            resultCounter.FilteredBySize++;
         }
     }
 
@@ -328,11 +337,9 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads, const Con
 }
 
 template <typename TRead>
-boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(const TRead& read,
-                                                                 const std::string& chem,
-                                                                 const PoaAlignmentSummary& summary,
-                                                                 const size_t poaLength,
-                                                                 const size_t minLength)
+boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
+    const TRead& read, const std::string& chem, const PoaAlignmentSummary& summary,
+    const size_t poaLength, const ConsensusSettings& settings, SubreadResultCounter* resultCounter)
 {
     using PacBio::Consensus::StrandEnum;
 
@@ -341,8 +348,13 @@ boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(const TRead& re
     const size_t readStart = summary.ExtentOnRead.Left();
     const size_t readEnd = summary.ExtentOnRead.Right();
 
-    if (readStart > readEnd || readEnd - readStart < minLength) {
-        PBLOG_DEBUG << "Skipping read " << read.Id << ", too short (<" << minLength << ')';
+    if (readStart > readEnd || readEnd - readStart < settings.MinLength) {
+        resultCounter->FilteredBySize++;
+        PBLOG_DEBUG << "Skipping read " << read.Id << ", too short (<" << settings.MinLength << ')';
+        return boost::none;
+    } else if (readEnd - readStart > settings.MaxLength) {
+        resultCounter->FilteredBySize++;
+        PBLOG_DEBUG << "Skipping read " << read.Id << ", too long (>" << settings.MaxLength << ')';
         return boost::none;
     }
 
@@ -417,7 +429,7 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
 //   but then take ownership here with a local unique_ptr
 template <typename TChunk>
 ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunksRef,
-                              const ConsensusSettings& settings)
+                                    const ConsensusSettings& settings)
 {
     using namespace PacBio::Consensus;
 
@@ -426,15 +438,14 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
 
     if (!chunks) return result;
     // We should only be dealing with chunks of size 1
-    if (chunks->size() !=1) {
+    if (chunks->size() != 1) {
         throw std::runtime_error("CCS chunk was of size != 1");
     }
     const auto& chunk = chunks->at(0);
-    
+
     try {
-        
         Timer timer;
-        
+
         // Do read level SNR filtering first
         auto& snr = chunk.SignalToNoise;
         auto minSNR = std::min(std::min(snr.A, snr.C), std::min(snr.G, snr.T));
@@ -443,8 +454,8 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
             result.PoorSNR += 1;
             return result;
         }
-        
-        auto reads = FilterReads(chunk.Reads, settings, result.SubreadCounter);
+
+        auto reads = FilterReads(chunk.Reads, settings, &result.SubreadCounter);
 
         if (reads.empty() ||  // Check if subread are present
             std::accumulate(reads.begin(), reads.end(), 0, std::plus<bool>()) == 0) {
@@ -452,19 +463,17 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
             PBLOG_DEBUG << "Skipping " << chunk.Id << ", no high quality subreads available";
             return result;
         }
-        
+
         /* If it is not possible to exceed the minPasses requirement, we will bail here before
            generating the POA, filling the matrices and performing all the other checks */
         size_t possiblePasses = 0;
         size_t activeReads = 0;
         for (size_t i = 0; i < reads.size(); ++i) {
-            if (reads[i] != nullptr)
-            {
+            if (reads[i] != nullptr) {
                 activeReads++;
-                if(reads[i]->Flags & BAM::ADAPTER_BEFORE &&
-                    reads[i]->Flags & BAM::ADAPTER_AFTER) {
+                if (reads[i]->Flags & BAM::ADAPTER_BEFORE && reads[i]->Flags & BAM::ADAPTER_AFTER) {
                     possiblePasses++;
-                 }
+                }
             }
         }
         if (possiblePasses < settings.MinPasses) {
@@ -485,105 +494,110 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
             result.SubreadCounter.Other += activeReads;
             PBLOG_DEBUG << "Skipping " << chunk.Id << ", initial consensus too short (<"
                         << settings.MinLength << ')';
+        } else if (poaConsensus.length() > settings.MaxLength) {
+            result.TooLong += 1;
+            result.SubreadCounter.Other += activeReads;
+            PBLOG_DEBUG << "Skipping " << chunk.Id << ", initial consensus too long (>"
+                        << settings.MaxLength << ')';
         } else {
-            
-        if (settings.NoPolish) {
-            /* Generate dummy QVs, will use
-             * 5 = ASCII 53 = 33 + 20
-             */
-            std::string qvs(poaConsensus.length(), '5');
-            result.Success += 1;
-            result.SubreadCounter.Success += activeReads;
-            result.emplace_back(ConsensusType{chunk.Id, poaConsensus, qvs, possiblePasses, 0, 0,
-                                         std::vector<double>(1), result.SubreadCounter.ReturnCountsAsArray(), 0, 0,
-                                         chunk.SignalToNoise, timer.ElapsedMilliseconds(),
-                                         chunk.Barcodes});
-        } else {
-            
-            // setup the arrow integrator
-            IntegratorConfig cfg(settings.MinZScore, 12.5);
-            MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise, chunk.Chemistry);
-            const size_t nReads = readKeys.size();
-            size_t nPasses = 0, nDropped = 0;
+            if (settings.NoPolish) {
+                /* Generate dummy QVs, will use
+                 * 5 = ASCII 53 = 33 + 20
+                 */
+                std::string qvs(poaConsensus.length(), '5');
+                result.Success += 1;
+                result.SubreadCounter.Success += activeReads;
+                result.emplace_back(ConsensusType{
+                    chunk.Id, poaConsensus, qvs, possiblePasses, 0, 0, std::vector<double>(1),
+                    result.SubreadCounter.ReturnCountsAsArray(), 0, 0, chunk.SignalToNoise,
+                    timer.ElapsedMilliseconds(), chunk.Barcodes});
+            } else {
+                // setup the arrow integrator
+                IntegratorConfig cfg(settings.MinZScore, 12.5);
+                MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise, chunk.Chemistry);
+                const size_t nReads = readKeys.size();
+                size_t nPasses = 0, nDropped = 0;
 
-            // If this ZMW could possibly pass,  add the reads to the integrator
-            for (size_t i = 0; i < nReads; ++i) {
-                // skip unadded reads
-                if (readKeys[i] < 0) continue;
+                // If this ZMW could possibly pass,  add the reads to the integrator
+                for (size_t i = 0; i < nReads; ++i) {
+                    // skip unadded reads
+                    if (readKeys[i] < 0) continue;
 
-                if (auto mr = ExtractMappedRead(*reads[i], chunk.Chemistry, summaries[readKeys[i]],
-                                                poaConsensus.length(), settings.MinLength)) {
-                    auto status = ai.AddRead(*mr);
-                    // increment the status count
-                    result.SubreadCounter.AddResult(status);
-                    if (status == AddReadResult::SUCCESS && reads[i]->Flags & BAM::ADAPTER_BEFORE &&
-                        reads[i]->Flags & BAM::ADAPTER_AFTER) {
-                        ++nPasses;
-                    } else if (status != AddReadResult::SUCCESS) {
-                        ++nDropped;
-                        PBLOG_DEBUG << "Skipping read " << mr->Name << ", " << status;
+                    if (auto mr = ExtractMappedRead(*reads[i], chunk.Chemistry,
+                                                    summaries[readKeys[i]], poaConsensus.length(),
+                                                    settings, &result.SubreadCounter)) {
+                        auto status = ai.AddRead(*mr);
+                        // increment the status count
+                        result.SubreadCounter.AddResult(status);
+                        if (status == AddReadResult::SUCCESS &&
+                            reads[i]->Flags & BAM::ADAPTER_BEFORE &&
+                            reads[i]->Flags & BAM::ADAPTER_AFTER) {
+                            ++nPasses;
+                        } else if (status != AddReadResult::SUCCESS) {
+                            ++nDropped;
+                            PBLOG_DEBUG << "Skipping read " << mr->Name << ", " << status;
+                        }
                     }
                 }
+
+                if (nPasses < settings.MinPasses) {
+                    // Reassign all the successful reads to the other category
+                    result.SubreadCounter.AssignSuccessToOther();
+                    result.TooFewPasses += 1;
+                    PBLOG_DEBUG << "Skipping " << chunk.Id << ", insufficient number of passes ("
+                                << nPasses << '<' << settings.MinPasses << ')';
+                    return result;
+                }
+
+                const double fracDropped = static_cast<double>(nDropped) / nReads;
+                if (fracDropped > settings.MaxDropFraction) {
+                    result.TooManyUnusable += 1;
+                    result.SubreadCounter.AssignSuccessToOther();
+                    PBLOG_DEBUG << "Skipping " << chunk.Id
+                                << ", too high a fraction of unusable subreads (" << fracDropped
+                                << '>' << settings.MaxDropFraction << ')';
+                    return result;
+                }
+
+                const double zAvg = ai.AvgZScore();
+                const auto zScores = ai.ZScores();
+
+                // find consensus!!
+                size_t nTested, nApplied;
+                bool polished;
+                std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
+
+                if (!polished) {
+                    result.NonConvergent += 1;
+                    result.SubreadCounter.AssignSuccessToOther();
+                    PBLOG_DEBUG << "Skipping " << chunk.Id << ", failed to converge";
+                    return result;
+                }
+
+                // compute predicted accuracy
+                double predAcc = 0.0;
+                std::vector<int> qvs = ConsensusQVs(ai);
+                for (const int qv : qvs) {
+                    predAcc += pow(10.0, static_cast<double>(qv) / -10.0);
+                }
+                predAcc = 1.0 - predAcc / qvs.size();
+
+                if (predAcc < settings.MinPredictedAccuracy) {
+                    result.PoorQuality += 1;
+                    result.SubreadCounter.AssignSuccessToOther();
+                    PBLOG_DEBUG << "Skipping " << chunk.Id
+                                << ", failed to meet minimum predicted accuracy (" << predAcc << '<'
+                                << settings.MinPredictedAccuracy << ')';
+                    return result;
+                }
+
+                // return resulting sequence!!
+                result.Success += 1;
+                result.emplace_back(ConsensusType{
+                    chunk.Id, std::string(ai), QVsToASCII(qvs), nPasses, predAcc, zAvg, zScores,
+                    result.SubreadCounter.ReturnCountsAsArray(), nTested, nApplied,
+                    chunk.SignalToNoise, timer.ElapsedMilliseconds(), chunk.Barcodes});
             }
-
-            if (nPasses < settings.MinPasses) {
-                // Reassign all the successful reads to the other category
-                result.SubreadCounter.AssignSuccessToOther();
-                result.TooFewPasses += 1;
-                PBLOG_DEBUG << "Skipping " << chunk.Id << ", insufficient number of passes ("
-                            << nPasses << '<' << settings.MinPasses << ')';
-                return result;
-            }
-                
-            const double fracDropped = static_cast<double>(nDropped) / nReads;
-            if (fracDropped > settings.MaxDropFraction) {
-                result.TooManyUnusable += 1;
-                result.SubreadCounter.AssignSuccessToOther();
-                PBLOG_DEBUG << "Skipping " << chunk.Id
-                            << ", too high a fraction of unusable subreads (" << fracDropped << '>'
-                            << settings.MaxDropFraction << ')';
-                return result;
-            }
-
-            const double zAvg = ai.AvgZScore();
-            const auto zScores = ai.ZScores();
-
-            // find consensus!!
-            size_t nTested, nApplied;
-            bool polished;
-            std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
-
-            if (!polished) {
-                result.NonConvergent += 1;
-                result.SubreadCounter.AssignSuccessToOther();
-                PBLOG_DEBUG << "Skipping " << chunk.Id << ", failed to converge";
-                return result;
-            }
-
-            // compute predicted accuracy
-            double predAcc = 0.0;
-            std::vector<int> qvs = ConsensusQVs(ai);
-            for (const int qv : qvs) {
-                predAcc += pow(10.0, static_cast<double>(qv) / -10.0);
-            }
-            predAcc = 1.0 - predAcc / qvs.size();
-
-            if (predAcc < settings.MinPredictedAccuracy) {
-                result.PoorQuality += 1;
-                result.SubreadCounter.AssignSuccessToOther();
-                PBLOG_DEBUG << "Skipping " << chunk.Id
-                            << ", failed to meet minimum predicted accuracy (" << predAcc << '<'
-                            << settings.MinPredictedAccuracy << ')';
-                return result;
-            }
-
-            // return resulting sequence!!
-            result.Success += 1;
-            result.emplace_back(ConsensusType{chunk.Id, std::string(ai), QVsToASCII(qvs), nPasses,
-                                         predAcc, zAvg, zScores, result.SubreadCounter.ReturnCountsAsArray(), nTested, nApplied,
-                                         chunk.SignalToNoise, timer.ElapsedMilliseconds(),
-                                        chunk.Barcodes});
-            }            
         }
     } catch (const std::exception& e) {
         result.ExceptionThrown += 1;
@@ -595,7 +609,6 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
         result.ExceptionThrown += 1;
         PBLOG_ERROR << "Skipping " << chunk.Id << ", caught unknown exception type";
     }
-    
 
     return result;
 }
