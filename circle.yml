@@ -1,3 +1,6 @@
+machine:
+    python:
+        version: 2.7.9
 dependencies:
     cache_directories:
         - "_deps/cmake-3.3.0-Linux-x86_64"
@@ -18,7 +21,12 @@ dependencies:
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbsparse.git
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbchimera.git
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pblaa.git
-        - pip install "numpy>=1.6.0"
+        - pip install --upgrade pip
+        - pip install numpy
+        - pip install cython
+        - pip install h5py
+        - pip install pysam
+        - pip install git+https://github.com/PacificBiosciences/pbcommand.git git+https://github.com/PacificBiosciences/pbcore.git
     override:
         - echo "Building PBBAM"
         - mkdir _build_bam
