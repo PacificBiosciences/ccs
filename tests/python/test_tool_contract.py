@@ -39,6 +39,7 @@ class TestCCSApp(pbcommand.testkit.PbTestApp):
         ds = SubreadSet(BAM_IN, strict=True)
         chunks = ds.split(zmws=True, chunks=2, targetSize=2)
         assert len(chunks) == 2
+        self.zmw_range = chunks[CHUNK_INDEX].zmwRanges[0][1:3]
         logging.info("zmwRanges[CHUNK_INDEX] = {r}".format(
             r=str(chunks[CHUNK_INDEX].zmwRanges)))
         logging.info("SubreadSet = {f}".format(f=self.INPUT_FILES[0]))
@@ -51,7 +52,8 @@ class TestCCSApp(pbcommand.testkit.PbTestApp):
         with ConsensusReadSet(rtc.task.output_files[0]) as ds_out:
             zmws = set(ds_out.resourceReaders()[0].holeNumber)
             logging.info("ZMWs = {z}".format(z=zmws))
-            self.assertEqual(zmws, set([32861, 37134]))
+            for z in zmws:
+                self.assertTrue(self.zmw_range[0] < z < self.zmw_range[1])
 
 
 if __name__ == "__main__":
