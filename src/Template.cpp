@@ -12,7 +12,7 @@ AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const b
                                    const bool pinEnd)
     : start_{start}, end_{end}, pinStart_{pinStart}, pinEnd_{pinEnd}
 {
-    assert(start_ < end_);
+    assert(start_ <= end_);
 }
 
 AbstractTemplate::~AbstractTemplate() {}
@@ -20,13 +20,13 @@ void AbstractTemplate::ApplyMutation(const Mutation& mut)
 {
     // if the end of the mutation is before the end of our mapping,
     //   update the mapping
-    if (pinEnd_ || mut.Start() < end_) end_ += mut.LengthDiff();
+    if (pinEnd_ || mut.Start() < end_ || mut.End() <= start_) end_ += mut.LengthDiff();
 
     // if the end of the mutation is before the start of our mapping,
     //   update the mapping
     if (!pinStart_ && mut.End() <= start_) start_ += mut.LengthDiff();
 
-    assert(start_ < end_);
+    assert(start_ <= end_);
 }
 
 void AbstractTemplate::ApplyMutations(std::vector<Mutation>* const muts)
@@ -173,14 +173,19 @@ Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg, c
 boost::optional<Mutation> Template::Mutate(const Mutation& mut)
 {
     Reset();
+
+    if (Length() == 0 && mut.LengthDiff() < 1) return boost::none;
     if (!InRange(mut.Start(), mut.End())) return boost::none;
+
     mutStart_ = mut.Start() - start_;
     mutEnd_ = mut.End() - start_;
 
     // TODO(lhepler): The following should never happen, but does.
     //     find the root cause, fix it, and nuke this line
+    /*
     if (mutStart_ > tpl_.size() || (mutStart_ == tpl_.size() && mut.Type == MutationType::DELETION))
         return boost::none;
+    */
 
     if (mut.Type == MutationType::INSERTION) {
         if (mutStart_ > 0) mutTpl_[0] = cfg_->Populate({tpl_[mutStart_ - 1].Base, mut.Base})[0];
@@ -217,8 +222,9 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
     mutOff_ = mut.LengthDiff();
     mutated_ = true;
 
-    assert((*this)[Length() - 1].Match == 1.0 && (*this)[Length() - 1].Branch == 0.0 &&
-           (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0);
+    assert(Length() == 0 ||
+           ((*this)[Length() - 1].Match == 1.0 && (*this)[Length() - 1].Branch == 0.0 &&
+            (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0));
 
     return Mutation(mut.Type, mutStart_, mut.Base);
 }
@@ -231,12 +237,14 @@ void Template::Reset()
 
 void Template::ApplyMutation(const Mutation& mut)
 {
+    if (Length() == 0 && mut.LengthDiff() < 1) return;
+
     if (InRange(mut.Start(), mut.End())) {
         const size_t i = mut.Start() - start_;
 
         // TODO(lhepler): The following should never happen, but does.
         //     find the root cause, fix it, and nuke this line
-        if (i > tpl_.size() || (i == tpl_.size() && mut.Type == MutationType::DELETION)) return;
+        // if (i > tpl_.size() || (i == tpl_.size() && mut.Type == MutationType::DELETION)) return;
 
         if (mut.Type == MutationType::INSERTION) {
             if (i > 0) tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, mut.Base})[0];
@@ -271,8 +279,9 @@ void Template::ApplyMutation(const Mutation& mut)
     AbstractTemplate::ApplyMutation(mut);
 
     assert(tpl_.size() == end_ - start_);
-    assert((*this)[Length() - 1].Match == 1.0 && (*this)[Length() - 1].Branch == 0.0 &&
-           (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0);
+    assert(Length() == 0 ||
+           ((*this)[Length() - 1].Match == 1.0 && (*this)[Length() - 1].Branch == 0.0 &&
+            (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0));
 
     assert(!pinStart_ || start_ == 0);
 }

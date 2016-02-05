@@ -304,4 +304,40 @@ TEST(TemplateTest, TestPinning)
     }
 }
 
+TEST(TemplateTest, NullTemplate)
+{
+    const string tpl = "ACGT";
+    const size_t len = tpl.length();
+    const Mutation mut(MutationType::DELETION, 0, '-');
+
+    Template master(tpl, ModelFactory::Create(mdl, snr), 0, len, true, true);
+    VirtualTemplate virt(master, 0, len, false, false);
+
+    EXPECT_EQ(len, master.Length());
+
+    for (size_t i = 1; i <= len; ++i) {
+        master.ApplyMutation(mut);
+        EXPECT_EQ(len - i, master.Length());
+        virt.ApplyMutation(mut);
+        EXPECT_EQ(len - i, virt.Length());
+    }
+
+    {
+        const string A(1, 'A');
+
+        auto mut_ = master.Mutate(mut);
+        EXPECT_FALSE(bool(mut_));
+        master.ApplyMutation(mut);
+
+        mut_ = master.Mutate(Mutation(MutationType::INSERTION, 0, 'A'));
+        ASSERT_TRUE(bool(mut_));
+        EXPECT_EQ(A, ToString(master));
+        master.Reset();
+        master.ApplyMutation(*mut_);
+        EXPECT_EQ(A, ToString(master));
+        virt.ApplyMutation(*mut_);
+        EXPECT_EQ(0, virt.Length());
+    }
+}
+
 }  // namespace anonymous
