@@ -130,7 +130,7 @@ struct ConsensusSettings
             .help("Minimum predicted accuracy in [0, 1]. Default = %default");
         parser->add_option(em + OptionNames::MinZScore)
             .type("float")
-            .set_default(-5.0)
+            .set_default(-3.5)
             .help("Minimum z-score to use a subread. NaN disables this filter. Default = %default");
         parser->add_option(em + OptionNames::MaxDropFraction)
             .type("float")
