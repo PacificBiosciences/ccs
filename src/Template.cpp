@@ -24,7 +24,7 @@ void AbstractTemplate::ApplyMutation(const Mutation& mut)
 
     // if the end of the mutation is before the start of our mapping,
     //   update the mapping
-    if (!pinStart_ && mut.End() < start_) start_ += mut.LengthDiff();
+    if (!pinStart_ && mut.End() <= start_) start_ += mut.LengthDiff();
 
     assert(start_ < end_);
 }
@@ -186,14 +186,14 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
         if (mutStart_ < tpl_.size())
             mutTpl_[1] = cfg_->Populate({mut.Base, tpl_[mutStart_].Base})[0];
         else
-            mutTpl_[1] = TemplatePosition{mut.Base, 0.0, 0.0, 0.0, 0.0};
+            mutTpl_[1] = TemplatePosition{mut.Base, 1.0, 0.0, 0.0, 0.0};
     } else if (mut.Type == MutationType::SUBSTITUTION) {
         if (mutStart_ > 0) mutTpl_[0] = cfg_->Populate({tpl_[mutStart_ - 1].Base, mut.Base})[0];
 
         if (mutStart_ + 1 < tpl_.size())
             mutTpl_[1] = cfg_->Populate({mut.Base, tpl_[mutStart_ + 1].Base})[0];
         else
-            mutTpl_[1] = TemplatePosition{mut.Base, 0.0, 0.0, 0.0, 0.0};
+            mutTpl_[1] = TemplatePosition{mut.Base, 1.0, 0.0, 0.0, 0.0};
     } else if (mut.Type == MutationType::DELETION) {
         // if there's a predecessor, fill it
         if (mutStart_ > 0) {
@@ -201,7 +201,7 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
                 mutTpl_[0] =
                     cfg_->Populate({tpl_[mutStart_ - 1].Base, tpl_[mutStart_ + 1].Base})[0];
             else
-                mutTpl_[0] = TemplatePosition{tpl_[mutStart_ - 1].Base, 0.0, 0.0, 0.0, 0.0};
+                mutTpl_[0] = TemplatePosition{tpl_[mutStart_ - 1].Base, 1.0, 0.0, 0.0, 0.0};
         }
 
         // if there's a successor, the params for the mutant position
@@ -215,7 +215,7 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
     mutOff_ = mut.LengthDiff();
     mutated_ = true;
 
-    assert((*this)[Length() - 1].Match == 0.0 && (*this)[Length() - 1].Branch == 0.0 &&
+    assert((*this)[Length() - 1].Match == 1.0 && (*this)[Length() - 1].Branch == 0.0 &&
            (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0);
 
     return Mutation(mut.Type, mutStart_, mut.Base);
@@ -242,7 +242,7 @@ void Template::ApplyMutation(const Mutation& mut)
             if (i < tpl_.size())
                 tpl_.insert(tpl_.begin() + i, cfg_->Populate({mut.Base, tpl_[i].Base})[0]);
             else
-                tpl_.emplace_back(TemplatePosition{mut.Base, 0.0, 0.0, 0.0, 0.0});
+                tpl_.emplace_back(TemplatePosition{mut.Base, 1.0, 0.0, 0.0, 0.0});
         } else if (mut.Type == MutationType::SUBSTITUTION) {
             if (i > 0) tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, mut.Base})[0];
 
@@ -257,7 +257,7 @@ void Template::ApplyMutation(const Mutation& mut)
                 if (i < tpl_.size())
                     tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, tpl_[i].Base})[0];
                 else
-                    tpl_[i - 1] = TemplatePosition{tpl_[i - 1].Base, 0.0, 0.0, 0.0, 0.0};
+                    tpl_[i - 1] = TemplatePosition{tpl_[i - 1].Base, 1.0, 0.0, 0.0, 0.0};
             }
         } else
             throw std::invalid_argument(
@@ -269,7 +269,7 @@ void Template::ApplyMutation(const Mutation& mut)
     AbstractTemplate::ApplyMutation(mut);
 
     assert(tpl_.size() == end_ - start_);
-    assert((*this)[Length() - 1].Match == 0.0 && (*this)[Length() - 1].Branch == 0.0 &&
+    assert((*this)[Length() - 1].Match == 1.0 && (*this)[Length() - 1].Branch == 0.0 &&
            (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0);
 
     assert(!pinStart_ || start_ == 0);

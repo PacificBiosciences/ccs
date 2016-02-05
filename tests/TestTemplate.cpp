@@ -273,7 +273,8 @@ TEST(TemplateTest, TestPinning)
         master.ApplyMutation(Mutation(MutationType::INSERTION, 0, 'A'));
         EXPECT_EQ(len, master.Length());
         EXPECT_EQ(tpl, ToString(master));
-        master.ApplyMutation(Mutation(MutationType::INSERTION, len, 'A'));
+        // the coords are now 1..6, so a new terminal mutation is at len+1
+        master.ApplyMutation(Mutation(MutationType::INSERTION, len + 1, 'A'));
         EXPECT_EQ(len + 1, master.Length());
         EXPECT_EQ(tpl + A, ToString(master));
     }
