@@ -27,8 +27,8 @@ public:
 
     double ZScore() const;
 
-    void ApplyMutation(const Mutation& mut);
-    void ApplyMutations(std::vector<Mutation>* muts);
+    bool ApplyMutation(const Mutation& mut);
+    bool ApplyMutations(std::vector<Mutation>* muts);
 
 private:
     void Recalculate();

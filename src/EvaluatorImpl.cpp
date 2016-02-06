@@ -177,16 +177,22 @@ inline void EvaluatorImpl::Recalculate()
     recursor_.FillAlphaBeta(alpha_, beta_);
 }
 
-void EvaluatorImpl::ApplyMutation(const Mutation& mut)
+bool EvaluatorImpl::ApplyMutation(const Mutation& mut)
 {
-    recursor_.tpl_->ApplyMutation(mut);
-    Recalculate();
+    if (recursor_.tpl_->ApplyMutation(mut)) {
+        Recalculate();
+        return true;
+    }
+    return false;
 }
 
-void EvaluatorImpl::ApplyMutations(std::vector<Mutation>* muts)
+bool EvaluatorImpl::ApplyMutations(std::vector<Mutation>* muts)
 {
-    recursor_.tpl_->ApplyMutations(muts);
-    Recalculate();
+    if (recursor_.tpl_->ApplyMutations(muts)) {
+        Recalculate();
+        return true;
+    }
+    return false;
 }
 
 /*

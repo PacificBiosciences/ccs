@@ -16,8 +16,10 @@ AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const b
 }
 
 AbstractTemplate::~AbstractTemplate() {}
-void AbstractTemplate::ApplyMutation(const Mutation& mut)
+bool AbstractTemplate::ApplyMutation(const Mutation& mut)
 {
+    const bool mutApplied = InRange(mut.Start(), mut.End());
+
     // if the end of the mutation is before the end of our mapping,
     //   update the mapping
     if (pinEnd_ || mut.Start() < end_ || mut.End() <= start_) end_ += mut.LengthDiff();
@@ -27,15 +29,21 @@ void AbstractTemplate::ApplyMutation(const Mutation& mut)
     if (!pinStart_ && mut.End() <= start_) start_ += mut.LengthDiff();
 
     assert(start_ <= end_);
+
+    return mutApplied;
 }
 
-void AbstractTemplate::ApplyMutations(std::vector<Mutation>* const muts)
+bool AbstractTemplate::ApplyMutations(std::vector<Mutation>* const muts)
 {
+    bool mutsApplied = false;
+
     // make sure the mutations are sorted by site: End() then Start()
     std::sort(muts->begin(), muts->end(), Mutation::SiteComparer);
 
     for (auto it = muts->crbegin(); it != muts->crend(); ++it)
-        ApplyMutation(*it);
+        mutsApplied |= ApplyMutation(*it);
+
+    return mutsApplied;
 }
 
 std::pair<double, double> AbstractTemplate::NormalParameters() const
@@ -235,9 +243,11 @@ void Template::Reset()
     mutated_ = false;
 }
 
-void Template::ApplyMutation(const Mutation& mut)
+bool Template::ApplyMutation(const Mutation& mut)
 {
-    if (Length() == 0 && mut.LengthDiff() < 1) return;
+    if (Length() == 0 && mut.LengthDiff() < 1) return false;
+
+    bool mutApplied = false;
 
     if (InRange(mut.Start(), mut.End())) {
         const size_t i = mut.Start() - start_;
@@ -273,6 +283,8 @@ void Template::ApplyMutation(const Mutation& mut)
             throw std::invalid_argument(
                 "invalid mutation type! must be DELETION, INSERTION, or "
                 "SUBSTITUTION");
+
+        mutApplied = true;
     }
 
     // update the start_ and end_ mappings
@@ -284,6 +296,8 @@ void Template::ApplyMutation(const Mutation& mut)
             (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0));
 
     assert(!pinStart_ || start_ == 0);
+
+    return mutApplied;
 }
 
 VirtualTemplate::VirtualTemplate(const Template& master, const size_t start, const size_t end,
@@ -294,11 +308,12 @@ VirtualTemplate::VirtualTemplate(const Template& master, const size_t start, con
     assert(!pinEnd_ || end_ == master_.tpl_.size());
 }
 
-void VirtualTemplate::ApplyMutation(const Mutation& mut)
+bool VirtualTemplate::ApplyMutation(const Mutation& mut)
 {
     assert(!pinStart_ || start_ == 0);
-    AbstractTemplate::ApplyMutation(mut);
+    const bool mutApplied = AbstractTemplate::ApplyMutation(mut);
     assert(!pinStart_ || start_ == 0);
+    return mutApplied;
 }
 
 }  // namespace Consensus
