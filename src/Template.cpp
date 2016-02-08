@@ -188,13 +188,6 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
     mutStart_ = mut.Start() - start_;
     mutEnd_ = mut.End() - start_;
 
-    // TODO(lhepler): The following should never happen, but does.
-    //     find the root cause, fix it, and nuke this line
-    /*
-    if (mutStart_ > tpl_.size() || (mutStart_ == tpl_.size() && mut.Type == MutationType::DELETION))
-        return boost::none;
-    */
-
     if (mut.Type == MutationType::INSERTION) {
         if (mutStart_ > 0) mutTpl_[0] = cfg_->Populate({tpl_[mutStart_ - 1].Base, mut.Base})[0];
 
@@ -251,10 +244,6 @@ bool Template::ApplyMutation(const Mutation& mut)
 
     if (InRange(mut.Start(), mut.End())) {
         const size_t i = mut.Start() - start_;
-
-        // TODO(lhepler): The following should never happen, but does.
-        //     find the root cause, fix it, and nuke this line
-        // if (i > tpl_.size() || (i == tpl_.size() && mut.Type == MutationType::DELETION)) return;
 
         if (mut.Type == MutationType::INSERTION) {
             if (i > 0) tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, mut.Base})[0];

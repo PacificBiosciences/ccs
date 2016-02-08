@@ -69,9 +69,6 @@ double EvaluatorImpl::LL(const Mutation& mut_)
     // apply the virtual mutation
     if (!mut) return LL();
 
-    // if the length of the new template is zero, we don't contribute anything
-    if (recursor_.tpl_->Length() == 0) return 0.0;
-
     size_t betaLinkCol = 1 + mut->End();
     size_t absoluteLinkColumn = 1 + mut->End() + mut->LengthDiff();
 
