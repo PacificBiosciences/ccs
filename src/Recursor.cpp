@@ -414,7 +414,7 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
         // TODO: ERROR! Fix this. Temporary hack is to merge the columns in
         // front and behind.
         // Still totally broken.
-        if (j < tpl_->Length()) {
+        if (j < alpha.Columns()) {
             std::tie(beginRow, endRow) = alpha.UsedRowRange(j);
             size_t pBegin, pEnd, nBegin, nEnd;
             if (j > 0) {
@@ -422,7 +422,7 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
                 beginRow = std::min(beginRow, pBegin);
                 endRow = std::max(endRow, pEnd);
             }
-            if ((j + 1) < tpl_->Length()) {
+            if ((j + 1) < alpha.Columns()) {
                 std::tie(nBegin, nEnd) = alpha.UsedRowRange(j + 1);
                 beginRow = std::min(beginRow, nBegin);
                 endRow = std::max(endRow, nEnd);
@@ -551,12 +551,12 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
         } else {
             std::tie(beginRow, endRow) = beta.UsedRowRange(j);
             int pBegin, pEnd, nBegin, nEnd;
-            if ((j - 1) >= 0) {
+            if (j > 0) {
                 std::tie(pBegin, pEnd) = beta.UsedRowRange(j - 1);
                 beginRow = std::min(beginRow, pBegin);
                 endRow = std::max(endRow, pEnd);
             }
-            if ((j + 1) < tpl_->Length()) {
+            if ((j + 1) < beta.Columns()) {
                 std::tie(nBegin, nEnd) = beta.UsedRowRange(j + 1);
                 beginRow = std::min(beginRow, nBegin);
                 endRow = std::max(endRow, nEnd);
