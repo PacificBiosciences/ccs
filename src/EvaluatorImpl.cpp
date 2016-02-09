@@ -3,8 +3,6 @@
 
 #include <boost/optional.hpp>
 
-#include <pacbio/consensus/Evaluator.h>
-
 #include "EvaluatorImpl.h"
 
 namespace PacBio {
@@ -58,7 +56,7 @@ EvaluatorImpl::EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const Mapp
     , beta_(mr.Length() + 1, recursor_.tpl_->Length() + 1)
     , extendBuffer_(mr.Length() + 1, EXTEND_BUFFER_COLUMNS)
 {
-    if (recursor_.tpl_->Length() > 0) recursor_.FillAlphaBeta(alpha_, beta_);
+    recursor_.FillAlphaBeta(alpha_, beta_);
     if (!std::isfinite(LL())) throw AlphaBetaMismatch();
 }
 
@@ -146,7 +144,6 @@ double EvaluatorImpl::LL(const Mutation& mut_)
 
 double EvaluatorImpl::LL() const
 {
-    if (recursor_.tpl_->Length() == 0) return 0.0;
     return std::log(beta_(0, 0)) + beta_.GetLogProdScales() +
            recursor_.tpl_->UndoCounterWeights(recursor_.read_.Length());
 }
@@ -165,7 +162,6 @@ double EvaluatorImpl::ZScore() const
 
 inline void EvaluatorImpl::Recalculate()
 {
-    if (recursor_.tpl_->Length() == 0) return;
     size_t I = recursor_.read_.Length() + 1;
     size_t J = recursor_.tpl_->Length() + 1;
     alpha_.Reset(I, J);

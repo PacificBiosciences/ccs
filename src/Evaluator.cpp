@@ -2,29 +2,105 @@
 #include <cmath>
 
 #include <pacbio/consensus/Evaluator.h>
+#include <pacbio/consensus/Exceptions.h>
 
 #include "EvaluatorImpl.h"
 
 namespace PacBio {
 namespace Consensus {
+namespace {
 
+constexpr double NEG_INF = -std::numeric_limits<double>::infinity();
 constexpr size_t EXTEND_BUFFER_COLUMNS = 8;
 
+}  // anonymous namespace
+
 Evaluator::Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                     const double scoreDiff)
-    : impl_{std::unique_ptr<EvaluatorImpl>(
-          new EvaluatorImpl(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff))}
+                     const double minZScore, const double scoreDiff)
+    : impl_{nullptr}, state_{EvaluatorState::VALID}
 {
-    if (impl_.get() == nullptr) throw std::runtime_error("failed to construct EvaluatorImpl");
+    try {
+        impl_.reset(
+            new EvaluatorImpl(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
+
+        const double zScore = impl_->ZScore();
+        // TODO(lhepler): re-enable this check when the zscore bits are working again
+        // assert(std::isfinite(zScore));
+        if (!std::isnan(minZScore) && (!std::isfinite(zScore) || zScore < minZScore))
+            state_ = EvaluatorState::POOR_ZSCORE;
+    } catch (AlphaBetaMismatch&) {
+        state_ = EvaluatorState::ALPHA_BETA_MISMATCH;
+    }
+
+    CheckInvariants();
 }
 
-Evaluator::Evaluator(Evaluator&& eval) : impl_{std::move(eval.impl_)} {}
+Evaluator::Evaluator(Evaluator&& eval) : impl_{std::move(eval.impl_)}, state_{eval.state_}
+{
+    CheckInvariants();
+}
+
 Evaluator::~Evaluator() {}
-double Evaluator::LL(const Mutation& mut) { return impl_->LL(mut); }
-double Evaluator::LL() const { return impl_->LL(); }
-std::pair<double, double> Evaluator::NormalParameters() const { return impl_->NormalParameters(); }
-double Evaluator::ZScore() const { return impl_->ZScore(); }
-bool Evaluator::ApplyMutation(const Mutation& mut) { return impl_->ApplyMutation(mut); }
-bool Evaluator::ApplyMutations(std::vector<Mutation>* muts) { return impl_->ApplyMutations(muts); }
+size_t Evaluator::Length() const
+{
+    if (impl_) return impl_->recursor_.tpl_->Length();
+    return 0;
+}
+
+StrandEnum Evaluator::Strand() const
+{
+    if (impl_) return impl_->recursor_.read_.Strand;
+    return StrandEnum::UNMAPPED;
+}
+
+Evaluator::operator bool() const { return state_ == EvaluatorState::VALID; }
+double Evaluator::LL(const Mutation& mut)
+{
+    if (impl_) return impl_->LL(mut);
+    return NEG_INF;
+}
+
+double Evaluator::LL() const
+{
+    if (impl_) return impl_->LL();
+    return NEG_INF;
+}
+
+std::pair<double, double> Evaluator::NormalParameters() const
+{
+    if (impl_) return impl_->NormalParameters();
+    return std::make_pair(NEG_INF, NEG_INF);
+}
+
+double Evaluator::ZScore() const
+{
+    if (impl_) return impl_->ZScore();
+    return NEG_INF;
+}
+
+bool Evaluator::ApplyMutation(const Mutation& mut)
+{
+    if (!impl_) return false;
+    const bool mutApplied = impl_->ApplyMutation(mut);
+    CheckInvariants();
+    return mutApplied;
+}
+
+bool Evaluator::ApplyMutations(std::vector<Mutation>* muts)
+{
+    if (!impl_) return false;
+    const bool mutsApplied = impl_->ApplyMutations(muts);
+    CheckInvariants();
+    return mutsApplied;
+}
+
+EvaluatorState Evaluator::Status() const { return state_; }
+void Evaluator::CheckInvariants()
+{
+    if (!impl_) return;
+    if (impl_->recursor_.tpl_->Length() == 0) state_ = EvaluatorState::NULL_TEMPLATE;
+    if (state_ != EvaluatorState::VALID) impl_.reset(nullptr);
+}
+
 }  // namespace Consensus
 }  // namespace PacBio

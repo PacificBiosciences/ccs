@@ -43,9 +43,9 @@ using std::min;
 using std::max;
 
 // TODO(dalexander): put these into a RecursorConfig struct
+// TODO(anybody): Hmmm... not sure what the heck to do about these...
 #define MAX_FLIP_FLOPS 5
-#define ALPHA_BETA_MISMATCH_TOLERANCE \
-    .001  // TODO: Hmmm... not sure what the heck to do about these...
+#define ALPHA_BETA_MISMATCH_TOLERANCE .001
 #define REBANDING_THRESHOLD 0.04
 
 typedef std::pair<size_t, size_t> Interval;
@@ -65,7 +65,7 @@ inline Interval RangeUnion(const Interval& range1, const Interval& range2, const
     return RangeUnion(RangeUnion(range1, range2), RangeUnion(range3, range4));
 }
 
-double Combine(const double a, const double b) { return a + b; }
+inline double Combine(const double a, const double b) { return a + b; }
 }  // namespace anonymous
 
 void Recursor::FillAlpha(const M& guide, M& alpha) const
@@ -398,39 +398,15 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
     size_t maxLeftMovePossible = tpl_->Length();
     size_t maxDownMovePossible = read_.Length();
 
+    // completely fill the rectangle bounded by the min and max
+    size_t beginRow, endRow;
+    std::tie(beginRow, endRow) = alpha.UsedRowRange(beginColumn);
+    for (size_t j = 1; j + beginColumn < alpha.Columns() && j <= numExtColumns; ++j)
+        endRow = std::max(alpha.UsedRowRange(j + beginColumn).second, endRow);
+
     for (size_t extCol = 0; extCol < numExtColumns; extCol++) {
         size_t j = beginColumn + extCol;
-        size_t beginRow, endRow;
 
-        //
-        // If this extend is contained within the column bounds of
-        // the original alpha, we use the row range that was
-        // previously determined.  Otherwise start at alpha's last
-        // UsedRow beginRow and go to the end.
-        //
-        // BULLSHIT! If there was a deletion or insertion, the row range for the
-        // previous
-        // column, not the column of interest will be used.
-        // TODO: ERROR! Fix this. Temporary hack is to merge the columns in
-        // front and behind.
-        // Still totally broken.
-        if (j < alpha.Columns()) {
-            std::tie(beginRow, endRow) = alpha.UsedRowRange(j);
-            size_t pBegin, pEnd, nBegin, nEnd;
-            if (j > 0) {
-                std::tie(pBegin, pEnd) = alpha.UsedRowRange(j - 1);
-                beginRow = std::min(beginRow, pBegin);
-                endRow = std::max(endRow, pEnd);
-            }
-            if ((j + 1) < alpha.Columns()) {
-                std::tie(nBegin, nEnd) = alpha.UsedRowRange(j + 1);
-                beginRow = std::min(beginRow, nBegin);
-                endRow = std::max(endRow, nEnd);
-            }
-        } else {
-            beginRow = alpha.UsedRowRange(alpha.Columns() - 1).first;
-            endRow = alpha.Rows();
-        }
         ext.StartEditingColumn(extCol, beginRow, endRow);
 
         int i;
@@ -536,6 +512,15 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
     assert(beta.Rows() == I + 1 && ext.Rows() == I + 1);
     assert(abs(lengthDiff) < 2);
 
+    // completely fill the rectangle bounded by the min and max
+    int beginRow, endRow;
+    if (lastColumn + 1 < beta.Columns())
+        std::tie(beginRow, endRow) = beta.UsedRowRange(lastColumn + 1);
+    else
+        std::tie(beginRow, endRow) = beta.UsedRowRange(lastColumn);
+    for (int j = 0; j <= lastColumn && j <= numExtColumns; ++j)
+        beginRow = std::min(static_cast<int>(beta.UsedRowRange(lastColumn - j).first), beginRow);
+
     for (int j = lastColumn; j + numExtColumns > lastColumn; j--) {
         /* Convert from old template to new template coordinates.
            lengthDiff will be 0 for substitution, -1 for deletion and +1 for
@@ -544,24 +529,6 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
         int jp = j + lengthDiff;
         // What is the current extension column we are adding data into.
         int extCol = lastExtColumn - (lastColumn - j);
-        int beginRow, endRow;
-        if (j < 0) {
-            beginRow = 0;
-            endRow = beta.UsedRowRange(0).second;
-        } else {
-            std::tie(beginRow, endRow) = beta.UsedRowRange(j);
-            int pBegin, pEnd, nBegin, nEnd;
-            if (j > 0) {
-                std::tie(pBegin, pEnd) = beta.UsedRowRange(j - 1);
-                beginRow = std::min(beginRow, pBegin);
-                endRow = std::max(endRow, pEnd);
-            }
-            if ((j + 1) < beta.Columns()) {
-                std::tie(nBegin, nEnd) = beta.UsedRowRange(j + 1);
-                beginRow = std::min(beginRow, nBegin);
-                endRow = std::max(endRow, nEnd);
-            }
-        }
 
         ext.StartEditingColumn(extCol, beginRow, endRow);
 
@@ -651,6 +618,9 @@ Recursor::Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr
 
 size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
 {
+    if (tpl_->Length() == 0)
+        throw std::runtime_error("template length is 0, invalid state!");
+
     FillAlpha(M::Null(), a);
     FillBeta(a, b);
 

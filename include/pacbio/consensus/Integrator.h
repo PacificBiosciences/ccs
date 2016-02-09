@@ -19,7 +19,7 @@ struct IntegratorConfig
     double MinZScore;
     double ScoreDiff;
 
-    IntegratorConfig(double minZScore = -5.0, double scoreDiff = 12.5);
+    IntegratorConfig(double minZScore = -3.5, double scoreDiff = 12.5);
 };
 
 enum struct AddReadResult : uint8_t
@@ -66,12 +66,6 @@ public:
     virtual void ApplyMutations(std::vector<Mutation>* muts) = 0;
 
 protected:
-    struct ReadState : std::unique_ptr<Evaluator>
-    {
-        ReadState(std::unique_ptr<Evaluator>&& ptr, StrandEnum strand);
-        StrandEnum Strand;
-    };
-
     Mutation ReverseComplement(const Mutation& mut) const;
 
     AbstractIntegrator(const IntegratorConfig& cfg);
@@ -82,7 +76,7 @@ protected:
     AddReadResult AddRead(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& read);
 
     IntegratorConfig cfg_;
-    std::vector<ReadState> evals_;
+    std::vector<Evaluator> evals_;
 };
 
 class MonoMolecularIntegrator : public AbstractIntegrator

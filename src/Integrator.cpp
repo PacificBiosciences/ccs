@@ -1,4 +1,5 @@
 
+#include <cassert>
 #include <cmath>
 #include <utility>
 
@@ -29,30 +30,21 @@ AbstractIntegrator::~AbstractIntegrator() {}
 AddReadResult AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
                                           const MappedRead& read)
 {
-    std::unique_ptr<Evaluator> eval(nullptr);
-    AddReadResult result = AddReadResult::SUCCESS;
+    if (read.TemplateEnd <= read.TemplateStart)
+        throw std::invalid_argument("invalid read mapping, template end <= start");
 
-    try {
-        eval.reset(new Evaluator(std::move(tpl), read, cfg_.ScoreDiff));
-        const double zScore = eval->ZScore();
-        // assert(std::isfinite(zScore));
-        if (!std::isnan(cfg_.MinZScore) && (!std::isfinite(zScore) || zScore < cfg_.MinZScore)) {
-            eval.reset(nullptr);
-            result = AddReadResult::POOR_ZSCORE;
-        }
-    } catch (AlphaBetaMismatch& e) {
-        eval.reset(nullptr);
-        result = AddReadResult::ALPHA_BETA_MISMATCH;
-    }
-    // TODO(lhepler): do we really want other?
-    catch (...) {
-        eval.reset(nullptr);
-        result = AddReadResult::OTHER;
-    }
+    evals_.emplace_back(Evaluator(std::move(tpl), read, cfg_.MinZScore, cfg_.ScoreDiff));
 
-    evals_.emplace_back(ReadState(std::move(eval), read.Strand));
+    const auto status = evals_.back().Status();
 
-    return result;
+    if (status == EvaluatorState::ALPHA_BETA_MISMATCH)
+        return AddReadResult::ALPHA_BETA_MISMATCH;
+    else if (status == EvaluatorState::POOR_ZSCORE)
+        return AddReadResult::POOR_ZSCORE;
+
+    assert(status == EvaluatorState::VALID);
+
+    return AddReadResult::SUCCESS;
 }
 
 double AbstractIntegrator::LL(const Mutation& fwdMut)
@@ -60,12 +52,10 @@ double AbstractIntegrator::LL(const Mutation& fwdMut)
     const Mutation revMut(ReverseComplement(fwdMut));
     double ll = 0.0;
     for (auto& eval : evals_) {
-        if (eval) {
-            if (eval.Strand == StrandEnum::FORWARD)
-                ll += eval->LL(fwdMut);
-            else
-                ll += eval->LL(revMut);
-        }
+        if (eval.Strand() == StrandEnum::FORWARD)
+            ll += eval.LL(fwdMut);
+        else if (eval.Strand() == StrandEnum::REVERSE)
+            ll += eval.LL(revMut);
     }
     return ll;
 }
@@ -74,7 +64,7 @@ double AbstractIntegrator::LL() const
 {
     double ll = 0.0;
     for (const auto& eval : evals_) {
-        if (eval) ll += eval->LL();
+        if (eval) ll += eval.LL();
     }
     return ll;
 }
@@ -86,7 +76,7 @@ double AbstractIntegrator::AvgZScore() const
     for (const auto& eval : evals_) {
         if (eval) {
             double m, v;
-            std::tie(m, v) = eval->NormalParameters();
+            std::tie(m, v) = eval.NormalParameters();
             mean += m;
             var += v;
             ++n;
@@ -102,8 +92,8 @@ std::vector<double> AbstractIntegrator::ZScores() const
     for (const auto& eval : evals_) {
         if (eval) {
             double mean, var;
-            std::tie(mean, var) = eval->NormalParameters();
-            results.emplace_back((eval->LL() - mean) / std::sqrt(var));
+            std::tie(mean, var) = eval.NormalParameters();
+            results.emplace_back((eval.LL() - mean) / std::sqrt(var));
         } else
             results.emplace_back(std::numeric_limits<double>::quiet_NaN());
     }
@@ -113,11 +103,6 @@ std::vector<double> AbstractIntegrator::ZScores() const
 Mutation AbstractIntegrator::ReverseComplement(const Mutation& mut) const
 {
     return Mutation(mut.Type, Length() - mut.End(), Complement(mut.Base));
-}
-
-AbstractIntegrator::ReadState::ReadState(std::unique_ptr<Evaluator>&& ptr, StrandEnum strand)
-    : std::unique_ptr<Evaluator>(std::forward<std::unique_ptr<Evaluator>>(ptr)), Strand(strand)
-{
 }
 
 MonoMolecularIntegrator::MonoMolecularIntegrator(const std::string& tpl,
@@ -140,7 +125,7 @@ MonoMolecularIntegrator::MonoMolecularIntegrator(MonoMolecularIntegrator&& mmi)
 
 AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
 {
-    if (read.Model != mdl_) return AddReadResult::OTHER;
+    if (read.Model != mdl_) throw std::invalid_argument("invalid model for integrator!");
 
     if (read.Strand == StrandEnum::FORWARD)
         return AbstractIntegrator::AddRead(
@@ -148,11 +133,14 @@ AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
                 fwdTpl_, read.TemplateStart, read.TemplateEnd, read.PinStart, read.PinEnd)),
             read);
 
-    return AbstractIntegrator::AddRead(
-        std::unique_ptr<AbstractTemplate>(new VirtualTemplate(revTpl_, Length() - read.TemplateEnd,
-                                                              Length() - read.TemplateStart,
-                                                              read.PinEnd, read.PinStart)),
-        read);
+    else if (read.Strand == StrandEnum::REVERSE)
+        return AbstractIntegrator::AddRead(
+            std::unique_ptr<AbstractTemplate>(
+                new VirtualTemplate(revTpl_, Length() - read.TemplateEnd,
+                                    Length() - read.TemplateStart, read.PinEnd, read.PinStart)),
+            read);
+
+    throw std::invalid_argument("read is unmapped!");
 }
 
 size_t MonoMolecularIntegrator::Length() const { return fwdTpl_.TrueLength(); }
@@ -188,12 +176,10 @@ void MonoMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)
     revTpl_.ApplyMutation(revMut);
 
     for (auto& eval : evals_) {
-        if (eval) {
-            if (eval.Strand == StrandEnum::FORWARD)
-                eval->ApplyMutation(fwdMut);
-            else
-                eval->ApplyMutation(revMut);
-        }
+        if (eval.Strand() == StrandEnum::FORWARD)
+            eval.ApplyMutation(fwdMut);
+        else if (eval.Strand() == StrandEnum::REVERSE)
+            eval.ApplyMutation(revMut);
     }
 
     assert(fwdTpl_.Length() == revTpl_.Length());
@@ -223,12 +209,10 @@ void MonoMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
     revTpl_.ApplyMutations(&revMuts);
 
     for (auto& eval : evals_) {
-        if (eval) {
-            if (eval.Strand == StrandEnum::FORWARD)
-                eval->ApplyMutations(fwdMuts);
-            else
-                eval->ApplyMutations(&revMuts);
-        }
+        if (eval.Strand() == StrandEnum::FORWARD)
+            eval.ApplyMutations(fwdMuts);
+        else if (eval.Strand() == StrandEnum::REVERSE)
+            eval.ApplyMutations(&revMuts);
     }
 
     assert(fwdTpl_.Length() == revTpl_.Length());
@@ -265,7 +249,7 @@ AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read, const SN
                                                            ModelFactory::Create(read.Model, snr),
                                                            start, end, read.PinStart, read.PinEnd)),
             read);
-    } else {
+    } else if (read.Strand == StrandEnum::REVERSE) {
         const size_t start = revTpl_.size() - read.TemplateEnd;
         const size_t end = revTpl_.size() - read.TemplateStart;
 
@@ -276,7 +260,7 @@ AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read, const SN
             read);
     }
 
-    return AddReadResult::OTHER;
+    throw std::invalid_argument("read is unmapped!");
 }
 
 size_t MultiMolecularIntegrator::Length() const { return fwdTpl_.length(); }
@@ -293,12 +277,10 @@ void MultiMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)
     revTpl_ = ::PacBio::Consensus::ApplyMutations(revTpl_, &revMuts);
 
     for (auto& eval : evals_) {
-        if (eval) {
-            if (eval.Strand == StrandEnum::FORWARD)
-                eval->ApplyMutation(fwdMut);
-            else
-                eval->ApplyMutation(revMut);
-        }
+        if (eval.Strand() == StrandEnum::FORWARD)
+            eval.ApplyMutation(fwdMut);
+        else if (eval.Strand() == StrandEnum::REVERSE)
+            eval.ApplyMutation(revMut);
     }
 
     assert(fwdTpl_.length() == revTpl_.length());
@@ -316,12 +298,10 @@ void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
     revTpl_ = ::PacBio::Consensus::ApplyMutations(revTpl_, &revMuts);
 
     for (auto& eval : evals_) {
-        if (eval) {
-            if (eval.Strand == StrandEnum::FORWARD)
-                eval->ApplyMutations(fwdMuts);
-            else
-                eval->ApplyMutations(&revMuts);
-        }
+        if (eval.Strand() == StrandEnum::FORWARD)
+            eval.ApplyMutations(fwdMuts);
+        else if (eval.Strand() == StrandEnum::REVERSE)
+            eval.ApplyMutations(&revMuts);
     }
 
     assert(fwdTpl_.length() == revTpl_.length());
