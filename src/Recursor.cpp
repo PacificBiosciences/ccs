@@ -618,8 +618,7 @@ Recursor::Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr
 
 size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
 {
-    if (tpl_->Length() == 0)
-        throw std::runtime_error("template length is 0, invalid state!");
+    if (tpl_->Length() == 0) throw std::runtime_error("template length is 0, invalid state!");
 
     FillAlpha(M::Null(), a);
     FillBeta(a, b);

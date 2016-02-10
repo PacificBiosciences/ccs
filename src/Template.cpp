@@ -238,11 +238,12 @@ void Template::Reset()
 
 bool Template::ApplyMutation(const Mutation& mut)
 {
-    if (Length() == 0 && mut.LengthDiff() < 1) return false;
-
     bool mutApplied = false;
 
-    if (InRange(mut.Start(), mut.End())) {
+    if (Length() == 0 && mut.LengthDiff() < 1) goto finish;
+    if (!InRange(mut.Start(), mut.End())) goto finish;
+
+    {
         const size_t i = mut.Start() - start_;
 
         if (mut.Type == MutationType::INSERTION) {
@@ -276,6 +277,7 @@ bool Template::ApplyMutation(const Mutation& mut)
         mutApplied = true;
     }
 
+finish:
     // update the start_ and end_ mappings
     AbstractTemplate::ApplyMutation(mut);
 

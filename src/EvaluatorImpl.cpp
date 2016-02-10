@@ -62,9 +62,16 @@ EvaluatorImpl::EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const Mapp
 
 double EvaluatorImpl::LL(const Mutation& mut_)
 {
+    // apply the virtual mutation
     boost::optional<Mutation> mut(recursor_.tpl_->Mutate(mut_));
 
-    // apply the virtual mutation
+    // if the resulting template is 0, simulate NULL_TEMPLATE (removal)
+    if (recursor_.tpl_->Length() == 0) {
+        recursor_.tpl_->Reset();
+        return 0.0;
+    }
+
+    // if the mutation didn't hit this read, just return the ll as-is
     if (!mut) return LL();
 
     size_t betaLinkCol = 1 + mut->End();
