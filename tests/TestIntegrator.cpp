@@ -158,8 +158,8 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    // increase the floor by nmut because we do not support templates with lt 3
-    // bases
+    // increase the floor by 3 because we do not support templates or reads with lt 2 bases,
+    //   and we explore edit-1 space around the template to generate reads
     std::uniform_int_distribution<size_t> rand(3 + nmut, 30);
 
     // count how bad we do
@@ -178,13 +178,23 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
 
             try {
                 auto ai1 = makeIntegrator(tpl);
-                EXPECT_EQ(AddReadResult::SUCCESS,
-                          addRead(ai1, MappedRead(Read("N/A", read, mdl), strand, 0, tpl.length(),
-                                                  true, true)));
+                const auto arr1 = addRead(
+                    ai1, MappedRead(Read("N/A", read, mdl), strand, 0, tpl.length(), true, true));
+                EXPECT_EQ(AddReadResult::SUCCESS, arr1);
+                if (arr1 != AddReadResult::SUCCESS) {
+                    std::cerr << std::endl << "!! alpha/beta mismatch:" << std::endl;
+                    std::cerr << "  " << tpl.length() << ", " << tpl << std::endl;
+                    std::cerr << "  " << read.length() << ", " << read << std::endl;
+                }
                 auto ai2 = makeIntegrator(app);
-                EXPECT_EQ(AddReadResult::SUCCESS,
-                          addRead(ai2, MappedRead(Read("N/A", read, mdl), strand, 0, app.length(),
-                                                  true, true)));
+                const auto arr2 = addRead(
+                    ai2, MappedRead(Read("N/A", read, mdl), strand, 0, app.length(), true, true));
+                EXPECT_EQ(AddReadResult::SUCCESS, arr2);
+                if (arr2 != AddReadResult::SUCCESS) {
+                    std::cerr << std::endl << "!! alpha/beta mismatch:" << std::endl;
+                    std::cerr << "  " << app.length() << ", " << app << std::endl;
+                    std::cerr << "  " << read.length() << ", " << read << std::endl;
+                }
                 const double exp = ai2.LL();
                 const double obs0 = ai1.LL();
                 const double obs1 = ai1.LL(mut);
