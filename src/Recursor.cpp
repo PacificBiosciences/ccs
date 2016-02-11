@@ -637,10 +637,11 @@ size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
         flipflops += 3;
     }
 
+    const double unweight = tpl_->UndoCounterWeights(read_.Length());
     double alphaV, betaV;
     while (flipflops <= MAX_FLIP_FLOPS) {
-        alphaV = std::log(a(I, J)) + a.GetLogProdScales();
-        betaV = std::log(b(0, 0)) + b.GetLogProdScales();
+        alphaV = std::log(a(I, J)) + a.GetLogProdScales() + unweight;
+        betaV = std::log(b(0, 0)) + b.GetLogProdScales() + unweight;
 
         if (std::abs(1.0 - alphaV / betaV) <= ALPHA_BETA_MISMATCH_TOLERANCE) break;
 
