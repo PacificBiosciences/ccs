@@ -98,7 +98,7 @@ EvaluatorState Evaluator::Status() const { return state_; }
 void Evaluator::CheckInvariants()
 {
     if (!impl_) return;
-    if (impl_->recursor_.tpl_->Length() == 0) state_ = EvaluatorState::NULL_TEMPLATE;
+    if (impl_->recursor_.tpl_->Length() < 2) state_ = EvaluatorState::NULL_TEMPLATE;
     if (state_ != EvaluatorState::VALID) impl_.reset(nullptr);
 }
 

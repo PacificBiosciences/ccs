@@ -30,8 +30,10 @@ AbstractIntegrator::~AbstractIntegrator() {}
 AddReadResult AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
                                           const MappedRead& read)
 {
-    if (read.TemplateEnd <= read.TemplateStart)
-        throw std::invalid_argument("invalid read mapping, template end <= start");
+    if (read.TemplateEnd <= read.TemplateStart || read.TemplateEnd - read.TemplateStart < 2)
+        throw std::invalid_argument("template span < 2!");
+
+    if (read.Length() < 2) throw std::invalid_argument("read span < 2!");
 
     evals_.emplace_back(Evaluator(std::move(tpl), read, cfg_.MinZScore, cfg_.ScoreDiff));
 

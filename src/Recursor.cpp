@@ -187,7 +187,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
      * information */
     {
         auto currTplBase = (*tpl_)[J - 1].Base;
-        auto prevTplBase = (*tpl_)[J - 2].Base;
+        assert(J < 2 || prevTplBase == (*tpl_)[J - 2].Base);
         // end in the homopolymer state for now.
         auto likelihood =
             alpha(I - 1, J - 1) *
