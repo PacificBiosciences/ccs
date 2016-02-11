@@ -69,6 +69,7 @@ namespace std
 %include "Mutation.i"
 %include "Polish.i"
 %include "Read.i"
+%include "Version.i"
 
 // after ModelConfig.i and Mutation.i
 // %include "Template.i"
