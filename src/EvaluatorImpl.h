@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include <pacbio/consensus/Evaluator.h>
 #include <pacbio/consensus/Read.h>
 #include <pacbio/consensus/Template.h>
 
@@ -27,8 +28,8 @@ public:
 
     double ZScore() const;
 
-    void ApplyMutation(const Mutation& mut);
-    void ApplyMutations(std::vector<Mutation>* muts);
+    bool ApplyMutation(const Mutation& mut);
+    bool ApplyMutations(std::vector<Mutation>* muts);
 
 private:
     void Recalculate();
@@ -39,6 +40,8 @@ private:
     ScaledMatrix alpha_;
     ScaledMatrix beta_;
     ScaledMatrix extendBuffer_;
+
+    friend class Evaluator;
 };
 
 }  // namespace Consensus

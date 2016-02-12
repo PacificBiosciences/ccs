@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <numeric>
 #include <vector>
 
@@ -13,13 +14,21 @@ namespace Consensus {
 
 class ScaledMatrix : public SparseMatrix
 {
+public:
+    enum Direction
+    {
+        FORWARD,
+        REVERSE
+    };
+
 public:  // constructor/destructor
-    ScaledMatrix(int rows, int cols);
+    ScaledMatrix(int rows, int cols, Direction dir);
     ScaledMatrix(const ScaledMatrix& other);
     ~ScaledMatrix(void) = default;
 
 public:
     void Reset(size_t rows, size_t cols);
+    Direction SetDirection(Direction dir);
 
 public:  // nullability
     static const ScaledMatrix& Null();
@@ -34,15 +43,18 @@ public:  // Scaling and normalization
 
 private:
     std::vector<double> logScalars_;
+    Direction dir_;
 };
+
+std::ostream& operator<<(std::ostream&, const ScaledMatrix&);
 
 inline const ScaledMatrix& ScaledMatrix::Null()
 {
-    static ScaledMatrix* nullObj = new ScaledMatrix(0, 0);
+    static ScaledMatrix* nullObj = new ScaledMatrix(0, 0, FORWARD);
     return *nullObj;
 }
 
-inline void ScaledMatrix::FinishEditingColumn(int j, int usedBegin, int usedEnd)
+inline void ScaledMatrix::FinishEditingColumn(const int j, const int usedBegin, const int usedEnd)
 {
     // get the constant to scale by
     double c = 0.0;
@@ -50,14 +62,21 @@ inline void ScaledMatrix::FinishEditingColumn(int j, int usedBegin, int usedEnd)
         c = std::max(c, SparseMatrix::Get(i, j));
     }
 
+    // cumsum stuff
+    double last = 0.0;
+    if (dir_ == FORWARD && j > 0)
+        last = logScalars_[j - 1];
+    else if (dir_ == REVERSE && j + 1 < Columns())
+        last = logScalars_[j + 1];
+
     // set it
     if (c != 0.0 && c != 1.0) {
         for (int i = usedBegin; i < usedEnd; ++i) {
             SparseMatrix::Set(i, j, SparseMatrix::Get(i, j) / c);
         }
-        logScalars_[j] = std::log(c);
+        logScalars_[j] = last + std::log(c);
     } else {
-        logScalars_[j] = 0.0;
+        logScalars_[j] = last;
     }
 
     SparseMatrix::FinishEditingColumn(j, usedBegin, usedEnd);
@@ -66,12 +85,21 @@ inline void ScaledMatrix::FinishEditingColumn(int j, int usedBegin, int usedEnd)
 inline double ScaledMatrix::GetLogScale(int j) const { return logScalars_[j]; }
 inline double ScaledMatrix::GetLogProdScales(int beginColumn, int endColumn) const
 {
-    return std::accumulate(logScalars_.begin() + beginColumn, logScalars_.begin() + endColumn, 0.0);
+    double f, l;
+    if (dir_ == FORWARD) {
+        f = (beginColumn > 0) ? logScalars_[beginColumn - 1] : 0.0;
+        l = (endColumn > 0) ? logScalars_[endColumn - 1] : 0.0;
+        return l - f;
+    }  // else dir_ == REVERSE
+    f = logScalars_[beginColumn];
+    l = (endColumn < Columns()) ? logScalars_[endColumn] : 0.0;
+    return f - l;
 }
 
 inline double ScaledMatrix::GetLogProdScales() const
 {
-    return std::accumulate(logScalars_.begin(), logScalars_.end(), 0.0);
+    if (dir_ == FORWARD) return logScalars_.back();
+    return logScalars_.front();
 }
 
 }  // namespace Consensus

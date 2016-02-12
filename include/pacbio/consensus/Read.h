@@ -27,7 +27,8 @@ struct Read
 enum struct StrandEnum : uint8_t
 {
     FORWARD,
-    REVERSE
+    REVERSE,
+    UNMAPPED
 };
 
 struct MappedRead : public Read

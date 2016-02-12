@@ -43,9 +43,9 @@ using std::min;
 using std::max;
 
 // TODO(dalexander): put these into a RecursorConfig struct
+// TODO(anybody): Hmmm... not sure what the heck to do about these...
 #define MAX_FLIP_FLOPS 5
-#define ALPHA_BETA_MISMATCH_TOLERANCE \
-    .001  // TODO: Hmmm... not sure what the heck to do about these...
+#define ALPHA_BETA_MISMATCH_TOLERANCE .001
 #define REBANDING_THRESHOLD 0.04
 
 typedef std::pair<size_t, size_t> Interval;
@@ -65,7 +65,7 @@ inline Interval RangeUnion(const Interval& range1, const Interval& range2, const
     return RangeUnion(RangeUnion(range1, range2), RangeUnion(range3, range4));
 }
 
-double Combine(const double a, const double b) { return a + b; }
+inline double Combine(const double a, const double b) { return a + b; }
 }  // namespace anonymous
 
 void Recursor::FillAlpha(const M& guide, M& alpha) const
@@ -89,7 +89,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
 
     size_t hintBeginRow = 1, hintEndRow = 1;
     auto prevTransProbs = TemplatePosition{'N', 1, 0, 0, 0};
-    char prevTplBase = 'N';
+    char prevTplBase = prevTransProbs.Base;
 
     for (int j = 1; j < J; ++j)  // Note due to offset with reads and otherwise, this is ugly-ish
     {
@@ -99,7 +99,6 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
         auto currTplBase = currTransProbs.Base;
         this->RangeGuide(j, guide, alpha, &hintBeginRow, &hintEndRow);
 
-        size_t requiredEndRow = min(I, hintEndRow);
         size_t i;
         double thresholdScore = 0.0;
         double maxScore = 0.0;
@@ -111,7 +110,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
         size_t beginRow = hintBeginRow, endRow;
         // Recursively calculate [Probability in last state] * [Probability
         // transition to new state] * [Probability of emission]
-        for (i = beginRow; i < I && (score >= thresholdScore || i < requiredEndRow); ++i) {
+        for (i = beginRow; i < I && (score >= thresholdScore || i < hintEndRow); ++i) {
             const char curReadBase = read_.Seq[i - 1];
             // TODO: Terrible hack right now to emit this guy as teh IQV
             const uint8_t curReadIqv = read_.Cov[i - 1];
@@ -132,22 +131,21 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
 
               ***********  EDGE_CONDITION ************
              */
-            {
+            if (i > 0 && j > 0) {
                 thisMoveScore =
                     alpha(i - 1, j - 1) * prevTransProbs.Match *
                     tpl_->BaseEmissionPr(MoveType::MATCH, currTplBase, curReadBase) *
                     tpl_->CovEmissionPr(MoveType::MATCH, curReadIqv, prevTplBase, currTplBase);
+                score = Combine(score, thisMoveScore);
             }
-            score = Combine(score, thisMoveScore);
 
             // Stick or Branch:
             if (i > 1)  // Due to pinning, can't "insert" first or last read base
             {
-                const MoveType move =
-                    (curReadBase == nextTplBase) ? MoveType::BRANCH : MoveType::STICK;
-                double trans_emission_prob =
-                    (curReadBase == nextTplBase) ? currTransProbs.Branch : currTransProbs.Stick;
-                thisMoveScore = alpha(i - 1, j) * trans_emission_prob *
+                const bool nextBasesMatch = curReadBase == nextTplBase;
+                const MoveType move = nextBasesMatch ? MoveType::BRANCH : MoveType::STICK;
+                thisMoveScore = alpha(i - 1, j) *
+                                (nextBasesMatch ? currTransProbs.Branch : currTransProbs.Stick) *
                                 tpl_->BaseEmissionPr(move, nextTplBase, curReadBase) *
                                 tpl_->CovEmissionPr(move, curReadIqv, currTplBase, nextTplBase);
                 score = Combine(score, thisMoveScore);
@@ -187,7 +185,7 @@ void Recursor::FillAlpha(const M& guide, M& alpha) const
      * information */
     {
         auto currTplBase = (*tpl_)[J - 1].Base;
-        auto prevTplBase = (*tpl_)[J - 2].Base;
+        assert(J < 2 || prevTplBase == (*tpl_)[J - 2].Base);
         // end in the homopolymer state for now.
         auto likelihood =
             alpha(I - 1, J - 1) *
@@ -224,8 +222,6 @@ void Recursor::FillBeta(const M& guide, M& beta) const
 
         this->RangeGuide(j, guide, beta, &hintBeginRow, &hintEndRow);
 
-        size_t requiredBeginRow = std::max(hintBeginRow, static_cast<size_t>(0));
-
         beta.StartEditingColumn(j, hintBeginRow, hintEndRow);
 
         int i;
@@ -234,31 +230,24 @@ void Recursor::FillBeta(const M& guide, M& beta) const
         double maxScore = 0.0;
 
         int beginRow, endRow = hintEndRow;
-        for (i = endRow - 1; i > 0 && (score >= thresholdScore || i >= requiredBeginRow); --i) {
+        for (i = endRow - 1; i > 0 && (score >= thresholdScore || i >= hintBeginRow); --i) {
             const char nextReadBase = read_.Seq[i];
             const uint8_t nextReadIqv = read_.Cov[i];
-            double thisMoveScore;
+            double thisMoveScore = 0.0;
             score = 0.0;
 
-            // We are going to pre-catch this because it determine both the
-            // match score
-            // and whether a stick/branch.
-            bool nextBasesMatch = nextReadBase == nextTplBase;
-
             // Match
-            auto match_prev_emission_prob =
-                beta(i + 1, j + 1) *
-                tpl_->BaseEmissionPr(MoveType::MATCH, nextTplBase, nextReadBase);
-            if ((i + 1) < I) {
-                thisMoveScore = match_prev_emission_prob * currTransProbs.Match *
+            if (i + 1 < I) {
+                thisMoveScore = beta(i + 1, j + 1) * currTransProbs.Match *
+                                tpl_->BaseEmissionPr(MoveType::MATCH, nextTplBase, nextReadBase) *
                                 tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv,
                                                     currTransProbs.Base, nextTplBase);
                 score = Combine(score, thisMoveScore);
-            } else if ((i + 1) == I && ((j + 1) == J)) {
-                thisMoveScore =
-                    match_prev_emission_prob *
-                    tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv, currTransProbs.Base,
-                                        nextTplBase);  // TODO: Redundant on first pass?
+            } else if (i + 1 == I && j + 1 == J) {
+                thisMoveScore = beta(i + 1, j + 1) *
+                                tpl_->BaseEmissionPr(MoveType::MATCH, nextTplBase, nextReadBase) *
+                                tpl_->CovEmissionPr(MoveType::MATCH, nextReadIqv,
+                                                    currTransProbs.Base, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
@@ -266,11 +255,11 @@ void Recursor::FillBeta(const M& guide, M& beta) const
             //  can only transition to an insertion for the 2nd to last read
             //  base
             if (0 < i && i < I) {
+                const bool nextBasesMatch = nextReadBase == nextTplBase;
                 const MoveType move = nextBasesMatch ? MoveType::BRANCH : MoveType::STICK;
-                auto trans_emission_prob =
-                    nextBasesMatch ? currTransProbs.Branch : currTransProbs.Stick;
                 thisMoveScore =
-                    beta(i + 1, j) * trans_emission_prob *
+                    beta(i + 1, j) *
+                    (nextBasesMatch ? currTransProbs.Branch : currTransProbs.Stick) *
                     tpl_->BaseEmissionPr(move, nextTplBase, nextReadBase) *
                     tpl_->CovEmissionPr(move, nextReadIqv, currTransProbs.Base, nextTplBase);
                 score = Combine(score, thisMoveScore);
@@ -398,39 +387,15 @@ void Recursor::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t nu
     size_t maxLeftMovePossible = tpl_->Length();
     size_t maxDownMovePossible = read_.Length();
 
+    // completely fill the rectangle bounded by the min and max
+    size_t beginRow, endRow;
+    std::tie(beginRow, endRow) = alpha.UsedRowRange(beginColumn);
+    for (size_t j = 1; j + beginColumn < alpha.Columns() && j <= numExtColumns; ++j)
+        endRow = std::max(alpha.UsedRowRange(j + beginColumn).second, endRow);
+
     for (size_t extCol = 0; extCol < numExtColumns; extCol++) {
         size_t j = beginColumn + extCol;
-        size_t beginRow, endRow;
 
-        //
-        // If this extend is contained within the column bounds of
-        // the original alpha, we use the row range that was
-        // previously determined.  Otherwise start at alpha's last
-        // UsedRow beginRow and go to the end.
-        //
-        // BULLSHIT! If there was a deletion or insertion, the row range for the
-        // previous
-        // column, not the column of interest will be used.
-        // TODO: ERROR! Fix this. Temporary hack is to merge the columns in
-        // front and behind.
-        // Still totally broken.
-        if (j < tpl_->Length()) {
-            std::tie(beginRow, endRow) = alpha.UsedRowRange(j);
-            size_t pBegin, pEnd, nBegin, nEnd;
-            if (j > 0) {
-                std::tie(pBegin, pEnd) = alpha.UsedRowRange(j - 1);
-                beginRow = std::min(beginRow, pBegin);
-                endRow = std::max(endRow, pEnd);
-            }
-            if ((j + 1) < tpl_->Length()) {
-                std::tie(nBegin, nEnd) = alpha.UsedRowRange(j + 1);
-                beginRow = std::min(beginRow, nBegin);
-                endRow = std::max(endRow, nEnd);
-            }
-        } else {
-            beginRow = alpha.UsedRowRange(alpha.Columns() - 1).first;
-            endRow = alpha.Rows();
-        }
         ext.StartEditingColumn(extCol, beginRow, endRow);
 
         int i;
@@ -536,6 +501,15 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
     assert(beta.Rows() == I + 1 && ext.Rows() == I + 1);
     assert(abs(lengthDiff) < 2);
 
+    // completely fill the rectangle bounded by the min and max
+    int beginRow, endRow;
+    if (lastColumn + 1 < beta.Columns())
+        std::tie(beginRow, endRow) = beta.UsedRowRange(lastColumn + 1);
+    else
+        std::tie(beginRow, endRow) = beta.UsedRowRange(lastColumn);
+    for (int j = 0; j <= lastColumn && j <= numExtColumns; ++j)
+        beginRow = std::min(static_cast<int>(beta.UsedRowRange(lastColumn - j).first), beginRow);
+
     for (int j = lastColumn; j + numExtColumns > lastColumn; j--) {
         /* Convert from old template to new template coordinates.
            lengthDiff will be 0 for substitution, -1 for deletion and +1 for
@@ -544,24 +518,6 @@ void Recursor::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDi
         int jp = j + lengthDiff;
         // What is the current extension column we are adding data into.
         int extCol = lastExtColumn - (lastColumn - j);
-        int beginRow, endRow;
-        if (j < 0) {
-            beginRow = 0;
-            endRow = beta.UsedRowRange(0).second;
-        } else {
-            std::tie(beginRow, endRow) = beta.UsedRowRange(j);
-            int pBegin, pEnd, nBegin, nEnd;
-            if ((j - 1) >= 0) {
-                std::tie(pBegin, pEnd) = beta.UsedRowRange(j - 1);
-                beginRow = std::min(beginRow, pBegin);
-                endRow = std::max(endRow, pEnd);
-            }
-            if ((j + 1) < tpl_->Length()) {
-                std::tie(nBegin, nEnd) = beta.UsedRowRange(j + 1);
-                beginRow = std::min(beginRow, nBegin);
-                endRow = std::max(endRow, nEnd);
-            }
-        }
 
         ext.StartEditingColumn(extCol, beginRow, endRow);
 
@@ -651,6 +607,8 @@ Recursor::Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr
 
 size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
 {
+    if (tpl_->Length() == 0) throw std::runtime_error("template length is 0, invalid state!");
+
     FillAlpha(M::Null(), a);
     FillBeta(a, b);
 
@@ -668,10 +626,11 @@ size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
         flipflops += 3;
     }
 
+    const double unweight = tpl_->UndoCounterWeights(read_.Length());
     double alphaV, betaV;
     while (flipflops <= MAX_FLIP_FLOPS) {
-        alphaV = std::log(a(I, J)) + a.GetLogProdScales();
-        betaV = std::log(b(0, 0)) + b.GetLogProdScales();
+        alphaV = std::log(a(I, J)) + a.GetLogProdScales() + unweight;
+        betaV = std::log(b(0, 0)) + b.GetLogProdScales() + unweight;
 
         if (std::abs(1.0 - alphaV / betaV) <= ALPHA_BETA_MISMATCH_TOLERANCE) break;
 
@@ -683,7 +642,8 @@ size_t Recursor::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
         ++flipflops;
     }
 
-    if (std::abs(1.0 - alphaV / betaV) > ALPHA_BETA_MISMATCH_TOLERANCE) throw AlphaBetaMismatch();
+    if (std::abs(1.0 - alphaV / betaV) > ALPHA_BETA_MISMATCH_TOLERANCE || !std::isfinite(betaV))
+        throw AlphaBetaMismatch();
 
     return flipflops;
 }

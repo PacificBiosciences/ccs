@@ -55,6 +55,9 @@ public:
         else if (lhs.End() == rhs.End() && lhs.Start() < rhs.Start())
             return true;
 
+        else if (lhs.End() == rhs.End() && lhs.Start() == rhs.Start() && lhs.IsDeletion())
+            return true;
+
         return false;
     }
 

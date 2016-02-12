@@ -3,8 +3,6 @@
 
 #include <boost/optional.hpp>
 
-#include <pacbio/consensus/Evaluator.h>
-
 #include "EvaluatorImpl.h"
 
 namespace PacBio {
@@ -54,19 +52,25 @@ void WriteMatrix(const ScaledMatrix& mat)
 EvaluatorImpl::EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                              const double scoreDiff)
     : recursor_(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
-    , alpha_(mr.Length() + 1, recursor_.tpl_->Length() + 1)
-    , beta_(mr.Length() + 1, recursor_.tpl_->Length() + 1)
-    , extendBuffer_(mr.Length() + 1, EXTEND_BUFFER_COLUMNS)
+    , alpha_(mr.Length() + 1, recursor_.tpl_->Length() + 1, ScaledMatrix::FORWARD)
+    , beta_(mr.Length() + 1, recursor_.tpl_->Length() + 1, ScaledMatrix::REVERSE)
+    , extendBuffer_(mr.Length() + 1, EXTEND_BUFFER_COLUMNS, ScaledMatrix::FORWARD)
 {
     recursor_.FillAlphaBeta(alpha_, beta_);
-    if (!std::isfinite(LL())) throw AlphaBetaMismatch();
 }
 
 double EvaluatorImpl::LL(const Mutation& mut_)
 {
+    // apply the virtual mutation
     boost::optional<Mutation> mut(recursor_.tpl_->Mutate(mut_));
 
-    // apply the virtual mutation
+    // if the resulting template is 0, simulate NULL_TEMPLATE (removal)
+    if (recursor_.tpl_->Length() == 0) {
+        recursor_.tpl_->Reset();
+        return 0.0;
+    }
+
+    // if the mutation didn't hit this read, just return the ll as-is
     if (!mut) return LL();
 
     size_t betaLinkCol = 1 + mut->End();
@@ -90,6 +94,7 @@ double EvaluatorImpl::LL(const Mutation& mut_)
             assert(extendLength <= EXTEND_BUFFER_COLUMNS);
         }
 
+        extendBuffer_.SetDirection(ScaledMatrix::FORWARD);
         recursor_.ExtendAlpha(alpha_, extendStartCol, extendBuffer_, extendLength);
         score = recursor_.LinkAlphaBeta(extendBuffer_, extendLength, beta_, betaLinkCol,
                                         absoluteLinkColumn) +
@@ -102,6 +107,7 @@ double EvaluatorImpl::LL(const Mutation& mut_)
         assert(recursor_.tpl_->Length() + 1 > extendStartCol);
         size_t extendLength = recursor_.tpl_->Length() - extendStartCol + 1;
 
+        extendBuffer_.SetDirection(ScaledMatrix::FORWARD);
         recursor_.ExtendAlpha(alpha_, extendStartCol, extendBuffer_, extendLength);
         score = std::log(extendBuffer_(recursor_.read_.Length(), extendLength - 1)) +
                 alpha_.GetLogProdScales(0, extendStartCol) +
@@ -112,6 +118,7 @@ double EvaluatorImpl::LL(const Mutation& mut_)
         // We duplicate this math inside the function
         size_t extendLength = 1 + mut->End() + mut->LengthDiff();
 
+        extendBuffer_.SetDirection(ScaledMatrix::REVERSE);
         recursor_.ExtendBeta(beta_, extendLastCol, extendBuffer_, mut->LengthDiff());
         score = std::log(extendBuffer_(0, 0)) +
                 beta_.GetLogProdScales(extendLastCol + 1, beta_.Columns()) +
@@ -132,7 +139,8 @@ double EvaluatorImpl::LL(const Mutation& mut_)
         //
         // Just do the whole fill
         //
-        ScaledMatrix alphaP(recursor_.read_.Length() + 1, recursor_.tpl_->Length() + 1);
+        ScaledMatrix alphaP(recursor_.read_.Length() + 1, recursor_.tpl_->Length() + 1,
+                            ScaledMatrix::FORWARD);
         recursor_.FillAlpha(ScaledMatrix::Null(), alphaP);
         score = std::log(alphaP(recursor_.read_.Length(), recursor_.tpl_->Length())) +
                 alphaP.GetLogProdScales();
@@ -172,16 +180,22 @@ inline void EvaluatorImpl::Recalculate()
     recursor_.FillAlphaBeta(alpha_, beta_);
 }
 
-void EvaluatorImpl::ApplyMutation(const Mutation& mut)
+bool EvaluatorImpl::ApplyMutation(const Mutation& mut)
 {
-    recursor_.tpl_->ApplyMutation(mut);
-    Recalculate();
+    if (recursor_.tpl_->ApplyMutation(mut)) {
+        Recalculate();
+        return true;
+    }
+    return false;
 }
 
-void EvaluatorImpl::ApplyMutations(std::vector<Mutation>* muts)
+bool EvaluatorImpl::ApplyMutations(std::vector<Mutation>* muts)
 {
-    recursor_.tpl_->ApplyMutations(muts);
-    Recalculate();
+    if (recursor_.tpl_->ApplyMutations(muts)) {
+        Recalculate();
+        return true;
+    }
+    return false;
 }
 
 /*

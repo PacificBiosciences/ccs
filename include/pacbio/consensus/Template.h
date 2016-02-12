@@ -29,8 +29,8 @@ public:
     virtual void Reset() = 0;
 
     // actually apply mutations
-    virtual void ApplyMutation(const Mutation& mut);
-    virtual void ApplyMutations(std::vector<Mutation>* muts);
+    virtual bool ApplyMutation(const Mutation& mut);
+    virtual bool ApplyMutations(std::vector<Mutation>* muts);
 
     // access model configuration
     virtual double BaseEmissionPr(MoveType move, char from, char to) const = 0;
@@ -70,7 +70,7 @@ public:
     boost::optional<Mutation> Mutate(const Mutation& mut);
     void Reset();
 
-    void ApplyMutation(const Mutation& mut);
+    bool ApplyMutation(const Mutation& mut);
 
     inline double BaseEmissionPr(MoveType move, char from, char to) const;
     inline double CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const;
@@ -99,7 +99,7 @@ public:
     inline bool IsMutated() const;
     inline boost::optional<Mutation> Mutate(const Mutation&);
     inline void Reset() {}
-    void ApplyMutation(const Mutation& mut);
+    bool ApplyMutation(const Mutation& mut);
 
     inline double BaseEmissionPr(MoveType move, char from, char to) const;
     inline double CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const;
