@@ -16,7 +16,8 @@ enum struct EvaluatorState : uint8_t
     VALID,
     ALPHA_BETA_MISMATCH,
     POOR_ZSCORE,
-    NULL_TEMPLATE
+    NULL_TEMPLATE,
+    DISABLED
 };
 
 // forward declaration
@@ -25,6 +26,7 @@ class EvaluatorImpl;
 class Evaluator
 {
 public:
+    Evaluator(EvaluatorState);
     Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double minZScore,
               double scoreDiff);
 
@@ -49,11 +51,11 @@ public:
     bool ApplyMutations(std::vector<Mutation>* muts);
 
     EvaluatorState Status() const;
+    void Release();
 
 private:
     void CheckInvariants();
 
-public:
 private:
     std::unique_ptr<EvaluatorImpl> impl_;
     EvaluatorState state_;
