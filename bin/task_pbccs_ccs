@@ -166,11 +166,11 @@ def get_parser():
                 description="Minimum read score of input subreads")
     p.add_int(Constants.MAX_LENGTH_ID, "maxLength",
               default=Constants.MAX_LENGTH_DEFAULT,
-              name="Maximum Length",
+              name="Maximum Subread Length",
               description="Maximum length of subreads to use for generating CCS")
     p.add_int(Constants.MIN_LENGTH_ID, "minLength",
               default=Constants.MIN_LENGTH_DEFAULT,
-              name="Minimum Length",
+              name="Minimum Subread Length",
               description="Minimum length of subreads to use for generating CCS")
     p.add_int(Constants.MIN_PASSES_ID, "minPasses",
               default=Constants.MIN_PASSES_DEFAULT,
