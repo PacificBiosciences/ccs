@@ -63,6 +63,9 @@ TEST(SparsePoaTest, TestLocalStaggered)
     // Adapted from Pat's C# test
     vector<std::string> reads;
 
+    // Don't let clang-format break the whitespace here!!
+    // clang-format off
+
     //        0123456789012345678901234567890
     reads += "TTTACAGGATAGTGCCGCCAATCTTCCAGT",
     //               0123456789012345678901234567890123456789012345
@@ -80,6 +83,8 @@ TEST(SparsePoaTest, TestLocalStaggered)
     // -----------------------------------------------------------------------------------
     //                012345678901234567890123456789012345678901234567890123456789012345678
     //               "ATAGTGCCGCCAATCTTCCAGTATATACAGCACGGAGTAGCATCACGTACGTACGTCTACACGTAATT",
+
+    // clang-format on
 
     SparsePoa sp;
     for (auto& read : reads) {
