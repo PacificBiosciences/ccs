@@ -48,38 +48,61 @@ static const SdpAnchor* binarySearchAnchors(const SdpAnchorVector& anchors, size
     }
 }
 
-typedef std::pair<size_t, size_t> Interval;
+
+typedef std::pair<int, int> Interval;
+
+std::string formatIntervalEndpoint(int i)
+{
+    if      (i == INT_MAX/2)  { return "inf";  }
+    else if (i == -INT_MAX/2) { return "-inf"; }
+    else                      { return std::to_string(i); }
+}
+
+std::string formatInterval(const Interval& ival)
+{
+    return (std::string("[") +
+            formatIntervalEndpoint(ival.first) +
+            std::string(", ") +
+            formatIntervalEndpoint(ival.second) +
+            std::string(")"));
+}
+
+// Canonical empty interval....
+const Interval emptyInterval = Interval(INT_MAX / 2, -INT_MAX / 2);
 
 inline Interval RangeUnion(const Interval& range1, const Interval& range2)
 {
-    return Interval(min(range1.first, range2.first), max(range1.second, range2.second));
+    return Interval(min(range1.first, range2.first),
+                    max(range1.second, range2.second));
 }
 
 inline Interval RangeUnion(const std::vector<Interval>& ranges)
 {
-    Interval result = Interval(INT_MAX / 2, -INT_MAX / 2);
+    Interval result = emptyInterval;
     for (const Interval& r : ranges) {
         result = RangeUnion(result, r);
     }
     return result;
 }
 
-inline Interval next(const Interval& v, size_t upperBound)
+inline Interval next(const Interval& v, int upperBound)
 {
-    return Interval(min(v.first + 1, upperBound), min(v.second + 1, upperBound));
+    if (v == emptyInterval)
+        return emptyInterval;
+    else
+        return Interval(min(v.first + 1, upperBound), min(v.second + 1, upperBound));
 }
 
-inline Interval prev(const Interval& v, size_t lowerBound = 0)
+inline Interval prev(const Interval& v, int lowerBound = 0)
 {
-    return Interval(max(v.first - 1, lowerBound), max(v.second - 1, lowerBound));
-}
-
-inline Interval rangeIntersection(const Interval& range1, const Interval& range2)
-{
-    return Interval(max(range1.first, range2.first), min(range1.second, range2.second));
+    if (v == emptyInterval)
+        return emptyInterval;
+    else
+        return Interval(max(v.first - 1, lowerBound), max(v.second - 1, lowerBound));
 }
 
 SdpRangeFinder::~SdpRangeFinder() {}
+
 void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
                                      const std::vector<Vertex>& consensusPath,
                                      const std::string& consensusSequence,
@@ -87,13 +110,18 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
 {
 #if DEBUG_RANGE_FINDER
     poaGraph.WriteGraphVizFile("debug-graph.dot", PoaGraph::VERBOSE_NODES, NULL);
+    std::map<Vertex, const SdpAnchor*> anchorByVertex;
 #endif
     // Clear prexisting state first!
     alignableReadIntervalByVertex_.clear();
 
     const int readLength = readSequence.size();
-
     SdpAnchorVector anchors = FindAnchors(consensusSequence, readSequence);
+#if DEBUG_RANGE_FINDER
+    std::cout << "Consensus: " << consensusSequence << std::endl;
+    std::cout << "Read     : " << readSequence << std::endl;
+    std::cout << "RawAnchors length: " << anchors.size() << std::endl;
+#endif
 
     std::map<VD, optional<Interval>> directRanges;
     std::map<VD, Interval> fwdMarks, revMarks;
@@ -112,8 +140,7 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
         const SdpAnchor* anchor = binarySearchAnchors(anchors, cssPos);
         if (anchor != NULL) {
 #if DEBUG_RANGE_FINDER
-            cout << "Anchor: " << anchor->first << "-" << anchor->second << " (Vertex " << vExt
-                 << ")" << endl;
+            anchorByVertex[vExt] = anchor;
 #endif
             directRanges[v] = Interval(max(int(anchor->second) - WIDTH, 0),
                                        min(int(anchor->second) + WIDTH, readLength));
@@ -136,12 +163,16 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
                 Interval predRangeStepped = next(fwdMarks.at(pred), readLength);
                 predRangesStepped.push_back(predRangeStepped);
             }
-            fwdMarks[v] = RangeUnion(predRangesStepped);
+            Interval fwdInterval = RangeUnion(predRangesStepped);
+            fwdMarks[v] = fwdInterval;
         }
     }
 
+
     // Do the same thing, but as a backwards recursion
     for (const VD v : boost::adaptors::reverse(sortedVertices)) {
+        Vertex vExt = poaGraph.externalize(v); // DEBUGGING
+
         optional<Interval> directRange = directRanges.at(v);
         if (directRange) {
             revMarks[v] = directRange.get();
@@ -149,10 +180,12 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
             std::vector<Interval> succRangesStepped;
             BOOST_FOREACH (const ED& e, out_edges(v, poaGraph.g_)) {
                 VD succ = target(e, poaGraph.g_);
+                Vertex succExt = poaGraph.externalize(succ);  // DEBUGGING
                 Interval succRangeStepped = prev(revMarks.at(succ), 0);
                 succRangesStepped.push_back(succRangeStepped);
             }
-            revMarks[v] = RangeUnion(succRangesStepped);
+            Interval revInterval = RangeUnion(succRangesStepped);
+            revMarks[v] = revInterval;
         }
     }
 
@@ -161,8 +194,19 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
         Vertex vExt = poaGraph.externalize(v);
         alignableReadIntervalByVertex_[vExt] = RangeUnion(fwdMarks.at(v), revMarks.at(v));
 #if DEBUG_RANGE_FINDER
-        cout << vExt << " range = [" << alignableReadIntervalByVertex_[v].Begin << ", "
-             << alignableReadIntervalByVertex_[v].End << ")" << endl;
+        cout << vExt << "\t";
+        if (anchorByVertex.find(vExt) != anchorByVertex.end())
+        {
+            cout <<  " @  " << anchorByVertex.at(vExt)->second <<  "\t";
+        }
+        else
+        {
+            cout << "\t";
+        }
+        cout << "Fwd mark: " << formatInterval(fwdMarks[v]) << "\t"
+             << "Rev mark: " << formatInterval(revMarks[v]) << "\t"
+             << "Range: " << formatInterval(alignableReadIntervalByVertex_[vExt])
+             << endl;
 #endif
     }
 }

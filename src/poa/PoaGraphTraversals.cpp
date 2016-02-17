@@ -211,9 +211,8 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
 {
     const int I = sequence.length();
 
-    // perform traceback from (I,$), threading the new sequence into the graph
-    // as
-    // we go.
+    // perform traceback from (I,$), threading the new sequence into
+    // the graph as we go.
     int i = I;
     const AlignmentColumn* curCol;
     VD v = null_vertex, forkVertex = null_vertex;

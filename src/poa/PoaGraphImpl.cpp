@@ -149,7 +149,7 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumnForExit(VD v,
     // this is kind of unnecessary as we are only actually using one entry in
     // this column
     int I = sequence.length();
-    AlignmentColumn* curCol = new AlignmentColumn(v, I + 1);
+    AlignmentColumn* curCol = new AlignmentColumn(v, 0, I + 1);
 
     float bestScore = -FLT_MAX;
     VD prevVertex = null_vertex;
@@ -164,8 +164,7 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumnForExit(VD v,
             if (u != exitVertex_) {
                 const AlignmentColumn* predCol = colMap.at(u);
                 int prevRow = (config.Mode == AlignMode::LOCAL ? ArgMax(predCol->Score) : I);
-
-                if (predCol->Score[prevRow] > bestScore) {
+                if (predCol->HasRow(prevRow) && predCol->Score[prevRow] > bestScore) {
                     bestScore = predCol->Score[prevRow];
                     prevVertex = predCol->CurrentVertex;
                 }
@@ -175,7 +174,7 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumnForExit(VD v,
         // regular predecessors
         vector<const AlignmentColumn*> predecessorColumns = getPredecessorColumns(g_, v, colMap);
         for (const AlignmentColumn* predCol : predecessorColumns) {
-            if (predCol->Score[I] > bestScore) {
+            if (predCol->HasRow(I) && predCol->Score[I] > bestScore) {
                 bestScore = predCol->Score[I];
                 prevVertex = predCol->CurrentVertex;
             }
@@ -190,55 +189,38 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumnForExit(VD v,
 
 const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentColumnMap& colMap,
                                                          const std::string& sequence,
-                                                         const AlignConfig& config, int beginRow,
+                                                         const AlignConfig& config,
+                                                         int beginRow,
                                                          int endRow) const
 {
-    AlignmentColumn* curCol = new AlignmentColumn(v, sequence.length() + 1);
+    AlignmentColumn* curCol;
+    if (beginRow > endRow)
+    {
+        // This happens when there are no anchors in the read.  We
+        // want this read to be threaded onto the graph as a singleton
+        // path.  We use the START move.
+
+        // This is only going to work in LOCAL aln, assert on that
+
+        curCol = new AlignmentColumn(v, 0, 1);
+        curCol->ReachingMove[0] = StartMove;
+        curCol->PreviousVertex[0] = enterVertex_;
+        curCol->Score[0] = 0; // > -FLT_MAX
+        return curCol;
+    }
+
+    assert (beginRow < endRow || beginRow == 0 || beginRow == sequence.length());
+
+    curCol = new AlignmentColumn(v, beginRow, endRow);
     const PoaNode& vertexInfo = vertexInfoMap_[v];
     vector<const AlignmentColumn*> predecessorColumns = getPredecessorColumns(g_, v, colMap);
 
-    //
-    // handle row 0 separately:
-    //
-    if (predecessorColumns.size() == 0) {
-        // if this vertex doesn't have any in-edges it is ^; has
-        // no reaching move
-        assert(v == enterVertex_);
-        curCol->Score[0] = 0;
-        curCol->ReachingMove[0] = InvalidMove;
-        curCol->PreviousVertex[0] = null_vertex;
-    } else if (config.Mode == AlignMode::SEMIGLOBAL || config.Mode == AlignMode::LOCAL) {
-        // under semiglobal or local alignment, we use the Start move
-        curCol->Score[0] = 0;
-        curCol->ReachingMove[0] = StartMove;
-        curCol->PreviousVertex[0] = enterVertex_;
-    } else {
-        // otherwise it's a deletion
-        float candidateScore;
-        float bestScore = -FLT_MAX;
-        VD prevVertex = null_vertex;
-        MoveType reachingMove = InvalidMove;
-
-        for (const AlignmentColumn* prevCol : predecessorColumns) {
-            candidateScore = prevCol->Score[0] + config.Params.Delete;
-            if (candidateScore > bestScore) {
-                bestScore = candidateScore;
-                prevVertex = prevCol->CurrentVertex;
-                reachingMove = DeleteMove;
-            }
-        }
-        assert(reachingMove != InvalidMove);
-        curCol->Score[0] = bestScore;
-        curCol->ReachingMove[0] = reachingMove;
-        curCol->PreviousVertex[0] = prevVertex;
-    }
-
-    //
-    // tackle remainder of read.
-    //
     // i represents position in array
     // readPos=i-1 represents position in read
-    for (unsigned int i = 1; i <= sequence.length(); i++) {
+    for (int i = beginRow; i < endRow; i++) {
+
+        assert(curCol->HasRow(i));
+
         float candidateScore, bestScore;
         VD prevVertex;
         MoveType reachingMove;
@@ -253,35 +235,78 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentCo
             reachingMove = InvalidMove;
         }
 
-        for (const AlignmentColumn* prevCol : predecessorColumns) {
-            // Incorporate (Match or Mismatch)
-            bool isMatch = sequence[i - 1] == vertexInfo.Base;
-            candidateScore =
-                prevCol->Score[i - 1] + (isMatch ? config.Params.Match : config.Params.Mismatch);
-            if (candidateScore > bestScore) {
-                bestScore = candidateScore;
-                prevVertex = prevCol->CurrentVertex;
-                reachingMove = (isMatch ? MatchMove : MismatchMove);
-            }
-            // Delete
-            candidateScore = prevCol->Score[i] + config.Params.Delete;
-            if (candidateScore > bestScore) {
-                bestScore = candidateScore;
-                prevVertex = prevCol->CurrentVertex;
-                reachingMove = DeleteMove;
+        // Special-case the first row, this could probably be factored
+        // more cleanly
+        if (i == 0)
+        {
+            if (predecessorColumns.size() == 0) {
+                // if this vertex doesn't have any in-edges it is ^; has
+                // no reaching move
+                assert(v == enterVertex_);
+                curCol->Score[0] = 0;
+                curCol->ReachingMove[0] = InvalidMove;
+                curCol->PreviousVertex[0] = null_vertex;
+            } else if (config.Mode == AlignMode::SEMIGLOBAL || config.Mode == AlignMode::LOCAL) {
+                // under semiglobal or local alignment, we use the Start move
+                curCol->Score[0] = 0;
+                curCol->ReachingMove[0] = StartMove;
+                curCol->PreviousVertex[0] = enterVertex_;
+            } else {
+                // otherwise it's a deletion
+                for (const AlignmentColumn* prevCol : predecessorColumns) {
+                    candidateScore = prevCol->Score[0] + config.Params.Delete;
+                    if (candidateScore > bestScore) {
+                        bestScore = candidateScore;
+                        prevVertex = prevCol->CurrentVertex;
+                        reachingMove = DeleteMove;
+                    }
+                }
+                assert(reachingMove != InvalidMove);
+                curCol->Score[0] = bestScore;
+                curCol->ReachingMove[0] = reachingMove;
+                curCol->PreviousVertex[0] = prevVertex;
             }
         }
-        // Extra
-        candidateScore = curCol->Score[i - 1] + config.Params.Insert;
-        if (candidateScore > bestScore) {
-            bestScore = candidateScore;
-            prevVertex = v;
-            reachingMove = ExtraMove;
+        else
+        {
+            for (const AlignmentColumn* prevCol : predecessorColumns) {
+                // Incorporate (Match or Mismatch)
+                if (prevCol->HasRow(i - 1))
+                {
+                    bool isMatch = sequence[i - 1] == vertexInfo.Base;
+                    candidateScore =
+                        prevCol->Score[i - 1] + (isMatch ? config.Params.Match : config.Params.Mismatch);
+                    if (candidateScore > bestScore) {
+                        bestScore = candidateScore;
+                        prevVertex = prevCol->CurrentVertex;
+                        reachingMove = (isMatch ? MatchMove : MismatchMove);
+                    }
+                }
+                // Delete
+                if (prevCol->HasRow(i)) {
+                    candidateScore = prevCol->Score[i] + config.Params.Delete;
+                    if (candidateScore > bestScore) {
+                        bestScore = candidateScore;
+                        prevVertex = prevCol->CurrentVertex;
+                        reachingMove = DeleteMove;
+                    }
+                }
+            }
+            // Extra
+            if (curCol->HasRow(i - 1))
+            {
+                candidateScore = curCol->Score[i - 1] + config.Params.Insert;
+                if (candidateScore > bestScore) {
+                    bestScore = candidateScore;
+                    prevVertex = v;
+                    reachingMove = ExtraMove;
+                }
+            }
+            assert(reachingMove != InvalidMove);
+            curCol->Score[i] = bestScore;
+            curCol->ReachingMove[i] = reachingMove;
+            curCol->PreviousVertex[i] = prevVertex;
         }
-        assert(reachingMove != InvalidMove);
-        curCol->Score[i] = bestScore;
-        curCol->ReachingMove[i] = reachingMove;
-        curCol->PreviousVertex[i] = prevVertex;
     }
 
     return curCol;
@@ -339,11 +364,13 @@ PoaAlignmentMatrixImpl* PoaGraphImpl::TryAddRead(const std::string& readSeq,
     const AlignmentColumn* curCol;
     for (const auto& v : sortedVertices) {
         if (v != exitVertex_) {
-            size_t startRange = 0, endRange = readSeq.size();
+            size_t startRow = 0, endRow = readSeq.size() + 1;
             if (rangeFinder) {
-                std::tie(startRange, endRange) = rangeFinder->FindAlignableRange(externalize(v));
+                // FIXME: this call returns an alignable sequence range, which is not the same as
+                // the alignable rows (the end is off-by-one, for a normal interval)
+                std::tie(startRow, endRow) = rangeFinder->FindAlignableRange(externalize(v));
             }
-            curCol = makeAlignmentColumn(v, mat->columns_, readSeq, config, startRange, endRange);
+            curCol = makeAlignmentColumn(v, mat->columns_, readSeq, config, startRow, endRow);
         } else {
             curCol = makeAlignmentColumnForExit(v, mat->columns_, readSeq, config);
         }
