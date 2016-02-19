@@ -219,7 +219,8 @@ public:
 #ifndef NDEBUG
                 << " at " << file << ':' << line
 #endif
-                << delim << std::hex << std::this_thread::get_id() << std::dec << "||" << delim;
+                << delim << std::hex << std::showbase << std::this_thread::get_id()
+                << std::noshowbase << std::dec << "||" << delim;
     }
 
     LogMessage(const LogMessage& msg) = delete;
