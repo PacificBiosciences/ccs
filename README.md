@@ -139,3 +139,22 @@ The Z-score for a subread is a metric which quantifies how well it doesn't fit t
 Subreads with very low Z-scores are very unlikely to have been produced according to the CCS model, and so represent outliers.  For example, the plot below shows the Z-scores for several subreads.  With a -5 cutoff, we can see that one subread is excluded from the data.
 
 ![Image of ZScore](http://www.evolvedmicrobe.com/Zfiltering.jpg)
+
+
+## CCS Yield Report
+
+After ccs runs, a report is generated that specifies the number of ZMWs that successfully produced consensus sequences, as well as a count of how many ZMWs did not produce a consensus sequence for various reasons.  The entries in this report, as well as parameters that can be set to change to increase of decrease the number of ZMWs that pass various filters, are explained in the table below.
+
+| ZMW result                           | Parameter(s) affecting result               | Description                                                                                                                                                                                                           | 
+|--------------------------------------|---------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+| Below SNR threshold                  | --minSnr                                    | ZMW had at least one channel's SNR below the minimum threshold.                                                                                                                                                       | 
+| No usable subreads                   | --minReadScore, --minLength, --maxLength | The ZMW had no usable subreads, either there were no subreads, or all the subreads were below the minimum quality threshold or were above/below the specified length thresholds.                                      | 
+| Insert size too long                 | --maxLength                                | The consensus sequence was above the maximum length threshold. Note that if all the input subreads were already below the size criteria, they would all have been excluded leading to "No usable subreads."           | 
+| Insert size too small                | --minLength                                | The consensus sequence was below the miminum length threshold.  Note that if all the input subreads were already below the size criteria, they would all have been excluded leading to "No usable subreads."          | 
+| Not enough full passes               |  --minPasses                                | There were not enough subreads that had an adapter at the start and end of the subread (a "full pass").                                                                                                               | 
+| Too many unusable subreads           |  --minZScore, --maxDropFraction             | The ZMW had too many subreads that could not be used.  A read can be unusable if it appears too unlikely given the initial template (low Z-score), or rarely, if a numerical rounding error occurs during processing. | 
+| CCS did not converge                 | None                                        | The consensus sequence did not converge after the maximum number of allowed rounds of polishing.                                                                                                                      | 
+| CCS below minimum predicted accuracy | --minPredictedAccuracy                     | Each CCS read has a predicted level of accuracy associated with it, reads that are below the minimum specified threshold are removed.                                                                                 | 
+| Unknown error during processing      | None                                        | These should not occur.                                                                                                                                                                                               | 
+
+
