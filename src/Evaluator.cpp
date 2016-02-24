@@ -31,14 +31,20 @@ Evaluator::Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& 
             new EvaluatorImpl(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
 
         const double zScore = impl_->ZScore();
+
+        // the zscore filter is disabled under the following conditions
+        if (mr.Model == "S/P1-C1") goto end;
+        if (minZScore <= -100.0) goto end;
+        if (std::isnan(minZScore)) goto end;
+
         // TODO(lhepler): re-enable this check when the zscore bits are working again
         // assert(std::isfinite(zScore));
-        if (!std::isnan(minZScore) && (!std::isfinite(zScore) || zScore < minZScore))
-            state_ = EvaluatorState::POOR_ZSCORE;
+        if (!std::isfinite(zScore) || zScore < minZScore) state_ = EvaluatorState::POOR_ZSCORE;
     } catch (AlphaBetaMismatch&) {
         state_ = EvaluatorState::ALPHA_BETA_MISMATCH;
     }
 
+end:
     CheckInvariants();
 }
 
