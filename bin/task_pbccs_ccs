@@ -32,7 +32,7 @@ class Constants(object):
     MIN_SNR_ID = "pbccs.task_options.min_snr"
     MIN_SNR_DEFAULT = 3.75
     MIN_READ_SCORE_ID = "pbccs.task_options.min_read_score"
-    MIN_READ_SCORE_DEFAULT = 0.75
+    MIN_READ_SCORE_DEFAULT = 0.65
     MAX_LENGTH_ID = "pbccs.task_options.max_length"
     MAX_LENGTH_DEFAULT = 7000
     MIN_LENGTH_ID = "pbccs.task_options.min_length"
