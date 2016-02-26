@@ -190,8 +190,15 @@ class PoaGraphImpl
 
     void repCheck() const;
 
-    Vertex externalize(VD vd) const { return vertexInfoMap_[vd].Id; }
-    VD internalize(Vertex vertex) const { return vertexLookup_.at(vertex); }
+    Vertex externalize(VD vd) const
+    {
+        if (vd == null_vertex) { return (Vertex) -1; }
+        else { return vertexInfoMap_[vd].Id; }
+    }
+
+    VD internalize(Vertex vertex) const
+    { return vertexLookup_.at(vertex); }
+
     std::vector<Vertex> externalizePath(const std::vector<VD>& vds) const
     {
         std::vector<Vertex> out(vds.size(), 0);
