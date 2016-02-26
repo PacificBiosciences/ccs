@@ -63,6 +63,23 @@ private:
     bool verbose_;
 };
 
+
+class my_graph_writer
+{
+public:
+    my_graph_writer(bool leftToRight=false)
+        : leftToRight_(leftToRight)
+    {}
+
+    void operator()(std::ostream& out) const
+    {
+        if (leftToRight_) out << "rankdir=\"LR\";" << std::endl;
+    }
+
+private:
+    bool leftToRight_;
+};
+
 }  // namespace boost
 
 namespace PacBio {
@@ -398,8 +415,12 @@ size_t PoaGraphImpl::NumReads() const { return numReads_; }
 string PoaGraphImpl::ToGraphViz(int flags, const PoaConsensus* pc) const
 {
     std::stringstream ss;
-    write_graphviz(ss, g_, my_label_writer(vertexInfoMap_, flags & PoaGraph::COLOR_NODES,
-                                           flags & PoaGraph::VERBOSE_NODES, pc));
+    write_graphviz(ss, g_,
+                   my_label_writer(vertexInfoMap_, flags & PoaGraph::COLOR_NODES,
+                                   flags & PoaGraph::VERBOSE_NODES, pc),
+                   default_writer(), // edge writer
+                   my_graph_writer(true));
+
     return ss.str();
 }
 
