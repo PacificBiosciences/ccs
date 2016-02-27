@@ -96,6 +96,8 @@ PoaAlignmentMatrixImpl::~PoaAlignmentMatrixImpl()
 }
 
 float PoaAlignmentMatrixImpl::Score() const { return score_; }
+
+
 // ----------------- PoaGraphImpl ---------------------
 
 PoaGraphImpl::PoaGraphImpl()
