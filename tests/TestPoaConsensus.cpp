@@ -87,7 +87,7 @@ static void plotConsensus(const PoaConsensus* pc, string description,
 //  cout << dot << endl;
 // }
 
-TEST(PoaGraph, SmallBasicTest)
+TEST(PoaGraph, SmallBasicTest1)
 {
     // Test that it works with a single sequence
     vector<string> reads;
@@ -106,11 +106,38 @@ TEST(PoaGraph, SmallBasicTest)
         "3->4 ;"
         "4->1 ;"
         "}";
-    plotConsensus(pc, "small-basic");
+    plotConsensus(pc, "small-basic-1");
     EXPECT_EQ(expectedDot, erase_all_copy(dot, "\n"));
     EXPECT_EQ("GGG", pc->Sequence);
     delete pc;
 }
+
+TEST(PoaGraph, SmallBasicTest2)
+{
+    // Test that it works with two identical sequences
+    vector<string> reads;
+    reads += "GGG", "GGG";
+    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::GLOBAL);
+    string dot = pc->Graph.ToGraphViz();
+    string expectedDot =
+        "digraph G {"
+        "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
+        "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
+        "2[shape=Mrecord, label=\"{ G | 2 }\"];"
+        "3[shape=Mrecord, label=\"{ G | 2 }\"];"
+        "4[shape=Mrecord, label=\"{ G | 2 }\"];"
+        "0->2 ;"
+        "2->3 ;"
+        "3->4 ;"
+        "4->1 ;"
+        "}";
+    plotConsensus(pc, "small-basic-2");
+    EXPECT_EQ(expectedDot, erase_all_copy(dot, "\n"));
+    EXPECT_EQ("GGG", pc->Sequence);
+
+    delete pc;
+}
+
 
 TEST(PoaGraph, SmallExtraTests)
 {
