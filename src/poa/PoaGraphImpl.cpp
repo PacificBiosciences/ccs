@@ -86,17 +86,6 @@ namespace PacBio {
 namespace Consensus {
 namespace detail {
 
-// ----------------- PoaAlignmentMatrixImpl ---------------------
-
-PoaAlignmentMatrixImpl::~PoaAlignmentMatrixImpl()
-{
-    for (auto& kv : columns_) {
-        delete kv.second;
-    }
-}
-
-float PoaAlignmentMatrixImpl::Score() const { return score_; }
-
 
 // ----------------- PoaGraphImpl ---------------------
 
@@ -206,7 +195,8 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumnForExit(VD v,
     return curCol;
 }
 
-const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentColumnMap& colMap,
+const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v,
+                                                         const AlignmentColumnMap& colMap,
                                                          const std::string& sequence,
                                                          const AlignConfig& config,
                                                          int beginRow,
@@ -337,7 +327,7 @@ void PoaGraphImpl::AddRead(const std::string& readSeq, const AlignConfig& config
     if (NumReads() == 0) {
         AddFirstRead(readSeq, readPathOutput);
     } else {
-        PoaAlignmentMatrixImpl* mat = TryAddRead(readSeq, config, rangeFinder);
+        PoaAlignmentMatrix* mat = TryAddRead(readSeq, config, rangeFinder);
         CommitAdd(mat, readPathOutput);
         delete mat;
     }
@@ -354,9 +344,9 @@ void PoaGraphImpl::AddFirstRead(const std::string& readSeq, std::vector<Vertex>*
     repCheck();
 }
 
-PoaAlignmentMatrixImpl* PoaGraphImpl::TryAddRead(const std::string& readSeq,
-                                                 const AlignConfig& config,
-                                                 SdpRangeFinder* rangeFinder) const
+PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq,
+                                             const AlignConfig& config,
+                                             SdpRangeFinder* rangeFinder) const
 {
     repCheck();
     assert(readSeq.length() > 0);

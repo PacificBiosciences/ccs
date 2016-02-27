@@ -46,16 +46,20 @@
 
 namespace PacBio {
 namespace Consensus {
-
-// some forward declaration
-struct PoaConsensus;
-
 namespace detail {
 
-class PoaGraphImpl;
-class SdpRangeFinder;
+    class PoaGraphImpl;
+    class SdpRangeFinder;
 
-}  // namespace detail
+}}}  // namespace detail
+
+
+
+namespace PacBio {
+namespace Consensus {
+
+// Fwd
+struct PoaConsensus;
 
 class PoaAlignmentMatrix
 {
@@ -64,12 +68,15 @@ public:
     virtual float Score() const = 0;
 };
 
+
 /// \brief An object representing a Poa (partial-order alignment) graph
 class PoaGraph
 {
 public:
     typedef size_t Vertex;
     typedef size_t ReadId;
+
+    static const Vertex NullVertex = (Vertex) -1;
 
 public:  // Flags enums for specifying GraphViz output features
     enum

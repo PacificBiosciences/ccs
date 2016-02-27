@@ -1,12 +1,5 @@
 
 #pragma once
-// This header is internal, not part of the API!  ConsensusCore doesn't have a
-// good directory-level separation of internal-vs-API, but we can at least
-// prevent
-// SWIG export
-#ifdef SWIG
-#error "PoaGraphImpl.h is not an API-facing header!"
-#endif  // SWIG
 
 #include <cfloat>
 #include <climits>
@@ -14,16 +7,16 @@
 
 #include <boost/config.hpp>
 #include <boost/format.hpp>
-#include <boost/graph/adjacency_list.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/type_traits.hpp>
-#include <boost/utility.hpp>
 
 #include <pacbio/consensus/align/AlignConfig.h>
 #include <pacbio/consensus/poa/PoaGraph.h>
 #include <pacbio/consensus/Mutation.h>
 
-#include "VectorL.h"
+#include "BoostGraph.h"
+#include "PoaAlignmentMatrix.h"
+
 
 using std::string;
 using std::vector;
@@ -33,33 +26,14 @@ using std::vector;
 ///
 using namespace boost;  // NOLINT
 
-namespace boost {
-
-enum vertex_info_t
-{
-    vertex_info = 424
-};  // a unique #
-BOOST_INSTALL_PROPERTY(vertex, info);
-
-}  // namespace boost
 
 namespace PacBio {
 namespace Consensus {
 namespace detail {
 
+// FWD
 class SdpRangeFinder;
 
-enum MoveType
-{
-    InvalidMove,  // Invalid move reaching ^ (start)
-    StartMove,    // Start move: ^ -> vertex in row 0 of local alignment
-    EndMove,      // End move: vertex -> $ in row 0 of local alignment, or
-                  //  in global alignment, terminal vertex -> $
-    MatchMove,
-    MismatchMove,
-    DeleteMove,
-    ExtraMove
-};
 
 struct PoaNode
 {
@@ -87,21 +61,9 @@ struct PoaNode
     PoaNode(size_t id, char base, int reads) { Init(id, base, reads); }
 };
 
-// BGL is intimidating, and it *deserves* your hatred.  But it's
-// the only game in town!
-typedef property<vertex_info_t, PoaNode, property<vertex_index_t, size_t> > vertex_property_t;
-typedef adjacency_list<setS, listS, bidirectionalS, vertex_property_t> BoostGraph;
-
-// Descriptor types used internally
-typedef graph_traits<BoostGraph>::edge_descriptor ED;
-typedef graph_traits<BoostGraph>::vertex_descriptor VD;
-
 // External-facing vertex id type
 typedef size_t Vertex;
 
-typedef property_map<BoostGraph, vertex_info_t>::type VertexInfoMap;
-typedef property_map<BoostGraph, vertex_index_t>::type index_map_t;
-static const VD null_vertex = graph_traits<BoostGraph>::null_vertex();
 
 struct EdgeComparator
 {
@@ -136,42 +98,6 @@ inline std::vector<ED> inEdges(VD v, const BoostGraph& g)
     return tmp;
 }
 
-struct AlignmentColumn : noncopyable
-{
-    VD CurrentVertex;
-    VectorL<float> Score;
-    VectorL<MoveType> ReachingMove;
-    VectorL<VD> PreviousVertex;
-
-    AlignmentColumn(VD vertex, int beginRow, int endRow)
-        : CurrentVertex(vertex)
-        , Score(beginRow, endRow, -FLT_MAX)
-        , ReachingMove(beginRow, endRow, InvalidMove)
-        , PreviousVertex(beginRow, endRow, null_vertex)
-    {
-    }
-
-    ~AlignmentColumn() {}
-    int BeginRow() const { return Score.BeginRow(); }
-    int EndRow() const { return Score.EndRow(); }
-    bool HasRow(size_t i) const { return (BeginRow() <= i) && (i < EndRow()); }
-};
-
-typedef unordered_map<VD, const AlignmentColumn*> AlignmentColumnMap;
-
-class PoaAlignmentMatrixImpl : public PoaAlignmentMatrix
-{
-public:
-    virtual ~PoaAlignmentMatrixImpl();
-    virtual float Score() const;
-
-public:
-    AlignmentColumnMap columns_;
-    std::string readSequence_;
-    AlignMode mode_;
-    float score_;
-};
-
 class PoaGraphImpl
 {
     friend class SdpRangeFinder;
@@ -192,12 +118,15 @@ class PoaGraphImpl
 
     Vertex externalize(VD vd) const
     {
-        if (vd == null_vertex) { return (Vertex) -1; }
+        if (vd == null_vertex) { return PoaGraph::NullVertex; }
         else { return vertexInfoMap_[vd].Id; }
     }
 
     VD internalize(Vertex vertex) const
-    { return vertexLookup_.at(vertex); }
+    {
+        if (vertex == PoaGraph::NullVertex) { return null_vertex; }
+        return vertexLookup_.at(vertex);
+    }
 
     std::vector<Vertex> externalizePath(const std::vector<VD>& vds) const
     {
@@ -266,8 +195,8 @@ public:
 
     void AddFirstRead(const std::string& sequence, std::vector<Vertex>* readPathOutput = NULL);
 
-    PoaAlignmentMatrixImpl* TryAddRead(const std::string& sequence, const AlignConfig& config,
-                                       SdpRangeFinder* rangeFinder = NULL) const;
+    PoaAlignmentMatrix* TryAddRead(const std::string& sequence, const AlignConfig& config,
+                                   SdpRangeFinder* rangeFinder = NULL) const;
 
     void CommitAdd(PoaAlignmentMatrix* mat, std::vector<Vertex>* readPathOutput = NULL);
 
