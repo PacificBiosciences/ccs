@@ -236,6 +236,10 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
         // u: current vertex
         // v: vertex last visited in traceback (could be == u)
         // forkVertex: the vertex that will be the target of a new edge
+
+        Vertex uExt = this->externalize(u); // DEBUGGING
+        Vertex vExt = this->externalize(v); // DEBUGGING
+
         curCol = alignmentColumnForVertex.at(u);
         assert(curCol != NULL);
         PoaNode& curNodeInfo = vertexInfoMap_[u];

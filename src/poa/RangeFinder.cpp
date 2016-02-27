@@ -153,6 +153,8 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
     // letting a node with null direct range have a range that is the
     // union of the "forward stepped" ranges of its predecessors
     for (const VD v : sortedVertices) {
+        Vertex vExt = poaGraph.externalize(v); // DEBUGGING
+
         optional<Interval> directRange = directRanges.at(v);
         if (directRange) {
             fwdMarks[v] = directRange.get();
@@ -160,6 +162,7 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
             std::vector<Interval> predRangesStepped;
             for (const ED& e : inEdges(v, poaGraph.g_)) {
                 VD pred = source(e, poaGraph.g_);
+                Vertex predExt = poaGraph.externalize(pred); // DEBUGGING
                 Interval predRangeStepped = next(fwdMarks.at(pred), readLength);
                 predRangesStepped.push_back(predRangeStepped);
             }
