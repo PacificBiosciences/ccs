@@ -96,6 +96,7 @@ TEST(PoaGraph, SmallBasicTest1)
     string dot = pc->Graph.ToGraphViz();
     string expectedDot =
         "digraph G {"
+        "rankdir=\"LR\";"
         "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
         "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
         "2[shape=Mrecord, label=\"{ G | 1 }\"];"
@@ -121,6 +122,7 @@ TEST(PoaGraph, SmallBasicTest2)
     string dot = pc->Graph.ToGraphViz();
     string expectedDot =
         "digraph G {"
+        "rankdir=\"LR\";"
         "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
         "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
         "2[shape=Mrecord, label=\"{ G | 2 }\"];"
@@ -149,6 +151,7 @@ TEST(PoaGraph, SmallExtraTests)
         string dot = pc->Graph.ToGraphViz();
         string expectedDot =
             "digraph G {"
+            "rankdir=\"LR\";"
             "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
             "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
             "2[shape=Mrecord, label=\"{ G | 2 }\"];"
@@ -178,6 +181,7 @@ TEST(PoaGraph, SmallExtraTests)
         // strings feature (in g++ 4.5+)
         string expectedDot =
             "digraph G {"
+            "rankdir=\"LR\";"
             "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
             "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
             "2[shape=Mrecord, label=\"{ G | 2 }\"];"
@@ -205,6 +209,7 @@ TEST(PoaGraph, SmallExtraTests)
         string dot = pc->Graph.ToGraphViz();
         string expectedDot =
             "digraph G {"
+            "rankdir=\"LR\";"
             "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
             "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
             "2[shape=Mrecord, label=\"{ G | 2 }\"];"
@@ -235,6 +240,7 @@ TEST(PoaGraph, SmallMismatchTests)
         string dot = pc->Graph.ToGraphViz();
         string expectedDot =
             "digraph G {"
+            "rankdir=\"LR\";"
             "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
             "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
             "2[shape=Mrecord, label=\"{ G | 1 }\"];"
@@ -262,6 +268,7 @@ TEST(PoaGraph, SmallMismatchTests)
         string dot = pc->Graph.ToGraphViz();
         string expectedDot =
             "digraph G {"
+            "rankdir=\"LR\";"
             "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
             "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
             "2[shape=Mrecord, label=\"{ G | 3 }\"];"
@@ -289,6 +296,7 @@ TEST(PoaGraph, SmallMismatchTests)
         string dot = pc->Graph.ToGraphViz();
         string expectedDot =
             "digraph G {"
+            "rankdir=\"LR\";"
             "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
             "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
             "2[shape=Mrecord, label=\"{ G | 2 }\"];"
@@ -319,6 +327,7 @@ TEST(PoaGraph, SmallDeletionTests)
         string dot = pc->Graph.ToGraphViz();
         string expectedDot =
             "digraph G {"
+            "rankdir=\"LR\";"
             "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
             "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
             "2[shape=Mrecord, label=\"{ G | 1 }\"];"
@@ -344,6 +353,7 @@ TEST(PoaGraph, SmallDeletionTests)
         string dot = pc->Graph.ToGraphViz();
         string expectedDot =
             "digraph G {"
+            "rankdir=\"LR\";"
             "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
             "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
             "2[shape=Mrecord, label=\"{ G | 2 }\"];"
@@ -368,6 +378,7 @@ TEST(PoaGraph, SmallDeletionTests)
         string dot = pc->Graph.ToGraphViz();
         string expectedDot =
             "digraph G {"
+            "rankdir=\"LR\";"
             "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
             "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
             "2[shape=Mrecord, label=\"{ G | 2 }\"];"
@@ -415,6 +426,7 @@ TEST(PoaConsensus, SmallSemiglobalTest)
     plotConsensus(pc, "small-semiglobal");
     string expectedDot =
         "digraph G {"
+        "rankdir=\"LR\";"
         "0[shape=Mrecord, label=\"{ ^ | 0 }\"];"
         "1[shape=Mrecord, label=\"{ $ | 0 }\"];"
         "2[shape=Mrecord, label=\"{ G | 2 }\"];"
@@ -456,6 +468,7 @@ TEST(PoaConsensus, TestVerboseGraphVizOutput)
 
     string expectedDot =
         "digraph G {"
+        "rankdir=\"LR\";"
         "0[shape=Mrecord, label=\"{ { 0 | ^ } | { 0 | 0 } | { 0.00 | 0.00 } "
         "}\"];"
         "1[shape=Mrecord, label=\"{ { 1 | $ } | { 0 | 0 } | { 0.00 | 0.00 } "
