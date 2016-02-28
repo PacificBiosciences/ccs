@@ -37,8 +37,7 @@ class SdpRangeFinder;
 
 struct PoaNode
 {
-    size_t Id;  // This is the external-facing identifier we use to represent
-                // the vertex
+    PoaGraph::Vertex Id;
     char Base;
     int Reads;
     // move the below out of here?
