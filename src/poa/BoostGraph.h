@@ -1,7 +1,6 @@
 #pragma once
 
 #include <boost/config.hpp>
-#include <boost/format.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/type_traits.hpp>
