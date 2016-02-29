@@ -367,6 +367,7 @@ PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq,
     PoaAlignmentMatrixImpl* mat = new PoaAlignmentMatrixImpl();
     mat->readSequence_ = readSeq;
     mat->mode_ = config.Mode;
+    mat->graph_ = this;
 
     vector<VD> sortedVertices(num_vertices(g_));
     topological_sort(g_, sortedVertices.rbegin());

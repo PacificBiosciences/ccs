@@ -97,6 +97,7 @@ struct AlignmentColumn : noncopyable
 typedef unordered_map<VD, const AlignmentColumn*> AlignmentColumnMap;
 
 
+
 class PoaAlignmentMatrixImpl : public PoaAlignmentMatrix
 {
 public:
@@ -109,7 +110,15 @@ public:
 
     virtual float Score() const { return score_; }
 
+    size_t NumRows() const { return readSequence_.length() + 1; }
+    size_t NumCols() const { return columns_.size(); }
+
+    void Print() const;
+
 public:
+    // TODO: why did I leave these public?  why is there no
+    // constructor?
+    const PoaGraphImpl* graph_;
     AlignmentColumnMap columns_;
     std::string readSequence_;
     AlignMode mode_;
@@ -118,8 +127,6 @@ public:
 
 
 
-void PrintPoaAlignmentMatrix(const PoaAlignmentMatrix* matP,
-                             const PoaGraph* graphP);
 
 
 }}} // PacBio::Consensus::detail

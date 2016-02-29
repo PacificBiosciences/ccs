@@ -93,6 +93,14 @@ boost::unordered_set<VD> SpanningDFS(const VD start, const VD end, const BoostGr
     return rev;
 }
 
+
+std::vector<VD> PoaGraphImpl::sortedVertices() const
+{
+    vector<VD> sv(num_vertices(g_));
+    topological_sort(g_, sv.rbegin());
+    return sv;
+}
+
 void PoaGraphImpl::tagSpan(VD start, VD end)
 {
     boost::unordered_set<VD> vertices = SpanningDFS(start, end, g_);

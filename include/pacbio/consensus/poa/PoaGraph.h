@@ -66,6 +66,9 @@ class PoaAlignmentMatrix
 public:
     virtual ~PoaAlignmentMatrix(){};
     virtual float Score() const = 0;
+    virtual size_t NumRows() const = 0;
+    virtual size_t NumCols() const = 0;
+    virtual void Print() const = 0;
 };
 
 

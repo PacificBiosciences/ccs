@@ -113,7 +113,38 @@ class PoaGraphImpl
                                          // for algorithms.
     std::map<Vertex, VD> vertexLookup_;  // external ID -> internal ID
 
+
     void repCheck() const;
+
+
+    VD addVertex(char base, int nReads = 1)
+    {
+        VD vd = add_vertex(g_);
+        Vertex vExt = totalVertices_++;
+        vertexInfoMap_[vd] = PoaNode(vExt, base, nReads);
+        vertexLookup_[vExt] = vd;
+        indexMap_[vd] = liveVertices_++;
+        return vd;
+    }
+
+    //
+    // utility routines
+    //
+    const AlignmentColumn* makeAlignmentColumn(VD v,
+                                               const AlignmentColumnMap& alignmentColumnForVertex,
+                                               const std::string& sequence,
+                                               const AlignConfig& config, int beginRow,
+                                               int endRow) const;
+
+    const AlignmentColumn* makeAlignmentColumnForExit(
+        VD v, const AlignmentColumnMap& alignmentColumnForVertex, const std::string& sequence,
+        const AlignConfig& config) const;
+
+
+public:
+    //
+    // Vertex id translation
+    //
 
     Vertex externalize(VD vd) const
     {
@@ -145,33 +176,24 @@ class PoaGraphImpl
         return out;
     }
 
-    VD addVertex(char base, int nReads = 1)
+public:
+    //
+    // POA node lookup
+    //
+    const PoaNode& getPoaNode(VD v) const
     {
-        VD vd = add_vertex(g_);
-        Vertex vExt = totalVertices_++;
-        vertexInfoMap_[vd] = PoaNode(vExt, base, nReads);
-        vertexLookup_[vExt] = vd;
-        indexMap_[vd] = liveVertices_++;
-        return vd;
+        return vertexInfoMap_[v];
     }
 
-    //
-    // utility routines
-    //
-    const AlignmentColumn* makeAlignmentColumn(VD v,
-                                               const AlignmentColumnMap& alignmentColumnForVertex,
-                                               const std::string& sequence,
-                                               const AlignConfig& config, int beginRow,
-                                               int endRow) const;
 
-    const AlignmentColumn* makeAlignmentColumnForExit(
-        VD v, const AlignmentColumnMap& alignmentColumnForVertex, const std::string& sequence,
-        const AlignConfig& config) const;
 
 public:
     //
     // Graph traversal functions, defined in PoaGraphTraversals
     //
+
+    std::vector<VD> sortedVertices() const;
+
     void tagSpan(VD start, VD end);
 
     std::vector<VD> consensusPath(AlignMode mode, int minCoverage = -INT_MAX) const;
