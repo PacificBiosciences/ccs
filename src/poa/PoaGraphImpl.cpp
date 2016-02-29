@@ -378,7 +378,7 @@ PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq,
             if (rangeFinder) {
                 // FindAlignableRange returns an alignable sequence range, which is not the same as
                 // the alignable rows (the end is off-by-one, for a normal interval).
-                size_t startRange, endRange;
+                int startRange, endRange;
                 std::tie(startRange, endRange) = rangeFinder->FindAlignableRange(externalize(v));
                 startRow = startRange;
                 endRow = (endRange == -INT_MAX ? endRange : endRange + 1);

@@ -89,8 +89,8 @@ struct AlignmentColumn : noncopyable
 
     ~AlignmentColumn() {}
 
-    int BeginRow() const { return Score.BeginRow(); }
-    int EndRow() const { return Score.EndRow(); }
+    size_t BeginRow() const { return Score.BeginRow(); }
+    size_t EndRow() const { return Score.EndRow(); }
     bool HasRow(size_t i) const { return (BeginRow() <= i) && (i < EndRow()); }
 };
 
