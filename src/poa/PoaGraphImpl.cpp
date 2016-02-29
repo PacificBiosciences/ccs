@@ -376,9 +376,12 @@ PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq,
         if (v != exitVertex_) {
             size_t startRow = 0, endRow = readSeq.size() + 1;
             if (rangeFinder) {
-                // FIXME: this call returns an alignable sequence range, which is not the same as
-                // the alignable rows (the end is off-by-one, for a normal interval)
-                std::tie(startRow, endRow) = rangeFinder->FindAlignableRange(externalize(v));
+                // FindAlignableRange returns an alignable sequence range, which is not the same as
+                // the alignable rows (the end is off-by-one, for a normal interval).
+                size_t startRange, endRange;
+                std::tie(startRange, endRange) = rangeFinder->FindAlignableRange(externalize(v));
+                startRow = startRange;
+                endRow = (endRange == -INT_MAX ? endRange : endRange + 1);
             }
             Vertex vExt = externalize(v); // DEBUGGING
             curCol = makeAlignmentColumn(v, mat->columns_, readSeq, config, startRow, endRow);
