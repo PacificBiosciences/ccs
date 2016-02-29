@@ -93,6 +93,14 @@ boost::unordered_set<VD> SpanningDFS(const VD start, const VD end, const BoostGr
     return rev;
 }
 
+
+std::vector<VD> PoaGraphImpl::sortedVertices() const
+{
+    vector<VD> sv(num_vertices(g_));
+    topological_sort(g_, sv.rbegin());
+    return sv;
+}
+
 void PoaGraphImpl::tagSpan(VD start, VD end)
 {
     boost::unordered_set<VD> vertices = SpanningDFS(start, end, g_);
@@ -211,9 +219,8 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
 {
     const int I = sequence.length();
 
-    // perform traceback from (I,$), threading the new sequence into the graph
-    // as
-    // we go.
+    // perform traceback from (I,$), threading the new sequence into
+    // the graph as we go.
     int i = I;
     const AlignmentColumn* curCol;
     VD v = null_vertex, forkVertex = null_vertex;
@@ -237,6 +244,10 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
         // u: current vertex
         // v: vertex last visited in traceback (could be == u)
         // forkVertex: the vertex that will be the target of a new edge
+
+        Vertex uExt = this->externalize(u); // DEBUGGING
+        Vertex vExt = this->externalize(v); // DEBUGGING
+
         curCol = alignmentColumnForVertex.at(u);
         assert(curCol != NULL);
         PoaNode& curNodeInfo = vertexInfoMap_[u];
