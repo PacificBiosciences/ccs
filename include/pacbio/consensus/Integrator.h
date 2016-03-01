@@ -120,6 +120,8 @@ public:
     AddReadResult AddRead(const MappedRead& read, const SNR& snr);
 
 protected:
+    std::unique_ptr<AbstractTemplate> GetTemplate(const MappedRead& read, const SNR& snr);
+
     std::string fwdTpl_;
     std::string revTpl_;
 
