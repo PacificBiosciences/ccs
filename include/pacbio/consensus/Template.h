@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -22,6 +23,8 @@ public:
 
     virtual size_t Length() const = 0;
     virtual const TemplatePosition& operator[](size_t i) const = 0;
+
+    operator std::string() const;
 
     // virtual mutations (for mutation testing purposes)
     virtual bool IsMutated() const = 0;
@@ -55,6 +58,8 @@ protected:
 private:
     std::pair<double, double> SiteNormalParameters(size_t i) const;
 };
+
+std::ostream& operator<<(std::ostream&, const AbstractTemplate&);
 
 class Template : public AbstractTemplate
 {

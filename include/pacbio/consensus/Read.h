@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstdint>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -44,6 +45,8 @@ struct MappedRead : public Read
     bool PinStart;
     bool PinEnd;
 };
+
+std::ostream& operator<<(std::ostream&, const MappedRead&);
 
 }  // namespace Consensus
 }  // namespace PacBio

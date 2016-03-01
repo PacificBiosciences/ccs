@@ -39,6 +39,7 @@ public:
     StrandEnum Strand() const;
 
     operator bool() const;
+    operator std::string() const;
 
     double LL(const Mutation& mut);
     double LL() const;

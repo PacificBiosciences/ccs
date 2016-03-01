@@ -1,6 +1,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <sstream>
 #include <stdexcept>
 
 #include <pacbio/consensus/Template.h>
@@ -16,6 +17,14 @@ AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const b
 }
 
 AbstractTemplate::~AbstractTemplate() {}
+AbstractTemplate::operator std::string() const
+{
+    std::stringstream ss;
+    for (size_t i = 0; i < Length(); ++i)
+        ss << (*this)[i].Base;
+    return ss.str();
+}
+
 bool AbstractTemplate::ApplyMutation(const Mutation& mut)
 {
     const bool mutApplied = InRange(mut.Start(), mut.End());
@@ -157,6 +166,12 @@ std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i)
     const double moment2 = E2_BS + 2 * E_BS * E_MD + E2_MD;
     const double var = moment2 - mean * mean;
     return std::make_pair(mean, var);
+}
+
+std::ostream& operator<<(std::ostream& os, const AbstractTemplate& tpl)
+{
+    os << std::string(tpl);
+    return os;
 }
 
 Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg)

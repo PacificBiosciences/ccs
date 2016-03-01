@@ -29,5 +29,19 @@ MappedRead::MappedRead(const Read& read, StrandEnum strand, size_t templateStart
 {
 }
 
+std::ostream& operator<<(std::ostream& os, const MappedRead& mr)
+{
+    os << "MappedRead(Read(\"" << mr.Name << "\", \"" << mr.Seq << "\", \"" << mr.Model << "\"), ";
+    if (mr.Strand == StrandEnum::FORWARD)
+        os << "StrandEnum_FORWARD, ";
+    else if (mr.Strand == StrandEnum::REVERSE)
+        os << "StrandEnum_REVERSE, ";
+    else if (mr.Strand == StrandEnum::UNMAPPED)
+        os << "StrandEnum_UNMAPPED, ";
+    os << mr.TemplateStart << ", " << mr.TemplateEnd << ", ";
+    os << mr.PinStart << ", " << mr.PinEnd << ")";
+    return os;
+}
+
 }  // namespace Consensus
 }  // namespace PacBio
