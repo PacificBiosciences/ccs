@@ -381,7 +381,7 @@ PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq,
                 int startRange, endRange;
                 std::tie(startRange, endRange) = rangeFinder->FindAlignableRange(externalize(v));
                 startRow = startRange;
-                endRow = (endRange != -INT_MAX/2 ? endRange : endRange + 1);
+                endRow = (endRange == -INT_MAX/2 ? endRange : endRange + 1);
             }
             Vertex vExt = externalize(v); // DEBUGGING
             curCol = makeAlignmentColumn(v, mat->columns_, readSeq, config, startRow, endRow);
