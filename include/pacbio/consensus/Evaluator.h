@@ -32,6 +32,7 @@ public:
 
     // move constructors
     Evaluator(Evaluator&&);
+    Evaluator& operator=(Evaluator&&);
 
     ~Evaluator();
 

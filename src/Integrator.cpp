@@ -240,29 +240,7 @@ MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
 
 AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read, const SNR& snr)
 {
-    const size_t len = read.TemplateEnd - read.TemplateStart;
-
-    if (read.Strand == StrandEnum::FORWARD) {
-        const size_t start = read.TemplateStart;
-        const size_t end = read.TemplateEnd;
-
-        return AbstractIntegrator::AddRead(
-            std::unique_ptr<AbstractTemplate>(new Template(fwdTpl_.substr(start, len),
-                                                           ModelFactory::Create(read.Model, snr),
-                                                           start, end, read.PinStart, read.PinEnd)),
-            read);
-    } else if (read.Strand == StrandEnum::REVERSE) {
-        const size_t start = revTpl_.size() - read.TemplateEnd;
-        const size_t end = revTpl_.size() - read.TemplateStart;
-
-        return AbstractIntegrator::AddRead(
-            std::unique_ptr<AbstractTemplate>(new Template(revTpl_.substr(start, len),
-                                                           ModelFactory::Create(read.Model, snr),
-                                                           start, end, read.PinEnd, read.PinStart)),
-            read);
-    }
-
-    throw std::invalid_argument("read is unmapped!");
+    return AbstractIntegrator::AddRead(GetTemplate(read, snr), read);
 }
 
 size_t MultiMolecularIntegrator::Length() const { return fwdTpl_.length(); }
@@ -308,6 +286,30 @@ void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
 
     assert(fwdTpl_.length() == revTpl_.length());
     assert(fwdTpl_ == ::PacBio::Consensus::ReverseComplement(revTpl_));
+}
+
+std::unique_ptr<AbstractTemplate> MultiMolecularIntegrator::GetTemplate(const MappedRead& read,
+                                                                        const SNR& snr)
+{
+    const size_t len = read.TemplateEnd - read.TemplateStart;
+
+    if (read.Strand == StrandEnum::FORWARD) {
+        const size_t start = read.TemplateStart;
+        const size_t end = read.TemplateEnd;
+
+        return std::unique_ptr<AbstractTemplate>(
+            new Template(fwdTpl_.substr(start, len), ModelFactory::Create(read.Model, snr), start,
+                         end, read.PinStart, read.PinEnd));
+    } else if (read.Strand == StrandEnum::REVERSE) {
+        const size_t start = revTpl_.size() - read.TemplateEnd;
+        const size_t end = revTpl_.size() - read.TemplateStart;
+
+        return std::unique_ptr<AbstractTemplate>(
+            new Template(revTpl_.substr(start, len), ModelFactory::Create(read.Model, snr), start,
+                         end, read.PinEnd, read.PinStart));
+    }
+
+    throw std::invalid_argument("read is unmapped!");
 }
 
 }  // namespace Consensus

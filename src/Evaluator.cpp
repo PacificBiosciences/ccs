@@ -52,6 +52,13 @@ Evaluator::Evaluator(Evaluator&& eval) : impl_{std::move(eval.impl_)}, state_{ev
     CheckInvariants();
 }
 
+Evaluator& Evaluator::operator=(Evaluator&& eval)
+{
+    impl_ = move(eval.impl_);
+    state_ = eval.state_;
+    return *this;
+}
+
 Evaluator::~Evaluator() {}
 size_t Evaluator::Length() const
 {
