@@ -63,14 +63,10 @@ private:
     bool verbose_;
 };
 
-
 class my_graph_writer
 {
 public:
-    my_graph_writer(bool leftToRight=false)
-        : leftToRight_(leftToRight)
-    {}
-
+    my_graph_writer(bool leftToRight = false) : leftToRight_(leftToRight) {}
     void operator()(std::ostream& out) const
     {
         if (leftToRight_) out << "rankdir=\"LR\";" << std::endl;
@@ -85,7 +81,6 @@ private:
 namespace PacBio {
 namespace Consensus {
 namespace detail {
-
 
 // ----------------- PoaGraphImpl ---------------------
 
@@ -195,16 +190,13 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumnForExit(VD v,
     return curCol;
 }
 
-const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v,
-                                                         const AlignmentColumnMap& colMap,
+const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentColumnMap& colMap,
                                                          const std::string& sequence,
-                                                         const AlignConfig& config,
-                                                         int beginRow,
+                                                         const AlignConfig& config, int beginRow,
                                                          int endRow) const
 {
     AlignmentColumn* curCol;
-    if (beginRow > endRow)
-    {
+    if (beginRow > endRow) {
         // This happens when there are no anchors in the read.  We
         // want this read to be threaded onto the graph as a singleton
         // path.  We use the START move.
@@ -214,11 +206,11 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v,
         curCol = new AlignmentColumn(v, 0, 1);
         curCol->ReachingMove[0] = StartMove;
         curCol->PreviousVertex[0] = enterVertex_;
-        curCol->Score[0] = 0; // > -FLT_MAX
+        curCol->Score[0] = 0;  // > -FLT_MAX
         return curCol;
     }
 
-    assert (beginRow < endRow || beginRow == 0 || beginRow == sequence.length());
+    assert(beginRow < endRow || beginRow == 0 || beginRow == sequence.length());
 
     curCol = new AlignmentColumn(v, beginRow, endRow);
     const PoaNode& vertexInfo = vertexInfoMap_[v];
@@ -227,7 +219,6 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v,
     // i represents position in array
     // readPos=i-1 represents position in read
     for (int i = beginRow; i < endRow; i++) {
-
         assert(curCol->HasRow(i));
 
         float candidateScore, bestScore;
@@ -246,8 +237,7 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v,
 
         // Special-case the first row, this could probably be factored
         // more cleanly
-        if (i == 0)
-        {
+        if (i == 0) {
             if (predecessorColumns.size() == 0) {
                 // if this vertex doesn't have any in-edges it is ^; has
                 // no reaching move
@@ -275,16 +265,13 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v,
                 curCol->ReachingMove[0] = reachingMove;
                 curCol->PreviousVertex[0] = prevVertex;
             }
-        }
-        else
-        {
+        } else {
             for (const AlignmentColumn* prevCol : predecessorColumns) {
                 // Incorporate (Match or Mismatch)
-                if (prevCol->HasRow(i - 1))
-                {
+                if (prevCol->HasRow(i - 1)) {
                     bool isMatch = sequence[i - 1] == vertexInfo.Base;
-                    candidateScore =
-                        prevCol->Score[i - 1] + (isMatch ? config.Params.Match : config.Params.Mismatch);
+                    candidateScore = prevCol->Score[i - 1] +
+                                     (isMatch ? config.Params.Match : config.Params.Mismatch);
                     if (candidateScore > bestScore) {
                         bestScore = candidateScore;
                         prevVertex = prevCol->CurrentVertex;
@@ -302,8 +289,7 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v,
                 }
             }
             // Extra
-            if (curCol->HasRow(i - 1))
-            {
+            if (curCol->HasRow(i - 1)) {
                 candidateScore = curCol->Score[i - 1] + config.Params.Insert;
                 if (candidateScore > bestScore) {
                     bestScore = candidateScore;
@@ -344,8 +330,7 @@ void PoaGraphImpl::AddFirstRead(const std::string& readSeq, std::vector<Vertex>*
     repCheck();
 }
 
-PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq,
-                                             const AlignConfig& config,
+PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq, const AlignConfig& config,
                                              SdpRangeFinder* rangeFinder) const
 {
     repCheck();
@@ -381,9 +366,9 @@ PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq,
                 int startRange, endRange;
                 std::tie(startRange, endRange) = rangeFinder->FindAlignableRange(externalize(v));
                 startRow = startRange;
-                endRow = (endRange == -INT_MAX/2 ? endRange : endRange + 1);
+                endRow = (endRange == -INT_MAX / 2 ? endRange : endRange + 1);
             }
-            Vertex vExt = externalize(v); // DEBUGGING
+            Vertex vExt = externalize(v);  // DEBUGGING
             curCol = makeAlignmentColumn(v, mat->columns_, readSeq, config, startRow, endRow);
         } else {
             curCol = makeAlignmentColumnForExit(v, mat->columns_, readSeq, config);
@@ -412,10 +397,9 @@ size_t PoaGraphImpl::NumReads() const { return numReads_; }
 string PoaGraphImpl::ToGraphViz(int flags, const PoaConsensus* pc) const
 {
     std::stringstream ss;
-    write_graphviz(ss, g_,
-                   my_label_writer(vertexInfoMap_, flags & PoaGraph::COLOR_NODES,
-                                   flags & PoaGraph::VERBOSE_NODES, pc),
-                   default_writer(), // edge writer
+    write_graphviz(ss, g_, my_label_writer(vertexInfoMap_, flags & PoaGraph::COLOR_NODES,
+                                           flags & PoaGraph::VERBOSE_NODES, pc),
+                   default_writer(),  // edge writer
                    my_graph_writer(true));
 
     return ss.str();

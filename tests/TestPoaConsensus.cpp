@@ -140,7 +140,6 @@ TEST(PoaGraph, SmallBasicTest2)
     delete pc;
 }
 
-
 TEST(PoaGraph, SmallExtraTests)
 {
     // Extra at beginning

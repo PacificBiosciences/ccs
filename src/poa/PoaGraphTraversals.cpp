@@ -93,7 +93,6 @@ boost::unordered_set<VD> SpanningDFS(const VD start, const VD end, const BoostGr
     return rev;
 }
 
-
 std::vector<VD> PoaGraphImpl::sortedVertices() const
 {
     vector<VD> sv(num_vertices(g_));
@@ -245,8 +244,8 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
         // v: vertex last visited in traceback (could be == u)
         // forkVertex: the vertex that will be the target of a new edge
 
-        Vertex uExt = this->externalize(u); // DEBUGGING
-        Vertex vExt = this->externalize(v); // DEBUGGING
+        Vertex uExt = this->externalize(u);  // DEBUGGING
+        Vertex vExt = this->externalize(v);  // DEBUGGING
 
         curCol = alignmentColumnForVertex.at(u);
         assert(curCol != NULL);

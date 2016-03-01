@@ -53,11 +53,9 @@
 using boost::noncopyable;
 using boost::unordered_map;
 
-
 namespace PacBio {
 namespace Consensus {
 namespace detail {
-
 
 enum MoveType
 {
@@ -70,7 +68,6 @@ enum MoveType
     DeleteMove,
     ExtraMove
 };
-
 
 struct AlignmentColumn : noncopyable
 {
@@ -88,15 +85,12 @@ struct AlignmentColumn : noncopyable
     }
 
     ~AlignmentColumn() {}
-
     size_t BeginRow() const { return Score.BeginRow(); }
     size_t EndRow() const { return Score.EndRow(); }
     bool HasRow(size_t i) const { return (BeginRow() <= i) && (i < EndRow()); }
 };
 
 typedef unordered_map<VD, const AlignmentColumn*> AlignmentColumnMap;
-
-
 
 class PoaAlignmentMatrixImpl : public PoaAlignmentMatrix
 {
@@ -109,10 +103,8 @@ public:
     }
 
     virtual float Score() const { return score_; }
-
     size_t NumRows() const { return readSequence_.length() + 1; }
     size_t NumCols() const { return columns_.size(); }
-
     void Print() const;
 
 public:
@@ -124,9 +116,6 @@ public:
     AlignMode mode_;
     float score_;
 };
-
-
-
-
-
-}}} // PacBio::Consensus::detail
+}
+}
+}  // PacBio::Consensus::detail

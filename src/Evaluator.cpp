@@ -15,8 +15,7 @@ constexpr size_t EXTEND_BUFFER_COLUMNS = 8;
 
 }  // anonymous namespace
 
-Evaluator::Evaluator(const EvaluatorState state)
-    : impl_{nullptr}, state_{state}
+Evaluator::Evaluator(const EvaluatorState state) : impl_{nullptr}, state_{state}
 {
     if (state_ == EvaluatorState::VALID)
         throw std::invalid_argument("cannot initialize a dummy Evaluator with VALID state");
@@ -108,7 +107,11 @@ bool Evaluator::ApplyMutations(std::vector<Mutation>* muts)
 }
 
 EvaluatorState Evaluator::Status() const { return state_; }
-void Evaluator::Release() { state_ = EvaluatorState::DISABLED; impl_.reset(nullptr); }
+void Evaluator::Release()
+{
+    state_ = EvaluatorState::DISABLED;
+    impl_.reset(nullptr);
+}
 
 void Evaluator::CheckInvariants()
 {

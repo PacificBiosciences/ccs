@@ -44,12 +44,10 @@ public:
                          const std::vector<PoaGraph::Vertex>& consensusPath,
                          const std::string& consensusSequence, const std::string& readSequence);
 
-
     // TODO: write contract
     std::pair<int, int> FindAlignableRange(PoaGraph::Vertex v);
 
 protected:
-
     // TODO: write contract
     virtual SdpAnchorVector FindAnchors(const std::string& consensusSequence,
                                         const std::string& readSequence) const = 0;

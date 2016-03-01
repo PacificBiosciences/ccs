@@ -5,17 +5,13 @@
 #include <boost/static_assert.hpp>
 #include <boost/type_traits.hpp>
 
-
 namespace boost {
-    enum vertex_info_t
-    {
-        vertex_info = 424
-    };  // a unique #
-    BOOST_INSTALL_PROPERTY(vertex, info);
+enum vertex_info_t
+{
+    vertex_info = 424
+};  // a unique #
+BOOST_INSTALL_PROPERTY(vertex, info);
 }  // namespace boost
-
-
-
 
 namespace PacBio {
 namespace Consensus {
@@ -28,7 +24,6 @@ namespace detail {
 
 using namespace boost;
 
-
 struct PoaNode;
 
 // BGL is intimidating, and it *deserves* your hatred.  But it's
@@ -40,10 +35,9 @@ typedef adjacency_list<setS, listS, bidirectionalS, vertex_property_t> BoostGrap
 typedef graph_traits<BoostGraph>::edge_descriptor ED;
 typedef graph_traits<BoostGraph>::vertex_descriptor VD;
 
-
 typedef property_map<BoostGraph, vertex_info_t>::type VertexInfoMap;
 typedef property_map<BoostGraph, vertex_index_t>::type index_map_t;
 static const VD null_vertex = graph_traits<BoostGraph>::null_vertex();
-
-
-}}}
+}
+}
+}

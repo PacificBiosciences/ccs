@@ -17,7 +17,6 @@
 #include "BoostGraph.h"
 #include "PoaAlignmentMatrix.h"
 
-
 using std::string;
 using std::vector;
 
@@ -26,14 +25,12 @@ using std::vector;
 ///
 using namespace boost;  // NOLINT
 
-
 namespace PacBio {
 namespace Consensus {
 namespace detail {
 
 // FWD
 class SdpRangeFinder;
-
 
 struct PoaNode
 {
@@ -62,7 +59,6 @@ struct PoaNode
 
 // External-facing vertex id type
 typedef size_t Vertex;
-
 
 struct EdgeComparator
 {
@@ -113,9 +109,7 @@ class PoaGraphImpl
                                          // for algorithms.
     std::map<Vertex, VD> vertexLookup_;  // external ID -> internal ID
 
-
     void repCheck() const;
-
 
     VD addVertex(char base, int nReads = 1)
     {
@@ -140,7 +134,6 @@ class PoaGraphImpl
         VD v, const AlignmentColumnMap& alignmentColumnForVertex, const std::string& sequence,
         const AlignConfig& config) const;
 
-
 public:
     //
     // Vertex id translation
@@ -148,13 +141,18 @@ public:
 
     Vertex externalize(VD vd) const
     {
-        if (vd == null_vertex) { return PoaGraph::NullVertex; }
-        else { return vertexInfoMap_[vd].Id; }
+        if (vd == null_vertex) {
+            return PoaGraph::NullVertex;
+        } else {
+            return vertexInfoMap_[vd].Id;
+        }
     }
 
     VD internalize(Vertex vertex) const
     {
-        if (vertex == PoaGraph::NullVertex) { return null_vertex; }
+        if (vertex == PoaGraph::NullVertex) {
+            return null_vertex;
+        }
         return vertexLookup_.at(vertex);
     }
 
@@ -180,13 +178,7 @@ public:
     //
     // POA node lookup
     //
-    const PoaNode& getPoaNode(VD v) const
-    {
-        return vertexInfoMap_[v];
-    }
-
-
-
+    const PoaNode& getPoaNode(VD v) const { return vertexInfoMap_[v]; }
 public:
     //
     // Graph traversal functions, defined in PoaGraphTraversals
