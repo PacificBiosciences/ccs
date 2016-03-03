@@ -98,7 +98,7 @@ def resolved_tool_contract_runner(rtc):
         output_file,
         subreads_file
     ]
-    logging.info(" ".join(args))
+    log.info(" ".join(args))
     result = run_cmd(
         cmd=" ".join(args),
         stdout_fh=sys.stdout,
@@ -115,16 +115,16 @@ def resolved_tool_contract_runner(rtc):
 
 # FIXME(nechols)(2016-01-26): this is evil
 def _process_csv(csv_file, report_file):
-    logging.info("reading attributes from %s" % csv_file)
+    log.info("reading attributes from %s" % csv_file)
     attributes = []
     with open(csv_file) as f:
         for line in f.read().splitlines():
             fields = line.strip().split(",")
             if len(fields) == 0 or fields == ['']:
-                logging.critical("MISFORMED CSV LINE: {l}".format(l=line))
+                log.critical("MISFORMED CSV LINE: {l}".format(l=line))
                 break
             elif len(fields) < 2:
-                logging.critical("MISFORMED CSV LINE: {l}".format(l=line))
+                log.critical("MISFORMED CSV LINE: {l}".format(l=line))
                 continue
             label = re.sub(".*\ \-\-\ ", "", fields[0])
             field_id = Constants.REPORT_FIELDS.get(label, None)
@@ -134,7 +134,7 @@ def _process_csv(csv_file, report_file):
             attributes.append(a)
     r = Report("ccs_processing", attributes=attributes)
     r.write_json(report_file)
-    logging.info("wrote %s" % report_file)
+    log.info("wrote %s" % report_file)
     return r
 
 
@@ -145,7 +145,8 @@ def get_parser():
         name=Constants.TOOL_NAME,
         description=__doc__,
         driver_exe=Constants.DRIVER_EXE,
-        nproc=SymbolTypes.MAX_NPROC)
+        nproc=SymbolTypes.MAX_NPROC,
+        default_level="INFO")
     p.add_input_file_type(FileTypes.DS_SUBREADS, "subread_set",
                           "SubreadSet", "Subread DataSet or .bam file")
     p.add_output_file_type(FileTypes.DS_CCS, "bam_output",
@@ -197,7 +198,6 @@ def get_parser():
 
 
 def main(argv=sys.argv):
-    logging.basicConfig(level=logging.INFO)
     return pbparser_runner(
         argv=argv[1:],
         parser=get_parser(),
