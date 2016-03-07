@@ -31,6 +31,6 @@ build it as a separate step)
 
 We recommend installing ConsensusCore2 within a Python `virtualenv`.
 
-    ```sh
-    python setup.py install
-    ```
+```sh
+python setup.py install
+```
