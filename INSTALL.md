@@ -5,7 +5,7 @@ First, set up the build environment.
 
 ```sh
 module purge   # start with a clean environment
-module load gcc/4.8.4 boost/1.58 swig/2.0.10 cmake/3.2.2
+module load gcc/4.8.4 boost/1.58 swig/3.0.5 cmake/3.2.2
 ```
 
 Second: are you building `ConsensusCore2` for use by
