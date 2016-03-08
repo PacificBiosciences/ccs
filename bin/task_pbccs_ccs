@@ -152,11 +152,11 @@ def get_parser():
     p.add_output_file_type(FileTypes.DS_CCS, "bam_output",
                            name="ConsensusReadSet",
                            description="Output DataSet XML file",
-                           default_name="ccs.consensusreadset.xml")
+                           default_name="ccs")
     p.add_output_file_type(FileTypes.REPORT, "report_json",
                            name="JSON report",
                            description="JSON report",
-                           default_name="ccs_report.json")
+                           default_name="ccs_report")
     p.add_float(Constants.MIN_SNR_ID, "minSnr",
                 default=Constants.MIN_SNR_DEFAULT,
                 name="Minimum SNR",
