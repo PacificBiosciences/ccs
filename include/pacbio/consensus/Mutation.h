@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <ostream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace PacBio {
@@ -49,16 +50,10 @@ public:
 
     static bool SiteComparer(const Mutation& lhs, const Mutation& rhs)
     {
-        if (lhs.End() < rhs.End())
-            return true;
-
-        else if (lhs.End() == rhs.End() && lhs.Start() < rhs.Start())
-            return true;
-
-        else if (lhs.End() == rhs.End() && lhs.Start() == rhs.Start() && lhs.IsDeletion())
-            return true;
-
-        return false;
+        // perform a lexicographic sort on End, Start, IsDeletion
+        const auto l = std::make_tuple(lhs.End(), lhs.Start(), lhs.IsDeletion());
+        const auto r = std::make_tuple(rhs.End(), rhs.Start(), rhs.IsDeletion());
+        return l < r;
     }
 
 private:
