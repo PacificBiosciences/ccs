@@ -109,12 +109,12 @@ def resolved_tool_contract_runner(rtc):
     ccs = ConsensusReadSet(output_file)
     ccs.write(rtc.task.output_files[0])
     ccs.close()
-    _process_csv(csv_file, report_file)
+    _process_csv(csv_file, report_file, ccs.uuid)
     return 0
 
 
 # FIXME(nechols)(2016-01-26): this is evil
-def _process_csv(csv_file, report_file):
+def _process_csv(csv_file, report_file, uuid):
     log.info("reading attributes from %s" % csv_file)
     attributes = []
     with open(csv_file) as f:
@@ -132,7 +132,7 @@ def _process_csv(csv_file, report_file):
                 field_id = re.sub("\ ", "_", label.lower())
             a = Attribute(field_id, int(fields[1]), name=label)
             attributes.append(a)
-    r = Report("ccs_processing", attributes=attributes)
+    r = Report("ccs_processing", attributes=attributes, dataset_uuids=(uuid,))
     r.write_json(report_file)
     log.info("wrote %s" % report_file)
     return r
