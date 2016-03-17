@@ -1,0 +1,10 @@
+BasedOnStyle: Google
+AllowShortLoopsOnASingleLine: false
+AccessModifierOffset: -4
+BreakBeforeBraces: Mozilla
+BreakConstructorInitializersBeforeComma: true
+ColumnLimit: 100
+IndentWidth: 4
+PointerAlignment: Left
+TabWidth: 4
+UseTab: Never
