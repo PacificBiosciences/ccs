@@ -91,9 +91,12 @@ class ChimeraLabeler {
 public: // structors
   // Default constructor
   explicit ChimeraLabeler(double minChimeraScoreArg = 1.0,
+                          size_t maxChimeraSupportArg = 100,
                           bool verboseArg = false)
-      : minChimeraScore(minChimeraScoreArg), beta(4), pseudocount(2.0),
-        chunks(4), verbose(verboseArg){};
+      : minChimeraScore(minChimeraScoreArg)
+      , maxChimeraSupport(maxChimeraSupportArg)
+      , beta(4), pseudocount(2.0)
+      , chunks(4), verbose(verboseArg){};
   // Move constructor
   ChimeraLabeler(ChimeraLabeler &&src) = delete;
   // Copy constructor
@@ -115,6 +118,7 @@ private: // Type definitions
 
 private: // Instance variables
   const double minChimeraScore;
+  const size_t maxChimeraSupport;
   const size_t beta;
   const double pseudocount;
   const size_t chunks;
@@ -239,8 +243,9 @@ public: // Modifying methods
     // Declare containers for tracking non-Chimeric parents
     std::vector<size_t> parentIds;
 
-    // First two sequences do not have enough parents, assumed real
-    if (ids_.size() < 2) {
+    // The first two sequences do not have enough possible parents, and any
+    //  records with a high enough number of supporting reads, assume real
+    if (ids_.size() < 2 || size > maxChimeraSupport) {
       if (verbose)
         std::cout << "consensus '" << id << "' is abundant, assumed real"
                   << std::endl;
