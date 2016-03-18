@@ -33,7 +33,7 @@ TEST(ChimeraLabeler, EndToEnd)
     }
 
     // Label the Records
-    ChimeraLabeler chimeraLabeler(1.0f, false);
+    ChimeraLabeler chimeraLabeler;
     const auto& labels = chimeraLabeler.LabelChimeras(idList, seqList);
 
     // Expect 10 labels

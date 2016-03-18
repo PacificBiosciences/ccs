@@ -1,6 +1,6 @@
 #include <string>
 
-#define CHIMERA_GIT_SHA1 "c07a339"
+#define CHIMERA_GIT_SHA1 "46614a9*"
 #define CHIMERA_VERSION "0.0.1"
 
 namespace PacBio {
@@ -8,9 +8,9 @@ namespace Chimera {
 
 struct Version
 {
-    static const size_t Major = 0;
-    static const size_t Minor = 0;
-    static const size_t Patch = 1;
+    static const size_t Major = @PacBioChimera_VERSION_MAJOR @;
+    static const size_t Minor = @PacBioChimera_VERSION_MINOR @;
+    static const size_t Patch = @PacBioChimera_VERSION_PATCH @;
 
     static std::string ToString() { return CHIMERA_VERSION; }
 };
