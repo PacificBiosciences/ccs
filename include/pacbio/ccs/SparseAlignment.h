@@ -42,6 +42,8 @@
 #include <utility>
 #include <vector>
 
+#include <boost/optional.hpp>
+
 #include <seqan/align.h>
 #include <seqan/basic.h>
 #include <seqan/index.h>
@@ -124,7 +126,7 @@ template <typename TConfig>
 void FindSeeds(
     std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>& seeds,
     const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
-    const seqan::DnaString& seq, const size_t qIdx)
+    const seqan::DnaString& seq, const boost::optional<size_t> qIdx = boost::none)
 {
     using namespace seqan;
     using namespace std;
@@ -146,7 +148,7 @@ void FindSeeds(
         for (const auto& hit : hits) {
             size_t rIdx;
 
-            if ((rIdx = getValueI1(hit)) == qIdx) continue;
+            if (qIdx && (rIdx = getValueI1(hit)) == *qIdx) continue;
 
             size_t j = getValueI2(hit);
             Seed<Simple> seed(i, j, TConfig::Size);
