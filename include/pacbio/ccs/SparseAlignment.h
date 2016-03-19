@@ -146,9 +146,9 @@ void FindSeeds(
         auto hits = getOccurrences(index, shape);
 
         for (const auto& hit : hits) {
-            size_t rIdx;
+            size_t rIdx = getValueI1(hit);
 
-            if (qIdx && (rIdx = getValueI1(hit)) == *qIdx) continue;
+            if (qIdx && rIdx == *qIdx) continue;
 
             size_t j = getValueI2(hit);
             Seed<Simple> seed(i, j, TConfig::Size);
