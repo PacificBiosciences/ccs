@@ -296,7 +296,7 @@ int main(int argc, char** argv)
     //   clang messes with the way the arg to version() is formatted..
     auto parser =
         OptionParser()
-            .usage("usage: %prog [OPTIONS] OUTPUT FILES...")
+            .usage("usage: %prog [OPTIONS] INPUT OUTPUT")
             .version("%prog " CCS_VERSION " (commit " CCS_GIT_SHA1 ")"
                      "\nConsensusCore2 " CC2_VERSION " (commit " CC2_GIT_SHA1 ")"
                      "\nCopyright (c) 2014-2015 Pacific Biosciences, Inc.\nLicense: 3-BSD")
@@ -334,7 +334,7 @@ int main(int argc, char** argv)
         .help("Set log level. Default = %default");
 
     const auto options = parser.parse_args(argc, argv);
-    auto files = parser.args();
+    const auto files = parser.args();
 
     const ConsensusSettings settings(options);
 
@@ -361,21 +361,23 @@ int main(int argc, char** argv)
     //
     //
     if (files.size() < 1)
-        parser.error("missing OUTPUT and FILES...");
+        parser.error("missing INPUT and OUTPUT");
     else if (files.size() < 2)
-        parser.error("missing FILES...");
+        parser.error("missing OUTPUT");
+    else if (files.size() > 2)
+        parser.error("too many arguments for INPUT and OUTPUT");
 
     // pop first file off the list, is OUTPUT file
-    const string outputFile(files.front());
-    files.erase(files.begin());
+    const string inputFile = files.front();
+    const string outputFile = files.back();
+
+    // verify input file exists
+    if (!FileExists(inputFile))
+        parser.error("INPUT: file does not exist: '" + inputFile + "'");
 
     // verify output file does not already exist
     if (FileExists(outputFile) && !forceOutput)
         parser.error("OUTPUT: file already exists: '" + outputFile + "'");
-
-    // verify input files exist
-    for (const auto& file : files)
-        if (!FileExists(file)) parser.error("FILES...: file does not exist: '" + file + "'");
 
     // logging
     //
@@ -401,7 +403,7 @@ int main(int argc, char** argv)
 
     PBLOG_DEBUG << "Found consensus models for: (" << join(avail, ", ") << ')';
 
-    DataSet ds(files);
+    DataSet ds(inputFile);
 
     // test that all input chemistries are supported
     {

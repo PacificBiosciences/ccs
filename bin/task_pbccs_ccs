@@ -94,8 +94,8 @@ def resolved_tool_contract_runner(rtc):
         "--minPredictedAccuracy=%g" % \
             rtc.task.options[Constants.MIN_PREDICTED_ACCURACY_ID],
         "--noPolish" if rtc.task.options[Constants.NO_POLISH_ID] else "",
-        output_file,
-        subreads_file
+        subreads_file,
+        output_file
     ]
     log.info(" ".join(args))
     result = run_cmd(
