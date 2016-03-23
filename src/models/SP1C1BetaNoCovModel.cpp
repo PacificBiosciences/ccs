@@ -11,23 +11,23 @@ namespace PacBio {
 namespace Consensus {
 namespace {
 
-class SP1C1NoCovModel : public ModelConfig
+class SP1C1BetaNoCovModel : public ModelConfig
 {
-    REGISTER_MODEL(SP1C1NoCovModel);
+    REGISTER_MODEL(SP1C1BetaNoCovModel);
 
 public:
-    SP1C1NoCovModel(const SNR& snr);
+    SP1C1BetaNoCovModel(const SNR& snr);
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
     double BaseEmissionPr(MoveType move, char from, char to) const;
     double CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const;
     double UndoCounterWeights(size_t nEmissions) const;
 
-    static std::string Name() { return "S/P1-C1"; }
+    static std::string Name() { return "S/P1-C1/beta"; }
 private:
     SNR snr_;
 };
 
-REGISTER_MODEL_IMPL(SP1C1NoCovModel);
+REGISTER_MODEL_IMPL(SP1C1BetaNoCovModel);
 
 double matchPmf[8][4] = {
     {0.980417570, 0.011537479, 0.005804964, 0.002239987},  // AA
@@ -54,7 +54,7 @@ double stickPmf[8][4] = {
 double branchPmf[8][4] = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1},
                           {1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {0, 0, 0, 1}};
 
-double SP1C1NoCovParams[8][4] = {
+double SP1C1BetaNoCovParams[8][4] = {
     // Match, Branch, Stick, Delete
     {0.888913751, 0.021169653, 0.034937054, 0.054979542},  // AA
     {0.835822697, 0.036126801, 0.091992041, 0.036058461},  // CC
@@ -66,8 +66,8 @@ double SP1C1NoCovParams[8][4] = {
     {0.879087800, 0.022178294, 0.057073518, 0.041660389}   // NT
 };
 
-SP1C1NoCovModel::SP1C1NoCovModel(const SNR& snr) : snr_(snr) {}
-std::vector<TemplatePosition> SP1C1NoCovModel::Populate(const std::string& tpl) const
+SP1C1BetaNoCovModel::SP1C1BetaNoCovModel(const SNR& snr) : snr_(snr) {}
+std::vector<TemplatePosition> SP1C1BetaNoCovModel::Populate(const std::string& tpl) const
 {
     std::vector<TemplatePosition> result;
 
@@ -79,7 +79,7 @@ std::vector<TemplatePosition> SP1C1NoCovModel::Populate(const std::string& tpl) 
         if (b > 3) throw std::invalid_argument("invalid character in sequence!");
 
         const bool hpAdd = tpl[i - 1] == tpl[i] ? 0 : 4;
-        const auto params = SP1C1NoCovParams[b + hpAdd];
+        const auto params = SP1C1BetaNoCovParams[b + hpAdd];
 
         result.emplace_back(TemplatePosition{
             tpl[i - 1],
@@ -95,14 +95,14 @@ std::vector<TemplatePosition> SP1C1NoCovModel::Populate(const std::string& tpl) 
     return result;
 }
 
-double SP1C1NoCovModel::BaseEmissionPr(MoveType move, const char from, const char to) const
+double SP1C1BetaNoCovModel::BaseEmissionPr(MoveType move, const char from, const char to) const
 {
     // All emissions are now "Covariate Emissions"
     assert(move != MoveType::DELETION);
     return 1.0;
 }
 
-double SP1C1NoCovModel::CovEmissionPr(MoveType move, uint8_t nuc, char from, char to) const
+double SP1C1BetaNoCovModel::CovEmissionPr(MoveType move, uint8_t nuc, char from, char to) const
 {
     const uint8_t hpAdd = from == to ? 0 : 4;
 
@@ -122,7 +122,7 @@ double SP1C1NoCovModel::CovEmissionPr(MoveType move, uint8_t nuc, char from, cha
     throw std::invalid_argument("unknown move type!");
 }
 
-double SP1C1NoCovModel::UndoCounterWeights(const size_t nEmissions) const { return 0; }
+double SP1C1BetaNoCovModel::UndoCounterWeights(const size_t nEmissions) const { return 0; }
 }  // namespace anonymous
 }  // namespace Consensus
 }  // namespace PacBio
