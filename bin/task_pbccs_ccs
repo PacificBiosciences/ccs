@@ -76,14 +76,13 @@ def resolved_tool_contract_runner(rtc):
         output_file = re.sub(".consensusreadset.xml", ".bam", output_file)
     assert output_file.endswith(".bam")
     report_file = rtc.task.output_files[1]
-    csv_file = os.path.splitext(report_file)[0] + ".csv"
     log.info("CCS_EXE = {e}".format(e=Constants.CCS_EXE))
     args = [
         Constants.CCS_EXE,
         "--pbi",
         "--force",
         "--logLevel=DEBUG",
-        "--reportFile=%s" % csv_file,
+        "--reportFile=%s" % report_file,
         "--numThreads=%d" % rtc.task.nproc,
         "--minSnr=%g" % rtc.task.options[Constants.MIN_SNR_ID],
         "--minReadScore=%g" % rtc.task.options[Constants.MIN_READ_SCORE_ID],
@@ -109,33 +108,7 @@ def resolved_tool_contract_runner(rtc):
     ccs = ConsensusReadSet(output_file)
     ccs.write(rtc.task.output_files[0])
     ccs.close()
-    _process_csv(csv_file, report_file, ccs.uuid)
     return 0
-
-
-# FIXME(nechols)(2016-01-26): this is evil
-def _process_csv(csv_file, report_file, uuid):
-    log.info("reading attributes from %s" % csv_file)
-    attributes = []
-    with open(csv_file) as f:
-        for line in f.read().splitlines():
-            fields = line.strip().split(",")
-            if len(fields) == 0 or fields == ['']:
-                log.critical("MISFORMED CSV LINE: {l}".format(l=line))
-                break
-            elif len(fields) < 2:
-                log.critical("MISFORMED CSV LINE: {l}".format(l=line))
-                continue
-            label = re.sub(".*\ \-\-\ ", "", fields[0])
-            field_id = Constants.REPORT_FIELDS.get(label, None)
-            if field_id is None:
-                field_id = re.sub("\ ", "_", label.lower())
-            a = Attribute(field_id, int(fields[1]), name=label)
-            attributes.append(a)
-    r = Report("ccs_processing", attributes=attributes, dataset_uuids=(uuid,))
-    r.write_json(report_file)
-    log.info("wrote %s" % report_file)
-    return r
 
 
 def get_parser():
@@ -153,9 +126,9 @@ def get_parser():
                            name="ConsensusReadSet",
                            description="Output DataSet XML file",
                            default_name="ccs")
-    p.add_output_file_type(FileTypes.REPORT, "report_json",
-                           name="JSON report",
-                           description="JSON report",
+    p.add_output_file_type(FileTypes.TXT, "report_csv",
+                           name="CSV report",
+                           description="Text report summarizing run statistics",
                            default_name="ccs_report")
     p.add_float(Constants.MIN_SNR_ID, "minSnr",
                 default=Constants.MIN_SNR_DEFAULT,
