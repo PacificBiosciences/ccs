@@ -1,5 +1,7 @@
 
 #include <cmath>
+#include <memory>
+#include <string>
 
 #include <pacbio/consensus/Evaluator.h>
 #include <pacbio/consensus/Exceptions.h>
@@ -32,7 +34,7 @@ Evaluator::Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& 
         const double zScore = impl_->ZScore();
 
         // the zscore filter is disabled under the following conditions
-        if (mr.Model == "S/P1-C1") goto end;
+        if (mr.Model.find("S/P1-C1") != std::string::npos) goto end;
         if (minZScore <= -100.0) goto end;
         if (std::isnan(minZScore)) goto end;
 
