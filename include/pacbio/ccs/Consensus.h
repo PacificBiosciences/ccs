@@ -42,28 +42,28 @@
 #include <functional>
 #include <memory>
 #include <numeric>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <stdexcept>
 
 #include <boost/optional.hpp>
 
 #include <OptionParser.h>
 
-#include <pacbio/consensus/poa/PoaConsensus.h>
 #include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Polish.h>
+#include <pacbio/consensus/poa/PoaConsensus.h>
 
 #include <pbbam/Accuracy.h>
-#include <pbbam/QualityValues.h>
 #include <pbbam/LocalContextFlags.h>
+#include <pbbam/QualityValues.h>
 
 #include <pacbio/ccs/Logging.h>
-#include <pacbio/ccs/SparsePoa.h>
-#include <pacbio/ccs/Timer.h>
-#include <pacbio/ccs/SubreadResultCounter.h>
 #include <pacbio/ccs/ReadId.h>
+#include <pacbio/ccs/SparsePoa.h>
+#include <pacbio/ccs/SubreadResultCounter.h>
+#include <pacbio/ccs/Timer.h>
 
 namespace PacBio {
 namespace CCS {
@@ -72,6 +72,7 @@ using SNR = PacBio::Consensus::SNR;
 using QualityValues = PacBio::BAM::QualityValues;
 using LocalContextFlags = PacBio::BAM::LocalContextFlags;
 using Accuracy = PacBio::BAM::Accuracy;
+using StrandEnum = PacBio::Consensus::StrandEnum;
 
 namespace OptionNames {
 // constexpr auto MaxPoaCoverage       = "maxPoaCoverage";
@@ -81,11 +82,10 @@ constexpr auto MinPasses = "minPasses";
 constexpr auto MinPredictedAccuracy = "minPredictedAccuracy";
 constexpr auto MinZScore = "minZScore";
 constexpr auto MaxDropFraction = "maxDropFraction";
-constexpr auto noPolish = "noPolish";
+constexpr auto NoPolish = "noPolish";
 constexpr auto MinReadScore = "minReadScore";
 constexpr auto MinSnr = "minSnr";
-
-// constexpr auto Directional          = "directional";
+constexpr auto ByStrand = "byStrand";
 }  // namespace OptionNames
 
 struct ConsensusSettings
@@ -97,7 +97,7 @@ struct ConsensusSettings
     double MinPredictedAccuracy;
     double MinZScore;
     double MaxDropFraction;
-    bool Directional;
+    bool ByStrand;
     bool NoPolish;
     double MinReadScore;
     double MinSNR;
@@ -108,7 +108,7 @@ struct ConsensusSettings
     static void AddOptions(optparse::OptionParser* const parser)
     {
         const std::string em = "--";
-        // TODO(lhepler) implement alignment to POA and directional support
+        // TODO(lhepler) implement alignment to POA
         // parser->add_option(em +
         // OptionNames::MaxPoaCoverage).type("int").set_default(1024).help("Maximum number of
         // subreads to use when building POA. Default = %default");
@@ -144,17 +144,18 @@ struct ConsensusSettings
                 3.75)  // See https://github.com/PacificBiosciences/pbccs/issues/86 for a more
                        // detailed discussion of this default.
             .help("Minimum SNR of input subreads. Default = %default");
-        parser->add_option(em + OptionNames::noPolish)
-            .action("store_true")
-            .help("Only output the initial template derived from the POA (faster, less accurate).");
         parser->add_option(em + OptionNames::MinReadScore)
             .type("float")
             .set_default(0.75)
             .help("Minimum read score of input subreads. Default = %default");
-
-        // parser->add_option(em +
-        // OptionNames::Directional).action("store_true").set_default("0").help("Generate a
-        // consensus for each strand. Default = false");
+        parser->add_option(em + OptionNames::ByStrand)
+            .action("store_true")
+            .help("Generate a consensus for each strand. Default = false");
+        parser->add_option(em + OptionNames::NoPolish)
+            .action("store_true")
+            .help(
+                "Only output the initial template derived from the POA (faster, less accurate). "
+                "Default = false");
     }
 };
 
@@ -183,6 +184,7 @@ struct ChunkType
 struct ConsensusType
 {
     ReadId Id;
+    boost::optional<StrandEnum> Strand;
     std::string Sequence;
     std::string Qualities;
     size_t NumPasses;
@@ -341,8 +343,6 @@ boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
     const TRead& read, const std::string& chem, const PoaAlignmentSummary& summary,
     const size_t poaLength, const ConsensusSettings& settings, SubreadResultCounter* resultCounter)
 {
-    using PacBio::Consensus::StrandEnum;
-
     const size_t tplStart = summary.ExtentOnConsensus.Left();
     const size_t tplEnd = summary.ExtentOnConsensus.Right();
     const size_t readStart = summary.ExtentOnRead.Left();
@@ -508,95 +508,139 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                 result.Success += 1;
                 result.SubreadCounter.Success += activeReads;
                 result.emplace_back(ConsensusType{
-                    chunk.Id, poaConsensus, qvs, possiblePasses, 0, 0, std::vector<double>(1),
-                    result.SubreadCounter.ReturnCountsAsArray(), 0, 0, chunk.SignalToNoise,
-                    timer.ElapsedMilliseconds(), chunk.Barcodes});
-            } else {
-                // setup the arrow integrator
-                IntegratorConfig cfg(settings.MinZScore, 12.5);
-                MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise, chunk.Chemistry);
-                const size_t nReads = readKeys.size();
-                size_t nPasses = 0, nDropped = 0;
-
-                // If this ZMW could possibly pass,  add the reads to the integrator
-                for (size_t i = 0; i < nReads; ++i) {
-                    // skip unadded reads
-                    if (readKeys[i] < 0) continue;
-
-                    if (auto mr = ExtractMappedRead(*reads[i], chunk.Chemistry,
-                                                    summaries[readKeys[i]], poaConsensus.length(),
-                                                    settings, &result.SubreadCounter)) {
-                        auto status = ai.AddRead(*mr);
-                        // increment the status count
-                        result.SubreadCounter.AddResult(status);
-                        if (status == AddReadResult::SUCCESS &&
-                            reads[i]->Flags & BAM::ADAPTER_BEFORE &&
-                            reads[i]->Flags & BAM::ADAPTER_AFTER) {
-                            ++nPasses;
-                        } else if (status != AddReadResult::SUCCESS) {
-                            ++nDropped;
-                            PBLOG_DEBUG << "Skipping read " << mr->Name << ", " << status;
-                        }
-                    }
-                }
-
-                if (nPasses < settings.MinPasses) {
-                    // Reassign all the successful reads to the other category
-                    result.SubreadCounter.AssignSuccessToOther();
-                    result.TooFewPasses += 1;
-                    PBLOG_DEBUG << "Skipping " << chunk.Id << ", insufficient number of passes ("
-                                << nPasses << '<' << settings.MinPasses << ')';
-                    return result;
-                }
-
-                const double fracDropped = static_cast<double>(nDropped) / nReads;
-                if (fracDropped > settings.MaxDropFraction) {
-                    result.TooManyUnusable += 1;
-                    result.SubreadCounter.AssignSuccessToOther();
-                    PBLOG_DEBUG << "Skipping " << chunk.Id
-                                << ", too high a fraction of unusable subreads (" << fracDropped
-                                << '>' << settings.MaxDropFraction << ')';
-                    return result;
-                }
-
-                const double zAvg = ai.AvgZScore();
-                const auto zScores = ai.ZScores();
-
-                // find consensus!!
-                size_t nTested, nApplied;
-                bool polished;
-                std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
-
-                if (!polished) {
-                    result.NonConvergent += 1;
-                    result.SubreadCounter.AssignSuccessToOther();
-                    PBLOG_DEBUG << "Skipping " << chunk.Id << ", failed to converge";
-                    return result;
-                }
-
-                // compute predicted accuracy
-                double predAcc = 0.0;
-                std::vector<int> qvs = ConsensusQVs(ai);
-                for (const int qv : qvs) {
-                    predAcc += pow(10.0, static_cast<double>(qv) / -10.0);
-                }
-                predAcc = 1.0 - predAcc / qvs.size();
-
-                if (predAcc < settings.MinPredictedAccuracy) {
-                    result.PoorQuality += 1;
-                    result.SubreadCounter.AssignSuccessToOther();
-                    PBLOG_DEBUG << "Skipping " << chunk.Id
-                                << ", failed to meet minimum predicted accuracy (" << predAcc << '<'
-                                << settings.MinPredictedAccuracy << ')';
-                    return result;
-                }
-
-                // return resulting sequence!!
-                result.Success += 1;
-                result.emplace_back(ConsensusType{
-                    chunk.Id, std::string(ai), QVsToASCII(qvs), nPasses, predAcc, zAvg, zScores,
-                    result.SubreadCounter.ReturnCountsAsArray(), nTested, nApplied,
+                    chunk.Id, boost::none, poaConsensus, qvs, possiblePasses, 0, 0,
+                    std::vector<double>(1), result.SubreadCounter.ReturnCountsAsArray(), 0, 0,
                     chunk.SignalToNoise, timer.ElapsedMilliseconds(), chunk.Barcodes});
+            } else {
+                const auto mkConsensus = [&](const boost::optional<StrandEnum> strand) {
+                    // give this consensus attempt a name we can refer to
+                    std::string chunkName(chunk.Id);
+                    if (strand && *strand == StrandEnum::FORWARD) chunkName += " [fwd]";
+                    if (strand && *strand == StrandEnum::REVERSE) chunkName += " [rev]";
+
+                    try {
+                        // setup the arrow integrator
+                        IntegratorConfig cfg(settings.MinZScore, 12.5);
+                        MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise,
+                                                   chunk.Chemistry);
+                        const size_t nReads = readKeys.size();
+                        size_t nPasses = 0, nDropped = 0;
+
+                        // If this ZMW could possibly pass,  add the reads to the integrator
+                        for (size_t i = 0; i < nReads; ++i) {
+                            // skip unadded reads
+                            if (readKeys[i] < 0) continue;
+
+                            if (auto mr = ExtractMappedRead(
+                                    *reads[i], chunk.Chemistry, summaries[readKeys[i]],
+                                    poaConsensus.length(), settings, &result.SubreadCounter)) {
+                                // skip reads not belonging to this strand, if we're --byStrand
+                                if (strand && mr->Strand != *strand) continue;
+                                auto status = ai.AddRead(*mr);
+                                // increment the status count
+                                result.SubreadCounter.AddResult(status);
+                                if (status == AddReadResult::SUCCESS &&
+                                    reads[i]->Flags & BAM::ADAPTER_BEFORE &&
+                                    reads[i]->Flags & BAM::ADAPTER_AFTER) {
+                                    ++nPasses;
+                                } else if (status != AddReadResult::SUCCESS) {
+                                    ++nDropped;
+                                    PBLOG_DEBUG << "Skipping read " << mr->Name << ", " << status;
+                                }
+                            }
+                        }
+
+                        if (nPasses < settings.MinPasses) {
+                            // Reassign all the successful reads to the other category
+                            result.SubreadCounter.AssignSuccessToOther();
+                            result.TooFewPasses += 1;
+                            PBLOG_DEBUG << "Skipping " << chunkName
+                                        << ", insufficient number of passes (" << nPasses << '<'
+                                        << settings.MinPasses << ')';
+                            return;
+                        }
+
+                        // this is hairy, but also relatively straightforward, so bear with me:
+                        //   if we're not doing strand-specific consensus, the total number of
+                        //   available reads is just nReads. If we're doing byStrand though,
+                        //   then the number of available reads is those that mapped to this
+                        //   strand, plus half of those that didn't map to the POA (we assume).
+                        const size_t nAvail =
+                            (!strand) ? nReads
+                                      : (std::count_if(
+                                             readKeys.cbegin(), readKeys.cend(),
+                                             [&](const SparsePoa::ReadKey key) {
+                                                 return key >= 0 &&
+                                                        summaries[key].ReverseComplementedRead ==
+                                                            (*strand == StrandEnum::REVERSE);
+                                             }) +
+                                         std::count_if(
+                                             readKeys.cbegin(), readKeys.cend(),
+                                             [](const SparsePoa::ReadKey key) { return key < 0; }) /
+                                             2);
+
+                        const double fracDropped = static_cast<double>(nDropped) / nAvail;
+                        if (fracDropped > settings.MaxDropFraction) {
+                            result.TooManyUnusable += 1;
+                            result.SubreadCounter.AssignSuccessToOther();
+                            PBLOG_DEBUG << "Skipping " << chunkName
+                                        << ", too high a fraction of unusable subreads ("
+                                        << fracDropped << '>' << settings.MaxDropFraction << ')';
+                            return;
+                        }
+
+                        const double zAvg = ai.AvgZScore();
+                        const auto zScores = ai.ZScores();
+
+                        // find consensus!!
+                        size_t nTested, nApplied;
+                        bool polished;
+                        std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
+
+                        if (!polished) {
+                            result.NonConvergent += 1;
+                            result.SubreadCounter.AssignSuccessToOther();
+                            PBLOG_DEBUG << "Skipping " << chunkName << ", failed to converge";
+                            return;
+                        }
+
+                        // compute predicted accuracy
+                        double predAcc = 0.0;
+                        std::vector<int> qvs = ConsensusQVs(ai);
+                        for (const int qv : qvs) {
+                            predAcc += pow(10.0, static_cast<double>(qv) / -10.0);
+                        }
+                        predAcc = 1.0 - predAcc / qvs.size();
+
+                        if (predAcc < settings.MinPredictedAccuracy) {
+                            result.PoorQuality += 1;
+                            result.SubreadCounter.AssignSuccessToOther();
+                            PBLOG_DEBUG << "Skipping " << chunkName
+                                        << ", failed to meet minimum predicted accuracy ("
+                                        << predAcc << '<' << settings.MinPredictedAccuracy << ')';
+                            return;
+                        }
+
+                        // return resulting sequence!!
+                        result.Success += 1;
+                        result.emplace_back(ConsensusType{
+                            chunk.Id, strand, std::string(ai), QVsToASCII(qvs), nPasses, predAcc,
+                            zAvg, zScores, result.SubreadCounter.ReturnCountsAsArray(), nTested,
+                            nApplied, chunk.SignalToNoise, timer.ElapsedMilliseconds(),
+                            chunk.Barcodes});
+                    } catch (const std::exception& e) {
+                        result.ExceptionThrown += 1;
+                        PBLOG_ERROR << "Skipping " << chunkName << ", caught exception: '"
+                                    << e.what() << "\'";
+                    }
+                };
+
+                if (settings.ByStrand) {
+                    mkConsensus(StrandEnum::FORWARD);
+                    mkConsensus(StrandEnum::REVERSE);
+                } else {
+                    mkConsensus(boost::none);
+                }
             }
         }
     } catch (const std::exception& e) {

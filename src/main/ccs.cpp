@@ -123,6 +123,9 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
 
         name << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs";
 
+        if (ccs.Strand && *(ccs.Strand) == StrandEnum::FORWARD) name << "/fwd";
+        if (ccs.Strand && *(ccs.Strand) == StrandEnum::REVERSE) name << "/rev";
+
         vector<float> snr = {
             static_cast<float>(ccs.SignalToNoise.A), static_cast<float>(ccs.SignalToNoise.C),
             static_cast<float>(ccs.SignalToNoise.G), static_cast<float>(ccs.SignalToNoise.T)};
@@ -174,13 +177,19 @@ void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
 {
     counts += results;
     for (const auto& ccs : results) {
-        ccsFastq << '@' << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs"
-                 << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy;
+        ccsFastq << '@' << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs";
+
+        if (ccs.Strand && *(ccs.Strand) == StrandEnum::FORWARD) ccsFastq << "/fwd";
+        if (ccs.Strand && *(ccs.Strand) == StrandEnum::REVERSE) ccsFastq << "/rev";
+
+        ccsFastq << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy;
+
 #if DIAGNOSTICS
         if (ccs.Barcodes) {
             ccsFastq << " bc:" << ccs.Barcodes->first << "-" << ccs.Barcodes->second;
         }
 #endif
+
         ccsFastq << '\n';
         ccsFastq << ccs.Sequence << '\n';
         ccsFastq << "+\n";
@@ -378,6 +387,9 @@ int main(int argc, char** argv)
     // verify output file does not already exist
     if (FileExists(outputFile) && !forceOutput)
         parser.error("OUTPUT: file already exists: '" + outputFile + "'");
+
+    if (settings.ByStrand && settings.NoPolish)
+        parser.error("option --byStrand: incompatible with --noPolish");
 
     // logging
     //
