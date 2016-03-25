@@ -26,8 +26,6 @@ include_directories(SYSTEM
 
 file(GLOB PacBioConsensusTests_CPP "*.cpp")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioConsensus_CXX_FLAGS}")
-
 add_executable(test_pbconsensus EXCLUDE_FROM_ALL
     ${PacBioConsensusTests_CPP}
     ${GMOCK_CC}
