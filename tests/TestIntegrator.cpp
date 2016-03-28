@@ -106,7 +106,12 @@ TEST(IntegratorTest, TestLongTemplate)
     EXPECT_NEAR(-148.92614949338801011, ai.LL(), prec);
 }
 
+// disable this test under debug builds (which are not fast enough to pass these timings)
+#ifndef NDEBUG
+TEST(IntegratorTest, DISABLED_TestLongTemplateTiming)
+#else
 TEST(IntegratorTest, TestLongTemplateTiming)
+#endif
 {
     const size_t nsamp = 200;
     MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);

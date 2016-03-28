@@ -36,10 +36,13 @@ dependencies:
 test:
     pre:
         - mkdir _build
-        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
+        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Debug -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
     override:
         - pushd _build ; make
         - pushd _build ; make check
+        - pushd _build ; rm -rf * ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
+        - pushd _build ; make clean ; make test_pbconsensus
+        - tests/bin/test_pbconsensus --gtest_filter=IntegratorTest.TestLongTemplateTiming
         - CC=gcc-4.8 CXX=g++-4.8 CMAKE_COMMAND=$(readlink -f _deps/cmake-3.3.0-Linux-x86_64/bin/cmake) Boost_INCLUDE_DIRS=$(readlink -f _deps/boost_1_58_0) SWIG_COMMAND=$(readlink -f _deps/swig-3.0.8/bin/swig) VERBOSE=1 pip install --verbose --upgrade --no-deps .
         - python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
     post:

@@ -62,11 +62,6 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 # flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioConsensus_CXX_FLAGS}")
 
-# gperftools support
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_EXE_LINKER_FLAGS "-Wl,-no_pie")
-endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-
 # libpbconsensus.a
 add_library(pbconsensus STATIC
     ${PacBioConsensus_CPP}
