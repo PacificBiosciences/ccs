@@ -29,12 +29,17 @@ bool AbstractTemplate::ApplyMutation(const Mutation& mut)
 {
     const bool mutApplied = InRange(mut.Start(), mut.End());
 
-    // if the end of the mutation is before the end of our mapping,
-    //   update the mapping
-    if (pinEnd_ || mut.Start() < end_ || mut.End() <= start_) end_ += mut.LengthDiff();
+    // update the end_ mapping if...
+    //   we're pinned at the end (and we're not trying to delete nonexistent bases), or
+    //   we're before the end of our mapping, or
+    //   TODO(lhepler) I HAVE NO IDEA WHY I PUT THIS HERE ARGH
+    if ((pinEnd_ && (end_ > 0 || mut.LengthDiff() > 0)) ||
+        mut.Start() < end_ ||
+        mut.End() <= start_) end_ += mut.LengthDiff();
 
-    // if the end of the mutation is before the start of our mapping,
-    //   update the mapping
+    // update the start_ mapping if...
+    //   we're NOT pinned at the start, or
+    //   the mutation comes before the start mapping.
     if (!pinStart_ && mut.End() <= start_) start_ += mut.LengthDiff();
 
     assert(start_ <= end_);
@@ -253,6 +258,9 @@ void Template::Reset()
 
 bool Template::ApplyMutation(const Mutation& mut)
 {
+    if (mutated_)
+        throw std::runtime_error("cannot ApplyMutation to an already mutated Template, call Reset first");
+
     bool mutApplied = false;
 
     if (Length() == 0 && mut.LengthDiff() < 1) goto finish;
