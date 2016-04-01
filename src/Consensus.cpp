@@ -42,7 +42,6 @@
 namespace PacBio {
 namespace CCS {
 
-// TODO(lhepler) fix directional
 ConsensusSettings::ConsensusSettings(const optparse::Values& options)
     : MaxPoaCoverage{std::numeric_limits<size_t>::max()}
     , MaxLength{options.get(OptionNames::MaxLength)}
@@ -51,10 +50,10 @@ ConsensusSettings::ConsensusSettings(const optparse::Values& options)
     , MinPredictedAccuracy{options.get(OptionNames::MinPredictedAccuracy)}
     , MinZScore{options.get(OptionNames::MinZScore)}
     , MaxDropFraction{options.get(OptionNames::MaxDropFraction)}
-    , Directional{false}  // options.get("directional")}
-    , NoPolish(options.get(OptionNames::noPolish))
-    , MinReadScore(static_cast<float>(options.get(OptionNames::MinReadScore)))
-    , MinSNR(static_cast<double>(options.get(OptionNames::MinSnr)))
+    , ByStrand{options.get(OptionNames::ByStrand)}
+    , NoPolish{options.get(OptionNames::NoPolish)}
+    , MinReadScore{static_cast<float>(options.get(OptionNames::MinReadScore))}
+    , MinSNR{static_cast<double>(options.get(OptionNames::MinSnr))}
 {
 }
 

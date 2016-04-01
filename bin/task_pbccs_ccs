@@ -47,6 +47,8 @@ class Constants(object):
     MAX_DROP_FRAC_DEFAULT = 0.34
     NO_POLISH_ID="pbccs.task_options.no_polish"
     NO_POLISH_DEFAULT=False
+    BY_STRAND_ID="pbccs.task_options.by_strand"
+    BY_STRAND_DEFAULT=False
     #
     REPORT_FIELDS = {
         "CCS generated": "num_ccs_reads",
@@ -94,6 +96,7 @@ def resolved_tool_contract_runner(rtc):
         "--minPredictedAccuracy=%g" % \
             rtc.task.options[Constants.MIN_PREDICTED_ACCURACY_ID],
         "--noPolish" if rtc.task.options[Constants.NO_POLISH_ID] else "",
+        "--byStrand" if rtc.task.options[Constants.BY_STRAND_ID] else "",
         subreads_file,
         output_file
     ]
@@ -167,6 +170,10 @@ def get_parser():
                   default=Constants.NO_POLISH_DEFAULT,
                   name="No Polish CCS",
                   description="Only output the initial template derived from the POA")
+    p.add_boolean(Constants.BY_STRAND_ID, "byStrand",
+                  default=Constants.BY_STRAND_DEFAULT,
+                  name="By Strand CCS",
+                  description="For each ZMW, generate two CCS sequences, one for each strand")
     return p
 
 
