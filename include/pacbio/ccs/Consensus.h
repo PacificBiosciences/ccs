@@ -178,7 +178,7 @@ struct ChunkType
     std::vector<TRead> Reads;
     SNR SignalToNoise;
     std::string Chemistry;
-    boost::optional<std::pair<uint16_t, uint16_t>> Barcodes;
+    boost::optional<std::tuple<uint16_t, uint16_t, uint8_t>> Barcodes;
 };
 
 struct ConsensusType
@@ -196,7 +196,7 @@ struct ConsensusType
     size_t MutationsApplied;
     SNR SignalToNoise;
     float ElapsedMilliseconds;
-    boost::optional<std::pair<uint16_t, uint16_t>> Barcodes;
+    boost::optional<std::tuple<uint16_t, uint16_t, uint8_t>> Barcodes;
 };
 
 template <typename TConsensus>

@@ -36,8 +36,8 @@
 // Author: Lance Hepler
 
 #include <algorithm>
-#include <functional>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <iterator>
 #include <map>
@@ -53,8 +53,8 @@
 
 #include <pbbam/BamWriter.h>
 #include <pbbam/EntireFileQuery.h>
-#include <pbbam/PbiFilterQuery.h>
 #include <pbbam/PbiBuilder.h>
+#include <pbbam/PbiFilterQuery.h>
 #include <pbbam/ReadGroupInfo.h>
 
 #include <pacbio/ccs/Consensus.h>
@@ -62,10 +62,10 @@
 #include <pacbio/ccs/Interval.h>
 #include <pacbio/ccs/Logging.h>
 #include <pacbio/ccs/ReadId.h>
-#include <pacbio/ccs/Whitelist.h>
-#include <pacbio/ccs/WorkQueue.h>
 #include <pacbio/ccs/Utility.h>
 #include <pacbio/ccs/Version.h>
+#include <pacbio/ccs/Whitelist.h>
+#include <pacbio/ccs/WorkQueue.h>
 
 #include <pacbio/consensus/Version.h>
 
@@ -144,11 +144,16 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["zs"] = zScores;
         tags["rs"] = ccs.StatusCounts;
 
-#if DIAGNOSTICS
         if (ccs.Barcodes) {
-            vector<uint16_t> bcs{ccs.Barcodes->first, ccs.Barcodes->second};
+            uint16_t first, second;
+            uint8_t quality;
+            tie(first, second, quality) = *ccs.Barcodes;
+            vector<uint16_t> bcs{first, second};
             tags["bc"] = bcs;
+            tags["bq"] = static_cast<int32_t>(quality);
         }
+
+#if DIAGNOSTICS
         tags["ms"] = ccs.ElapsedMilliseconds;
         tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
@@ -184,11 +189,12 @@ void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
 
         ccsFastq << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy;
 
-#if DIAGNOSTICS
         if (ccs.Barcodes) {
-            ccsFastq << " bc:" << ccs.Barcodes->first << "-" << ccs.Barcodes->second;
+            uint16_t first, second;
+            uint8_t quality;
+            tie(first, second, quality) = *ccs.Barcodes;
+            ccsFastq << " bc:B:S," << first << ',' << second << " bq:i:" << quality;
         }
-#endif
 
         ccsFastq << '\n';
         ccsFastq << ccs.Sequence << '\n';
@@ -231,6 +237,11 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv, const
                 .SequencingKit(rg.SequencingKit())
                 .BasecallerVersion(rg.BasecallerVersion())
                 .FrameRateHz(rg.FrameRateHz());
+
+            if (rg.HasBarcodeData()) {
+                readGroup.BarcodeData(rg.BarcodeFile(), rg.BarcodeHash(), rg.BarcodeCount(),
+                                      rg.BarcodeMode(), rg.BarcodeQuality());
+            }
 
             header.AddReadGroup(readGroup);
         }
@@ -381,8 +392,7 @@ int main(int argc, char** argv)
     const string outputFile = files.back();
 
     // verify input file exists
-    if (!FileExists(inputFile))
-        parser.error("INPUT: file does not exist: '" + inputFile + "'");
+    if (!FileExists(inputFile)) parser.error("INPUT: file does not exist: '" + inputFile + "'");
 
     // verify output file does not already exist
     if (FileExists(outputFile) && !forceOutput)
@@ -464,15 +474,15 @@ int main(int argc, char** argv)
     map<string, shared_ptr<string>> movieNames;
     optional<int32_t> holeNumber(none);
     bool skipZmw = false;
-    boost::optional<std::pair<uint16_t, uint16_t>> barcodes(boost::none);
+    optional<tuple<uint16_t, uint16_t, uint8_t>> barcodes(none);
 
     for (const auto& read : *query) {
         const string movieName = read.MovieName();
 
-        if (movieNames.find(movieName) == movieNames.end()) {
+        if (movieNames.find(movieName) == movieNames.end())
             movieNames[movieName] = make_shared<string>(movieName);
-        }
-        // Have we started a new ZMW?
+
+        // check if we've started a new ZMW
         if (!holeNumber || *holeNumber != read.HoleNumber()) {
             if (chunk && chunk->size() >= chunkSize) {
                 workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
@@ -480,12 +490,20 @@ int main(int argc, char** argv)
             }
             holeNumber = read.HoleNumber();
             auto snr = read.SignalToNoise();
-            if (read.HasBarcodes()) {
-                barcodes = read.Barcodes();
-            }
-            if (whitelist && !whitelist->Contains(movieName, *holeNumber)) {
-                skipZmw = true;
+
+            // barcodes
+            if (read.HasBarcodes() && read.HasBarcodeQuality()) {
+                uint16_t first, second;
+                uint8_t quality = read.BarcodeQuality();
+                tie(first, second) = read.Barcodes();
+                barcodes = make_tuple(first, second, quality);
             } else {
+                barcodes = none;
+            }
+
+            if (whitelist && !whitelist->Contains(movieName, *holeNumber))
+                skipZmw = true;
+            else {
                 skipZmw = false;
                 chunk->emplace_back(Chunk{ReadId(movieNames[movieName], *holeNumber),
                                           vector<Subread>(), SNR(snr[0], snr[1], snr[2], snr[3]),
@@ -495,15 +513,13 @@ int main(int argc, char** argv)
 
         if (skipZmw) continue;
 
-        // Check that barcode matches the previous ones
-        if (barcodes) {
-            // if not, set the barcodes to the flag and stop checking them.
-            if (!read.HasBarcodes() || read.Barcodes() != barcodes) {
-                barcodes->first = UINT16_MAX;
-                barcodes->second = UINT16_MAX;
-                chunk->back().Barcodes = barcodes;
-                barcodes = boost::none;
-            }
+        // check that barcode matches the previous ones, or else...
+        if (barcodes && (!read.HasBarcodes() || !read.HasBarcodeQuality() ||
+                         read.BarcodeForward() != get<0>(*barcodes) ||
+                         read.BarcodeReverse() != get<1>(*barcodes) ||
+                         read.BarcodeQuality() != get<2>(*barcodes))) {
+            PBLOG_FATAL << "invalid data: \"bc\" or \"bq\" tag did not agree between subreads!";
+            exit(-1);
         }
 
         chunk->back().Reads.emplace_back(
@@ -513,9 +529,7 @@ int main(int argc, char** argv)
     }
 
     // run the remaining tasks
-    if (chunk && !chunk->empty()) {
-        workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
-    }
+    if (chunk && !chunk->empty()) workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
 
     // wait for the queue to be done
     workQueue.Finalize();
@@ -525,9 +539,9 @@ int main(int argc, char** argv)
     auto counts = writer.get();
     const string reportFile(options.get(OptionNames::ReportFile));
 
-    if (reportFile == "-") {
+    if (reportFile == "-")
         WriteResultsReport(cout, counts);
-    } else {
+    else {
         ofstream stream(reportFile);
         WriteResultsReport(stream, counts);
     }
