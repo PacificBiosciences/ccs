@@ -18,7 +18,7 @@ from pbcommand.models.report import Report, Attribute
 from pbcommand.cli import pbparser_runner
 from pbcommand.utils import setup_log
 from pbcommand.engine import run_cmd
-from pbcore.io import ConsensusReadSet
+from pbcore.io import ConsensusReadSet, SubreadSet
 
 __version__ = "0.1"
 log = logging.getLogger(__name__)
@@ -73,6 +73,15 @@ def resolved_tool_contract_runner(rtc):
     dataset around the resulting .bam file.
     """
     subreads_file = rtc.task.input_files[0]
+    # XXX checking to make sure we don't propagate nonsense
+    barcode_sets = set()
+    with SubreadSet(subreads_file) as ds_in:
+        for ext_res in ds_in.externalResources:
+            if ext_res.barcodes is not None:
+                barcode_sets.add(ext_res.barcodes)
+    if len(barcode_sets) > 1:
+        raise RuntimeError("The input SubreadSet contains multiple distinct "+
+                           "BarcodeSets.")
     output_file = rtc.task.output_files[0]
     if output_file.endswith(".consensusreadset.xml"):
         output_file = re.sub(".consensusreadset.xml", ".bam", output_file)
@@ -108,9 +117,12 @@ def resolved_tool_contract_runner(rtc):
     if result.exit_code != 0:
         return result.exit_code
     assert os.path.isfile(output_file)
-    ccs = ConsensusReadSet(output_file)
-    ccs.write(rtc.task.output_files[0])
-    ccs.close()
+    ccs_ds = ConsensusReadSet(output_file, strict=True)
+    if len(barcode_sets) == 1:
+        for ext_res in ccs_ds.externalResources:
+            ext_res.barcodes = list(barcode_sets)[0]
+    ccs_ds.write(rtc.task.output_files[0])
+    ccs_ds.close()
     return 0
 
 
