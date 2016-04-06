@@ -40,9 +40,13 @@
 #include <chrono>
 #include <condition_variable>
 #include <csignal>
+#include <cstdlib>
 #include <ctime>
+#include <exception>
+#include <functional>
 #include <iomanip>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -50,88 +54,111 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 
 namespace PacBio {
 namespace CCS {
 namespace Logging {
 
-enum LogLevel : unsigned char
+// borrowed a little from primary's SmartEnum
+class LogLevel
 {
-    TRACE = 0,
-    DEBUG = 10,
-    INFO = 20,
-    NOTICE = 30,
-    WARN = 40,
-    ERROR = 50,
-    CRITICAL = 60,
-    FATAL = 70
+public:
+    LogLevel(const unsigned char value) : value_{value} {}
+    LogLevel(const std::string& value) : value_{FromString(value)} {}
+    enum : unsigned char
+    {
+        TRACE = 0,
+        DEBUG = 1,
+        INFO = 2,
+        NOTICE = 3,
+        WARN = 4,
+        ERROR = 5,
+        CRITICAL = 6,
+        FATAL = 7
+    };
+
+    operator unsigned char() const { return value_; }
+private:
+    inline static LogLevel FromString(const std::string& level)
+    {
+        if (level == "TRACE") return LogLevel::TRACE;
+        if (level == "DEBUG") return LogLevel::DEBUG;
+        if (level == "INFO") return LogLevel::INFO;
+        if (level == "NOTICE") return LogLevel::NOTICE;
+        if (level == "WARN") return LogLevel::WARN;
+        if (level == "ERROR") return LogLevel::ERROR;
+        if (level == "CRITICAL") return LogLevel::CRITICAL;
+        if (level == "FATAL") return LogLevel::FATAL;
+        throw std::invalid_argument("invalid log level");
+    }
+
+private:
+    unsigned char value_;
 };
 
-inline LogLevel FromString(const std::string& level)
+class LoggerConfig : public std::map<LogLevel, std::vector<std::reference_wrapper<std::ostream>>>
 {
-    if (level == "TRACE") return TRACE;
-    if (level == "DEBUG") return DEBUG;
-    if (level == "INFO") return INFO;
-    if (level == "NOTICE") return NOTICE;
-    if (level == "WARN") return WARN;
-    if (level == "ERROR") return ERROR;
-    if (level == "CRITICAL") return CRITICAL;
-    if (level == "FATAL") return FATAL;
-    throw std::invalid_argument("invalid log level");
-}
+public:
+    LoggerConfig(const std::map<LogLevel, std::vector<std::reference_wrapper<std::ostream>>>& cfg)
+        : std::map<LogLevel, std::vector<std::reference_wrapper<std::ostream>>>(cfg)
+    {
+    }
+
+    LoggerConfig(
+        const std::map<std::string, std::vector<std::reference_wrapper<std::ostream>>>& cfg)
+    {
+        for (const auto& kv : cfg)
+            (*this)[kv.first] = kv.second;
+    }
+
+    LoggerConfig(std::ostream& os, const LogLevel level = LogLevel::INFO)
+    {
+        for (size_t i = static_cast<size_t>(level); i < 8; ++i)
+            (*this)[static_cast<LogLevel>(i)].push_back(os);
+    }
+
+    LoggerConfig(std::ostream& os, const std::string& level) : LoggerConfig(os, LogLevel(level)) {}
+};
+
+// necessary fwd decl
+class LogMessage;
 
 class Logger
 {
 public:
-    Logger(std::ostream& os, LogLevel level = INFO)
-        : level_(level)
-        , os_(os)  // TODO(lhepler) return this to initializer list syntax when gcc-5
-        , writer_(&Logger::MessageWriter, this)
+    template <typename... Args>
+    Logger(Args&&... args)
+        : cfg_(std::forward<Args>(args)...), writer_(&Logger::MessageWriter, this)
     {
 #ifdef NDEBUG
-        if (level == TRACE)
+        if (Handles(LogLevel::TRACE))
             throw std::invalid_argument("one cannot simply log TRACE messages in release builds!");
 #endif
-    }
-
-    Logger(std::ostream& os, const std::string& level) : Logger(os, FromString(level)) {}
-    inline LogLevel GetLevel() const { return level_; }
-    inline Logger& operator<<(std::unique_ptr<std::ostringstream>&& ptr)
-    {
-        if (!writer_.joinable()) throw std::runtime_error("this logger is dead!");
-
-        {
-            std::lock_guard<std::mutex> g(m_);
-            queue_.emplace(std::forward<std::unique_ptr<std::ostringstream>>(ptr));
-        }
-        pushed_.notify_all();
-        return *this;
-    }
-
-    inline void Die()
-    {
-        if (!writer_.joinable()) throw std::runtime_error("this logger is already dead!");
-
-        // place a terminal sentinel for MessageWriter to know it's done
-        {
-            std::lock_guard<std::mutex> g(m_);
-            queue_.emplace(std::unique_ptr<std::ostringstream>());
-        }
-        pushed_.notify_all();
-
-        // wait for everything to be flushed
-        std::unique_lock<std::mutex> lk(m_);
-        popped_.wait(lk, [this]() { return queue_.empty(); });
-        // endl implicitly flushes, so no need to call os_.flush() here
-        // join writer thread
-        writer_.join();
     }
 
     Logger(const Logger& logger) = delete;
 
     ~Logger()
     {
-        if (writer_.joinable()) Die();
+        if (!writer_.joinable()) throw std::runtime_error("this logger is already dead!");
+
+        // place a terminal sentinel for MessageWriter to know it's done
+        {
+            std::lock_guard<std::mutex> g(m_);
+            queue_.emplace(std::unique_ptr<std::pair<LogLevel, std::ostringstream>>());
+        }
+        pushed_.notify_all();
+
+        // wait for everything to be flushed
+        {
+            std::unique_lock<std::mutex> lk(m_);
+            popped_.wait(lk, [this]() { return queue_.empty(); });
+            // endl implicitly flushes, so no need to call os_.flush() here
+        }
+
+        // join writer thread
+        writer_.join();
     }
 
     static inline Logger& Default(Logger* logger = nullptr)
@@ -142,10 +169,28 @@ public:
     }
 
 private:
+    inline bool Handles(const LogLevel level) const
+    {
+        return cfg_.find(level) != cfg_.end() && !cfg_.at(level).empty();
+    }
+
+    inline Logger& operator<<(std::unique_ptr<std::pair<LogLevel, std::ostringstream>>&& ptr)
+    {
+        if (!writer_.joinable()) throw std::runtime_error("this logger is dead!");
+
+        {
+            std::lock_guard<std::mutex> g(m_);
+            queue_.emplace(
+                std::forward<std::unique_ptr<std::pair<LogLevel, std::ostringstream>>>(ptr));
+        }
+        pushed_.notify_all();
+        return *this;
+    }
+
     void MessageWriter()
     {
         while (true) {
-            std::unique_ptr<std::ostringstream> ptr;
+            std::unique_ptr<std::pair<LogLevel, std::ostringstream>> ptr;
 
             // wait on messages to arrive in the queue_, and pop them off
             {
@@ -167,7 +212,10 @@ private:
             }
 
             // otherwise, push the message onto os_
-            os_ << ptr->str() << std::endl;
+            const LogLevel level = std::get<0>(*ptr);
+            if (cfg_.find(level) != cfg_.end())
+                for (const auto& os : cfg_.at(level))
+                    os.get() << std::get<1>(*ptr).str() << std::endl;
 
             // and notify flush we delivered a message to os_,
             popped_.notify_all();
@@ -175,13 +223,14 @@ private:
     }
 
 private:
-    LogLevel level_;
     std::mutex m_;
-    std::ostream& os_;
+    LoggerConfig cfg_;
     std::condition_variable popped_;
     std::condition_variable pushed_;
-    std::queue<std::unique_ptr<std::ostringstream>> queue_;
+    std::queue<std::unique_ptr<std::pair<LogLevel, std::ostringstream>>> queue_;
     std::thread writer_;
+
+    friend class LogMessage;
 };
 
 class LogMessage
@@ -189,7 +238,7 @@ class LogMessage
 public:
     LogMessage(const char* file __attribute__((unused)),
                const char* function __attribute__((unused)),
-               unsigned int line __attribute__((unused)), LogLevel level, Logger& logger)
+               unsigned int line __attribute__((unused)), const LogLevel level, Logger& logger)
         : logger_(logger)
     {
         using std::chrono::duration_cast;
@@ -197,9 +246,10 @@ public:
         using std::chrono::seconds;
         using std::chrono::system_clock;
 
-        if (logger_.GetLevel() > level) return;
+        if (!logger_.Handles(level)) return;
 
-        ptr_.reset(new std::ostringstream());
+        ptr_.reset(new std::pair<LogLevel, std::ostringstream>(
+            std::piecewise_construct, std::forward_as_tuple(level), std::forward_as_tuple()));
 
         static const char* delim = " -|- ";
 
@@ -214,13 +264,14 @@ public:
         char buf[20];
         std::strftime(buf, 20, "%Y%m%d %T.", std::gmtime(&time));
 
-        (*ptr_) << ">|> " << buf << std::setfill('0') << std::setw(3) << std::to_string(msec)
-                << delim << LogLevelRepr(level) << delim << function
+        std::get<1>(*ptr_) << ">|> " << buf << std::setfill('0') << std::setw(3)
+                           << std::to_string(msec) << delim << LogLevelRepr(level) << delim
+                           << function
 #ifndef NDEBUG
-                << " at " << file << ':' << line
+                           << " at " << file << ':' << line
 #endif
-                << delim << std::hex << std::showbase << std::this_thread::get_id()
-                << std::noshowbase << std::dec << "||" << delim;
+                           << delim << std::hex << std::showbase << std::this_thread::get_id()
+                           << std::noshowbase << std::dec << "||" << delim;
     }
 
     LogMessage(const LogMessage& msg) = delete;
@@ -233,7 +284,7 @@ public:
     template <typename T>
     inline LogMessage& operator<<(const T& t)
     {
-        if (ptr_) (*ptr_) << t;
+        if (ptr_) std::get<1>(*ptr_) << t;
         return *this;
     }
 
@@ -242,21 +293,21 @@ private:
     {
         // by specification these are all of length 10
         switch (level) {
-            case TRACE:
+            case LogLevel::TRACE:
                 return "TRACE     ";
-            case DEBUG:
+            case LogLevel::DEBUG:
                 return "DEBUG     ";
-            case INFO:
+            case LogLevel::INFO:
                 return "INFO      ";
-            case NOTICE:
+            case LogLevel::NOTICE:
                 return "NOTICE    ";
-            case WARN:
+            case LogLevel::WARN:
                 return "WARN      ";
-            case ERROR:
+            case LogLevel::ERROR:
                 return "ERROR     ";
-            case CRITICAL:
+            case LogLevel::CRITICAL:
                 return "CRITICAL  ";
-            case FATAL:
+            case LogLevel::FATAL:
                 return "FATAL     ";
             default:
                 return "OTHER     ";
@@ -264,39 +315,39 @@ private:
     }
 
 private:
-    std::unique_ptr<std::ostringstream> ptr_;
+    std::unique_ptr<std::pair<LogLevel, std::ostringstream>> ptr_;
     Logger& logger_;
 };
 
 // trace is disabled under Release builds (-DNDEBUG)
 #ifdef NDEBUG
-#define PBLOGGER_LEVEL(lg, lvl)                                   \
-    if (PacBio::CCS::Logging::lvl != PacBio::CCS::Logging::TRACE) \
+#define PBLOGGER_LEVEL(lg, lvl)                                             \
+    if (PacBio::CCS::Logging::lvl != PacBio::CCS::Logging::LogLevel::TRACE) \
     PacBio::CCS::Logging::LogMessage(__FILE__, __func__, __LINE__, PacBio::CCS::Logging::lvl, (lg))
 #else
 #define PBLOGGER_LEVEL(lg, lvl) \
     PacBio::CCS::Logging::LogMessage(__FILE__, __func__, __LINE__, PacBio::CCS::Logging::lvl, (lg))
 #endif
 
-#define PBLOGGER_TRACE(lg) PBLOGGER_LEVEL(lg, TRACE)
-#define PBLOGGER_DEBUG(lg) PBLOGGER_LEVEL(lg, DEBUG)
-#define PBLOGGER_INFO(lg) PBLOGGER_LEVEL(lg, INFO)
-#define PBLOGGER_NOTICE(lg) PBLOGGER_LEVEL(lg, NOTICE)
-#define PBLOGGER_WARN(lg) PBLOGGER_LEVEL(lg, WARN)
-#define PBLOGGER_ERROR(lg) PBLOGGER_LEVEL(lg, ERROR)
-#define PBLOGGER_CRITICAL(lg) PBLOGGER_LEVEL(lg, CRITICAL)
-#define PBLOGGER_FATAL(lg) PBLOGGER_LEVEL(lg, FATAL)
+#define PBLOGGER_TRACE(lg) PBLOGGER_LEVEL(lg, LogLevel::TRACE)
+#define PBLOGGER_DEBUG(lg) PBLOGGER_LEVEL(lg, LogLevel::DEBUG)
+#define PBLOGGER_INFO(lg) PBLOGGER_LEVEL(lg, LogLevel::INFO)
+#define PBLOGGER_NOTICE(lg) PBLOGGER_LEVEL(lg, LogLevel::NOTICE)
+#define PBLOGGER_WARN(lg) PBLOGGER_LEVEL(lg, LogLevel::WARN)
+#define PBLOGGER_ERROR(lg) PBLOGGER_LEVEL(lg, LogLevel::ERROR)
+#define PBLOGGER_CRITICAL(lg) PBLOGGER_LEVEL(lg, LogLevel::CRITICAL)
+#define PBLOGGER_FATAL(lg) PBLOGGER_LEVEL(lg, LogLevel::FATAL)
 
 #define PBLOG_LEVEL(lvl) PBLOGGER_LEVEL(PacBio::CCS::Logging::Logger::Default(), lvl)
 
-#define PBLOG_TRACE PBLOG_LEVEL(TRACE)
-#define PBLOG_DEBUG PBLOG_LEVEL(DEBUG)
-#define PBLOG_INFO PBLOG_LEVEL(INFO)
-#define PBLOG_NOTICE PBLOG_LEVEL(NOTICE)
-#define PBLOG_WARN PBLOG_LEVEL(WARN)
-#define PBLOG_ERROR PBLOG_LEVEL(ERROR)
-#define PBLOG_CRITICAL PBLOG_LEVEL(CRITICAL)
-#define PBLOG_FATAL PBLOG_LEVEL(FATAL)
+#define PBLOG_TRACE PBLOG_LEVEL(LogLevel::TRACE)
+#define PBLOG_DEBUG PBLOG_LEVEL(LogLevel::DEBUG)
+#define PBLOG_INFO PBLOG_LEVEL(LogLevel::INFO)
+#define PBLOG_NOTICE PBLOG_LEVEL(LogLevel::NOTICE)
+#define PBLOG_WARN PBLOG_LEVEL(LogLevel::WARN)
+#define PBLOG_ERROR PBLOG_LEVEL(LogLevel::ERROR)
+#define PBLOG_CRITICAL PBLOG_LEVEL(LogLevel::CRITICAL)
+#define PBLOG_FATAL PBLOG_LEVEL(LogLevel::FATAL)
 
 inline void InstallSignalHandlers(Logger& logger = Logger::Default())
 {
@@ -305,11 +356,24 @@ inline void InstallSignalHandlers(Logger& logger = Logger::Default())
 
     static Logger& logger_ = logger;
 
+    std::set_terminate([]() {
+        if (auto eptr = std::current_exception()) {
+            try {
+                std::rethrow_exception(eptr);
+            } catch (const std::exception& e) {
+                PBLOGGER_FATAL(logger_) << "caught exception: \"" << e.what() << '"';
+            } catch (...) {
+                PBLOGGER_FATAL(logger_) << "caught unknown exception type";
+            }
+        }
+        // call the SIGABRT handler (below)
+        std::abort();
+    });
     signal(SIGABRT, [](int) {
         {
             PBLOGGER_FATAL(logger_) << "caught SIGABRT";
         }
-        logger_.Die();
+        logger_.~Logger();
         signal(SIGABRT, SIG_DFL);
         raise(SIGABRT);
     });
@@ -317,7 +381,7 @@ inline void InstallSignalHandlers(Logger& logger = Logger::Default())
         {
             PBLOGGER_FATAL(logger_) << "caught SIGINT";
         }
-        logger_.Die();
+        logger_.~Logger();
         signal(SIGINT, SIG_DFL);
         raise(SIGINT);
     });
@@ -325,7 +389,7 @@ inline void InstallSignalHandlers(Logger& logger = Logger::Default())
         {
             PBLOGGER_FATAL(logger_) << "caught SIGSEGV";
         }
-        logger_.Die();
+        logger_.~Logger();
         signal(SIGSEGV, SIG_DFL);
         raise(SIGSEGV);
     });
@@ -333,7 +397,7 @@ inline void InstallSignalHandlers(Logger& logger = Logger::Default())
         {
             PBLOGGER_FATAL(logger_) << "caught SIGTERM";
         }
-        logger_.Die();
+        logger_.~Logger();
         signal(SIGTERM, SIG_DFL);
         raise(SIGTERM);
     });
