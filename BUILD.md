@@ -1,6 +1,21 @@
+*Note: all are welcome to build our software from source, but official
+ support is only provided for official builds provided by PacBio
+ (the SMRT Analysis suite)*
 
-Building/installing pbccs
-=========================
+## Building/installing pbccs
+
+### Easy way: use `pitchfork`
+
+The easiest way to build is to use the `pitchfork` build tool, which
+automates dependency fetching/resolution:
+
+  ```sh
+  $ git clone https://github.com/PacificBiosciences/pitchfork
+  $ cd pitchfork
+  $ make pbccs
+  ```
+
+### Manually
 
 First make sure you have boost (>=1.5.8) and cmake (3.3) installed.
 
@@ -33,11 +48,15 @@ coreutils`).
   $ make
   ```
 
-
-Building/installing bax2bam
-===========================
+## Building/installing bax2bam
 
 If you want to use pbccs with data from the PacBio RSII instrument,
-you will need the bax2bam converter.
+you will need the bax2bam converter, which you can build using
+`pitchfork`.  At present, you need to build BLASR, as bax2bam is part
+of the BLASR suite.
 
-(TODO: instructions on how to build it!!)
+  ```sh
+  $ git clone https://github.com/PacificBiosciences/pitchfork
+  $ cd pitchfork
+  $ make blasr
+  ```
