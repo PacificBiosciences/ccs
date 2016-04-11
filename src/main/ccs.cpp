@@ -47,6 +47,7 @@
 #include <vector>
 
 #include <boost/algorithm/string/join.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
 
 #include <OptionParser.h>
@@ -74,6 +75,7 @@ using namespace PacBio::BAM;
 using namespace PacBio::CCS;
 
 using boost::none;
+using boost::numeric_cast;
 using boost::optional;
 using optparse::OptionParser;
 
@@ -145,10 +147,10 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["rs"] = ccs.StatusCounts;
 
         if (ccs.Barcodes) {
-            uint16_t first, second;
+            int16_t first, second;
             uint8_t quality;
             tie(first, second, quality) = *ccs.Barcodes;
-            vector<uint16_t> bcs{first, second};
+            vector<uint16_t> bcs{numeric_cast<uint16_t>(first), numeric_cast<uint16_t>(second)};
             tags["bc"] = bcs;
             tags["bq"] = static_cast<int32_t>(quality);
         }
@@ -190,7 +192,7 @@ void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
         ccsFastq << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy;
 
         if (ccs.Barcodes) {
-            uint16_t first, second;
+            int16_t first, second;
             uint8_t quality;
             tie(first, second, quality) = *ccs.Barcodes;
             ccsFastq << " bc:B:S," << first << ',' << second << " bq:i:" << quality;
@@ -474,7 +476,7 @@ int main(int argc, char** argv)
     map<string, shared_ptr<string>> movieNames;
     optional<int32_t> holeNumber(none);
     bool skipZmw = false;
-    optional<tuple<uint16_t, uint16_t, uint8_t>> barcodes(none);
+    optional<tuple<int16_t, int16_t, uint8_t>> barcodes(none);
 
     for (const auto& read : *query) {
         const string movieName = read.MovieName();
@@ -493,7 +495,7 @@ int main(int argc, char** argv)
 
             // barcodes
             if (read.HasBarcodes() && read.HasBarcodeQuality()) {
-                uint16_t first, second;
+                int16_t first, second;
                 uint8_t quality = read.BarcodeQuality();
                 tie(first, second) = read.Barcodes();
                 barcodes = make_tuple(first, second, quality);
