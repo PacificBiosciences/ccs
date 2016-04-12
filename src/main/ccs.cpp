@@ -343,7 +343,7 @@ int main(int argc, char** argv)
     ConsensusSettings::AddOptions(&parser);
 
     parser.add_option(em + OptionNames::ReportFile)
-        .set_default("ccs_report.csv")
+        .set_default("ccs_report.txt")
         .help("Where to write the results report. Default = %default");
     parser.add_option(em + OptionNames::NumThreads)
         .type("int")
