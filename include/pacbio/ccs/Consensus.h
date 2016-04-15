@@ -343,10 +343,26 @@ boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
     const TRead& read, const std::string& chem, const PoaAlignmentSummary& summary,
     const size_t poaLength, const ConsensusSettings& settings, SubreadResultCounter* resultCounter)
 {
-    const size_t tplStart = summary.ExtentOnConsensus.Left();
-    const size_t tplEnd = summary.ExtentOnConsensus.Right();
-    const size_t readStart = summary.ExtentOnRead.Left();
-    const size_t readEnd = summary.ExtentOnRead.Right();
+    constexpr size_t kStickyEnds = 7;
+
+    size_t readStart = summary.ExtentOnRead.Left();
+    size_t readEnd = summary.ExtentOnRead.Right();
+    size_t tplStart = summary.ExtentOnConsensus.Left();
+    size_t tplEnd = summary.ExtentOnConsensus.Right();
+
+    // if we're ADAPTER_BEFORE and _AFTER and mapped nearly end-to-end,
+    //   just make it end to end (but for each side, respectively)
+    if (summary.ReverseComplementedRead) {
+        if (read.Flags & BAM::ADAPTER_BEFORE && (poaLength - tplEnd) <= kStickyEnds)
+            tplEnd = poaLength;
+        if (read.Flags & BAM::ADAPTER_AFTER && tplStart <= kStickyEnds)
+            tplStart = 0;
+    } else {
+        if (read.Flags & BAM::ADAPTER_BEFORE && tplStart <= kStickyEnds)
+            tplStart = 0;
+        if (read.Flags & BAM::ADAPTER_AFTER && (poaLength - tplEnd) <= kStickyEnds)
+            tplEnd = poaLength;
+    }
 
     if (readStart > readEnd || readEnd - readStart < settings.MinLength) {
         resultCounter->FilteredBySize++;
