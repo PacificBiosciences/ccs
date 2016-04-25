@@ -66,13 +66,13 @@ Evaluator& Evaluator::operator=(Evaluator&& eval)
 Evaluator::~Evaluator() {}
 size_t Evaluator::Length() const
 {
-    if (impl_) return impl_->recursor_.tpl_->Length();
+    if (impl_) return impl_->recursor_->tpl_->Length();
     return 0;
 }
 
 StrandEnum Evaluator::Strand() const
 {
-    if (impl_) return impl_->recursor_.read_.Strand;
+    if (impl_) return impl_->recursor_->read_.Strand;
     return StrandEnum::UNMAPPED;
 }
 
@@ -127,7 +127,7 @@ void Evaluator::Release()
 void Evaluator::CheckInvariants()
 {
     if (!impl_) return;
-    if (impl_->recursor_.tpl_->Length() < 2) state_ = EvaluatorState::NULL_TEMPLATE;
+    if (impl_->recursor_->tpl_->Length() < 2) state_ = EvaluatorState::NULL_TEMPLATE;
     if (state_ != EvaluatorState::VALID) impl_.reset(nullptr);
 }
 

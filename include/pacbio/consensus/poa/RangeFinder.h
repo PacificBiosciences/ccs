@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <map>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include <pacbio/consensus/poa/PoaGraph.h>
 

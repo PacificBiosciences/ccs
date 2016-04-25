@@ -3,7 +3,7 @@
 ########################################################################
 
 cmake_policy(SET CMP0048 NEW)  # lets us set the version in project()
-project(PacBioConsensus VERSION 0.9.0 LANGUAGES CXX C)
+project(PacBioConsensus VERSION 0.10.0 LANGUAGES CXX C)
 cmake_minimum_required(VERSION 3.0)
 
 # set magic variable
@@ -39,7 +39,7 @@ file(GLOB_RECURSE PacBioConsensus_HPP "${PacBioConsensus_IncludeDir}/*.h")
 
 # shared CXX flags for src & tests
 include(CheckCXXCompilerFlag)
-set(PacBioConsensus_CXX_FLAGS "-std=c++11 -Wall -pedantic -msse3 -pthread")
+set(PacBioConsensus_CXX_FLAGS "-std=c++11 -Wall -pedantic -msse3")
 
 # silence gmock warning
 check_cxx_compiler_flag("-Wno-unused-variable" HAS_NO_UNUSED_VARIABLE)

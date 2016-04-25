@@ -10,9 +10,9 @@
 #include <boost/static_assert.hpp>
 #include <boost/type_traits.hpp>
 
+#include <pacbio/consensus/Mutation.h>
 #include <pacbio/consensus/align/AlignConfig.h>
 #include <pacbio/consensus/poa/PoaGraph.h>
-#include <pacbio/consensus/Mutation.h>
 
 #include "BoostGraph.h"
 #include "PoaAlignmentMatrix.h"

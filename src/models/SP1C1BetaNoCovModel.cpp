@@ -1,11 +1,14 @@
 
 #include <cassert>
 #include <cmath>
+#include <memory>
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
+#include <pacbio/consensus/Read.h>
 
 #include "../ModelFactory.h"
+#include "../Recursor.h"
 
 namespace PacBio {
 namespace Consensus {
@@ -16,18 +19,28 @@ class SP1C1BetaNoCovModel : public ModelConfig
     REGISTER_MODEL(SP1C1BetaNoCovModel);
 
 public:
-    SP1C1BetaNoCovModel(const SNR& snr);
-    std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double BaseEmissionPr(MoveType move, char from, char to) const;
-    double CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const;
-    double UndoCounterWeights(size_t nEmissions) const;
-
     static std::string Name() { return "S/P1-C1/beta"; }
+    SP1C1BetaNoCovModel(const SNR& snr);
+    std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
+                                                     const MappedRead& mr, double scoreDiff) const;
+    std::vector<TemplatePosition> Populate(const std::string& tpl) const;
+    double SubstitutionRate(uint8_t prev, uint8_t curr) const;
+
 private:
     SNR snr_;
 };
 
 REGISTER_MODEL_IMPL(SP1C1BetaNoCovModel);
+
+class SP1C1BetaNoCovRecursor : public Recursor<SP1C1BetaNoCovRecursor>
+{
+public:
+    SP1C1BetaNoCovRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+                           double scoreDiff);
+    static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
+    static inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr);
+    virtual double UndoCounterWeights(size_t nEmissions) const;
+};
 
 double matchPmf[8][4] = {
     {0.980417570, 0.011537479, 0.005804964, 0.002239987},  // AA
@@ -82,7 +95,7 @@ std::vector<TemplatePosition> SP1C1BetaNoCovModel::Populate(const std::string& t
         const auto params = SP1C1BetaNoCovParams[b + hpAdd];
 
         result.emplace_back(TemplatePosition{
-            tpl[i - 1],
+            tpl[i - 1], detail::TranslationTable[static_cast<uint8_t>(tpl[i - 1])],
             params[0],  // match
             params[1],  // branch
             params[2],  // stick
@@ -90,39 +103,71 @@ std::vector<TemplatePosition> SP1C1BetaNoCovModel::Populate(const std::string& t
         });
     }
 
-    result.emplace_back(TemplatePosition{tpl.back(), 1.0, 0.0, 0.0, 0.0});
+    result.emplace_back(TemplatePosition{tpl.back(),
+                                         detail::TranslationTable[static_cast<uint8_t>(tpl.back())],
+                                         1.0, 0.0, 0.0, 0.0});
 
     return result;
 }
 
-double SP1C1BetaNoCovModel::BaseEmissionPr(MoveType move, const char from, const char to) const
+std::unique_ptr<AbstractRecursor> SP1C1BetaNoCovModel::CreateRecursor(
+    std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
 {
-    // All emissions are now "Covariate Emissions"
-    assert(move != MoveType::DELETION);
-    return 1.0;
+    return std::unique_ptr<AbstractRecursor>(new SP1C1BetaNoCovRecursor(
+        std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
 }
 
-double SP1C1BetaNoCovModel::CovEmissionPr(MoveType move, uint8_t nuc, char from, char to) const
+double SP1C1BetaNoCovModel::SubstitutionRate(uint8_t prev, uint8_t curr) const
 {
-    const uint8_t hpAdd = from == to ? 0 : 4;
+    const uint8_t hpAdd = prev == curr ? 0 : 4;
+    const uint8_t row = curr + hpAdd;
 
-    to = detail::TranslationTable[static_cast<uint8_t>(to)];
-    if (to > 3 || nuc > 3) throw std::invalid_argument("invalid character in sequence");
+    double eps = 0.0;
+
+    for (uint8_t em = 0; em < 4; ++em)
+        if (em != curr) eps += matchPmf[row][em];
+
+    return eps / 3.0;
+}
+
+SP1C1BetaNoCovRecursor::SP1C1BetaNoCovRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
+                                               const MappedRead& mr, double scoreDiff)
+    : Recursor<SP1C1BetaNoCovRecursor>(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
+                                       scoreDiff)
+{
+}
+
+std::vector<uint8_t> SP1C1BetaNoCovRecursor::EncodeRead(const MappedRead& read)
+{
+    std::vector<uint8_t> result;
+
+    for (const char b : read.Seq)
+        result.emplace_back(detail::TranslationTable[static_cast<uint8_t>(b)]);
+
+    return result;
+}
+
+double SP1C1BetaNoCovRecursor::EmissionPr(MoveType move, const uint8_t emission, const uint8_t prev,
+                                          const uint8_t curr)
+{
+    const uint8_t hpAdd = prev == curr ? 0 : 4;
+
+    if (curr > 3 || emission > 3) throw std::invalid_argument("invalid character in sequence");
 
     // Which row do we want?
-    const uint8_t row = to + hpAdd;
+    const uint8_t row = curr + hpAdd;
 
     if (move == MoveType::BRANCH)
-        return branchPmf[row][nuc];
+        return branchPmf[row][emission];
     else if (move == MoveType::STICK)
-        return stickPmf[row][nuc];
+        return stickPmf[row][emission];
     else if (move == MoveType::MATCH)
-        return matchPmf[row][nuc];
+        return matchPmf[row][emission];
 
     throw std::invalid_argument("unknown move type!");
 }
 
-double SP1C1BetaNoCovModel::UndoCounterWeights(const size_t nEmissions) const { return 0; }
+double SP1C1BetaNoCovRecursor::UndoCounterWeights(const size_t nEmissions) const { return 0; }
 }  // namespace anonymous
 }  // namespace Consensus
 }  // namespace PacBio

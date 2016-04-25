@@ -53,9 +53,9 @@
 #include <string>
 #include <vector>
 
+#include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/io.hpp>
 
 #include <pacbio/consensus/align/LinearAlignment.h>
 #include <pacbio/consensus/align/PairwiseAlignment.h>

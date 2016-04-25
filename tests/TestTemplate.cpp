@@ -47,11 +47,12 @@
 
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/consensus/Mutation.h>
+#include <pacbio/consensus/Read.h>
 #include <pacbio/consensus/Template.h>
 
+#include "../src/ModelFactory.h"
 #include "Mutations.h"
 #include "RandomDNA.h"
-#include "../src/ModelFactory.h"
 
 using namespace std;
 using namespace PacBio::Consensus;  // NOLINT

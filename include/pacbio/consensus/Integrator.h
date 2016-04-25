@@ -65,6 +65,8 @@ public:
     virtual void ApplyMutation(const Mutation& mut) = 0;
     virtual void ApplyMutations(std::vector<Mutation>* muts) = 0;
 
+    virtual AddReadResult AddRead(const MappedRead& read) = 0;
+
 protected:
     Mutation ReverseComplement(const Mutation& mut) const;
 
@@ -101,6 +103,7 @@ public:
 
 protected:
     std::string mdl_;
+    SNR snr_;
     Template fwdTpl_;
     Template revTpl_;
 };
@@ -117,7 +120,7 @@ public:
     void ApplyMutation(const Mutation& mut);
     void ApplyMutations(std::vector<Mutation>* muts);
 
-    AddReadResult AddRead(const MappedRead& read, const SNR& snr);
+    AddReadResult AddRead(const MappedRead& read);
 
 protected:
     std::unique_ptr<AbstractTemplate> GetTemplate(const MappedRead& read, const SNR& snr);

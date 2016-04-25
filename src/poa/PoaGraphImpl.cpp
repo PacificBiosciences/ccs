@@ -1,10 +1,10 @@
 
 #include <set>
 
+#include <boost/foreach.hpp>
 #include <boost/graph/copy.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/topological_sort.hpp>
-#include <boost/foreach.hpp>
 
 #include <pacbio/consensus/align/AlignConfig.h>
 #include <pacbio/consensus/poa/PoaConsensus.h>

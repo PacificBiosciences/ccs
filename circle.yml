@@ -18,10 +18,10 @@ dependencies:
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/htslib.git
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbbam.git
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/seqan.git
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbccs.git
+        - pushd _rev_deps ; git clone -b stageEmissions https://github.com/PacificBiosciences/pbccs.git
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbsparse.git
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbchimera.git
-        - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pblaa.git
+        - pushd _rev_deps ; git clone -b stageEmissions https://${TOKEN}@github.com/PacificBiosciences/pblaa.git
         - pip install --upgrade pip
         - pip install numpy
         - pip install cython

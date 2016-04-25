@@ -51,22 +51,22 @@ void WriteMatrix(const ScaledMatrix& mat)
 
 EvaluatorImpl::EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                              const double scoreDiff)
-    : recursor_(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
-    , alpha_(mr.Length() + 1, recursor_.tpl_->Length() + 1, ScaledMatrix::FORWARD)
-    , beta_(mr.Length() + 1, recursor_.tpl_->Length() + 1, ScaledMatrix::REVERSE)
+    : recursor_{tpl->CreateRecursor(std::move(tpl), mr, scoreDiff)}
+    , alpha_(mr.Length() + 1, recursor_->tpl_->Length() + 1, ScaledMatrix::FORWARD)
+    , beta_(mr.Length() + 1, recursor_->tpl_->Length() + 1, ScaledMatrix::REVERSE)
     , extendBuffer_(mr.Length() + 1, EXTEND_BUFFER_COLUMNS, ScaledMatrix::FORWARD)
 {
-    recursor_.FillAlphaBeta(alpha_, beta_);
+    recursor_->FillAlphaBeta(alpha_, beta_);
 }
 
 double EvaluatorImpl::LL(const Mutation& mut_)
 {
     // apply the virtual mutation
-    boost::optional<Mutation> mut(recursor_.tpl_->Mutate(mut_));
+    boost::optional<Mutation> mut(recursor_->tpl_->Mutate(mut_));
 
     // if the resulting template is 0, simulate NULL_TEMPLATE (removal)
-    if (recursor_.tpl_->Length() == 0) {
-        recursor_.tpl_->Reset();
+    if (recursor_->tpl_->Length() == 0) {
+        recursor_->tpl_->Reset();
         return 0.0;
     }
 
@@ -93,23 +93,22 @@ double EvaluatorImpl::LL(const Mutation& mut_)
             extendStartCol = mut->Start();
             assert(extendLength <= EXTEND_BUFFER_COLUMNS);
         }
-
         extendBuffer_.SetDirection(ScaledMatrix::FORWARD);
-        recursor_.ExtendAlpha(alpha_, extendStartCol, extendBuffer_, extendLength);
-        score = recursor_.LinkAlphaBeta(extendBuffer_, extendLength, beta_, betaLinkCol,
-                                        absoluteLinkColumn) +
+        recursor_->ExtendAlpha(alpha_, extendStartCol, extendBuffer_, extendLength);
+        score = recursor_->LinkAlphaBeta(extendBuffer_, extendLength, beta_, betaLinkCol,
+                                         absoluteLinkColumn) +
                 alpha_.GetLogProdScales(0, extendStartCol);
     } else if (!atBegin && atEnd) {
         //
         // Extend alpha to end
         //
         size_t extendStartCol = mut->Start() - 1;
-        assert(recursor_.tpl_->Length() + 1 > extendStartCol);
-        size_t extendLength = recursor_.tpl_->Length() - extendStartCol + 1;
+        assert(recursor_->tpl_->Length() + 1 > extendStartCol);
+        size_t extendLength = recursor_->tpl_->Length() - extendStartCol + 1;
 
         extendBuffer_.SetDirection(ScaledMatrix::FORWARD);
-        recursor_.ExtendAlpha(alpha_, extendStartCol, extendBuffer_, extendLength);
-        score = std::log(extendBuffer_(recursor_.read_.Length(), extendLength - 1)) +
+        recursor_->ExtendAlpha(alpha_, extendStartCol, extendBuffer_, extendLength);
+        score = std::log(extendBuffer_(recursor_->read_.Length(), extendLength - 1)) +
                 alpha_.GetLogProdScales(0, extendStartCol) +
                 extendBuffer_.GetLogProdScales(0, extendLength);
     } else if (atBegin && !atEnd) {
@@ -119,7 +118,7 @@ double EvaluatorImpl::LL(const Mutation& mut_)
         size_t extendLength = 1 + mut->End() + mut->LengthDiff();
 
         extendBuffer_.SetDirection(ScaledMatrix::REVERSE);
-        recursor_.ExtendBeta(beta_, extendLastCol, extendBuffer_, mut->LengthDiff());
+        recursor_->ExtendBeta(beta_, extendLastCol, extendBuffer_, mut->LengthDiff());
         score = std::log(extendBuffer_(0, 0)) +
                 beta_.GetLogProdScales(extendLastCol + 1, beta_.Columns()) +
                 extendBuffer_.GetLogProdScales(0, extendLength);
@@ -139,28 +138,28 @@ double EvaluatorImpl::LL(const Mutation& mut_)
         //
         // Just do the whole fill
         //
-        ScaledMatrix alphaP(recursor_.read_.Length() + 1, recursor_.tpl_->Length() + 1,
+        ScaledMatrix alphaP(recursor_->read_.Length() + 1, recursor_->tpl_->Length() + 1,
                             ScaledMatrix::FORWARD);
-        recursor_.FillAlpha(ScaledMatrix::Null(), alphaP);
-        score = std::log(alphaP(recursor_.read_.Length(), recursor_.tpl_->Length())) +
+        recursor_->FillAlpha(ScaledMatrix::Null(), alphaP);
+        score = std::log(alphaP(recursor_->read_.Length(), recursor_->tpl_->Length())) +
                 alphaP.GetLogProdScales();
     }
 
     // reset the virtual mutation
-    recursor_.tpl_->Reset();
+    recursor_->tpl_->Reset();
 
-    return score + recursor_.tpl_->UndoCounterWeights(recursor_.read_.Length());
+    return score + recursor_->UndoCounterWeights(recursor_->read_.Length());
 }
 
 double EvaluatorImpl::LL() const
 {
     return std::log(beta_(0, 0)) + beta_.GetLogProdScales() +
-           recursor_.tpl_->UndoCounterWeights(recursor_.read_.Length());
+           recursor_->UndoCounterWeights(recursor_->read_.Length());
 }
 
 std::pair<double, double> EvaluatorImpl::NormalParameters() const
 {
-    return recursor_.tpl_->NormalParameters();
+    return recursor_->tpl_->NormalParameters();
 }
 
 double EvaluatorImpl::ZScore() const
@@ -172,17 +171,17 @@ double EvaluatorImpl::ZScore() const
 
 inline void EvaluatorImpl::Recalculate()
 {
-    size_t I = recursor_.read_.Length() + 1;
-    size_t J = recursor_.tpl_->Length() + 1;
+    size_t I = recursor_->read_.Length() + 1;
+    size_t J = recursor_->tpl_->Length() + 1;
     alpha_.Reset(I, J);
     beta_.Reset(I, J);
     extendBuffer_.Reset(I, EXTEND_BUFFER_COLUMNS);
-    recursor_.FillAlphaBeta(alpha_, beta_);
+    recursor_->FillAlphaBeta(alpha_, beta_);
 }
 
 bool EvaluatorImpl::ApplyMutation(const Mutation& mut)
 {
-    if (recursor_.tpl_->ApplyMutation(mut)) {
+    if (recursor_->tpl_->ApplyMutation(mut)) {
         Recalculate();
         return true;
     }
@@ -191,7 +190,7 @@ bool EvaluatorImpl::ApplyMutation(const Mutation& mut)
 
 bool EvaluatorImpl::ApplyMutations(std::vector<Mutation>* muts)
 {
-    if (recursor_.tpl_->ApplyMutations(muts)) {
+    if (recursor_->tpl_->ApplyMutations(muts)) {
         Recalculate();
         return true;
     }

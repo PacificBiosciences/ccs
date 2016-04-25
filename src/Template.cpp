@@ -33,9 +33,9 @@ bool AbstractTemplate::ApplyMutation(const Mutation& mut)
     //   we're pinned at the end (and we're not trying to delete nonexistent bases), or
     //   we're before the end of our mapping, or
     //   TODO(lhepler) I HAVE NO IDEA WHY I PUT THIS HERE ARGH
-    if ((pinEnd_ && (end_ > 0 || mut.LengthDiff() > 0)) ||
-        mut.Start() < end_ ||
-        mut.End() <= start_) end_ += mut.LengthDiff();
+    if ((pinEnd_ && (end_ > 0 || mut.LengthDiff() > 0)) || mut.Start() < end_ ||
+        mut.End() <= start_)
+        end_ += mut.LengthDiff();
 
     // update the start_ mapping if...
     //   we're NOT pinned at the start, or
@@ -136,8 +136,11 @@ std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i)
     // TODO (ndelaney): This probably needs to be matched to the specific model being used.
     // std::log(1.0/3);
     constexpr double lgThird = -1.0986122886681098;
+    const uint8_t prev = (i == 0) ? 0 : (*this)[i - 1].Idx;  // default base : A
     const auto params = (*this)[i];
-    const double eps = 1.0 - BaseEmissionPr(MoveType::MATCH, params.Base, params.Base);
+
+    // get the substitution rate here:
+    const double eps = SubstitutionRate(prev, params.Idx);
 
     const double p_m = params.Match, l_m = std::log(p_m), l2_m = l_m * l_m;
     const double p_d = params.Deletion, l_d = std::log(p_d), l2_d = l_d * l_d;
@@ -205,6 +208,8 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
     if (Length() == 0 && mut.LengthDiff() < 1) return boost::none;
     if (!InRange(mut.Start(), mut.End())) return boost::none;
 
+    const uint8_t idx = detail::TranslationTable[static_cast<uint8_t>(mut.Base)];
+
     mutStart_ = mut.Start() - start_;
     mutEnd_ = mut.End() - start_;
 
@@ -214,14 +219,14 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
         if (mutStart_ < tpl_.size())
             mutTpl_[1] = cfg_->Populate({mut.Base, tpl_[mutStart_].Base})[0];
         else
-            mutTpl_[1] = TemplatePosition{mut.Base, 1.0, 0.0, 0.0, 0.0};
+            mutTpl_[1] = TemplatePosition{mut.Base, idx, 1.0, 0.0, 0.0, 0.0};
     } else if (mut.Type == MutationType::SUBSTITUTION) {
         if (mutStart_ > 0) mutTpl_[0] = cfg_->Populate({tpl_[mutStart_ - 1].Base, mut.Base})[0];
 
         if (mutStart_ + 1 < tpl_.size())
             mutTpl_[1] = cfg_->Populate({mut.Base, tpl_[mutStart_ + 1].Base})[0];
         else
-            mutTpl_[1] = TemplatePosition{mut.Base, 1.0, 0.0, 0.0, 0.0};
+            mutTpl_[1] = TemplatePosition{mut.Base, idx, 1.0, 0.0, 0.0, 0.0};
     } else if (mut.Type == MutationType::DELETION) {
         // if there's a predecessor, fill it
         if (mutStart_ > 0) {
@@ -229,7 +234,8 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
                 mutTpl_[0] =
                     cfg_->Populate({tpl_[mutStart_ - 1].Base, tpl_[mutStart_ + 1].Base})[0];
             else
-                mutTpl_[0] = TemplatePosition{tpl_[mutStart_ - 1].Base, 1.0, 0.0, 0.0, 0.0};
+                mutTpl_[0] = TemplatePosition{
+                    tpl_[mutStart_ - 1].Base, tpl_[mutStart_ - 1].Idx, 1.0, 0.0, 0.0, 0.0};
         }
 
         // if there's a successor, the params for the mutant position
@@ -259,8 +265,10 @@ void Template::Reset()
 bool Template::ApplyMutation(const Mutation& mut)
 {
     if (mutated_)
-        throw std::runtime_error("cannot ApplyMutation to an already mutated Template, call Reset first");
+        throw std::runtime_error(
+            "cannot ApplyMutation to an already mutated Template, call Reset first");
 
+    const uint8_t idx = detail::TranslationTable[static_cast<uint8_t>(mut.Base)];
     bool mutApplied = false;
 
     if (Length() == 0 && mut.LengthDiff() < 1) goto finish;
@@ -275,14 +283,14 @@ bool Template::ApplyMutation(const Mutation& mut)
             if (i < tpl_.size())
                 tpl_.insert(tpl_.begin() + i, cfg_->Populate({mut.Base, tpl_[i].Base})[0]);
             else
-                tpl_.emplace_back(TemplatePosition{mut.Base, 1.0, 0.0, 0.0, 0.0});
+                tpl_.emplace_back(TemplatePosition{mut.Base, idx, 1.0, 0.0, 0.0, 0.0});
         } else if (mut.Type == MutationType::SUBSTITUTION) {
             if (i > 0) tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, mut.Base})[0];
 
             if (i + 1 < tpl_.size())
                 tpl_[i] = cfg_->Populate({mut.Base, tpl_[i + 1].Base})[0];
             else
-                tpl_[i].Base = mut.Base;
+                tpl_[i] = TemplatePosition{mut.Base, idx, 1.0, 0.0, 0.0, 0.0};
         } else if (mut.Type == MutationType::DELETION) {
             tpl_.erase(tpl_.begin() + i);
 
@@ -290,7 +298,8 @@ bool Template::ApplyMutation(const Mutation& mut)
                 if (i < tpl_.size())
                     tpl_[i - 1] = cfg_->Populate({tpl_[i - 1].Base, tpl_[i].Base})[0];
                 else
-                    tpl_[i - 1] = TemplatePosition{tpl_[i - 1].Base, 1.0, 0.0, 0.0, 0.0};
+                    tpl_[i - 1] =
+                        TemplatePosition{tpl_[i - 1].Base, tpl_[i - 1].Idx, 1.0, 0.0, 0.0, 0.0};
             }
         } else
             throw std::invalid_argument(
