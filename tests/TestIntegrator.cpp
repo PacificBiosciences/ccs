@@ -236,7 +236,7 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
                     std::cerr << "  " << mut << std::endl;
                     std::cerr << "  " << tpl.length() << ", " << tpl << std::endl;
                     std::cerr << "  " << app.length() << ", " << app << std::endl;
-                    std::cerr << "  " << ai1.Length() << ", " << string(ai1) << std::endl;
+                    std::cerr << "  " << ai1.TemplateLength() << ", " << string(ai1) << std::endl;
                     std::cerr << "  " << read.length() << ", " << read << std::endl;
                     ++nerror;
                 }

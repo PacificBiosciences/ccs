@@ -21,9 +21,12 @@ public:
     EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                   double scoreDiff = 12.5);
 
+    std::string ReadName() const;
+
     double LL(const Mutation& mut);
     double LL() const;
 
+    // TODO: Comments are nice!  Explain what this is about---ZScore calculation?
     std::pair<double, double> NormalParameters() const;
 
     double ZScore() const;
@@ -35,8 +38,9 @@ private:
     void Recalculate();
 
 private:
-    std::unique_ptr<AbstractRecursor> recursor_;
-
+    std::unique_ptr<AbstractRecursor> recursor_; // TODO: does this need to be a pointer?  is it always non-null?
+                                                 // are we making it a UP just so we can do a fwd decl and still have
+                                                 // RAII semantics?
     ScaledMatrix alpha_;
     ScaledMatrix beta_;
     ScaledMatrix extendBuffer_;

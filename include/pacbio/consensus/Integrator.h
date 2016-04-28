@@ -52,7 +52,8 @@ class AbstractIntegrator
 public:
     virtual ~AbstractIntegrator();
 
-    virtual size_t Length() const = 0;
+    virtual size_t TemplateLength() const = 0;
+
     virtual char operator[](size_t i) const = 0;
     virtual operator std::string() const = 0;
 
@@ -66,6 +67,12 @@ public:
     virtual void ApplyMutations(std::vector<Mutation>* muts) = 0;
 
     virtual AddReadResult AddRead(const MappedRead& read) = 0;
+
+    // For debugging purposes
+    // (Note that these include results include all evaluators, even the inactive ones)
+    std::vector<double> LLs(const Mutation& mut);
+    std::vector<double> LLs() const;
+    std::vector<std::string> ReadNames() const;
 
 protected:
     Mutation ReverseComplement(const Mutation& mut) const;
@@ -90,7 +97,8 @@ public:
     // move constructor
     MonoMolecularIntegrator(MonoMolecularIntegrator&&);
 
-    size_t Length() const;
+    size_t TemplateLength() const;
+
     char operator[](size_t i) const;
     operator std::string() const;
 
@@ -113,7 +121,8 @@ class MultiMolecularIntegrator : public AbstractIntegrator
 public:
     MultiMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg);
 
-    size_t Length() const;
+    size_t TemplateLength() const;
+
     char operator[](size_t i) const;
     operator std::string() const;
 

@@ -59,6 +59,11 @@ EvaluatorImpl::EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const Mapp
     recursor_->FillAlphaBeta(alpha_, beta_);
 }
 
+std::string EvaluatorImpl::ReadName() const
+{
+    return recursor_->read_.Name;
+}
+
 double EvaluatorImpl::LL(const Mutation& mut_)
 {
     // apply the virtual mutation

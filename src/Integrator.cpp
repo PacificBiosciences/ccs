@@ -71,6 +71,37 @@ double AbstractIntegrator::LL() const
     return ll;
 }
 
+std::vector<double> AbstractIntegrator::LLs(const Mutation& fwdMut)
+{
+    const Mutation revMut(ReverseComplement(fwdMut));
+    std::vector<double> lls;
+    for (auto& eval : evals_) {
+        if (eval.Strand() == StrandEnum::FORWARD)
+            lls.push_back(eval.LL(fwdMut));
+        else if (eval.Strand() == StrandEnum::REVERSE)
+            lls.push_back(eval.LL(revMut));
+    }
+    return lls;
+}
+
+std::vector<double> AbstractIntegrator::LLs() const
+{
+    std::vector<double> lls;
+    for (auto& eval : evals_) {
+        lls.push_back(eval.LL());
+    }
+    return lls;
+}
+
+std::vector<std::string> AbstractIntegrator::ReadNames() const
+{
+    std::vector<std::string> readNames;
+    for (const Evaluator& eval : evals_) {
+        readNames.push_back(eval.ReadName());
+    }
+    return readNames;
+}
+
 double AbstractIntegrator::AvgZScore() const
 {
     double mean = 0.0, var = 0.0;
@@ -104,7 +135,7 @@ std::vector<double> AbstractIntegrator::ZScores() const
 
 Mutation AbstractIntegrator::ReverseComplement(const Mutation& mut) const
 {
-    return Mutation(mut.Type, Length() - mut.End(), Complement(mut.Base));
+    return Mutation(mut.Type, TemplateLength() - mut.End(), Complement(mut.Base));
 }
 
 MonoMolecularIntegrator::MonoMolecularIntegrator(const std::string& tpl,
@@ -141,14 +172,14 @@ AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
     else if (read.Strand == StrandEnum::REVERSE)
         return AbstractIntegrator::AddRead(
             std::unique_ptr<AbstractTemplate>(
-                new VirtualTemplate(revTpl_, Length() - read.TemplateEnd,
-                                    Length() - read.TemplateStart, read.PinEnd, read.PinStart)),
+                new VirtualTemplate(revTpl_, TemplateLength() - read.TemplateEnd,
+                                    TemplateLength() - read.TemplateStart, read.PinEnd, read.PinStart)),
             read);
 
     throw std::invalid_argument("read is unmapped!");
 }
 
-size_t MonoMolecularIntegrator::Length() const { return fwdTpl_.TrueLength(); }
+size_t MonoMolecularIntegrator::TemplateLength() const { return fwdTpl_.TrueLength(); }
 char MonoMolecularIntegrator::operator[](const size_t i) const { return fwdTpl_[i].Base; }
 MonoMolecularIntegrator::operator std::string() const
 {
@@ -193,7 +224,7 @@ void MonoMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)
     std::string fwd;
     std::string rev;
 
-    for (size_t i = 0; i < Length(); ++i) {
+    for (size_t i = 0; i < TemplateLength(); ++i) {
         fwd.push_back(fwdTpl_[i].Base);
         rev.push_back(revTpl_[i].Base);
     }
@@ -226,7 +257,7 @@ void MonoMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
     std::string fwd;
     std::string rev;
 
-    for (size_t i = 0; i < Length(); ++i) {
+    for (size_t i = 0; i < TemplateLength(); ++i) {
         fwd.push_back(fwdTpl_[i].Base);
         rev.push_back(revTpl_[i].Base);
     }
@@ -246,7 +277,7 @@ AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read)
     return AbstractIntegrator::AddRead(GetTemplate(read, read.SignalToNoise), read);
 }
 
-size_t MultiMolecularIntegrator::Length() const { return fwdTpl_.length(); }
+size_t MultiMolecularIntegrator::TemplateLength() const { return fwdTpl_.length(); }
 char MultiMolecularIntegrator::operator[](const size_t i) const { return fwdTpl_[i]; }
 MultiMolecularIntegrator::operator std::string() const { return fwdTpl_; }
 void MultiMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)

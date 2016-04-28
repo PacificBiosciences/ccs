@@ -159,6 +159,7 @@ bool AbstractTemplate::InRange(const size_t start, const size_t end) const
 }
 
 size_t Template::Length() const { return tpl_.size() + mutOff_; }
+
 const TemplatePosition& Template::operator[](size_t i) const
 {
     // if no mutation, or everything up to the base before mutStart_, just return
@@ -175,6 +176,7 @@ const TemplatePosition& Template::operator[](size_t i) const
 }
 
 bool Template::IsMutated() const { return mutated_; }
+
 size_t VirtualTemplate::Length() const
 {
     if (IsMutated()) return end_ - start_ + master_.mutOff_;

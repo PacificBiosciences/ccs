@@ -74,7 +74,7 @@ std::vector<Mutation> Mutations(const AbstractIntegrator& ai, const size_t start
 
 std::vector<Mutation> Mutations(const AbstractIntegrator& ai)
 {
-    return Mutations(ai, 0, ai.Length());
+    return Mutations(ai, 0, ai.TemplateLength());
 }
 
 std::vector<Mutation> BestMutations(std::list<ScoredMutation>* scoredMuts, const size_t separation)
@@ -104,7 +104,7 @@ std::vector<Mutation> NearbyMutations(std::vector<Mutation>* applied,
                                       std::vector<Mutation>* centers, const AbstractIntegrator& ai,
                                       const size_t neighborhood)
 {
-    const size_t len = ai.Length();
+    const size_t len = ai.TemplateLength();
     const auto clamp = [len](const int i) { return std::max(0, std::min<int>(len, i)); };
 
     std::vector<Mutation> result;
@@ -224,7 +224,7 @@ std::vector<int> ConsensusQVs(AbstractIntegrator& ai)
 {
     std::vector<int> result;
     const double LL = ai.LL();
-    for (size_t i = 0; i < ai.Length(); ++i) {
+    for (size_t i = 0; i < ai.TemplateLength(); ++i) {
         double scoreSum = 0.0;
         for (const auto& m : Mutations(ai, i, i + 1)) {
             // skip mutations that start beyond the current site (e.g. trailing insertions)

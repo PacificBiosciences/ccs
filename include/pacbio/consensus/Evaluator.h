@@ -11,6 +11,11 @@
 namespace PacBio {
 namespace Consensus {
 
+//
+// TODO: explain the legal state transitions.  What does it mean to be in each state?
+// Can a read "come back" form being DISABLED to being VALID (I hope not!) or from one
+// of the other states?
+// TODO: Get rid of NULL_TEMPLATE state---this should be handled by ReadScoresMutation logic
 enum struct EvaluatorState : uint8_t
 {
     VALID,
@@ -36,11 +41,12 @@ public:
 
     ~Evaluator();
 
-    size_t Length() const;
+    size_t Length() const;  // TODO: is this used anywhere?  If not, delete it.
     StrandEnum Strand() const;
 
     operator bool() const;
     operator std::string() const;
+    std::string ReadName() const;
 
     double LL(const Mutation& mut);
     double LL() const;
