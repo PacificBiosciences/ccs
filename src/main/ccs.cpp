@@ -216,6 +216,23 @@ Results FastqWriterThread(WorkQueue<Results>& queue, const string& fname)
     return counts;
 }
 
+// TODO(lhepler) move this into ConsensusCore2
+bool ValidBaseFeatures(const DataSet& ds)
+{
+    for (const auto& bam : ds.BamFiles()) {
+        for (const auto& rg : bam.Header().ReadGroups()) {
+            // P6-C4 and S/P1-C1/beta do not require covariates besides SNR
+            if (rg.SequencingChemistry() == "P6-C4" || rg.SequencingChemistry() == "S/P1-C1/beta")
+                continue;
+            // everything else requires IPD and PulseWidth
+            else if (!rg.HasBaseFeature(BaseFeature::IPD) ||
+                     !rg.HasBaseFeature(BaseFeature::PULSE_WIDTH))
+                return false;
+        }
+    }
+    return true;
+}
+
 BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv, const DataSet& ds)
 {
     using boost::algorithm::join;
@@ -451,6 +468,11 @@ int main(int argc, char** argv)
         PBLOG_DEBUG << "Using consensus models for: (" << join(used, ", ") << ')';
     }
 
+    if (!ValidBaseFeatures(ds)) {
+        PBLOG_FATAL << "Missing base features: IPD or PulseWidth";
+        exit(-1);
+    }
+
     const auto filter = PbiFilter::FromDataSet(ds);
     unique_ptr<internal::IQuery> query(nullptr);
     if (filter.IsEmpty())
@@ -524,10 +546,23 @@ int main(int argc, char** argv)
             exit(-1);
         }
 
+        vector<uint8_t> ipd;
+        if (read.HasIPD())
+            ipd = read.IPD().Encode();
+        else
+            ipd = vector<uint8_t>(read.Sequence().length(), 0);
+
+        vector<uint8_t> pw;
+        if (read.HasPulseWidth())
+            pw = read.PulseWidth().Encode();
+        else
+            pw = vector<uint8_t>(read.Sequence().length(), 0);
+
         chunk->back().Reads.emplace_back(
             Subread{ReadId(movieNames[movieName], *holeNumber,
                            Interval(read.QueryStart(), read.QueryEnd())),
-                    read.Sequence(), read.LocalContextFlags(), read.ReadAccuracy()});
+                    read.Sequence(), std::move(ipd), std::move(pw), read.LocalContextFlags(),
+                    read.ReadAccuracy()});
     }
 
     // run the remaining tasks
