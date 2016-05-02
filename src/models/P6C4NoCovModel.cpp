@@ -91,14 +91,15 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
 
     if (tpl.empty()) return result;
 
+    uint8_t prev = detail::TranslationTable[static_cast<uint8_t>(tpl[0])];
+    if (prev > 3) throw std::invalid_argument("invalid character in sequence!");
+
     for (size_t i = 1; i < tpl.size(); ++i) {
-        const uint8_t bp = detail::TranslationTable[static_cast<uint8_t>(tpl[i])];
-
-        if (bp > 3) throw std::invalid_argument("invalid character in sequence!");
-
+        const uint8_t curr = detail::TranslationTable[static_cast<uint8_t>(tpl[i])];
+        if (curr > 3) throw std::invalid_argument("invalid character in sequence!");
         const bool hp = tpl[i - 1] == tpl[i];  // NA -> 0, AA -> 1
-        const auto params = P6C4NoCovParams[bp][hp];
-        const double snr = snr_[bp], snr2 = snr * snr, snr3 = snr2 * snr;
+        const auto params = P6C4NoCovParams[curr][hp];
+        const double snr = snr_[curr], snr2 = snr * snr, snr3 = snr2 * snr;
         double tprobs[3];
         double sum = 1.0;
 
@@ -114,17 +115,17 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
             tprobs[j] /= sum;
 
         result.emplace_back(TemplatePosition{
-            tpl[i - 1], detail::TranslationTable[static_cast<uint8_t>(tpl[i - 1])],
+            tpl[i - 1], prev,
             tprobs[1],  // match
             1.0 / sum,  // branch
             tprobs[2],  // stick
             tprobs[0]   // deletion
         });
+
+        prev = curr;
     }
 
-    result.emplace_back(TemplatePosition{tpl.back(),
-                                         detail::TranslationTable[static_cast<uint8_t>(tpl.back())],
-                                         1.0, 0.0, 0.0, 0.0});
+    result.emplace_back(TemplatePosition{tpl.back(), prev, 1.0, 0.0, 0.0, 0.0});
 
     return result;
 }
@@ -148,8 +149,11 @@ std::vector<uint8_t> P6C4NoCovRecursor::EncodeRead(const MappedRead& read)
 {
     std::vector<uint8_t> result;
 
-    for (const char bp : read.Seq)
-        result.emplace_back(detail::TranslationTable[static_cast<uint8_t>(bp)]);
+    for (const char bp : read.Seq) {
+        const uint8_t em = detail::TranslationTable[static_cast<uint8_t>(bp)];
+        if (em > 3) throw std::invalid_argument("invalid character in read!");
+        result.emplace_back(em);
+    }
 
     return result;
 }
