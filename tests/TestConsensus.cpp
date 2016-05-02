@@ -38,8 +38,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <pbbam/LocalContextFlags.h>
 #include <pbbam/Accuracy.h>
+#include <pbbam/LocalContextFlags.h>
 
 #include <pacbio/ccs/Consensus.h>
 #include <pacbio/ccs/ReadId.h>
@@ -56,11 +56,14 @@ TEST(ConsensusTest, TestReadFilter)
     auto movieName = std::make_shared<std::string>("fakeName");
     LocalContextFlags flags = LocalContextFlags::ADAPTER_BEFORE | LocalContextFlags::ADAPTER_AFTER;
     for (int i = 0; i < 10; i++) {
-        data.emplace_back(Subread{ReadId(movieName, 1, Interval(0, seq.size())), seq, flags, .99});
+        data.emplace_back(Subread{ReadId(movieName, 1, Interval(0, seq.size())), seq,
+                                  std::vector<uint8_t>(seq.size(), 0),
+                                  std::vector<uint8_t>(seq.size(), 0), flags, .99});
     }
 
     ConsensusSettings settings{};
     settings.MinLength = 10;
+    settings.MinReadScore = 0.0;
 
     // Nothing filtered
     SubreadResultCounter counter{};
@@ -80,8 +83,9 @@ TEST(ConsensusTest, TestReadFilter)
     // Just one
     auto longSeq = seq + seq + seq;
     settings.MinLength = 10;
-    data.emplace_back(
-        Subread{ReadId(movieName, 1, Interval(0, longSeq.size())), longSeq, flags, .99});
+    data.emplace_back(Subread{ReadId(movieName, 2, Interval(0, longSeq.size())), longSeq,
+                              std::vector<uint8_t>(longSeq.size(), 0),
+                              std::vector<uint8_t>(longSeq.size(), 0), flags, .99});
     auto result3 = FilterReads(data, settings, &counter);
     EXPECT_EQ(1, counter.FilteredBySize);
 }

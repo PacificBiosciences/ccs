@@ -164,6 +164,8 @@ struct ReadType
 {
     TId Id;
     std::string Seq;
+    std::vector<uint8_t> IPD;
+    std::vector<uint8_t> PulseWidth;
     LocalContextFlags Flags;
     Accuracy ReadAccuracy;
     // TODO (move SNR and Chemistry here, eventually)
@@ -340,8 +342,9 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
 
 template <typename TRead>
 boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
-    const TRead& read, const std::string& chem, const PoaAlignmentSummary& summary,
-    const size_t poaLength, const ConsensusSettings& settings, SubreadResultCounter* resultCounter)
+    const TRead& read, const PacBio::Consensus::SNR& snr, const std::string& chem,
+    const PoaAlignmentSummary& summary, const size_t poaLength, const ConsensusSettings& settings,
+    SubreadResultCounter* resultCounter)
 {
     constexpr size_t kStickyEnds = 7;
 
@@ -355,11 +358,9 @@ boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
     if (summary.ReverseComplementedRead) {
         if (read.Flags & BAM::ADAPTER_BEFORE && (poaLength - tplEnd) <= kStickyEnds)
             tplEnd = poaLength;
-        if (read.Flags & BAM::ADAPTER_AFTER && tplStart <= kStickyEnds)
-            tplStart = 0;
+        if (read.Flags & BAM::ADAPTER_AFTER && tplStart <= kStickyEnds) tplStart = 0;
     } else {
-        if (read.Flags & BAM::ADAPTER_BEFORE && tplStart <= kStickyEnds)
-            tplStart = 0;
+        if (read.Flags & BAM::ADAPTER_BEFORE && tplStart <= kStickyEnds) tplStart = 0;
         if (read.Flags & BAM::ADAPTER_AFTER && (poaLength - tplEnd) <= kStickyEnds)
             tplEnd = poaLength;
     }
@@ -375,7 +376,12 @@ boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
     }
 
     PacBio::Consensus::MappedRead mappedRead(
-        PacBio::Consensus::Read(read.Id, read.Seq.substr(readStart, readEnd - readStart), chem),
+        PacBio::Consensus::Read(
+            read.Id, read.Seq.substr(readStart, readEnd - readStart),
+            std::vector<uint8_t>(read.IPD.begin() + readStart, read.IPD.begin() + readEnd),
+            std::vector<uint8_t>(read.PulseWidth.begin() + readStart,
+                                 read.PulseWidth.begin() + readEnd),
+            snr, chem),
         summary.ReverseComplementedRead ? StrandEnum::REVERSE : StrandEnum::FORWARD, tplStart,
         tplEnd, (tplStart == 0) ? true : false, (tplEnd == poaLength) ? true : false);
 
@@ -547,9 +553,10 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                             // skip unadded reads
                             if (readKeys[i] < 0) continue;
 
-                            if (auto mr = ExtractMappedRead(
-                                    *reads[i], chunk.Chemistry, summaries[readKeys[i]],
-                                    poaConsensus.length(), settings, &result.SubreadCounter)) {
+                            if (auto mr = ExtractMappedRead(*reads[i], chunk.SignalToNoise,
+                                                            chunk.Chemistry, summaries[readKeys[i]],
+                                                            poaConsensus.length(), settings,
+                                                            &result.SubreadCounter)) {
                                 // skip reads not belonging to this strand, if we're --byStrand
                                 if (strand && mr->Strand != *strand) continue;
                                 auto status = ai.AddRead(*mr);
