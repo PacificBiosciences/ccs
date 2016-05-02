@@ -19,7 +19,7 @@ class SP1C1PwModel : public ModelConfig
     REGISTER_MODEL(SP1C1PwModel);
 
 public:
-    static std::string Name() { return "S/P1-C1"; }
+    static std::set<std::string> Names() { return {"S/P1-C1", "S/P2-C2/prospective-compatible"}; }
     SP1C1PwModel(const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;

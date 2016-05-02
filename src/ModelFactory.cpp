@@ -10,10 +10,11 @@
 namespace PacBio {
 namespace Consensus {
 
-ModelCreator::ModelCreator(const std::string& name)
+ModelCreator::ModelCreator(const std::set<std::string>& names)
 {
-    if (!ModelFactory::Register(name, this))
-        throw std::runtime_error("duplicate model inserted into factory!");
+    for (const std::string& name : names)
+        if (!ModelFactory::Register(name, this))
+            throw std::runtime_error("duplicate model inserted into factory!");
 }
 
 std::unique_ptr<ModelConfig> ModelFactory::Create(const std::string& name, const SNR& snr)
