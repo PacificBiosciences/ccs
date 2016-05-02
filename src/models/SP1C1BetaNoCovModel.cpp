@@ -19,7 +19,7 @@ class SP1C1BetaNoCovModel : public ModelConfig
     REGISTER_MODEL(SP1C1BetaNoCovModel);
 
 public:
-    static std::string Name() { return "S/P1-C1/beta"; }
+    static std::set<std::string> Names() { return {"S/P1-C1/beta"}; }
     SP1C1BetaNoCovModel(const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;

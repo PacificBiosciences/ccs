@@ -18,7 +18,7 @@ class ModelConfig;
 class ModelCreator
 {
 public:
-    ModelCreator(const std::string& name);
+    ModelCreator(const std::set<std::string>& names);
     virtual ~ModelCreator() {}
     virtual std::unique_ptr<ModelConfig> Create(const SNR&) const = 0;
 };
@@ -27,7 +27,7 @@ template <typename T>
 class ModelCreatorImpl : public ModelCreator
 {
 public:
-    ModelCreatorImpl<T>(const std::string& name) : ModelCreator(name) {}
+    ModelCreatorImpl<T>(const std::set<std::string>& names) : ModelCreator(names) {}
     virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
     {
         return std::unique_ptr<ModelConfig>(new T(snr));
@@ -49,7 +49,7 @@ private:
 private:                    \
     static const ModelCreatorImpl<cls> creator_
 
-#define REGISTER_MODEL_IMPL(cls) const ModelCreatorImpl<cls> cls::creator_(cls::Name())
+#define REGISTER_MODEL_IMPL(cls) const ModelCreatorImpl<cls> cls::creator_(cls::Names())
 
 }  // namespace Consensus
 }  // namespace PacBio
