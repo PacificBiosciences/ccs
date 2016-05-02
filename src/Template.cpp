@@ -209,6 +209,8 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
     if (!InRange(mut.Start(), mut.End())) return boost::none;
 
     const uint8_t idx = detail::TranslationTable[static_cast<uint8_t>(mut.Base)];
+    if (mut.Type != MutationType::DELETION && idx > 3)
+        throw std::invalid_argument("invalid character in template!");
 
     mutStart_ = mut.Start() - start_;
     mutEnd_ = mut.End() - start_;
@@ -269,6 +271,9 @@ bool Template::ApplyMutation(const Mutation& mut)
             "cannot ApplyMutation to an already mutated Template, call Reset first");
 
     const uint8_t idx = detail::TranslationTable[static_cast<uint8_t>(mut.Base)];
+    if (mut.Type != MutationType::DELETION && idx > 3)
+        throw std::invalid_argument("invalid character in template!");
+
     bool mutApplied = false;
 
     if (Length() == 0 && mut.LengthDiff() < 1) goto finish;

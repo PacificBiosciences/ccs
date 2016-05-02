@@ -28,7 +28,7 @@ public:
 
 private:
     SNR snr_;
-    double ctx_trans[16][4];
+    double ctxTrans_[16][4];
 };
 
 REGISTER_MODEL_IMPL(SP1C1PwModel);
@@ -216,16 +216,16 @@ SP1C1PwModel::SP1C1PwModel(const SNR& snr) : snr_(snr)
     const double snr1 = snr_.A, snr2 = snr1 * snr1, snr3 = snr2 * snr1;
     for (int ctx = 0; ctx < 16; ++ctx) {
         double sum = 1.0;
-        ctx_trans[ctx][0] = 1.0;
+        ctxTrans_[ctx][0] = 1.0;
         for (size_t j = 0; j < 3; ++j) {
             double xb = transProbs[ctx][j][0] + snr1 * transProbs[ctx][j][1] +
                         snr2 * transProbs[ctx][j][2] + snr3 * transProbs[ctx][j][3];
             xb = std::exp(xb);
-            ctx_trans[ctx][j + 1] = xb;
+            ctxTrans_[ctx][j + 1] = xb;
             sum += xb;
         }
         for (size_t j = 0; j < 4; ++j)
-            ctx_trans[ctx][j] /= sum;
+            ctxTrans_[ctx][j] /= sum;
     }
 }
 
@@ -246,12 +246,13 @@ std::vector<TemplatePosition> SP1C1PwModel::Populate(const std::string& tpl) con
 
     // Calculate probabilities in all 16 Contexts
     uint8_t prev = detail::TranslationTable[static_cast<uint8_t>(tpl[0])];
+    if (prev > 3) throw std::invalid_argument("invalid character in template!");
 
     for (size_t i = 1; i < tpl.size(); ++i) {
         const uint8_t curr = detail::TranslationTable[static_cast<uint8_t>(tpl[i])];
-        if (curr > 3) throw std::invalid_argument("invalid character in sequence!");
+        if (curr > 3) throw std::invalid_argument("invalid character in template!");
         const auto row = (prev << 2) | curr;
-        const auto params = ctx_trans[row];
+        const auto params = ctxTrans_[row];
         result.emplace_back(TemplatePosition{
             tpl[i - 1], prev,
             params[0],  // match
@@ -288,8 +289,10 @@ std::vector<uint8_t> SP1C1PwRecursor::EncodeRead(const MappedRead& read)
     std::vector<uint8_t> result;
 
     for (size_t i = 0; i < read.Length(); ++i) {
-        uint8_t pw = std::max(2, read.PulseWidth[i] - 1);
-        uint8_t em = (pw << 2) | detail::TranslationTable[static_cast<uint8_t>(read.Seq[i])];
+        uint8_t pw = std::max(2, std::min(0, read.PulseWidth[i] - 1));
+        uint8_t bp = detail::TranslationTable[static_cast<uint8_t>(read.Seq[i])];
+        if (bp > 3) throw std::invalid_argument("invalid character in read!");
+        uint8_t em = (pw << 2) | bp;
         if (em > 11) throw std::runtime_error("read encoding error!");
         result.emplace_back(em);
     }
@@ -300,14 +303,7 @@ std::vector<uint8_t> SP1C1PwRecursor::EncodeRead(const MappedRead& read)
 double SP1C1PwRecursor::EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr)
 {
     assert(move != MoveType::DELETION);
-
-    auto icurr = detail::TranslationTable[static_cast<uint8_t>(curr)];
-    auto iprev = detail::TranslationTable[static_cast<uint8_t>(prev)];
     const auto row = (prev << 2) | curr;
-
-    if (curr > 3 || prev > 3 || row > 15 || emission > 11)
-        throw std::invalid_argument("invalid character in sequence");
-
     return emissionPmf[static_cast<uint8_t>(move)][row][emission];
 }
 
