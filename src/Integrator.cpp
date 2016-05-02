@@ -112,14 +112,16 @@ MonoMolecularIntegrator::MonoMolecularIntegrator(const std::string& tpl,
                                                  const std::string& model)
     : AbstractIntegrator(cfg)
     , mdl_{model}
-    , fwdTpl_(tpl, ModelFactory::Create(mdl_, snr))
-    , revTpl_(::PacBio::Consensus::ReverseComplement(tpl), ModelFactory::Create(mdl_, snr))
+    , snr_{snr}
+    , fwdTpl_(tpl, ModelFactory::Create(mdl_, snr_))
+    , revTpl_(::PacBio::Consensus::ReverseComplement(tpl), ModelFactory::Create(mdl_, snr_))
 {
 }
 
 MonoMolecularIntegrator::MonoMolecularIntegrator(MonoMolecularIntegrator&& mmi)
     : AbstractIntegrator(std::move(mmi))
     , mdl_{mmi.mdl_}
+    , snr_{mmi.snr_}
     , fwdTpl_{std::move(mmi.fwdTpl_)}
     , revTpl_{std::move(mmi.revTpl_)}
 {
@@ -128,6 +130,7 @@ MonoMolecularIntegrator::MonoMolecularIntegrator(MonoMolecularIntegrator&& mmi)
 AddReadResult MonoMolecularIntegrator::AddRead(const MappedRead& read)
 {
     if (read.Model != mdl_) throw std::invalid_argument("invalid model for integrator!");
+    if (read.SignalToNoise != snr_) throw std::invalid_argument("invalid SNR for integrator!");
 
     if (read.Strand == StrandEnum::FORWARD)
         return AbstractIntegrator::AddRead(
@@ -238,9 +241,9 @@ MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
 {
 }
 
-AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read, const SNR& snr)
+AddReadResult MultiMolecularIntegrator::AddRead(const MappedRead& read)
 {
-    return AbstractIntegrator::AddRead(GetTemplate(read, snr), read);
+    return AbstractIntegrator::AddRead(GetTemplate(read, read.SignalToNoise), read);
 }
 
 size_t MultiMolecularIntegrator::Length() const { return fwdTpl_.length(); }

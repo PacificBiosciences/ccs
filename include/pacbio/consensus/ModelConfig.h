@@ -18,29 +18,16 @@ extern uint8_t TranslationTable[256];
 
 }  // namespace detail
 
-struct SNR
-{
-    double A;
-    double C;
-    double G;
-    double T;
-
-    SNR(double a, double c, double g, double t);
-    SNR(const std::vector<double>& snrs);
-
-    inline double operator[](const size_t i) const
-    {
-        if (i == 0) return A;
-        if (i == 1) return C;
-        if (i == 2) return G;
-        if (i == 3) return T;
-        throw std::invalid_argument("SNR out of bounds!");
-    }
-};
+// fwd decl
+class AbstractRecursor;
+class AbstractTemplate;
+struct MappedRead;
+struct SNR;
 
 struct TemplatePosition
 {
     char Base;
+    uint8_t Idx;
     double Match;
     double Branch;
     double Stick;
@@ -61,13 +48,10 @@ class ModelConfig
 {
 public:
     virtual ~ModelConfig() {}
+    virtual std::unique_ptr<AbstractRecursor> CreateRecursor(
+        std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const = 0;
     virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
-    virtual double BaseEmissionPr(MoveType move, char from, char to) const = 0;
-    virtual double CovEmissionPr(MoveType move, uint8_t cov, const char from,
-                                 const char to) const = 0;
-    // folded into CovEmissionPr for now:
-    //   virtual double CounterWeight() const = 0;
-    virtual double UndoCounterWeights(size_t nEmissions) const = 0;
+    virtual double SubstitutionRate(uint8_t prev, uint8_t curr) const = 0;
 };
 
 }  // namespace Consensus

@@ -48,9 +48,9 @@
 #include <utility>
 #include <vector>
 
+#include <pacbio/consensus/Mutation.h>
 #include <pacbio/consensus/align/AlignConfig.h>
 #include <pacbio/consensus/poa/PoaConsensus.h>
-#include <pacbio/consensus/Mutation.h>
 
 using std::string;
 using std::vector;

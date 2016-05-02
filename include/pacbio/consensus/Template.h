@@ -10,11 +10,18 @@
 
 #include <boost/optional.hpp>
 
+#include <pacbio/consensus/Exceptions.h>
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/consensus/Mutation.h>
+#include <pacbio/consensus/Read.h>
 
 namespace PacBio {
 namespace Consensus {
+
+// fwd decl
+class AbstractRecursor;
+class ScaledMatrix;
+struct MappedRead;
 
 class AbstractTemplate
 {
@@ -36,9 +43,9 @@ public:
     virtual bool ApplyMutations(std::vector<Mutation>* muts);
 
     // access model configuration
-    virtual double BaseEmissionPr(MoveType move, char from, char to) const = 0;
-    virtual double CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const = 0;
-    virtual double UndoCounterWeights(size_t nEmissions) const = 0;
+    virtual std::unique_ptr<AbstractRecursor> CreateRecursor(
+        std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const = 0;
+    virtual double SubstitutionRate(uint8_t prev, uint8_t curr) const = 0;
 
     std::pair<double, double> NormalParameters() const;
 
@@ -77,9 +84,10 @@ public:
 
     bool ApplyMutation(const Mutation& mut);
 
-    inline double BaseEmissionPr(MoveType move, char from, char to) const;
-    inline double CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const;
-    inline double UndoCounterWeights(size_t nEmissions) const;
+    inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
+                                                            const MappedRead& mr,
+                                                            double scoreDiff) const;
+    inline double SubstitutionRate(uint8_t prev, uint8_t curr) const;
 
 private:
     std::unique_ptr<ModelConfig> cfg_;
@@ -106,12 +114,41 @@ public:
     inline void Reset() {}
     bool ApplyMutation(const Mutation& mut);
 
-    inline double BaseEmissionPr(MoveType move, char from, char to) const;
-    inline double CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const;
-    inline double UndoCounterWeights(size_t nEmissions) const;
+    inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
+                                                            const MappedRead& mr,
+                                                            double scoreDiff) const;
+    inline double SubstitutionRate(uint8_t prev, uint8_t curr) const;
 
 private:
     Template const& master_;
+};
+
+// this needs to be here because the unique_ptr deleter for AbstractRecursor must know its size
+class AbstractRecursor
+{
+protected:
+    typedef ScaledMatrix M;
+
+public:
+    AbstractRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+                     double scoreDiff);
+    virtual ~AbstractRecursor() {}
+    virtual size_t FillAlphaBeta(M& alpha, M& beta) const throw(AlphaBetaMismatch) = 0;
+    virtual void FillAlpha(const M& guide, M& alpha) const = 0;
+    virtual void FillBeta(const M& guide, M& beta) const = 0;
+    virtual double LinkAlphaBeta(const M& alpha, size_t alphaColumn, const M& beta,
+                                 size_t betaColumn, size_t absoluteColumn) const = 0;
+    virtual void ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
+                             size_t numExtColumns = 2) const = 0;
+    virtual void ExtendBeta(const M& beta, size_t endColumn, M& ext, int lengthDiff = 0) const = 0;
+    virtual double UndoCounterWeights(size_t nEmissions) const = 0;
+
+public:
+    std::unique_ptr<AbstractTemplate> tpl_;
+    MappedRead read_;
+
+protected:
+    double scoreDiff_;  // reciprocal of "natural scale"
 };
 
 // inline function impls
@@ -138,26 +175,24 @@ const TemplatePosition& Template::operator[](size_t i) const
 }
 
 bool Template::IsMutated() const { return mutated_; }
-double Template::BaseEmissionPr(MoveType move, char from, char to) const
-{
-    return cfg_->BaseEmissionPr(move, from, to);
-}
-
-double Template::CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const
-{
-    return cfg_->CovEmissionPr(move, cov, from, to);
-}
-
-double Template::UndoCounterWeights(size_t nEmissions) const
-{
-    return cfg_->UndoCounterWeights(nEmissions);
-}
-
 size_t VirtualTemplate::Length() const
 {
     if (IsMutated()) return end_ - start_ + master_.mutOff_;
 
     return end_ - start_;
+}
+
+std::unique_ptr<AbstractRecursor> Template::CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
+                                                           const MappedRead& mr,
+                                                           double scoreDiff) const
+{
+    return cfg_->CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
+                                scoreDiff);
+}
+
+double Template::SubstitutionRate(uint8_t prev, uint8_t curr) const
+{
+    return cfg_->SubstitutionRate(prev, curr);
 }
 
 const TemplatePosition& VirtualTemplate::operator[](const size_t i) const
@@ -179,19 +214,16 @@ boost::optional<Mutation> VirtualTemplate::Mutate(const Mutation& mut)
     return boost::optional<Mutation>(Mutation(mut.Type, mut.Start() - start_, mut.Base));
 }
 
-double VirtualTemplate::BaseEmissionPr(MoveType move, char from, char to) const
+std::unique_ptr<AbstractRecursor> VirtualTemplate::CreateRecursor(
+    std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
 {
-    return master_.cfg_->BaseEmissionPr(move, from, to);
+    return master_.CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
+                                  scoreDiff);
 }
 
-double VirtualTemplate::CovEmissionPr(MoveType move, uint8_t cov, char from, char to) const
+double VirtualTemplate::SubstitutionRate(uint8_t prev, uint8_t curr) const
 {
-    return master_.cfg_->CovEmissionPr(move, cov, from, to);
-}
-
-double VirtualTemplate::UndoCounterWeights(size_t nEmissions) const
-{
-    return master_.cfg_->UndoCounterWeights(nEmissions);
+    return master_.SubstitutionRate(prev, curr);
 }
 
 }  // namespace Consensus

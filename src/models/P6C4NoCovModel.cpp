@@ -1,34 +1,50 @@
 
 #include <cassert>
 #include <cmath>
+#include <memory>
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
+#include <pacbio/consensus/Read.h>
 
 #include "../ModelFactory.h"
+#include "../Recursor.h"
 
 namespace PacBio {
 namespace Consensus {
 namespace {
+
+constexpr double kEps = 0.00505052456472967;
+constexpr double kCounterWeight = 1.894736842105264607;
 
 class P6C4NoCovModel : public ModelConfig
 {
     REGISTER_MODEL(P6C4NoCovModel);
 
 public:
-    P6C4NoCovModel(const SNR& snr);
-    std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double BaseEmissionPr(MoveType move, char from, char to) const;
-    double CovEmissionPr(MoveType move, uint8_t cov, const char from, const char to) const;
-    double UndoCounterWeights(size_t nEmissions) const;
-
     static std::string Name() { return "P6-C4"; }
+    P6C4NoCovModel(const SNR& snr);
+    std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
+                                                     const MappedRead& mr, double scoreDiff) const;
+    std::vector<TemplatePosition> Populate(const std::string& tpl) const;
+    double SubstitutionRate(uint8_t prev, uint8_t curr) const;
+
 private:
     SNR snr_;
-    double counterWeight_;
 };
 
 REGISTER_MODEL_IMPL(P6C4NoCovModel);
+
+// TODO(lhepler) comments regarding the CRTP
+class P6C4NoCovRecursor : public Recursor<P6C4NoCovRecursor>
+{
+public:
+    P6C4NoCovRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+                      double scoreDiff);
+    static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
+    static inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr);
+    virtual double UndoCounterWeights(size_t nEmissions) const;
+};
 
 double P6C4NoCovParams[4][2][3][4] = {
     { // A
@@ -68,28 +84,7 @@ double P6C4NoCovParams[4][2][3][4] = {
       {4.21031404956015, -0.347546363361823, 0.0293839179303896, -0.000893802212450644},
       {2.33143889851302, -0.586068444099136, 0.040044954697795, -0.000957298861394191}}}};
 
-P6C4NoCovModel::P6C4NoCovModel(const SNR& snr) : snr_(snr), counterWeight_{1.0}
-{
-    constexpr auto bases = "ACGT";
-    constexpr MoveType moves[] = {MoveType::MATCH, MoveType::BRANCH, MoveType::STICK};
-
-    double baseEmission = 0.0;
-    double covEmission = 0.0;
-
-    for (size_t m = 0; m < 3; ++m) {
-        for (size_t i = 0; i < 4; ++i)
-            for (size_t j = 0; j < 4; ++j)
-                baseEmission += BaseEmissionPr(moves[m], bases[i], bases[j]);
-
-        for (uint8_t c = 0; c < 20; ++c)
-            covEmission += CovEmissionPr(moves[m], c, 0, 0);
-    }
-
-    baseEmission /= (3 * 4 * 4);
-    covEmission /= (3 * 20);
-    counterWeight_ /= (baseEmission * covEmission);
-}
-
+P6C4NoCovModel::P6C4NoCovModel(const SNR& snr) : snr_(snr) {}
 std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) const
 {
     std::vector<TemplatePosition> result;
@@ -97,13 +92,13 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
     if (tpl.empty()) return result;
 
     for (size_t i = 1; i < tpl.size(); ++i) {
-        const uint8_t b = detail::TranslationTable[static_cast<uint8_t>(tpl[i])];
+        const uint8_t bp = detail::TranslationTable[static_cast<uint8_t>(tpl[i])];
 
-        if (b > 3) throw std::invalid_argument("invalid character in sequence!");
+        if (bp > 3) throw std::invalid_argument("invalid character in sequence!");
 
         const bool hp = tpl[i - 1] == tpl[i];  // NA -> 0, AA -> 1
-        const auto params = P6C4NoCovParams[b][hp];
-        const double snr = snr_[b], snr2 = snr * snr, snr3 = snr2 * snr;
+        const auto params = P6C4NoCovParams[bp][hp];
+        const double snr = snr_[bp], snr2 = snr * snr, snr3 = snr2 * snr;
         double tprobs[3];
         double sum = 1.0;
 
@@ -119,7 +114,7 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
             tprobs[j] /= sum;
 
         result.emplace_back(TemplatePosition{
-            tpl[i - 1],
+            tpl[i - 1], detail::TranslationTable[static_cast<uint8_t>(tpl[i - 1])],
             tprobs[1],  // match
             1.0 / sum,  // branch
             tprobs[2],  // stick
@@ -127,37 +122,57 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
         });
     }
 
-    result.emplace_back(TemplatePosition{tpl.back(), 1.0, 0.0, 0.0, 0.0});
+    result.emplace_back(TemplatePosition{tpl.back(),
+                                         detail::TranslationTable[static_cast<uint8_t>(tpl.back())],
+                                         1.0, 0.0, 0.0, 0.0});
 
     return result;
 }
 
-double P6C4NoCovModel::BaseEmissionPr(MoveType move, const char from, const char to) const
+std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(
+    std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
+{
+    return std::unique_ptr<AbstractRecursor>(
+        new P6C4NoCovRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
+}
+
+double P6C4NoCovModel::SubstitutionRate(uint8_t prev, uint8_t curr) const { return kEps; }
+P6C4NoCovRecursor::P6C4NoCovRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+                                     double scoreDiff)
+    : Recursor<P6C4NoCovRecursor>(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
+                                  scoreDiff)
+{
+}
+
+std::vector<uint8_t> P6C4NoCovRecursor::EncodeRead(const MappedRead& read)
+{
+    std::vector<uint8_t> result;
+
+    for (const char bp : read.Seq)
+        result.emplace_back(detail::TranslationTable[static_cast<uint8_t>(bp)]);
+
+    return result;
+}
+
+double P6C4NoCovRecursor::EmissionPr(MoveType move, const uint8_t emission, const uint8_t prev,
+                                     const uint8_t curr)
 {
     assert(move != MoveType::DELETION);
 
-    if (move == MoveType::BRANCH)
-        return 1.0;
-    else if (move == MoveType::STICK)
-        return 1.0 / 3.0;
+    // probability of a mismatch
+    constexpr double tbl[3][2] = {
+        // 0 (match), 1 (mismatch)
+        {1.0 - kEps, kEps / 3.0},  // MATCH
+        {1.0, 0.0},                // BRANCH
+        {0.0, 1.0 / 3.0}           // STICK
+    };
 
-    constexpr double pr = 0.00505052456472967;
-
-    if (from == to) return 1.0 - pr;
-
-    return pr / 3.0;
+    return tbl[static_cast<uint8_t>(move)][curr != emission] * kCounterWeight;
 }
 
-double P6C4NoCovModel::CovEmissionPr(MoveType move, const uint8_t, const char from,
-                                     const char to) const
+double P6C4NoCovRecursor::UndoCounterWeights(const size_t nEmissions) const
 {
-    assert(move != MoveType::DELETION);
-    return 1.0 * counterWeight_;
-}
-
-double P6C4NoCovModel::UndoCounterWeights(const size_t nEmissions) const
-{
-    return -std::log(counterWeight_) * nEmissions;
+    return -std::log(kCounterWeight) * nEmissions;
 }
 
 }  // namespace anonymous

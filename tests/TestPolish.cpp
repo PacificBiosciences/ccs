@@ -50,15 +50,21 @@ using namespace PacBio::Consensus;  // NOLINT
 
 namespace {
 
+Read MkRead(const std::string& seq, const SNR& snr, const std::string& mdl)
+{
+    std::vector<uint8_t> cov(0, seq.length());
+    return Read("NA", seq, cov, cov, snr, mdl);
+}
+
 const SNR snr(10, 7, 5, 11);
 
 TEST(PolishTest, MonoBasic)
 {
     MonoMolecularIntegrator ai("GCGTCGT", IntegratorConfig(), snr, "P6-C4");
 
-    ai.AddRead(MappedRead(Read("NA", "ACGTACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
+    ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
+    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
+    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
 
     Polish(&ai, PolishConfig());
 
@@ -69,13 +75,10 @@ TEST(PolishTest, MultiBasic)
 {
     MultiMolecularIntegrator ai("GCGTCGT", IntegratorConfig());
 
-    ai.AddRead(MappedRead(Read("NA", "ACGTACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true),
-               snr);
-    ai.AddRead(MappedRead(Read("NA", ReverseComplement("ACGACGT"), "P6-C4"), StrandEnum::REVERSE, 0,
-                          7, true, true),
-               snr);
-    ai.AddRead(MappedRead(Read("NA", "ACGACGT", "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true),
-               snr);
+    ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
+    ai.AddRead(MappedRead(MkRead(ReverseComplement("ACGACGT"), snr, "P6-C4"), StrandEnum::REVERSE,
+                          0, 7, true, true));
+    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
 
     bool polished;
     size_t nTested, nApplied;

@@ -1,4 +1,7 @@
 
+# pthread
+find_package(Threads)
+
 # gmock/gtest
 set(GMOCK_RootDir    ${PacBioConsensus_RootDir}/third-party/gmock-1.7.0)
 set(GMOCK_IncludeDir ${GMOCK_RootDir})

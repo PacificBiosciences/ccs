@@ -1,21 +1,22 @@
 
-#include <pacbio/consensus/Read.h>
+#include <cassert>
+
 #include <pacbio/consensus/ModelConfig.h>
+#include <pacbio/consensus/Read.h>
 
 namespace PacBio {
 namespace Consensus {
 
-Read::Read(const std::string& name, const std::string& seq, const std::vector<uint8_t>& cov,
-           const std::string& model)
-    : Name{name}, Seq{seq}, Cov{cov}, Model{model}
+SNR::SNR(const double a, const double c, const double g, const double t) : A(a), C(c), G(g), T(t) {}
+SNR::SNR(const std::vector<double>& snrs) : A(snrs[0]), C(snrs[1]), G(snrs[2]), T(snrs[3])
 {
+    assert(snrs.size() == 4);
 }
 
-Read::Read(const std::string& name, const std::string& seq, const std::string& model)
-    : Name{name}, Seq{seq}, Cov(seq.length(), 0), Model{model}
+Read::Read(const std::string& name, const std::string& seq, const std::vector<uint8_t>& ipd,
+           const std::vector<uint8_t>& pw, const SNR& snr, const std::string& model)
+    : Name{name}, Seq{seq}, IPD{ipd}, PulseWidth{pw}, SignalToNoise{snr}, Model{model}
 {
-    for (size_t i = 0; i < seq.length(); ++i)
-        Cov[i] = detail::TranslationTable[static_cast<unsigned char>(Seq[i])];
 }
 
 MappedRead::MappedRead(const Read& read, StrandEnum strand, size_t templateStart,

@@ -21,12 +21,6 @@ uint8_t TranslationTable[256] = {
 
 }  // namespace detail
 
-SNR::SNR(const double a, const double c, const double g, const double t) : A(a), C(c), G(g), T(t) {}
-SNR::SNR(const std::vector<double>& snrs) : A(snrs[0]), C(snrs[1]), G(snrs[2]), T(snrs[3])
-{
-    assert(snrs.size() == 4);
-}
-
 std::ostream& operator<<(std::ostream& out, const TemplatePosition& pos)
 {
     return out << "TemplatePosition(" << pos.Base << ", " << pos.Match << ", " << pos.Branch << ", "

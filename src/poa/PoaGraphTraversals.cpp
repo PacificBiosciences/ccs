@@ -35,8 +35,8 @@
 
 // Author: David Alexander
 
-#include <boost/graph/topological_sort.hpp>
 #include <boost/foreach.hpp>
+#include <boost/graph/topological_sort.hpp>
 #include <boost/unordered_set.hpp>
 
 #include <pacbio/consensus/poa/PoaGraph.h>

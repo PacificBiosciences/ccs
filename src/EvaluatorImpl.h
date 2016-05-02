@@ -9,8 +9,8 @@
 #include <pacbio/consensus/Read.h>
 #include <pacbio/consensus/Template.h>
 
-#include "matrix/ScaledMatrix.h"
 #include "Recursor.h"
+#include "matrix/ScaledMatrix.h"
 
 namespace PacBio {
 namespace Consensus {
@@ -35,7 +35,7 @@ private:
     void Recalculate();
 
 private:
-    Recursor recursor_;
+    std::unique_ptr<AbstractRecursor> recursor_;
 
     ScaledMatrix alpha_;
     ScaledMatrix beta_;

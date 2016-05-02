@@ -38,9 +38,9 @@
 #pragma once
 
 #include <climits>
-#include <vector>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <pacbio/consensus/align/AlignConfig.h>
 

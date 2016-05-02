@@ -2,13 +2,13 @@
 #include <algorithm>
 #include <map>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
-#include <boost/graph/topological_sort.hpp>
-#include <boost/range/adaptor/reversed.hpp>
 #include <boost/foreach.hpp>
+#include <boost/graph/topological_sort.hpp>
 #include <boost/optional.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 
 #include <pacbio/consensus/poa/RangeFinder.h>
 

@@ -37,8 +37,8 @@
 
 #include <algorithm>
 #include <cassert>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include <pacbio/consensus/Coverage.h>
 

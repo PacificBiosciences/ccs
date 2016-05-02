@@ -38,8 +38,8 @@
 
 #pragma once
 
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace PacBio {
 namespace Consensus {
