@@ -3,7 +3,7 @@
 ########################################################################
 
 cmake_policy(SET CMP0048 NEW)  # lets us set the version in project()
-project(PacBioConsensus VERSION 0.10.0 LANGUAGES CXX C)
+project(PacBioConsensus VERSION 0.11.0 LANGUAGES CXX C)
 cmake_minimum_required(VERSION 3.0)
 
 # set magic variable
