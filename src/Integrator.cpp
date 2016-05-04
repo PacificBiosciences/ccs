@@ -1,6 +1,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <limits>
 #include <utility>
 
 #include <pacbio/consensus/Integrator.h>
@@ -10,6 +11,8 @@
 
 namespace PacBio {
 namespace Consensus {
+
+constexpr double NaN = -std::numeric_limits<double>::quiet_NaN();
 
 std::set<std::string> SupportedChemistries() { return ModelFactory::SupportedChemistries(); }
 IntegratorConfig::IntegratorConfig(const double minZScore, const double scoreDiff)
@@ -80,6 +83,10 @@ std::vector<double> AbstractIntegrator::LLs(const Mutation& fwdMut)
             lls.push_back(eval.LL(fwdMut));
         else if (eval.Strand() == StrandEnum::REVERSE)
             lls.push_back(eval.LL(revMut));
+        else {
+            // inactive reads get a strand of "unmapped"
+            lls.push_back(NaN);
+        }
     }
     return lls;
 }
@@ -88,7 +95,10 @@ std::vector<double> AbstractIntegrator::LLs() const
 {
     std::vector<double> lls;
     for (auto& eval : evals_) {
-        lls.push_back(eval.LL());
+        if (eval)
+            lls.push_back(eval.LL());
+        else
+            lls.push_back(NaN);
     }
     return lls;
 }
