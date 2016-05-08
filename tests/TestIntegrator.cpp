@@ -137,7 +137,7 @@ TEST(IntegratorTest, TestLongTemplateTiming)
         const auto etime = std::chrono::high_resolution_clock::now();
         const auto duration =
             std::chrono::duration_cast<std::chrono::microseconds>(etime - stime).count();
-        EXPECT_LT(duration / nsamp, 2500);
+        EXPECT_LT(duration / nsamp, 1500);
     }
 }
 
