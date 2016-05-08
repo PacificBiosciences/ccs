@@ -227,8 +227,8 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
                 // EXPECT_NEAR(obs2, exp, prec);
                 EXPECT_EQ(string(ai1), app);
                 EXPECT_EQ(string(ai2), app);
-                const double diff1 = std::abs(obs1 - exp);
-                const double diff2 = std::abs(obs2 - exp);
+                const double diff1 = std::abs(1.0 - obs1 / exp);
+                const double diff2 = std::abs(1.0 - obs2 / exp);
                 if (diff1 >= prec || diff2 >= prec) {
                     std::cerr << std::endl
                               << "!! intolerable difference: exp: " << exp << ", obs1: " << obs1
