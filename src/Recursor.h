@@ -189,7 +189,7 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
     // Initial condition, we always start with a match
     alpha.StartEditingColumn(0, 0, 1);
     alpha.Set(0, 0, 1.0);
-    alpha.FinishEditingColumn(0, 0, 1);
+    alpha.FinishEditingColumn<false>(0, 0, 1);
     // End initial conditions
 
     size_t hintBeginRow = 1, hintEndRow = 1;
@@ -281,7 +281,7 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
         hintBeginRow = i;
 
         // Don't rescale until we finish updating the hint.
-        alpha.FinishEditingColumn(j, beginRow, endRow);
+        alpha.FinishEditingColumn<true>(j, beginRow, endRow, maxScore);
     }
 
     /* Now fill out the probability in the last pinned position.
@@ -297,7 +297,7 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
             Derived::EmissionPr(MoveType::MATCH, emissions_[I - 1], prevTplBase, currTplBase);
         alpha.StartEditingColumn(J, I, I + 1);
         alpha.Set(I, J, likelihood);
-        alpha.FinishEditingColumn(J, I, I + 1);
+        alpha.FinishEditingColumn<false>(J, I, I + 1);
     }
 }
 
@@ -313,7 +313,7 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
     // Setup initial condition, at the end we are one
     beta.StartEditingColumn(J, I, I + 1);
     beta.Set(I, J, 1.0);
-    beta.FinishEditingColumn(J, I, I + 1);
+    beta.FinishEditingColumn<false>(J, I, I + 1);
 
     // Totally arbitray decision here...
     size_t hintBeginRow = I, hintEndRow = I;
@@ -393,7 +393,7 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
         hintEndRow = i;
 
         // Don't rescale until we update the hints
-        beta.FinishEditingColumn(j, beginRow, endRow);
+        beta.FinishEditingColumn<true>(j, beginRow, endRow, maxScore);
     }
 
     /* Now to fill the top row which must be a match
@@ -404,7 +404,7 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
         auto match_emission_prob =
             Derived::EmissionPr(MoveType::MATCH, emissions_[0], kDefaultBase, (*tpl_)[0].Idx);
         beta.Set(0, 0, match_emission_prob * beta(1, 1));
-        beta.FinishEditingColumn(0, 0, 1);
+        beta.FinishEditingColumn<false>(0, 0, 1);
     }
 }
 
@@ -499,7 +499,7 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
 
         int i;
         double score = 0.0;
-
+        double max_score = score;
         // Grab values that will be useful for the whole column
         auto currTplParams = (*tpl_)[j - 1];
         auto currTplBase = currTplParams.Idx;
@@ -554,9 +554,10 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
                 score = Combine(score, thisMoveScore);
             }
             ext.Set(i, extCol, score);
+            if (score > max_score) max_score = score;
         }
         assert(i == endRow);
-        ext.FinishEditingColumn(extCol, beginRow, endRow);
+        ext.FinishEditingColumn<true>(extCol, beginRow, endRow, max_score);
     }
 }
 
@@ -628,6 +629,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
 
         TemplatePosition currTplParams = kDefaultTplPos;
         if (jp > 0) currTplParams = (*tpl_)[jp - 1];
+        double max_score = 0.0;
 
         for (int i = endRow - 1; i >= beginRow; i--) {
             uint8_t nextReadEm = 4;  // 'N'
@@ -636,7 +638,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
             }
             double thisMoveScore = 0.0;
             double score = 0.0;
-
+            
             // Match
             // TODO: Remove these checks, we should always be on the left side
             // of the matrix....
@@ -680,8 +682,9 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
             }
 
             ext.Set(i, extCol, score);
+            if (score > max_score) max_score = score;
         }
-        ext.FinishEditingColumn(extCol, beginRow, endRow);
+        ext.FinishEditingColumn<true>(extCol, beginRow, endRow, max_score);
     }
 
     // fill out the (0, 0) entry of the matrix
@@ -691,7 +694,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
         const double match_emission_prob =
             Derived::EmissionPr(MoveType::MATCH, emissions_[0], kDefaultBase, (*tpl_)[0].Idx);
         ext.Set(0, 0, match_trans_prob * match_emission_prob);
-        ext.FinishEditingColumn(0, 0, 1);
+        ext.FinishEditingColumn<false>(0, 0, 1);
     }
 }
 
