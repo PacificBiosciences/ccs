@@ -340,5 +340,19 @@ TEST(TemplateTest, NullTemplate)
         EXPECT_EQ(0, virt.Length());
     }
 }
+    
+
+TEST(TemplateTest, P6SiteNormalParameters)
+{
+    const string tpl = "ACGATACATACGATCGA";
+    const SNR snr(10, 7, 5, 11);
+    auto mdl = "P6-C4";
+    Template tester(tpl, ModelFactory::Create(mdl, snr));
+    auto results = tester.NormalParameters();
+    
+    EXPECT_EQ(-9.3915588824261888, results.first);
+    EXPECT_EQ(26.883352639390957, results.second);
+}
+   
 
 }  // namespace anonymous
