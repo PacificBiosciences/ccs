@@ -1,4 +1,4 @@
-# ConsensusCore2
+# ConsensusCore2 [![CircleCI](https://circleci.com/gh/PacificBiosciences/ConsensusCore2.svg?style=svg)](https://circleci.com/gh/PacificBiosciences/ConsensusCore2)
 
 `ConsensusCore2` embodies core C++ routines underlying the Arrow HMM
 algorithm for PacBio multi-sequence consensus.  Arrow is the successor
