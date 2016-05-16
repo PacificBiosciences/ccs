@@ -15,6 +15,7 @@ namespace Consensus {
 namespace {
 
 constexpr double kCounterWeight = 15.0;
+const size_t OUTCOME_NUMBER = 12;
 
 class SP1C1PwModel : public ModelConfig
 {
@@ -26,7 +27,11 @@ public:
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double SubstitutionRate(uint8_t prev, uint8_t curr) const;
+    double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
+    double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
+    double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
+    
+
 
 private:
     SNR snr_;
@@ -46,7 +51,8 @@ public:
     virtual double UndoCounterWeights(size_t nEmissions) const;
 };
 
-constexpr double emissionPmf[3][16][12] = {
+    
+constexpr double emissionPmf[3][16][OUTCOME_NUMBER] = {
     {// matchPmf
      {0.050180496, 0.000810831714, 0.000718815911, 2.41969643e-05, 0.0649534816, 0.000599364712,
       0.0024105932, 2.79498377e-05, 0.872718151, 0.0038260229, 0.00356427001, 0.00014363133},
@@ -270,16 +276,30 @@ std::vector<TemplatePosition> SP1C1PwModel::Populate(const std::string& tpl) con
 
     return result;
 }
-
-double SP1C1PwModel::SubstitutionRate(uint8_t prev, uint8_t curr) const
-{
+    
+inline double CalculateExpectedLogLikelihoodOfOutcomeRow(const int index, const uint8_t prev, const uint8_t curr, const bool secondMoment)  {
     const auto row = (prev << 2) | curr;
-    double eps = 0.0;
-    for (uint8_t pw = 0; pw < 3; ++pw)
-        for (uint8_t bp = 0; bp < 4; ++bp)
-            if (bp != curr)
-                eps += emissionPmf[static_cast<uint8_t>(MoveType::MATCH)][row][(pw << 2) | bp];
-    return eps / (3 * 4);
+    double expectedLL = 0;
+    for(size_t i = 0; i < OUTCOME_NUMBER; i++) {
+        double curProb = emissionPmf[index][row][i];
+        double lgCurProb = std::log(curProb);
+        if(!secondMoment) {
+            expectedLL +=  curProb * lgCurProb;
+        } else {
+            expectedLL += curProb * pow(lgCurProb, 2.0);
+        }
+    }
+    return expectedLL;
+}
+
+double SP1C1PwModel::ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+    return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::MATCH), prev, curr, secondMoment);
+}
+double SP1C1PwModel::ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+    return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::STICK), prev, curr, secondMoment);
+}
+double SP1C1PwModel::ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+    return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::BRANCH), prev, curr, secondMoment);
 }
 
 SP1C1PwRecursor::SP1C1PwRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,

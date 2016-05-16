@@ -45,8 +45,10 @@ public:
     // access model configuration
     virtual std::unique_ptr<AbstractRecursor> CreateRecursor(
         std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const = 0;
-    virtual double SubstitutionRate(uint8_t prev, uint8_t curr) const = 0;
-
+    virtual double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
+    virtual double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
+    virtual double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
+    
     std::pair<double, double> NormalParameters() const;
 
     // a sad but necessary release valve for MonoMolecularIntegrator Length()
@@ -87,7 +89,16 @@ public:
     inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                             const MappedRead& mr,
                                                             double scoreDiff) const;
-    inline double SubstitutionRate(uint8_t prev, uint8_t curr) const;
+
+    double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+        return cfg_->ExpectedLogLikelihoodForMatchEmission(prev, curr, secondMoment);
+    }
+    double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+       return  cfg_->ExpectedLogLikelihoodForStickEmission(prev, curr, secondMoment);
+    }
+    double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+        return cfg_->ExpectedLogLikelihoodForBranchEmission(prev, curr, secondMoment);
+    }
 
 private:
     std::unique_ptr<ModelConfig> cfg_;
@@ -113,12 +124,18 @@ public:
     inline boost::optional<Mutation> Mutate(const Mutation&);
     inline void Reset() {}
     bool ApplyMutation(const Mutation& mut);
-
+    double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+        return master_.ExpectedLogLikelihoodForMatchEmission(prev, curr, secondMoment);
+    }
+    double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+        return  master_.ExpectedLogLikelihoodForStickEmission(prev, curr, secondMoment);
+    }
+    double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+        return master_.ExpectedLogLikelihoodForBranchEmission(prev, curr, secondMoment);
+    }
     inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                             const MappedRead& mr,
                                                             double scoreDiff) const;
-    inline double SubstitutionRate(uint8_t prev, uint8_t curr) const;
-
 private:
     Template const& master_;
 };
@@ -190,11 +207,6 @@ std::unique_ptr<AbstractRecursor> Template::CreateRecursor(std::unique_ptr<Abstr
                                 scoreDiff);
 }
 
-double Template::SubstitutionRate(uint8_t prev, uint8_t curr) const
-{
-    return cfg_->SubstitutionRate(prev, curr);
-}
-
 const TemplatePosition& VirtualTemplate::operator[](const size_t i) const
 {
     if (master_.IsMutated() && !pinStart_ && master_.mutEnd_ <= start_)
@@ -219,11 +231,6 @@ std::unique_ptr<AbstractRecursor> VirtualTemplate::CreateRecursor(
 {
     return master_.CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
                                   scoreDiff);
-}
-
-double VirtualTemplate::SubstitutionRate(uint8_t prev, uint8_t curr) const
-{
-    return master_.SubstitutionRate(prev, curr);
 }
 
 }  // namespace Consensus

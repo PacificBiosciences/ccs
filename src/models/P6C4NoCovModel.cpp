@@ -27,8 +27,9 @@ public:
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double SubstitutionRate(uint8_t prev, uint8_t curr) const;
-
+    double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
+    double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
+    double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
 private:
     SNR snr_;
 };
@@ -137,7 +138,33 @@ std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(
         new P6C4NoCovRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
 }
 
-double P6C4NoCovModel::SubstitutionRate(uint8_t prev, uint8_t curr) const { return kEps; }
+    
+double P6C4NoCovModel::ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+    double probMatch = 1.0 - kEps;
+    const double lgThird = -std::log(3.0);
+    const double lgMatch = std::log(probMatch);
+    const double probMismatch = kEps;
+    const double lgMismatch = lgThird + std::log(probMismatch);
+    if (!secondMoment) {
+        return probMatch * lgMatch + probMismatch * lgMismatch;
+    } else {
+        return probMatch * pow(lgMatch, 2.0) + probMismatch * pow(lgMismatch, 2.0);
+    }
+}
+
+double P6C4NoCovModel::ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+    return 0.0;
+}
+
+double P6C4NoCovModel::ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+   const double lgThird = -std::log(3.0);
+    if(!secondMoment) {
+        return lgThird;
+    } else {
+        return pow(lgThird, 2.0);
+    }
+}
+    
 P6C4NoCovRecursor::P6C4NoCovRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                                      double scoreDiff)
     : Recursor<P6C4NoCovRecursor>(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,

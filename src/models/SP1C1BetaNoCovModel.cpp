@@ -24,7 +24,9 @@ public:
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double SubstitutionRate(uint8_t prev, uint8_t curr) const;
+    double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
+    double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
+    double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
 
 private:
     SNR snr_;
@@ -125,17 +127,31 @@ std::unique_ptr<AbstractRecursor> SP1C1BetaNoCovModel::CreateRecursor(
         std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
 }
 
-double SP1C1BetaNoCovModel::SubstitutionRate(uint8_t prev, uint8_t curr) const
-{
-    const uint8_t hpAdd = prev == curr ? 0 : 4;
-    const uint8_t row = curr + hpAdd;
+inline double CalculateExpectedLogLikelihoodOfOutcomeRow(const int index, const uint8_t prev, const uint8_t curr, const bool secondMoment)  {
+        const uint8_t hpAdd = prev == curr ? 0 : 4;
+        const uint8_t row = curr + hpAdd;
+        double expectedLL = 0;
+        for(size_t i = 0; i < 4; i++) {
+            double curProb = emissionPmf[index][row][i];
+            double lgCurProb = std::log(curProb);
+            if(!secondMoment) {
+                expectedLL +=  curProb * lgCurProb;
+            } else {
+                expectedLL += curProb * pow(lgCurProb, 2.0);
+            }
+        }
+        return expectedLL;
+    }
+    
 
-    double eps = 0.0;
-
-    for (uint8_t em = 0; em < 4; ++em)
-        if (em != curr) eps += emissionPmf[0][row][em];
-
-    return eps / 3.0;
+double SP1C1BetaNoCovModel::ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+        return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::MATCH), prev, curr, secondMoment);
+}
+double SP1C1BetaNoCovModel::ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+        return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::STICK), prev, curr, secondMoment);
+}
+double SP1C1BetaNoCovModel::ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
+        return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::BRANCH), prev, curr, secondMoment);
 }
 
 SP1C1BetaNoCovRecursor::SP1C1BetaNoCovRecursor(std::unique_ptr<AbstractTemplate>&& tpl,

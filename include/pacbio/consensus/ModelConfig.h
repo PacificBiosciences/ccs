@@ -51,7 +51,10 @@ public:
     virtual std::unique_ptr<AbstractRecursor> CreateRecursor(
         std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const = 0;
     virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
-    virtual double SubstitutionRate(uint8_t prev, uint8_t curr) const = 0;
+    virtual double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
+    virtual double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
+    virtual double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
+    
 };
 
 }  // namespace Consensus
