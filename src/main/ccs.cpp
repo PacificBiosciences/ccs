@@ -461,7 +461,8 @@ int main(int argc, char** argv)
                        back_inserter(unavail));
 
         if (!unavail.empty()) {
-            PBLOG_FATAL << "Unsupported chemistries found: " << join(unavail, ", ");
+            PBLOG_FATAL << "Unsupported chemistries found: \"" << join(unavail, "\", \"") << "\""
+                << " Supported chemistries are: \"" << join(avail, "\", \"") << "\"";
             exit(-1);
         }
 
