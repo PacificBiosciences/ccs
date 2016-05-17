@@ -136,8 +136,8 @@ std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i)
     const auto params = (*this)[i];
     // TODO: This is a bit unsafe, we should understand context and have this conversion in one
     // place (or really just move directly to using .Idx without bit shifting
-    const uint8_t prev = params.Idx >> 2;
-    const uint8_t curr = params.Idx & 3;
+    const uint8_t prev = (i == 0) ? 0 : (*this)[i - 1].Idx;  // default base : A
+    const uint8_t curr = params.Idx;
     
     const double p_m = params.Match, l_m = std::log(p_m), l2_m = l_m * l_m;
     const double p_d = params.Deletion, l_d = std::log(p_d), l2_d = l_d * l_d;
