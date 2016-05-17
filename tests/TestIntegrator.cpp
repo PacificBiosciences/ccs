@@ -248,7 +248,10 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
                     std::cerr << "  " << tpl.length() << ", " << tpl << std::endl;
                     std::cerr << "  " << app.length() << ", " << app << std::endl;
                     std::cerr << "  " << ai1.TemplateLength() << ", " << string(ai1) << std::endl;
-                    std::cerr << "  " << read.length() << ", " << read << std::endl;
+                    std::stringstream result;
+                    std::copy(pws.begin(), pws.end(), std::ostream_iterator<int>(result, " "));
+                    std::cerr << "  " << read.length() << ", " << read <<  " - " << result.str() << std::endl;
+                    
                     ++nerror;
                 }
             } catch (const std::exception& e) {
