@@ -16,7 +16,7 @@ namespace {
 
 constexpr double kCounterWeight = 15.0;
 const size_t OUTCOME_NUMBER = 12;
-
+const size_t CONTEXT_NUMBER = 16;
 class SP1C1PwModel : public ModelConfig
 {
     REGISTER_MODEL(SP1C1PwModel);
@@ -35,7 +35,9 @@ public:
 
 private:
     SNR snr_;
-    double ctxTrans_[16][4];
+    double ctxTrans_[CONTEXT_NUMBER][4];
+    double cachedEmissionExpectations_[CONTEXT_NUMBER][3][2];
+    double ExpectedLogLikelihoodOfOutcomeRow(const int index, const uint8_t prev, const uint8_t curr, const bool secondMoment) const;
 };
 
 REGISTER_MODEL_IMPL(SP1C1PwModel);
@@ -52,7 +54,7 @@ public:
 };
 
     
-constexpr double emissionPmf[3][16][OUTCOME_NUMBER] = {
+constexpr double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
     {// matchPmf
      {0.050180496, 0.000810831714, 0.000718815911, 2.41969643e-05, 0.0649534816, 0.000599364712,
       0.0024105932, 2.79498377e-05, 0.872718151, 0.0038260229, 0.00356427001, 0.00014363133},
@@ -220,11 +222,32 @@ constexpr double transProbs[16][3][4] = {
     {{-5.68426500741552, 1.35382620376114, -0.177669648153777, 0.0069662442934688},
      {-1.02037267928727, -0.844797584296236, 0.130687255561928, -0.00722481027088629},
      {-0.376565549274208, -1.21268955791849, 0.178640505929895, -0.00928721253355987}}};
+    
+inline double CalculateExpectedLogLikelihoodOfOutcomeRow(const int index, const uint8_t row, const bool secondMoment)  {
+    double expectedLL = 0;
+    for(size_t i = 0; i < OUTCOME_NUMBER; i++) {
+        double curProb = emissionPmf[index][row][i];
+        double lgCurProb = std::log(curProb);
+        if(!secondMoment) {
+            expectedLL +=  curProb * lgCurProb;
+        } else {
+            expectedLL += curProb * pow(lgCurProb, 2.0);
+        }
+    }
+    return expectedLL;
+}
+    
+double SP1C1PwModel::ExpectedLogLikelihoodOfOutcomeRow(const int index, const uint8_t prev, const uint8_t curr, const bool secondMoment) const {
+    const auto row = (prev << 2) | curr;
+    const auto moment = secondMoment ? 1 : 0;
+    return cachedEmissionExpectations_[row][index][moment];
+}
 
 SP1C1PwModel::SP1C1PwModel(const SNR& snr) : snr_(snr)
 {
+    // Generate cached transistion probabilities
     const double snr1 = snr_.A, snr2 = snr1 * snr1, snr3 = snr2 * snr1;
-    for (int ctx = 0; ctx < 16; ++ctx) {
+    for (int ctx = 0; ctx < CONTEXT_NUMBER; ++ctx) {
         double sum = 1.0;
         ctxTrans_[ctx][0] = 1.0;
         for (size_t j = 0; j < 3; ++j) {
@@ -236,6 +259,15 @@ SP1C1PwModel::SP1C1PwModel(const SNR& snr) : snr_(snr)
         }
         for (size_t j = 0; j < 4; ++j)
             ctxTrans_[ctx][j] /= sum;
+    }
+    
+    // Generate cached emission expectations
+    // TODO: These are identical for all instances, either we should enrich the model or avoid doing this in a context dependent way
+    for(int ctx = 0; ctx < CONTEXT_NUMBER; ctx++) {
+        for (int index = 0; index < 3; index++) {
+            cachedEmissionExpectations_[ctx][index][0] = CalculateExpectedLogLikelihoodOfOutcomeRow(index, ctx, false);
+            cachedEmissionExpectations_[ctx][index][1] = CalculateExpectedLogLikelihoodOfOutcomeRow(index, ctx, true);
+        }
     }
 }
 
@@ -277,29 +309,16 @@ std::vector<TemplatePosition> SP1C1PwModel::Populate(const std::string& tpl) con
     return result;
 }
     
-inline double CalculateExpectedLogLikelihoodOfOutcomeRow(const int index, const uint8_t prev, const uint8_t curr, const bool secondMoment)  {
-    const auto row = (prev << 2) | curr;
-    double expectedLL = 0;
-    for(size_t i = 0; i < OUTCOME_NUMBER; i++) {
-        double curProb = emissionPmf[index][row][i];
-        double lgCurProb = std::log(curProb);
-        if(!secondMoment) {
-            expectedLL +=  curProb * lgCurProb;
-        } else {
-            expectedLL += curProb * pow(lgCurProb, 2.0);
-        }
-    }
-    return expectedLL;
-}
+
 
 double SP1C1PwModel::ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-    return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::MATCH), prev, curr, secondMoment);
+    return ExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::MATCH), prev, curr, secondMoment);
 }
 double SP1C1PwModel::ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-    return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::STICK), prev, curr, secondMoment);
+    return ExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::STICK), prev, curr, secondMoment);
 }
 double SP1C1PwModel::ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-    return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::BRANCH), prev, curr, secondMoment);
+    return ExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::BRANCH), prev, curr, secondMoment);
 }
 
 SP1C1PwRecursor::SP1C1PwRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
