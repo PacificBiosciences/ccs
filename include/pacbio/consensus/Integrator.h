@@ -62,7 +62,8 @@ public:
 
     double AvgZScore() const;
     std::vector<double> ZScores() const;
-
+    std::vector<std::pair<double, double>> NormalParameters() const;
+    
     virtual void ApplyMutation(const Mutation& mut) = 0;
     virtual void ApplyMutations(std::vector<Mutation>* muts) = 0;
 

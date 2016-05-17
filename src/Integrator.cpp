@@ -142,7 +142,22 @@ std::vector<double> AbstractIntegrator::ZScores() const
     }
     return results;
 }
-
+std::vector<std::pair<double, double>> AbstractIntegrator::NormalParameters() const
+{
+    std::vector<std::pair<double, double>> results;
+    results.reserve(evals_.size());
+    for (const auto& eval : evals_) {
+        if (eval) {
+            results.emplace_back(eval.NormalParameters());
+        } else {
+            auto nan =std::numeric_limits<double>::quiet_NaN();
+            results.emplace_back(std::pair<double, double>(nan, nan));
+        }
+    }
+    return results;
+}
+    
+    
 Mutation AbstractIntegrator::ReverseComplement(const Mutation& mut) const
 {
     return Mutation(mut.Type, TemplateLength() - mut.End(), Complement(mut.Base));
