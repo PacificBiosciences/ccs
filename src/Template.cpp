@@ -133,28 +133,22 @@ size_t AbstractTemplate::TrueLength() const { return end_ - start_; }
 */
 std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i) const
 {
-    // TODO (ndelaney): This probably needs to be matched to the specific model being used.
-    // std::log(1.0/3);
-    constexpr double lgThird = -1.0986122886681098;
-    const uint8_t prev = (i == 0) ? 0 : (*this)[i - 1].Idx;  // default base : A
     const auto params = (*this)[i];
-
-    // get the substitution rate here:
-    const double eps = SubstitutionRate(prev, params.Idx);
-
+    // TODO: This is a bit unsafe, we should understand context and have this conversion in one
+    // place (or really just move directly to using .Idx without bit shifting
+    const uint8_t prev = (i == 0) ? 0 : (*this)[i - 1].Idx;  // default base : A
+    const uint8_t curr = params.Idx;
+    
     const double p_m = params.Match, l_m = std::log(p_m), l2_m = l_m * l_m;
     const double p_d = params.Deletion, l_d = std::log(p_d), l2_d = l_d * l_d;
     const double p_b = params.Branch, l_b = std::log(p_b), l2_b = l_b * l_b;
     const double p_s = params.Stick, l_s = std::log(p_s), l2_s = l_s * l_s;
-
-    const double lgeps = std::log(eps);
-    const double lg1minusEps = std::log(1.0 - eps);
-
+    
     // First moment expectations (zero terms used for clarity)
-    const double E_M = (1.0 - eps) * lg1minusEps + eps * (lgThird + lgeps);
+    const double E_M = ExpectedLogLikelihoodForMatchEmission(prev, curr, false);
     const double E_D = 0.0;
-    const double E_B = 0.0;
-    const double E_S = lgThird;
+    const double E_B = ExpectedLogLikelihoodForBranchEmission(prev, curr, false);
+    const double E_S = ExpectedLogLikelihoodForStickEmission(prev, curr, false);
 
     // Calculate first moment
     const double E_MD = (l_m + E_M) * p_m / (p_m + p_d) + (l_d + E_D) * p_d / (p_m + p_d);
@@ -164,12 +158,13 @@ std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i)
 
     // Calculate second momment
     // Key expansion used repeatedly here: (A + B)^2 = A^2 + 2AB + B^2
-    const double E2_M = (1.0 - eps) * pow(lg1minusEps, 2.0) + eps * pow(lgThird + lgeps, 2.0);
+    const double E2_M = ExpectedLogLikelihoodForMatchEmission(prev, curr, true);
+    const double E2_S = ExpectedLogLikelihoodForStickEmission(prev, curr, true);
+    const double E2_B = ExpectedLogLikelihoodForBranchEmission(prev, curr, true);
     const double E2_MD =
         (l2_m + 2 * l_m * E_M + E2_M) * p_m / (p_m + p_d) + l2_d * p_d / (p_m + p_d);
-    const double E2_S = pow(lgThird, 2.0);
     const double E2_I =
-        l2_b * p_b / (p_b + p_s) + (l2_s + 2 * E_S * l_s + E2_S) * p_s / (p_b + p_s);
+        (l2_b + 2 * E_B * l_b + E2_B) * p_b / (p_b + p_s) + (l2_s + 2 * E_S * l_s + E2_S) * p_s / (p_b + p_s);
     const double E2_BS = E2_I * (p_s + p_b) / (p_m + p_d);
     const double moment2 = E2_BS + 2 * E_BS * E_MD + E2_MD;
     const double var = moment2 - mean * mean;
