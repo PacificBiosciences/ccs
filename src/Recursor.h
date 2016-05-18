@@ -638,7 +638,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
             }
             double thisMoveScore = 0.0;
             double score = 0.0;
-            
+
             // Match
             // TODO: Remove these checks, we should always be on the left side
             // of the matrix....
