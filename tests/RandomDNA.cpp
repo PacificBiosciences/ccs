@@ -18,8 +18,7 @@ string RandomDNA(const size_t n, mt19937* const gen)
 std::vector<uint8_t> RandomPW(const size_t n, mt19937* const gen)
 {
     std::vector<uint8_t> result(n);
-    uniform_int_distribution<uint8_t> rand(1, 3);
-
+    uniform_int_distribution<size_t> rand(0, 2);
     for (size_t i = 0; i < n; ++i)
         result[i] = rand(*gen);
 
