@@ -34,7 +34,7 @@ public:  // nullability
     static const ScaledMatrix& Null();
 
 public:  // information about entries filled by column
-    template<bool maxProvided>
+    template <bool maxProvided>
     void FinishEditingColumn(int j, int usedBegin, int usedEnd, double max_val = 0.0);
 
 public:  // Scaling and normalization
@@ -55,13 +55,12 @@ inline const ScaledMatrix& ScaledMatrix::Null()
     return *nullObj;
 }
 
-
-    
-template<bool maxProvided>
-inline void ScaledMatrix::FinishEditingColumn(const int j, const int usedBegin, const int usedEnd, double max_val)
+template <bool maxProvided>
+inline void ScaledMatrix::FinishEditingColumn(const int j, const int usedBegin, const int usedEnd,
+                                              double max_val)
 {
     // get the constant to scale by
-    if(!maxProvided) {
+    if (!maxProvided) {
         max_val = 0.0;
         for (int i = usedBegin; i < usedEnd; ++i) {
             max_val = std::max(max_val, SparseMatrix::Get(i, j));

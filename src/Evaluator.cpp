@@ -64,7 +64,6 @@ Evaluator& Evaluator::operator=(Evaluator&& eval)
 }
 
 Evaluator::~Evaluator() {}
-
 size_t Evaluator::Length() const
 {
     if (impl_) return impl_->recursor_->tpl_->Length();
@@ -78,7 +77,6 @@ StrandEnum Evaluator::Strand() const
 }
 
 Evaluator::operator bool() const { return state_ == EvaluatorState::VALID; }
-
 std::string Evaluator::ReadName() const
 {
     if (impl_) {
@@ -129,7 +127,6 @@ bool Evaluator::ApplyMutations(std::vector<Mutation>* muts)
 }
 
 EvaluatorState Evaluator::Status() const { return state_; }
-
 void Evaluator::Release()
 {
     state_ = EvaluatorState::DISABLED;
@@ -137,7 +134,8 @@ void Evaluator::Release()
 }
 
 // TODO: this is no longer a simple "invariants check" function---a CheckInvariants function
-// should be const and only do asserts on whether the state is valid.  Rename or refactor this.  The state in this class
+// should be const and only do asserts on whether the state is valid.  Rename or refactor this.  The
+// state in this class
 // is a bit too complex for my taste.
 void Evaluator::CheckInvariants()
 {
