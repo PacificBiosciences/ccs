@@ -13,6 +13,14 @@ SNR::SNR(const std::vector<double>& snrs) : A(snrs[0]), C(snrs[1]), G(snrs[2]), 
     assert(snrs.size() == 4);
 }
 
+SNR CapSNR(double cap, const SNR& snr)
+{
+    return SNR(std::min(cap, snr.A),
+               std::min(cap, snr.C),
+               std::min(cap, snr.G),
+               std::min(cap, snr.T));
+}
+
 Read::Read(const std::string& name, const std::string& seq, const std::vector<uint8_t>& ipd,
            const std::vector<uint8_t>& pw, const SNR& snr, const std::string& model)
     : Name{name}, Seq{seq}, IPD{ipd}, PulseWidth{pw}, SignalToNoise{snr}, Model{model}

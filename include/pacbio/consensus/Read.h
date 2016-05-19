@@ -36,6 +36,8 @@ struct SNR
     inline bool operator!=(const SNR& other) const { return !(*this == other); }
 };
 
+SNR CapSNR(double cap, const SNR& snr);
+
 struct Read
 {
     Read(const std::string& name, const std::string& seq, const std::vector<uint8_t>& ipd,
