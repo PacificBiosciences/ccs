@@ -36,8 +36,8 @@
 // Author: Lance Hepler
 
 #include <iostream>
-#include <string>
 #include <sstream>
+#include <string>
 
 #include <pacbio/ccs/ReadId.h>
 

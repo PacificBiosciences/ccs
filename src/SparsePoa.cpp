@@ -35,19 +35,19 @@
 
 // Author: Lance Hepler
 
+#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
-#include <iostream>
 
+#include <pacbio/consensus/Sequence.h>
 #include <pacbio/consensus/align/AlignConfig.h>
 #include <pacbio/consensus/poa/PoaConsensus.h>
 #include <pacbio/consensus/poa/PoaGraph.h>
-#include <pacbio/consensus/Sequence.h>
 
 #include <pacbio/ccs/Logging.h>
-#include <pacbio/ccs/SparsePoa.h>
 #include <pacbio/ccs/SparseAlignment.h>
+#include <pacbio/ccs/SparsePoa.h>
 
 using PacBio::Consensus::detail::SdpAnchorVector;
 using PacBio::Consensus::AlignConfig;

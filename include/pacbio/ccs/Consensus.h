@@ -103,7 +103,6 @@ struct ConsensusSettings
     double MinSNR;
 
     ConsensusSettings(const optparse::Values& options);
-    ConsensusSettings();
 
     static void AddOptions(optparse::OptionParser* const parser)
     {

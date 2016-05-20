@@ -37,8 +37,8 @@
 
 #pragma once
 
-#include <memory>
 #include <iostream>
+#include <memory>
 #include <string>
 
 #include <boost/optional.hpp>

@@ -36,8 +36,8 @@
 #pragma once
 
 #include <stdlib.h>
-#include <vector>
 #include <iostream>
+#include <vector>
 
 #include <pacbio/consensus/Integrator.h>
 
