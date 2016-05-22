@@ -56,7 +56,5 @@ ConsensusSettings::ConsensusSettings(const optparse::Values& options)
     , MinSNR{static_cast<double>(options.get(OptionNames::MinSnr))}
 {
 }
-
-ConsensusSettings::ConsensusSettings() : MaxLength{std::numeric_limits<size_t>::max()} {}
 }  // namespace CCS
 }  // namespace PacBio

@@ -45,6 +45,8 @@
 #include <pacbio/ccs/ReadId.h>
 #include <pacbio/ccs/SubreadResultCounter.h>
 
+#include <OptionParser.h>
+
 using namespace PacBio::CCS;
 typedef ReadType<ReadId> Subread;
 
@@ -61,7 +63,10 @@ TEST(ConsensusTest, TestReadFilter)
                                   std::vector<uint8_t>(seq.size(), 0), flags, .99});
     }
 
-    ConsensusSettings settings{};
+    auto parser = optparse::OptionParser();
+    ConsensusSettings::AddOptions(&parser);
+    const auto options = parser.parse_args({});
+    ConsensusSettings settings(options);
     settings.MinLength = 10;
     settings.MinReadScore = 0.0;
 
