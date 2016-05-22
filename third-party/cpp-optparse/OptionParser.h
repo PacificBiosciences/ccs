@@ -100,32 +100,60 @@ class InvalidOption : public std::runtime_error {
     InvalidOption() : std::runtime_error("invalid Option") {}
 };
 
+
+
+namespace {
+
+template <typename T>
+T integralConvert(bool valid, const std::string& s)
+{
+    T t;
+    if (valid && (std::istringstream(s) >> t))
+        return t;
+    else
+        throw InvalidValueCast();
+}
+
+template <typename T>
+T floatingPointConvert(bool valid, const std::string& s)
+{
+    T t;
+    if (valid && (std::istringstream(s) >> t))
+        return t;
+    else if (valid) {
+        std::string lc(s);
+        std::transform(lc.begin(), lc.end(), lc.begin(), ::tolower);
+        if (lc == "inf")
+            return std::numeric_limits<T>::infinity();
+        else if (lc == "nan")
+            return std::numeric_limits<T>::quiet_NaN();
+    }
+    throw InvalidValueCast();
+}
+
+} // anon namespace
+
+
+
 //! Class for automatic conversion from string -> anytype
 class Value {
   public:
     Value() : str(), valid(false) {}
     Value(const std::string& v) : str(v), valid(true) {}
 
-    template<typename T,
-             typename = typename std::enable_if<std::is_arithmetic<T>::value>::type>
-    operator T() {
-        T t;
-        if (valid && (std::istringstream(str) >> t))
-            return t;
-        else if (valid && std::is_floating_point<T>::value)
-        {
-            std::string lc(str);
-            std::transform(lc.begin(), lc.end(), lc.begin(), ::tolower);
-            if (lc == "inf")
-                return std::numeric_limits<T>::infinity();
-            else if (lc == "nan")
-                return std::numeric_limits<T>::quiet_NaN();
-        }
-        throw InvalidValueCast();
-    }
+    operator const char*()    { return str.c_str(); }
+    operator bool()           { return integralConvert<bool>(valid, str); }
+    operator short()          { return integralConvert<short>(valid, str); }
+    operator unsigned short() { return integralConvert<unsigned short>(valid, str); }
+    operator int()            { return integralConvert<int>(valid, str); }
+    operator unsigned int()   { return integralConvert<unsigned int>(valid, str); }
+    operator long()           { return integralConvert<long>(valid, str); }
+    operator unsigned long()  { return integralConvert<unsigned long>(valid, str); }
+    operator float()          { return floatingPointConvert<float>(valid, str); }
+    operator double()         { return floatingPointConvert<double>(valid, str); }
+    operator long double()    { return floatingPointConvert<long double>(valid, str); }
 
-    operator const char*() { if (valid) return str.c_str(); throw InvalidValueCast(); }
-  private:
+private:
     const std::string str;
     bool valid;
 };
