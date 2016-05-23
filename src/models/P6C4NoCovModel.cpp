@@ -86,11 +86,11 @@ double P6C4NoCovParams[4][2][3][4] = {
       {2.33143889851302, -0.586068444099136, 0.040044954697795, -0.000957298861394191}}}};
 
 
-// For P6-C4 we cap SNR at 20.0; as the training set only went that
-// high; extrapolation beyond 20 goes haywire because of the
-// higher-order terms in the regression model.  See bug 31423.
+// For P6-C4 we cap SNR at 20.0 (19.0 for C); as the training set only went that
+// high; extrapolation beyond this cap goes haywire because of the higher-order
+// terms in the regression model.  See bug 31423.
 P6C4NoCovModel::P6C4NoCovModel(const SNR& snr)
-    : snr_(CapSNR(20.0, snr))
+    : snr_(ClampSNR(snr, SNR(0,0,0,0), SNR(20,19,20,20)))
 {}
 
 std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) const

@@ -13,12 +13,19 @@ SNR::SNR(const std::vector<double>& snrs) : A(snrs[0]), C(snrs[1]), G(snrs[2]), 
     assert(snrs.size() == 4);
 }
 
-SNR CapSNR(double cap, const SNR& snr)
+namespace {
+    double clamp(double val, double lo, double hi)
+    {
+        return std::min(std::max(val, lo), hi);
+    }
+}  // namespace
+
+SNR ClampSNR(const SNR& val, const SNR& lo, const SNR& hi)
 {
-    return SNR(std::min(cap, snr.A),
-               std::min(cap, snr.C),
-               std::min(cap, snr.G),
-               std::min(cap, snr.T));
+    return SNR(clamp(val.A, lo.A, hi.A),
+               clamp(val.C, lo.C, hi.C),
+               clamp(val.G, lo.G, hi.G),
+               clamp(val.T, lo.T, hi.T));
 }
 
 Read::Read(const std::string& name, const std::string& seq, const std::vector<uint8_t>& ipd,
