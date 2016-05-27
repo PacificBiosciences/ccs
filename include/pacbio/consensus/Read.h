@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -35,6 +36,8 @@ struct SNR
 
     inline bool operator!=(const SNR& other) const { return !(*this == other); }
 };
+
+SNR ClampSNR(const SNR& val, const SNR& min, const SNR& max);
 
 struct Read
 {
