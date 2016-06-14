@@ -21,4 +21,4 @@ test:
         - mkdir _build
         - pushd _build ; ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
     override:
-        - pushd _build ; make ; make check
+        - pushd _build ; make -j ; make check
