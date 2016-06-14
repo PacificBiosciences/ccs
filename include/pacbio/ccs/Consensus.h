@@ -57,7 +57,6 @@
 
 #include <pbbam/Accuracy.h>
 #include <pbbam/LocalContextFlags.h>
-#include <pbbam/QualityValues.h>
 
 #include <pacbio/ccs/Logging.h>
 #include <pacbio/ccs/ReadId.h>
@@ -69,7 +68,7 @@ namespace PacBio {
 namespace CCS {
 
 using SNR = PacBio::Consensus::SNR;
-using QualityValues = PacBio::BAM::QualityValues;
+using QualityValues = PacBio::Consensus::QualityValues;
 using LocalContextFlags = PacBio::BAM::LocalContextFlags;
 using Accuracy = PacBio::BAM::Accuracy;
 using StrandEnum = PacBio::Consensus::StrandEnum;
@@ -187,7 +186,7 @@ struct ConsensusType
     ReadId Id;
     boost::optional<StrandEnum> Strand;
     std::string Sequence;
-    std::string Qualities;
+    QualityValues QVs;
     size_t NumPasses;
     double PredictedAccuracy;
     double AvgZScore;
@@ -302,12 +301,12 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
         //   otherwise it's twice the longest read and is always true
 
         if (read.ReadAccuracy < settings.MinReadScore) {
-            resultCounter->BelowMinQual++;
+            resultCounter->BelowMinQual += 1;
             results.emplace_back(nullptr);
         } else if (read.Seq.length() < maxLen) {
             results.emplace_back(&read);
         } else {
-            resultCounter->FilteredBySize++;
+            resultCounter->FilteredBySize += 1;
             results.emplace_back(nullptr);
         }
     }
@@ -365,11 +364,11 @@ boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
     }
 
     if (readStart > readEnd || readEnd - readStart < settings.MinLength) {
-        resultCounter->FilteredBySize++;
+        resultCounter->FilteredBySize += 1;
         PBLOG_DEBUG << "Skipping read " << read.Id << ", too short (<" << settings.MinLength << ')';
         return boost::none;
     } else if (readEnd - readStart > settings.MaxLength) {
-        resultCounter->FilteredBySize++;
+        resultCounter->FilteredBySize += 1;
         PBLOG_DEBUG << "Skipping read " << read.Id << ", too long (>" << settings.MaxLength << ')';
         return boost::none;
     }
@@ -385,17 +384,6 @@ boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
         tplEnd, (tplStart == 0) ? true : false, (tplEnd == poaLength) ? true : false);
 
     return boost::make_optional(mappedRead);
-}
-
-inline std::string QVsToASCII(const std::vector<int>& qvs)
-{
-    std::string res;
-
-    for (const int qv : qvs) {
-        res.push_back(static_cast<char>(std::min(std::max(0, qv), 93) + 33));
-    }
-
-    return res;
 }
 
 #if 0
@@ -485,18 +473,19 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
             return result;
         }
 
-        /* If it is not possible to exceed the minPasses requirement, we will bail here before
-           generating the POA, filling the matrices and performing all the other checks */
+        // If it is not possible to exceed the minPasses requirement, we will bail here before
+        //   generating the POA, filling the matrices and performing all the other checks
         size_t possiblePasses = 0;
         size_t activeReads = 0;
         for (size_t i = 0; i < reads.size(); ++i) {
             if (reads[i] != nullptr) {
-                activeReads++;
+                activeReads += 1;
                 if (reads[i]->Flags & BAM::ADAPTER_BEFORE && reads[i]->Flags & BAM::ADAPTER_AFTER) {
-                    possiblePasses++;
+                    possiblePasses += 1;
                 }
             }
         }
+
         if (possiblePasses < settings.MinPasses) {
             result.TooFewPasses += 1;
             result.SubreadCounter.ZMWNotEnoughSubReads += activeReads;
@@ -522,10 +511,11 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                         << settings.MaxLength << ')';
         } else {
             if (settings.NoPolish) {
-                /* Generate dummy QVs, will use
-                 * 5 = ASCII 53 = 33 + 20
-                 */
-                std::string qvs(poaConsensus.length(), '5');
+                const size_t len = poaConsensus.length();
+                // generate dummy QVs, will use 20
+                // TODO(lhepler): should we use different values for delQVs, insQVs, and subQVs?
+                QualityValues qvs{std::vector<int>(len, 20), std::vector<int>(len, 20),
+                                  std::vector<int>(len, 20), std::vector<int>(len, 20)};
                 result.Success += 1;
                 result.SubreadCounter.Success += activeReads;
                 result.emplace_back(ConsensusType{
@@ -564,9 +554,9 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                                 if (status == AddReadResult::SUCCESS &&
                                     reads[i]->Flags & BAM::ADAPTER_BEFORE &&
                                     reads[i]->Flags & BAM::ADAPTER_AFTER) {
-                                    ++nPasses;
+                                    nPasses += 1;
                                 } else if (status != AddReadResult::SUCCESS) {
-                                    ++nDropped;
+                                    nDropped += 1;
                                     PBLOG_DEBUG << "Skipping read " << mr->Name << ", " << status;
                                 }
                             }
@@ -628,11 +618,11 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
 
                         // compute predicted accuracy
                         double predAcc = 0.0;
-                        std::vector<int> qvs = ConsensusQVs(ai);
-                        for (const int qv : qvs) {
+                        QualityValues qvs = ConsensusQVs(ai);
+                        for (const int qv : qvs.Qualities) {
                             predAcc += pow(10.0, static_cast<double>(qv) / -10.0);
                         }
-                        predAcc = 1.0 - predAcc / qvs.size();
+                        predAcc = 1.0 - predAcc / qvs.Qualities.size();
 
                         if (predAcc < settings.MinPredictedAccuracy) {
                             result.PoorQuality += 1;
@@ -646,7 +636,7 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                         // return resulting sequence!!
                         result.Success += 1;
                         result.emplace_back(ConsensusType{
-                            chunk.Id, strand, std::string(ai), QVsToASCII(qvs), nPasses, predAcc,
+                            chunk.Id, strand, std::string(ai), std::move(qvs), nPasses, predAcc,
                             zAvg, zScores, result.SubreadCounter.ReturnCountsAsArray(), nTested,
                             nApplied, chunk.SignalToNoise, timer.ElapsedMilliseconds(),
                             chunk.Barcodes});

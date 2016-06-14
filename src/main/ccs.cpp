@@ -102,6 +102,18 @@ typedef ResultType<ConsensusType> Results;
 
 const auto CircularConsensus = &Consensus<Chunk>;
 
+inline std::string QVsToASCII(const std::vector<int>& qvs)
+{
+    std::string result;
+    result.reserve(qvs.size());
+
+    for (const int qv : qvs) {
+        result.push_back(static_cast<char>(std::min(std::max(0, qv), 93) + 33));
+    }
+
+    return result;
+}
+
 void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts,
                      Results&& results)
 {
@@ -138,6 +150,11 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["rq"] = static_cast<float>(ccs.PredictedAccuracy);
         tags["sn"] = snr;
 
+        // deletion, insertion, and substitution QVs
+        tags["dq"] = QVsToASCII(ccs.QVs.DeletionQVs);
+        tags["iq"] = QVsToASCII(ccs.QVs.InsertionQVs);
+        tags["sq"] = QVsToASCII(ccs.QVs.SubstitutionQVs);
+
         // TODO(lhepler) maybe remove one day
         tags["za"] = static_cast<float>(ccs.AvgZScore);
         vector<float> zScores;
@@ -161,7 +178,9 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
 #endif
 
-        record.Name(name.str()).SetSequenceAndQualities(ccs.Sequence, ccs.Qualities).Tags(tags);
+        record.Name(name.str())
+            .SetSequenceAndQualities(ccs.Sequence, QVsToASCII(ccs.QVs.Qualities))
+            .Tags(tags);
 
         int64_t offset;
         ccsBam.Write(record, &offset);
@@ -201,7 +220,7 @@ void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
         ccsFastq << '\n';
         ccsFastq << ccs.Sequence << '\n';
         ccsFastq << "+\n";
-        ccsFastq << ccs.Qualities << '\n';
+        ccsFastq << QVsToASCII(ccs.QVs.Qualities) << '\n';
     }
 
     ccsFastq.flush();
