@@ -44,8 +44,14 @@ namespace std
     %template(IntPair) std::pair<int, int>;
     %template(LengthPair) std::pair<size_t, size_t>;
 
+    %apply const pair<double, double>& {pair<double, double>*};
+    %apply const pair<int, int>& {pair<int, int>*};
+    %apply const pair<size_t, size_t>& {pair<size_t, size_t>*};
+
     // set types
     %template(StringSet) std::set<std::string>;
+
+    %apply const set<string>& {set<string>*};
 
     // vector types
     %template(DoubleVector) std::vector<double>;
@@ -53,6 +59,12 @@ namespace std
     %template(IntVector) std::vector<int>;
     %template(StringVector) std::vector<string>;
     %template(Uint8Vector) std::vector<uint8_t>;
+
+    %apply const vector<double>& {vector<double>*};
+    %apply const vector<pair<int, int> >& {vector<pair<int, int> >*};
+    %apply const vector<int>& {vector<int>*};
+    %apply const vector<string>& {vector<string>*};
+    %apply const vector<uint8_t>& {vector<uint8_t>*};
 }
 
 %define py_tp_str(cls)
