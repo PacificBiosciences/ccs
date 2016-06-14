@@ -10,6 +10,7 @@ Boost, cmake, and c++ compiler are required for the quick installation process:
 
 ```
 git clone https://github.com/PacificBiosciences/pbccs && cd pbccs
+git pull --rebase origin master && git submodule update --init
 mkdir build && cd build
 cmake .. && make -j
 cd ..
