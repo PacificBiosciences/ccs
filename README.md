@@ -4,6 +4,19 @@
 
 The ccs program takes multiple reads of the same SMRTbell sequence and combines them to produce one high quality consensus sequence.
 
+## Quick Install
+
+Boost, cmake, and c++ compiler are required for the quick installation process:
+
+```
+git clone https://github.com/PacificBiosciences/pbccs && cd pbccs
+git submodule update --init
+mkdir build && cd build
+cmake .. && make -j
+cd ..
+bin/ccs --help
+```
+
 ## Quick Start
 
 ```

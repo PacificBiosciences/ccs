@@ -12,6 +12,25 @@ cmake_minimum_required(VERSION 2.8)
 # set magic variable
 set(ROOT_PROJECT_NAME ${PROJECT_NAME} CACHE STRING "root project name")
 
+# main project paths
+set(PacBioCCS_RootDir           ${PacBioCCS_SOURCE_DIR})
+set(PacBioCCS_ParentDir         ${PacBioCCS_RootDir}/..)
+set(PacBioCCS_IncludeDir        ${PacBioCCS_RootDir}/include)
+set(PacBioCCS_DocsDir           ${PacBioCCS_RootDir}/docs)
+set(PacBioCCS_SourceDir         ${PacBioCCS_RootDir}/src)
+set(PacBioCCS_TestsDir          ${PacBioCCS_RootDir}/tests)
+set(PacBioCCS_ThirdPartyDir     ${PacBioCCS_RootDir}/third-party)
+
+if(NOT PacBioCCS_OutputDir)
+    set(PacBioCCS_OutputDir     ${PacBioCCS_RootDir})
+endif()
+
+set(PacBioCCS_BinDir            ${PacBioCCS_OutputDir}/bin)
+set(PacBioCCS_LibDir            ${PacBioCCS_OutputDir}/lib)
+
+file(MAKE_DIRECTORY             ${PacBioCCS_BinDir})
+file(MAKE_DIRECTORY             ${PacBioCCS_LibDir})
+
 # required packages
 if (NOT Boost_INCLUDE_DIRS)
     find_package(Boost 1.58.0 REQUIRED)
@@ -33,7 +52,7 @@ if(NOT HTSLIB_INCLUDE_DIRS OR
                      REQUIRED)
     else()
         find_package(htslib
-                     PATHS ${PacBioCCS_SOURCE_DIR}/../../../lib/cpp/htslib
+                     PATHS ${PacBioCCS_ThirdPartyDir}/htslib
                      REQUIRED)
     endif()
 endif()
@@ -55,35 +74,17 @@ set(PacBioCCS_VERSION
 
 # Output diagnostic information if we are defined as producing an internal build.
 if(NOT DIAGNOSTICS)
-set(DIAGNOSTICS 0)
+    set(DIAGNOSTICS 0)
 endif()
 add_definitions(-DDIAGNOSTICS=${DIAGNOSTICS})
-
-
-# main project paths
-set(PacBioCCS_RootDir           ${PacBioCCS_SOURCE_DIR})
-set(PacBioCCS_ParentDir         ${PacBioCCS_RootDir}/..)
-set(PacBioCCS_IncludeDir        ${PacBioCCS_RootDir}/include)
-set(PacBioCCS_DocsDir           ${PacBioCCS_RootDir}/docs)
-set(PacBioCCS_SourceDir         ${PacBioCCS_RootDir}/src)
-set(PacBioCCS_TestsDir          ${PacBioCCS_RootDir}/tests)
-set(PacBioCCS_ThirdPartyDir     ${PacBioCCS_RootDir}/third-party)
-
-if(NOT PacBioCCS_OutputDir)
-    set(PacBioCCS_OutputDir     ${PacBioCCS_RootDir})
-endif()
-
-set(PacBioCCS_BinDir            ${PacBioCCS_OutputDir}/bin)
-set(PacBioCCS_LibDir            ${PacBioCCS_OutputDir}/lib)
-
-file(MAKE_DIRECTORY             ${PacBioCCS_BinDir})
-file(MAKE_DIRECTORY             ${PacBioCCS_LibDir})
 
 # PacBio libraries
 set(Bifx_RootDir                ${PacBioCCS_RootDir}/../../.. CACHE PATH "smrtanalysis/bioinformatics path")
 
 # pbbam
-set(PacBioBAM_RootDir           ${Bifx_RootDir}/lib/cpp/pbbam CACHE PATH "pbbam source path")
+if(NOT PacBioBAM_RootDir)
+    set(PacBioBAM_RootDir       ${PacBioCCS_ThirdPartyDir}/pbbam CACHE PATH "pbbam source path")
+endif()
 set(PacBioBAM_IncludeDir        ${PacBioBAM_RootDir}/include)
 
 # disable extra pbbam stuff for now
@@ -92,19 +93,21 @@ set(PacBioBAM_build_tests       OFF CACHE BOOL "build pbbam tests" FORCE)
 set(PacBioBAM_build_tools       OFF CACHE BOOL "build pbbam tools" FORCE)
 
 # pbconsensus
-set(PacBioConsensus_RootDir     ${PacBioCCS_ParentDir}/ConsensusCore2 CACHE PATH "ConsensusCore2 source path")
+if(NOT PacBioConsensus_RootDir)
+    set(PacBioConsensus_RootDir ${PacBioCCS_ThirdPartyDir}/ConsensusCore2 CACHE PATH "ConsensusCore2 source path")
+endif()
 set(PacBioConsensus_IncludeDir  ${PacBioConsensus_RootDir}/include)
-
-# prebuilt libraries
-set(PreBuilt_OutDir             ${Bifx_RootDir}/../prebuilt.out CACHE PATH "smrtanalysis/prebuilt.out path")
 
 # third-party libraries
 set(CPPOPTPARSE_RootDir         ${PacBioCCS_ThirdPartyDir}/cpp-optparse)
 set(CPPOPTPARSE_IncludeDir      ${CPPOPTPARSE_RootDir})
 
-set(SEQAN_INCLUDE_DIRS          ${PacBioCCS_RootDir}/../seqan/include CACHE PATH "seqan header path")
+# seqan
+if(NOT SEQAN_INCLUDE_DIRS)
+    set(SEQAN_INCLUDE_DIRS      ${PacBioCCS_ThirdPartyDir}/seqan/include CACHE PATH "seqan header path")
+endif()
 
-# laa sources
+# ccs sources
 file(GLOB         PacBioCCS_CPP "${PacBioCCS_SourceDir}/*.cpp")
 file(GLOB_RECURSE PacBioCCS_H   "${PacBioCCS_IncludeDir}/*.h")
 
