@@ -6,7 +6,6 @@ dependencies:
         - "_deps/cmake-3.3.0-Linux-x86_64"
         - "_deps/boost_1_58_0"
     pre:
-        - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test ; sudo apt-get update ; sudo apt-get install g++-4.8
         - if [ ! -d _deps ] ; then mkdir _deps ; fi
         - pushd _deps ; if [ ! -d cmake-3.3.0-Linux-x86_64 ] ; then wget --no-check-certificate https://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xzf cmake-3.3.0-Linux-x86_64.tar.gz ; fi
         - pushd _deps ; if [ ! -d boost_1_58_0 ] ; then wget https://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 ; tar xjf boost_1_58_0.tar.bz2 ; fi
@@ -20,6 +19,6 @@ test:
     pre:
         - git submodule update --init
         - mkdir _build
-        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
+        - pushd _build ; ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
     override:
         - pushd _build ; make ; make check
