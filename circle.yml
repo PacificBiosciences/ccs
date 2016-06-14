@@ -6,14 +6,9 @@ dependencies:
         - "_deps/cmake-3.3.0-Linux-x86_64"
         - "_deps/boost_1_58_0"
     pre:
-        - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test ; sudo apt-get update ; sudo apt-get install g++-4.8
         - if [ ! -d _deps ] ; then mkdir _deps ; fi
         - pushd _deps ; if [ ! -d cmake-3.3.0-Linux-x86_64 ] ; then wget --no-check-certificate https://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xzf cmake-3.3.0-Linux-x86_64.tar.gz ; fi
         - pushd _deps ; if [ ! -d boost_1_58_0 ] ; then wget https://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 ; tar xjf boost_1_58_0.tar.bz2 ; fi
-        - pushd _deps ; git clone https://github.com/PacificBiosciences/htslib.git
-        - pushd _deps ; git clone https://github.com/PacificBiosciences/pbbam.git
-        - pushd _deps ; git clone https://github.com/PacificBiosciences/ConsensusCore2.git
-        - pushd _deps ; git clone https://github.com/PacificBiosciences/seqan.git
         - pip install --upgrade pip
         - pip install numpy
         - pip install cython
@@ -22,7 +17,9 @@ dependencies:
         - pip install git+https://github.com/PacificBiosciences/pbcommand.git git+https://github.com/PacificBiosciences/pbcore.git
 test:
     pre:
+        - git submodule update --init
         - mkdir _build
-        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DPacBioBAM_RootDir=$(readlink -f ../_deps/pbbam) -DPacBioConsensus_RootDir=$(readlink -f ../_deps/ConsensusCore2) -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_deps/seqan/include) ..
+        - pushd _build ; ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
     override:
-        - pushd _build ; make ; make check
+        - pushd _build ; make
+        - pushd _build ; make check
