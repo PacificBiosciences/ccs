@@ -4,7 +4,7 @@
 
 ## Building/installing pbccs
 
-### Easy way: use `pitchfork`
+### Easiest way: use `pitchfork`
 
 The easiest way to build is to use the `pitchfork` build tool, which
 automates dependency fetching/resolution:
@@ -15,37 +15,18 @@ automates dependency fetching/resolution:
   $ make pbccs
   ```
 
-### Manually
+### Easy way: manually
 
-First make sure you have boost (>=1.5.8) and cmake (3.3) installed.
-
-Next, here's a recipe for setting up the dependencies in the
-_deps folder:
+Building from scratch requires system-wide installed boost (>=1.5.8), 
+cmake (3.3), and a c++11 compiler (>=gcc-4.8, clang):
 
   ```sh
-  $ mkdir _deps
-  $ pushd _deps
-  $ git clone https://github.com/PacificBiosciences/htslib.git
-  $ git clone https://github.com/PacificBiosciences/pbbam.git
-  $ git clone https://github.com/PacificBiosciences/ConsensusCore2.git
-  $ git clone https://github.com/PacificBiosciences/seqan.git
-  $ popd
-  ```
-
-Next, configure and build as below.  Sorry about the awkward call to
-readlink below, we are working on fixing that.  Note that Mac users
-should use GNU readlink (available as greadlink if you `brew install
-coreutils`).
-
-  ```sh
-  $ mkdir build; pushd build
-  $ cmake                                               \
-      -DSEQAN_INCLUDE_DIRS=../_deps/seqan/include       \
-      -DPacBioConsensus_RootDir=../_deps/ConsensusCore2 \
-      -DPacBioBAM_RootDir=../_deps/pbbam                \
-      -DHTSLIB_ROOTDIR=`readlink -f ../_deps/htslib`    \
-      ..
-  $ make
+  $ git clone https://github.com/PacificBiosciences/pbccs && cd pbccs
+  $ git submodule update --init
+  $ mkdir build && cd build
+  $ cmake .. && make -j
+  $ cd ..
+  $ bin/ccs --help
   ```
 
 ## Building/installing bax2bam
