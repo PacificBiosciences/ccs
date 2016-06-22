@@ -69,7 +69,7 @@ namespace {
 const double prec = 0.001;  // alpha/beta mismatch tolerance
 const SNR snr(10, 7, 5, 11);
 const string P6C4 = "P6-C4";
-const string SP1C1 = "S/P1-C1";
+const string SP1C1 = "S/P1-C1.1";
 
 const string longTpl =
     "GGGCGGCGACCTCGCGGGTTTTCGCTATTTATGAAAATTTTCCGGTTTAAGGCGTTTCCGTTCTTCTTCGTCAT"
