@@ -20,9 +20,6 @@ endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 # libpbccs.a
 add_library(pbccs STATIC ${PacBioCCS_CPP} ${PacBioCCS_H})
-set_target_properties(pbccs PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY ${PacBioCCS_LibDir}
-)
 
 # ccs
 set(CCS_Sources
@@ -32,9 +29,6 @@ set(CCS_Sources
 )
 
 add_executable(ccs ${CCS_Sources})
-set_target_properties(ccs PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${PacBioCCS_BinDir}
-)
 target_link_libraries(ccs
     pbccs
     ${PBCONSENSUS_LIBRARIES}
@@ -53,3 +47,8 @@ target_link_libraries(ccs
 if (TARGET htslib)
     add_dependencies(ccs htslib)
 endif()
+
+set_target_properties(ccs PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+install(TARGETS ccs RUNTIME DESTINATION bin)

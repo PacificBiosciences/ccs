@@ -21,15 +21,6 @@ set(PacBioCCS_SourceDir         ${PacBioCCS_RootDir}/src)
 set(PacBioCCS_TestsDir          ${PacBioCCS_RootDir}/tests)
 set(PacBioCCS_ThirdPartyDir     ${PacBioCCS_RootDir}/third-party)
 
-if(NOT PacBioCCS_OutputDir)
-    set(PacBioCCS_OutputDir     ${PacBioCCS_RootDir})
-endif()
-
-set(PacBioCCS_BinDir            ${PacBioCCS_OutputDir}/bin)
-set(PacBioCCS_LibDir            ${PacBioCCS_OutputDir}/lib)
-
-file(MAKE_DIRECTORY             ${PacBioCCS_BinDir})
-file(MAKE_DIRECTORY             ${PacBioCCS_LibDir})
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/generated/pacbio/ccs)
 
 # required packages

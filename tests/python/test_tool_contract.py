@@ -57,7 +57,4 @@ class TestCCSApp(pbcommand.testkit.PbTestApp):
 
 
 if __name__ == "__main__":
-    # add this to the environment to run the test locally
-    if not "__PBTEST_CCS_EXE" in os.environ:
-        os.environ['__PBTEST_CCS_EXE'] = op.join(CCS_DIR, "bin", "ccs")
     unittest.main()
