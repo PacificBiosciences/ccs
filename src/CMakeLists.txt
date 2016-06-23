@@ -7,6 +7,7 @@ include_directories(SYSTEM
     ${PBBAM_INCLUDE_DIRS}
     ${CPPOPTPARSE_IncludeDir}
     ${SEQAN_INCLUDE_DIRS}
+    ${CMAKE_BINARY_DIR}/generated/
 )
 
 # flags
