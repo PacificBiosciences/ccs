@@ -1,10 +1,4 @@
-/*
-
- *
- *  Created on: Feb 12, 2015
- *      Author: dalexander
- */
-// Copyright (c) 2011-2013, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
