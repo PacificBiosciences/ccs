@@ -70,6 +70,7 @@ const double prec = 0.001;  // alpha/beta mismatch tolerance
 const SNR snr(10, 7, 5, 11);
 const string P6C4 = "P6-C4";
 const string SP1C1 = "S/P1-C1.1";
+const string SP1C1v2 = "S/P1-C1.2";
 
 const string longTpl =
     "GGGCGGCGACCTCGCGGGTTTTCGCTATTTATGAAAATTTTCCGGTTTAAGGCGTTTCCGTTCTTCTTCGTCAT"
@@ -120,7 +121,7 @@ TEST(IntegratorTest, TestLongTemplate)
 void TestTiming(const string& mdl)
 {
     const vector<uint8_t> pws(longTpl.length(), 2);
-    const size_t nsamp = 200;
+    const size_t nsamp = 5000;
     MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
     const auto stime = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < nsamp; ++i)
@@ -130,6 +131,7 @@ void TestTiming(const string& mdl)
     const auto etime = std::chrono::high_resolution_clock::now();
     const auto duration =
         std::chrono::duration_cast<std::chrono::microseconds>(etime - stime).count();
+    // std::cout << "avg duration: " << duration / nsamp << "us" << std::endl;
     EXPECT_LT(duration / nsamp, 1500);
 }
 
@@ -151,6 +153,16 @@ TEST(IntegratorTest, TestLongTemplateTimingSP1C1)
 #endif
 {
     TestTiming(SP1C1);
+}
+
+// disable this test under debug builds (which are not fast enough to pass these timings)
+#ifndef NDEBUG
+TEST(IntegratorTest, DISABLED_TestLongTemplateTimingSP1C1v2)
+#else
+TEST(IntegratorTest, TestLongTemplateTimingSP1C1v2)
+#endif
+{
+    TestTiming(SP1C1v2);
 }
 
 std::tuple<string, StrandEnum> Mutate(const string& tpl, const size_t nmut, std::mt19937* const gen)
@@ -286,6 +298,7 @@ void MonoEquivalence(const string& mdl)
 
 TEST(IntegratorTest, TestMonoMutationEquivalenceP6C4) { MonoEquivalence(P6C4); }
 TEST(IntegratorTest, TestMonoMutationEquivalenceSP1C1) { MonoEquivalence(SP1C1); }
+TEST(IntegratorTest, TestMonoMutationEquivalenceSP1C1v2) { MonoEquivalence(SP1C1v2); }
 void MultiEquivalence(const string& mdl)
 {
     auto makeMulti = [](const string& tpl) { return MultiMolecularIntegrator(tpl, cfg); };
@@ -299,6 +312,7 @@ void MultiEquivalence(const string& mdl)
 
 TEST(IntegratorTest, TestMultiMutationEquivalenceP6C4) { MultiEquivalence(P6C4); }
 TEST(IntegratorTest, TestMultiMutationEquivalenceSP1C1) { MultiEquivalence(SP1C1); }
+TEST(IntegratorTest, TestMultiMutationEquivalenceSP1C1v2) { MultiEquivalence(SP1C1v2); }
 // TODO(lhepler): test multi/mono equivalence
 // TODO(lhepler): test multiple mutation testing mono and multi
 
