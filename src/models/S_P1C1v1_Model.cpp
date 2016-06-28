@@ -22,13 +22,13 @@ inline T clip(const T val, const T min, const T max)
 
 constexpr double kCounterWeight = 15.0;
 
-class SP1C1PwModel : public ModelConfig
+class S_P1C1v1_Model : public ModelConfig
 {
-    REGISTER_MODEL(SP1C1PwModel);
+    REGISTER_MODEL(S_P1C1v1_Model);
 
 public:
     static std::set<std::string> Names() { return {"S/P1-C1.1"}; }
-    SP1C1PwModel(const SNR& snr);
+    S_P1C1v1_Model(const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
@@ -39,13 +39,13 @@ private:
     double ctxTrans_[16][4];
 };
 
-REGISTER_MODEL_IMPL(SP1C1PwModel);
+REGISTER_MODEL_IMPL(S_P1C1v1_Model);
 
 // TODO(lhepler) comments regarding the CRTP
-class SP1C1PwRecursor : public Recursor<SP1C1PwRecursor>
+class S_P1C1v1_Recursor : public Recursor<S_P1C1v1_Recursor>
 {
 public:
-    SP1C1PwRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+    S_P1C1v1_Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                     double scoreDiff);
     static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
     static inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr);
@@ -221,7 +221,7 @@ constexpr double transProbs[16][3][4] = {
      {1.66643125707819, -2.11840547506457, 0.345196264109573, -0.0190747089705634},
      {-1.9903454046927, -0.489297962270134, 0.0503913801733079, -0.00174698908180932}}};
 
-SP1C1PwModel::SP1C1PwModel(const SNR& snr) : snr_(snr)
+S_P1C1v1_Model::S_P1C1v1_Model(const SNR& snr) : snr_(snr)
 {
     const double snr1 = clip(snr_.A, 4.0, 10.65), snr2 = snr1 * snr1, snr3 = snr2 * snr1;
     for (int ctx = 0; ctx < 16; ++ctx) {
@@ -239,14 +239,14 @@ SP1C1PwModel::SP1C1PwModel(const SNR& snr) : snr_(snr)
     }
 }
 
-std::unique_ptr<AbstractRecursor> SP1C1PwModel::CreateRecursor(
+std::unique_ptr<AbstractRecursor> S_P1C1v1_Model::CreateRecursor(
     std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
 {
     return std::unique_ptr<AbstractRecursor>(
-        new SP1C1PwRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
+        new S_P1C1v1_Recursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
 }
 
-std::vector<TemplatePosition> SP1C1PwModel::Populate(const std::string& tpl) const
+std::vector<TemplatePosition> S_P1C1v1_Model::Populate(const std::string& tpl) const
 {
     std::vector<TemplatePosition> result;
 
@@ -277,7 +277,7 @@ std::vector<TemplatePosition> SP1C1PwModel::Populate(const std::string& tpl) con
     return result;
 }
 
-double SP1C1PwModel::SubstitutionRate(uint8_t prev, uint8_t curr) const
+double S_P1C1v1_Model::SubstitutionRate(uint8_t prev, uint8_t curr) const
 {
     const auto row = (prev << 2) | curr;
     double eps = 0.0;
@@ -288,13 +288,13 @@ double SP1C1PwModel::SubstitutionRate(uint8_t prev, uint8_t curr) const
     return eps / (3 * 4);
 }
 
-SP1C1PwRecursor::SP1C1PwRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+S_P1C1v1_Recursor::S_P1C1v1_Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                                  double scoreDiff)
-    : Recursor<SP1C1PwRecursor>(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
+    : Recursor<S_P1C1v1_Recursor>(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
 {
 }
 
-std::vector<uint8_t> SP1C1PwRecursor::EncodeRead(const MappedRead& read)
+std::vector<uint8_t> S_P1C1v1_Recursor::EncodeRead(const MappedRead& read)
 {
     std::vector<uint8_t> result;
 
@@ -313,14 +313,14 @@ std::vector<uint8_t> SP1C1PwRecursor::EncodeRead(const MappedRead& read)
     return result;
 }
 
-double SP1C1PwRecursor::EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr)
+double S_P1C1v1_Recursor::EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr)
 {
     assert(move != MoveType::DELETION);
     const auto row = (prev << 2) | curr;
     return emissionPmf[static_cast<uint8_t>(move)][row][emission] * kCounterWeight;
 }
 
-double SP1C1PwRecursor::UndoCounterWeights(const size_t nEmissions) const
+double S_P1C1v1_Recursor::UndoCounterWeights(const size_t nEmissions) const
 {
     return -std::log(kCounterWeight) * nEmissions;
 }

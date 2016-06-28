@@ -16,12 +16,12 @@ dependencies:
         - pushd _deps ; if [ ! -f swig-3.0.8/bin/swig ] ; then rm -fr swig-3.0.8* ; mkdir dl ; pushd dl ; wget https://downloads.sourceforge.net/project/swig/swig/swig-3.0.8/swig-3.0.8.tar.gz ; tar xzf swig-3.0.8.tar.gz ; pushd swig-3.0.8 ; ./configure --prefix $(readlink -f ../../swig-3.0.8) ; make ; make install ; fi
         - mkdir _rev_deps  # Create a directory for reverse-dependencies, ie things that depend on us. These are not static, do not cache them.
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/htslib.git
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbbam.git
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/seqan.git
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbccs.git
+        - pushd _rev_deps ; git clone -b smrtanalysis-3.1.1 https://github.com/PacificBiosciences/pbbam.git
+        - pushd _rev_deps ; git clone -b smrtanalysis-3.1.1 https://github.com/PacificBiosciences/pbccs.git
+        - pushd _rev_deps ; git clone -b smrtanalysis-3.1.1 https://${TOKEN}@github.com/PacificBiosciences/pblaa.git
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbsparse.git
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbchimera.git
-        - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pblaa.git
+        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/seqan.git
         - pip install --upgrade pip
         - pip install numpy
         - pip install cython
