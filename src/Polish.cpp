@@ -220,7 +220,14 @@ std::tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConf
         const size_t newTpl = hashFn(ApplyMutations(*ai, &muts));
 
         if (history.find(newTpl) != history.end()) {
-            // cyclic behavior detected! apply just the single best mutation
+            /* Cyclic behavior guard - Dave A. found some edge cases where the
+             template was mutating back to an earlier version. This is a bad
+             and should be rare.  He found that by applying the single best
+             mutation you could avoid the loop. (That is if adding Muts X + Y
+             made removing muts X + Y beneficial, then you can break that
+             inifinite loop by just applying X or Y, as presumably this removes
+             the interaction between them that leads to the cycling behavior.
+             This step is just a heuristic work around that was found. */            
             ai->ApplyMutation(muts.front());
             oldTpl = hashFn(*ai);
             ++nApplied;
