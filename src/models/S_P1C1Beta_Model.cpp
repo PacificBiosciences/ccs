@@ -58,12 +58,8 @@ public:
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr,
-                                                 bool secondMoment) const;
-    double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr,
-                                                 bool secondMoment) const;
-    double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr,
-                                                  bool secondMoment) const;
+    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                 MomentType moment) const;
 
 private:
     SNR snr_;
@@ -165,42 +161,21 @@ std::unique_ptr<AbstractRecursor> S_P1C1Beta_Model::CreateRecursor(
         std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
 }
 
-inline double CalculateExpectedLogLikelihoodOfOutcomeRow(const int index, const uint8_t prev,
-                                                         const uint8_t curr,
-                                                         const bool secondMoment)
+double S_P1C1Beta_Model::ExpectedLLForEmission(const MoveType move, const uint8_t prev,
+                                               const uint8_t curr, const MomentType moment) const
 {
     const uint8_t hpAdd = prev == curr ? 0 : 4;
     const uint8_t row = curr + hpAdd;
     double expectedLL = 0;
     for (size_t i = 0; i < 4; i++) {
-        double curProb = emissionPmf[index][row][i];
+        double curProb = emissionPmf[static_cast<uint8_t>(move)][row][i];
         double lgCurProb = std::log(curProb);
-        if (!secondMoment) {
+        if (moment == MomentType::FIRST)
             expectedLL += curProb * lgCurProb;
-        } else {
-            expectedLL += curProb * pow(lgCurProb, 2.0);
-        }
+        else if (moment == MomentType::SECOND)
+            expectedLL += curProb * (lgCurProb * lgCurProb);
     }
     return expectedLL;
-}
-
-double S_P1C1Beta_Model::ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr,
-                                                               bool secondMoment) const
-{
-    return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::MATCH), prev,
-                                                      curr, secondMoment);
-}
-double S_P1C1Beta_Model::ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr,
-                                                               bool secondMoment) const
-{
-    return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::STICK), prev,
-                                                      curr, secondMoment);
-}
-double S_P1C1Beta_Model::ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr,
-                                                                bool secondMoment) const
-{
-    return CalculateExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::BRANCH), prev,
-                                                      curr, secondMoment);
 }
 
 S_P1C1Beta_Recursor::S_P1C1Beta_Recursor(std::unique_ptr<AbstractTemplate>&& tpl,
