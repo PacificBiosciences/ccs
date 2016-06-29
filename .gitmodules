@@ -1,12 +1,16 @@
 [submodule "third-party/pbbam"]
 	path = third-party/pbbam
 	url = https://github.com/PacificBiosciences/pbbam
+	branch = master
 [submodule "third-party/htslib"]
 	path = third-party/htslib
 	url = https://github.com/PacificBiosciences/htslib
+	branch = pb
 [submodule "third-party/seqan"]
 	path = third-party/seqan
 	url = https://github.com/PacificBiosciences/seqan.git
+	branch = master
 [submodule "third-party/ConsensusCore2"]
 	path = third-party/ConsensusCore2
 	url = https://github.com/PacificBiosciences/ConsensusCore2.git
+	branch = master

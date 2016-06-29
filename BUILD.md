@@ -22,7 +22,7 @@ cmake (3.3), and a c++11 compiler (>=gcc-4.8, clang):
 
   ```sh
   $ git clone https://github.com/PacificBiosciences/pbccs && cd pbccs
-  $ git submodule update --init
+  $ git submodule update --init --remote
   $ mkdir build && cd build
   $ cmake .. && make -j
   $ cd ..

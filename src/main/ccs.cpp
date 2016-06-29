@@ -92,6 +92,7 @@ constexpr auto ReportFile = "reportFile";
 constexpr auto NumThreads = "numThreads";
 constexpr auto LogFile = "logFile";
 constexpr auto LogLevel = "logLevel";
+constexpr auto RichQVs = "richQVs";
 }  // namespace OptionNames
 }  // namespace CCS
 }  // namespace PacBio
@@ -102,8 +103,20 @@ typedef ResultType<ConsensusType> Results;
 
 const auto CircularConsensus = &Consensus<Chunk>;
 
+inline std::string QVsToASCII(const std::vector<int>& qvs)
+{
+    std::string result;
+    result.reserve(qvs.size());
+
+    for (const int qv : qvs) {
+        result.push_back(static_cast<char>(std::min(std::max(0, qv), 93) + 33));
+    }
+
+    return result;
+}
+
 void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts,
-                     Results&& results)
+                     const bool richQVs, Results&& results)
 {
     counts += results;
 
@@ -138,6 +151,13 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["rq"] = static_cast<float>(ccs.PredictedAccuracy);
         tags["sn"] = snr;
 
+        // deletion, insertion, and substitution QVs
+        if (richQVs) {
+            tags["dq"] = QVsToASCII(ccs.QVs.DeletionQVs);
+            tags["iq"] = QVsToASCII(ccs.QVs.InsertionQVs);
+            tags["sq"] = QVsToASCII(ccs.QVs.SubstitutionQVs);
+        }
+
         // TODO(lhepler) maybe remove one day
         tags["za"] = static_cast<float>(ccs.AvgZScore);
         vector<float> zScores;
@@ -161,7 +181,9 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
 #endif
 
-        record.Name(name.str()).SetSequenceAndQualities(ccs.Sequence, ccs.Qualities).Tags(tags);
+        record.Name(name.str())
+            .SetSequenceAndQualities(ccs.Sequence, QVsToASCII(ccs.QVs.Qualities))
+            .Tags(tags);
 
         int64_t offset;
         ccsBam.Write(record, &offset);
@@ -172,10 +194,10 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
 }
 
 Results BamWriterThread(WorkQueue<Results>& queue, unique_ptr<BamWriter>&& ccsBam,
-                        unique_ptr<PbiBuilder>&& ccsPbi)
+                        unique_ptr<PbiBuilder>&& ccsPbi, const bool richQVs)
 {
     Results counts;
-    while (queue.ConsumeWith(WriteBamRecords, ref(*ccsBam), ref(ccsPbi), ref(counts)))
+    while (queue.ConsumeWith(WriteBamRecords, ref(*ccsBam), ref(ccsPbi), ref(counts), richQVs))
         ;
     return counts;
 }
@@ -201,7 +223,7 @@ void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
         ccsFastq << '\n';
         ccsFastq << ccs.Sequence << '\n';
         ccsFastq << "+\n";
-        ccsFastq << ccs.Qualities << '\n';
+        ccsFastq << QVsToASCII(ccs.QVs.Qualities) << '\n';
     }
 
     ccsFastq.flush();
@@ -359,6 +381,9 @@ int main(int argc, char** argv)
 
     ConsensusSettings::AddOptions(&parser);
 
+    parser.add_option(em + OptionNames::RichQVs)
+        .action("store_true")
+        .help("Emit dq, iq, and sq \"rich\" quality tracks. Default = false");
     parser.add_option(em + OptionNames::ReportFile)
         .set_default("ccs_report.txt")
         .help("Where to write the results report. Default = %default");
@@ -377,6 +402,7 @@ int main(int argc, char** argv)
 
     const ConsensusSettings settings(options);
 
+    const bool richQVs = options.get(OptionNames::RichQVs);
     const bool forceOutput = options.get(OptionNames::ForceOutput);
     const bool pbIndex = options.get(OptionNames::PbIndex);
     const size_t nThreads = ThreadCount(options.get(OptionNames::NumThreads));
@@ -489,7 +515,8 @@ int main(int argc, char** argv)
         unique_ptr<BamWriter> ccsBam(
             new BamWriter(outputFile, PrepareHeader(parser, argc, argv, ds)));
         unique_ptr<PbiBuilder> ccsPbi(pbIndex ? new PbiBuilder(outputFile + ".pbi") : nullptr);
-        writer = async(launch::async, BamWriterThread, ref(workQueue), move(ccsBam), move(ccsPbi));
+        writer = async(launch::async, BamWriterThread, ref(workQueue), move(ccsBam), move(ccsPbi),
+                       richQVs);
     } else if (outputExt == "fastq" || outputExt == "fq")
         writer = async(launch::async, FastqWriterThread, ref(workQueue), ref(outputFile));
     else
