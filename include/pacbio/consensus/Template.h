@@ -79,10 +79,9 @@ public:
     // access model configuration
     virtual std::unique_ptr<AbstractRecursor> CreateRecursor(
         std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const = 0;
-    virtual double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
-    virtual double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
-    virtual double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
-    
+    virtual double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                         MomentType moment) const = 0;
+
     std::pair<double, double> NormalParameters() const;
 
     // a sad but necessary release valve for MonoMolecularIntegrator Length()
@@ -124,15 +123,8 @@ public:
                                                             const MappedRead& mr,
                                                             double scoreDiff) const;
 
-    double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-        return cfg_->ExpectedLogLikelihoodForMatchEmission(prev, curr, secondMoment);
-    }
-    double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-       return  cfg_->ExpectedLogLikelihoodForStickEmission(prev, curr, secondMoment);
-    }
-    double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-        return cfg_->ExpectedLogLikelihoodForBranchEmission(prev, curr, secondMoment);
-    }
+    inline double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                        MomentType moment) const;
 
 private:
     std::unique_ptr<ModelConfig> cfg_;
@@ -158,18 +150,14 @@ public:
     inline boost::optional<Mutation> Mutate(const Mutation&);
     inline void Reset() {}
     bool ApplyMutation(const Mutation& mut);
-    double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-        return master_.ExpectedLogLikelihoodForMatchEmission(prev, curr, secondMoment);
-    }
-    double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-        return  master_.ExpectedLogLikelihoodForStickEmission(prev, curr, secondMoment);
-    }
-    double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-        return master_.ExpectedLogLikelihoodForBranchEmission(prev, curr, secondMoment);
-    }
+
     inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                             const MappedRead& mr,
                                                             double scoreDiff) const;
+
+    inline double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                        MomentType moment) const;
+
 private:
     Template const& master_;
 };
@@ -240,6 +228,11 @@ std::unique_ptr<AbstractRecursor> Template::CreateRecursor(std::unique_ptr<Abstr
     return cfg_->CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
                                 scoreDiff);
 }
+inline double Template::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                              MomentType moment) const
+{
+    return cfg_->ExpectedLLForEmission(move, prev, curr, moment);
+}
 
 const TemplatePosition& VirtualTemplate::operator[](const size_t i) const
 {
@@ -260,11 +253,16 @@ boost::optional<Mutation> VirtualTemplate::Mutate(const Mutation& mut)
     return boost::optional<Mutation>(Mutation(mut.Type, mut.Start() - start_, mut.Base));
 }
 
-std::unique_ptr<AbstractRecursor> VirtualTemplate::CreateRecursor(
+inline std::unique_ptr<AbstractRecursor> VirtualTemplate::CreateRecursor(
     std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
 {
     return master_.CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
                                   scoreDiff);
+}
+inline double VirtualTemplate::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                                     MomentType moment) const
+{
+    return master_.ExpectedLLForEmission(move, prev, curr, moment);
 }
 
 }  // namespace Consensus

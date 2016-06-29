@@ -61,9 +61,9 @@ public:
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
-    double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
-    double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const;
+    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                 MomentType moment) const;
+
 private:
     SNR snr_;
 };
@@ -119,13 +119,13 @@ double P6C4NoCovParams[4][2][3][4] = {
       {4.21031404956015, -0.347546363361823, 0.0293839179303896, -0.000893802212450644},
       {2.33143889851302, -0.586068444099136, 0.040044954697795, -0.000957298861394191}}}};
 
-
 // For P6-C4 we cap SNR at 20.0 (19.0 for C); as the training set only went that
 // high; extrapolation beyond this cap goes haywire because of the higher-order
 // terms in the regression model.  See bug 31423.
 P6C4NoCovModel::P6C4NoCovModel(const SNR& snr)
-    : snr_(ClampSNR(snr, SNR(0,0,0,0), SNR(20,19,20,20)))
-{}
+    : snr_(ClampSNR(snr, SNR(0, 0, 0, 0), SNR(20, 19, 20, 20)))
+{
+}
 
 std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) const
 {
@@ -179,33 +179,30 @@ std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(
         new P6C4NoCovRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
 }
 
-    
-double P6C4NoCovModel::ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-    double probMatch = 1.0 - kEps;
+double P6C4NoCovModel::ExpectedLLForEmission(const MoveType move, const uint8_t prev,
+                                             const uint8_t curr, const MomentType moment) const
+{
     const double lgThird = -std::log(3.0);
-    const double lgMatch = std::log(probMatch);
-    const double probMismatch = kEps;
-    const double lgMismatch = lgThird + std::log(probMismatch);
-    if (!secondMoment) {
-        return probMatch * lgMatch + probMismatch * lgMismatch;
-    } else {
-        return probMatch * pow(lgMatch, 2.0) + probMismatch * pow(lgMismatch, 2.0);
+    if (move == MoveType::MATCH) {
+        constexpr double probMatch = 1.0 - kEps;
+        constexpr double probMismatch = kEps;
+        const double lgMatch = std::log(probMatch);
+        const double lgMismatch = lgThird + std::log(probMismatch);
+        if (moment == MomentType::FIRST)
+            return probMatch * lgMatch + probMismatch * lgMismatch;
+        else if (moment == MomentType::SECOND)
+            return probMatch * (lgMatch * lgMatch) + probMismatch * (lgMismatch * lgMismatch);
+    } else if (move == MoveType::BRANCH)
+        return 0.0;
+    else if (move == MoveType::STICK) {
+        if (moment == MomentType::FIRST)
+            return lgThird;
+        else if (moment == MomentType::SECOND)
+            return lgThird * lgThird;
     }
+    throw std::invalid_argument("invalid move!");
 }
 
-double P6C4NoCovModel::ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-    return 0.0;
-}
-
-double P6C4NoCovModel::ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const {
-   const double lgThird = -std::log(3.0);
-    if(!secondMoment) {
-        return lgThird;
-    } else {
-        return pow(lgThird, 2.0);
-    }
-}
-    
 P6C4NoCovRecursor::P6C4NoCovRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                                      double scoreDiff)
     : Recursor<P6C4NoCovRecursor>(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,

@@ -62,19 +62,13 @@ public:
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr,
-                                                 bool secondMoment) const;
-    double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr,
-                                                 bool secondMoment) const;
-    double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr,
-                                                  bool secondMoment) const;
+    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                 MomentType moment) const;
 
 private:
     SNR snr_;
     double ctxTrans_[CONTEXT_NUMBER][4];
     double cachedEmissionExpectations_[CONTEXT_NUMBER][3][2];
-    double ExpectedLogLikelihoodOfOutcomeRow(const int index, const uint8_t prev,
-                                             const uint8_t curr, const bool secondMoment) const;
 };
 
 REGISTER_MODEL_IMPL(S_P1C1v1_Model);
@@ -259,29 +253,19 @@ constexpr double transProbs[16][3][4] = {
      {1.66643125707819, -2.11840547506457, 0.345196264109573, -0.0190747089705634},
      {-1.9903454046927, -0.489297962270134, 0.0503913801733079, -0.00174698908180932}}};
 
-inline double CalculateExpectedLogLikelihoodOfOutcomeRow(const int index, const uint8_t row,
-                                                         const bool secondMoment)
+inline double CalculateExpectedLLForEmission(const size_t move, const uint8_t row,
+                                             const size_t moment)
 {
     double expectedLL = 0;
-    for (size_t i = 0; i < OUTCOME_NUMBER; i++) {
-        double curProb = emissionPmf[index][row][i];
-        double lgCurProb = std::log(curProb);
-        if (!secondMoment) {
+    for (size_t i = 0; i < OUTCOME_NUMBER; ++i) {
+        const double curProb = emissionPmf[move][row][i];
+        const double lgCurProb = std::log(curProb);
+        if (moment == static_cast<uint8_t>(MomentType::FIRST))
             expectedLL += curProb * lgCurProb;
-        } else {
-            expectedLL += curProb * pow(lgCurProb, 2.0);
-        }
+        else if (moment == static_cast<uint8_t>(MomentType::SECOND))
+            expectedLL += curProb * (lgCurProb * lgCurProb);
     }
     return expectedLL;
-}
-
-double S_P1C1v1_Model::ExpectedLogLikelihoodOfOutcomeRow(const int index, const uint8_t prev,
-                                                         const uint8_t curr,
-                                                         const bool secondMoment) const
-{
-    const auto row = (prev << 2) | curr;
-    const auto moment = secondMoment ? 1 : 0;
-    return cachedEmissionExpectations_[row][index][moment];
 }
 
 S_P1C1v1_Model::S_P1C1v1_Model(const SNR& snr) : snr_(snr)
@@ -314,14 +298,11 @@ S_P1C1v1_Model::S_P1C1v1_Model(const SNR& snr) : snr_(snr)
     // Generate cached emission expectations
     // TODO: These are identical for all instances, either we should enrich the model or avoid doing
     // this in a context dependent way
-    for (int ctx = 0; ctx < CONTEXT_NUMBER; ctx++) {
-        for (int index = 0; index < 3; index++) {
-            cachedEmissionExpectations_[ctx][index][0] =
-                CalculateExpectedLogLikelihoodOfOutcomeRow(index, ctx, false);
-            cachedEmissionExpectations_[ctx][index][1] =
-                CalculateExpectedLogLikelihoodOfOutcomeRow(index, ctx, true);
-        }
-    }
+    for (size_t ctx = 0; ctx < CONTEXT_NUMBER; ++ctx)
+        for (size_t move = 0; move < 3; ++move)
+            for (size_t moment = 0; moment < 2; ++moment)
+                cachedEmissionExpectations_[ctx][move][moment] =
+                    CalculateExpectedLLForEmission(move, ctx, moment);
 }
 
 std::unique_ptr<AbstractRecursor> S_P1C1v1_Model::CreateRecursor(
@@ -362,23 +343,12 @@ std::vector<TemplatePosition> S_P1C1v1_Model::Populate(const std::string& tpl) c
     return result;
 }
 
-double S_P1C1v1_Model::ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr,
-                                                             bool secondMoment) const
+double S_P1C1v1_Model::ExpectedLLForEmission(const MoveType move, const uint8_t prev,
+                                             const uint8_t curr, const MomentType moment) const
 {
-    return ExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::MATCH), prev, curr,
-                                             secondMoment);
-}
-double S_P1C1v1_Model::ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr,
-                                                             bool secondMoment) const
-{
-    return ExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::STICK), prev, curr,
-                                             secondMoment);
-}
-double S_P1C1v1_Model::ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr,
-                                                              bool secondMoment) const
-{
-    return ExpectedLogLikelihoodOfOutcomeRow(static_cast<uint8_t>(MoveType::BRANCH), prev, curr,
-                                             secondMoment);
+    const size_t row = (prev << 2) | curr;
+    return cachedEmissionExpectations_[row][static_cast<uint8_t>(move)]
+                                      [static_cast<uint8_t>(moment)];
 }
 
 S_P1C1v1_Recursor::S_P1C1v1_Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,

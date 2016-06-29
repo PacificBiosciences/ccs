@@ -78,6 +78,12 @@ enum struct MoveType : uint8_t
     DELETION = 3  // never used for covariate
 };
 
+enum struct MomentType : uint8_t
+{
+    FIRST = 0,
+    SECOND = 1
+};
+
 class ModelConfig
 {
 public:
@@ -85,10 +91,8 @@ public:
     virtual std::unique_ptr<AbstractRecursor> CreateRecursor(
         std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const = 0;
     virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
-    virtual double ExpectedLogLikelihoodForMatchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
-    virtual double ExpectedLogLikelihoodForStickEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
-    virtual double ExpectedLogLikelihoodForBranchEmission(uint8_t prev, uint8_t curr, bool secondMoment) const = 0;
-    
+    virtual double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                         MomentType moment) const = 0;
 };
 
 }  // namespace Consensus
