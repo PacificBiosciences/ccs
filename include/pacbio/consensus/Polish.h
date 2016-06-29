@@ -57,7 +57,17 @@ struct PolishConfig
 
 std::tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
 
-std::vector<int> ConsensusQVs(AbstractIntegrator& ai);
+struct QualityValues
+{
+    std::vector<int> Qualities;
+    std::vector<int> DeletionQVs;
+    std::vector<int> InsertionQVs;
+    std::vector<int> SubstitutionQVs;
+};
+
+std::vector<int> ConsensusQualities(AbstractIntegrator& ai);
+
+QualityValues ConsensusQVs(AbstractIntegrator& ai);
 
 std::vector<Mutation> Mutations(const AbstractIntegrator& ai);
 
