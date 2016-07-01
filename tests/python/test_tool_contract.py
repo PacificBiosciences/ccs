@@ -12,8 +12,9 @@ import os.path as op
 import os
 
 import pbcommand.testkit
-import pbcore.data
 from pbcore.io import ConsensusReadSet, SubreadSet
+
+import pbtestdata
 
 logging.basicConfig(level=logging.INFO)
 CCS_DIR = op.dirname(op.dirname(op.dirname(__file__)))
@@ -35,7 +36,7 @@ class TestCCSApp(pbcommand.testkit.PbTestApp):
     }
 
     def setUp(self):
-        BAM_IN = pbcore.data.getUnalignedBam()
+        BAM_IN = pbtestdata.get_file("subreads-bam")
         ds = SubreadSet(BAM_IN, strict=True)
         chunks = ds.split(zmws=True, chunks=2, targetSize=2)
         assert len(chunks) == 2
