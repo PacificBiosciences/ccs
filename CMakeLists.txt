@@ -21,15 +21,7 @@ set(PacBioCCS_SourceDir         ${PacBioCCS_RootDir}/src)
 set(PacBioCCS_TestsDir          ${PacBioCCS_RootDir}/tests)
 set(PacBioCCS_ThirdPartyDir     ${PacBioCCS_RootDir}/third-party)
 
-if(NOT PacBioCCS_OutputDir)
-    set(PacBioCCS_OutputDir     ${PacBioCCS_RootDir})
-endif()
-
-set(PacBioCCS_BinDir            ${PacBioCCS_OutputDir}/bin)
-set(PacBioCCS_LibDir            ${PacBioCCS_OutputDir}/lib)
-
-file(MAKE_DIRECTORY             ${PacBioCCS_BinDir})
-file(MAKE_DIRECTORY             ${PacBioCCS_LibDir})
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/generated/pacbio/ccs)
 
 # required packages
 if (NOT Boost_INCLUDE_DIRS)
@@ -151,4 +143,4 @@ add_subdirectory(${PacBioCCS_TestsDir})
 list(APPEND CMAKE_MODULE_PATH "${PacBioConsensus_RootDir}/cmake")
 include(FindGitSha1)
 find_git_sha1(CCS_GIT_SHA1)
-configure_file("${PacBioCCS_IncludeDir}/pacbio/ccs/Version.h.in" "${PacBioCCS_IncludeDir}/pacbio/ccs/Version.h" @ONLY)
+configure_file(${PacBioCCS_IncludeDir}/pacbio/ccs/Version.h.in ${CMAKE_BINARY_DIR}/generated/pacbio/ccs/Version.h @ONLY)

@@ -6,18 +6,13 @@ set(GMOCK_IncludeDir ${GMOCK_RootDir})
 file(GLOB           GMOCK_CC    "${GMOCK_RootDir}/*.cc")
 file(GLOB_RECURSE   GMOCK_H     "${GMOCK_RootDir}/*.h")
 
-# output directory
-file(MAKE_DIRECTORY  ${PacBioCCS_TestsDir}/bin)
-
 include_directories(
     ${PacBioCCS_IncludeDir}
+    ${CMAKE_BINARY_DIR}/generated
 )
 
 # Generate paths for test data
-configure_file(
-    ${PacBioCCS_TestsDir}/TestData.h.in
-    ${PacBioCCS_TestsDir}/TestData.h
-)
+configure_file(${PacBioCCS_TestsDir}/TestData.h.in ${CMAKE_BINARY_DIR}/generated/TestData.h)
 
 include_directories(SYSTEM
     ${Boost_INCLUDE_DIRS}
@@ -40,9 +35,6 @@ add_executable(test_pbccs EXCLUDE_FROM_ALL
     ${GMOCK_CC}
     ${GMOCK_H}
 )
-set_target_properties(test_pbccs PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${PacBioCCS_TestsDir}/bin
-)
 target_link_libraries(test_pbccs
     pbccs
     ${PBCONSENSUS_LIBRARIES}
@@ -55,7 +47,7 @@ target_link_libraries(test_pbccs
 
 if (${ROOT_PROJECT_NAME} STREQUAL "PacBioCCS")
     add_custom_target(check test_pbccs
-        COMMAND ${PacBioCCS_RootDir}/scripts/cram.py ${PacBioCCS_TestsDir}/cram/*.t
-        COMMAND ${PacBioCCS_TestsDir}/python/test_tool_contract.py
+        COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${PacBioCCS_RootDir}/scripts/cram.py ${PacBioCCS_TestsDir}/cram/*.t
+        COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${PacBioCCS_TestsDir}/python/test_tool_contract.py
         DEPENDS ccs)
 endif()
