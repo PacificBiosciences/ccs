@@ -67,7 +67,7 @@ int main(int argc, char const **argv)
     }
 
     // Label the Records
-    ChimeraLabeler chimeraLabeler(1.0f, true);
+    ChimeraLabeler chimeraLabeler(1.0f, 100, true);
     auto labels = chimeraLabeler.LabelChimeras(idList, seqList);
 
     // Display the results
