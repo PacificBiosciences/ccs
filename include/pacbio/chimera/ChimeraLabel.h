@@ -109,7 +109,7 @@ struct ChimeraLabel
               << ",";
 
         // The score is only meaningfully defined > 0
-        if (label.score > 0.0f)
+        if (label.score >= 0.0f)
             o << label.score << ",";
         else
             o << "NaN"

@@ -284,18 +284,28 @@ public:  // Modifying methods
             {
                 auto label = TestPossibleChimera(id, sequence, parentIds);
 
-                if (verbose) {
-                    std::cout << "consensus '" << id << "' has a possible cross-over at "
-                              << label.crossover << " with a score of " << label.score << std::endl;
-                    std::cout << "possible parents are '" << label.leftParentId << "' and '"
-                              << label.rightParentId << "'" << std::endl;
-                }
+                if (label.score > 0.0f){
+                    if (verbose) {
+                        std::cout << "consensus '" << id << "' has a possible cross-over at "
+                                  << label.crossover << " with a score of " << label.score << std::endl;
+                        std::cout << "possible parents are '" << label.leftParentId << "' and '"
+                                  << label.rightParentId << "'" << std::endl;
+                    }
 #ifdef PBLOG_DEBUG
-                PBLOG_DEBUG << "consensus '" << id << "' has a possible cross-over at "
-                            << label.crossover << " with a score of " << label.score;
-                PBLOG_DEBUG << "possible parents are '" << label.leftParentId << "' and '"
-                            << label.rightParentId << "'";
+                    PBLOG_DEBUG << "consensus '" << id << "' has a possible cross-over at "
+                                << label.crossover << " with a score of " << label.score;
+                    PBLOG_DEBUG << "possible parents are '" << label.leftParentId << "' and '"
+                                << label.rightParentId << "'";
 #endif
+                } else {
+                    if (verbose)
+                        std::cout << "consensus '" << id
+                                  << "' had no possible cross-overs with positive scores, assumed real" << std::endl;
+#ifdef PBLOG_DEBUG
+                    PBLOG_DEBUG << "consensus '" << id
+                                << "' has no possible cross-overs with positive scores, assumed real";
+#endif
+                }
 
                 // If the score is high enough, set the flag, otherwise we add it to our
                 // reference
@@ -435,7 +445,8 @@ private:  // non-modifying methods
                     ScorePossibleChimera(alignments, id, parentA, parentB, i + 1, j + 1);
 
                 // Keep the highest scoring label
-                if (label.score > bestLabel.score) bestLabel = std::move(label);
+                if (label.score > bestLabel.score && label.score > 0.0f)
+                    bestLabel = std::move(label);
             }
         }
 
