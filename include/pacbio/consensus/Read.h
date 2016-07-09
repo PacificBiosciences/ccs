@@ -41,6 +41,8 @@
 #include <string>
 #include <vector>
 
+#include <pacbio/consensus/StrandType.h>
+
 namespace PacBio {
 namespace Consensus {
 
@@ -90,21 +92,14 @@ struct Read
     inline size_t Length() const { return Seq.length(); }
 };
 
-enum struct StrandEnum : uint8_t
-{
-    FORWARD,
-    REVERSE,
-    UNMAPPED
-};
-
 struct MappedRead : public Read
 {
-    MappedRead(const Read& read, StrandEnum strand, size_t templateStart, size_t templateEnd,
+    MappedRead(const Read& read, StrandType strand, size_t templateStart, size_t templateEnd,
                bool pinStart = false, bool pinEnd = false);
     MappedRead(const MappedRead& read) = default;
     MappedRead(MappedRead&& read) = default;
 
-    StrandEnum Strand;
+    StrandType Strand;
     size_t TemplateStart;
     size_t TemplateEnd;
     bool PinStart;

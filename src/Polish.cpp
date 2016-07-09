@@ -46,7 +46,7 @@
 
 #include <boost/optional.hpp>
 
-#include <pacbio/consensus/Integrator.h>
+#include <pacbio/consensus/AbstractIntegrator.h>
 #include <pacbio/consensus/Polish.h>
 
 using namespace std;
@@ -121,8 +121,8 @@ vector<Mutation> BestMutations(list<ScoredMutation>* scoredMuts, const size_t se
     if (separation == 0) throw invalid_argument("nonzero separation required");
 
     while (!scoredMuts->empty()) {
-        const auto& mut = *max_element(scoredMuts->begin(), scoredMuts->end(),
-                                            ScoredMutation::ScoreComparer);
+        const auto& mut =
+            *max_element(scoredMuts->begin(), scoredMuts->end(), ScoredMutation::ScoreComparer);
 
         result.emplace_back(mut);
 
@@ -136,9 +136,8 @@ vector<Mutation> BestMutations(list<ScoredMutation>* scoredMuts, const size_t se
     return result;
 }
 
-vector<Mutation> NearbyMutations(vector<Mutation>* applied,
-                                      vector<Mutation>* centers, const AbstractIntegrator& ai,
-                                      const size_t neighborhood)
+vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* centers,
+                                 const AbstractIntegrator& ai, const size_t neighborhood)
 {
     const size_t len = ai.TemplateLength();
     const auto clamp = [len](const int i) { return max(0, min<int>(len, i)); };
@@ -191,14 +190,14 @@ vector<Mutation> NearbyMutations(vector<Mutation>* applied,
     return result;
 }
 
-tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
+PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
 {
     vector<Mutation> muts = Mutations(*ai);
     hash<string> hashFn;
     size_t oldTpl = hashFn(*ai);
     set<size_t> history = {oldTpl};
-    size_t nTested = 0;
-    size_t nApplied = 0;
+
+    PolishResult result;
 
     for (size_t i = 0; i < cfg.MaximumIterations; ++i) {
         // find the best mutations given our parameters
@@ -209,7 +208,7 @@ tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& c
             for (const auto& mut : muts) {
                 const double ll = ai->LL(mut);
                 if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
-                ++nTested;
+                ++result.mutationsTested;
             }
 
             // take best mutations in separation window, apply them
@@ -217,9 +216,18 @@ tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& c
         }
 
         // convergence!!
-        if (muts.empty()) return make_tuple(true, nTested, nApplied);
+        if (muts.empty()) {
+            result.hasConverged = true;
+            return result;
+        }
 
         const size_t newTpl = hashFn(ApplyMutations(*ai, &muts));
+
+        const auto diagnostics = [&result](AbstractIntegrator* ai) {
+            result.maxAlphaPopulated.emplace_back(ai->MaxAlphaPopulated());
+            result.maxBetaPopulated.emplace_back(ai->MaxBetaPopulated());
+            result.maxNumFlipFlops.emplace_back(ai->MaxNumFlipFlops());
+        };
 
         if (history.find(newTpl) != history.end()) {
             /* Cyclic behavior guard - Dave A. found some edge cases where the
@@ -229,10 +237,12 @@ tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& c
              made removing muts X + Y beneficial, then you can break that
              inifinite loop by just applying X or Y, as presumably this removes
              the interaction between them that leads to the cycling behavior.
-             This step is just a heuristic work around that was found. */            
+             This step is just a heuristic work around that was found. */
             ai->ApplyMutation(muts.front());
             oldTpl = hashFn(*ai);
-            ++nApplied;
+            ++result.mutationsApplied;
+
+            diagnostics(ai);
 
             // get the mutations for the next round
             vector<Mutation> applied = {muts.front()};
@@ -240,7 +250,9 @@ tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& c
         } else {
             ai->ApplyMutations(&muts);
             oldTpl = newTpl;
-            nApplied += muts.size();
+            result.mutationsApplied += muts.size();
+
+            diagnostics(ai);
 
             // get the mutations for the next round
             muts = NearbyMutations(&muts, &muts, *ai, cfg.MutationNeighborhood);
@@ -250,7 +262,7 @@ tuple<bool, size_t, size_t> Polish(AbstractIntegrator* ai, const PolishConfig& c
         history.insert(oldTpl);
     }
 
-    return make_tuple(false, nTested, nApplied);
+    return result;
 }
 
 namespace {  // anonymous

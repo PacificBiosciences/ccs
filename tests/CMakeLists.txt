@@ -2,6 +2,10 @@
 # pthread
 find_package(Threads)
 
+if (EXTENSIVE_TESTING)
+    add_definitions(-DEXTENSIVE_TESTING=1)
+endif()
+
 # gmock/gtest
 set(GMOCK_RootDir    ${PacBioConsensus_RootDir}/third-party/gmock-1.7.0)
 set(GMOCK_IncludeDir ${GMOCK_RootDir})

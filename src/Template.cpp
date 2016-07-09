@@ -38,6 +38,7 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <pacbio/consensus/Exceptions.h>
 #include <pacbio/consensus/Template.h>
 
 namespace PacBio {
@@ -48,6 +49,11 @@ AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const b
     : start_{start}, end_{end}, pinStart_{pinStart}, pinEnd_{pinEnd}
 {
     assert(start_ <= end_);
+
+    // Templates that are below two bases are not allowed.
+    // This exception will get propagted up the chain up to the Integrator
+    // constructor or Integrator::AddRead.
+    if (end_ - start_ < 2) throw TemplateTooSmall();
 }
 
 AbstractTemplate::~AbstractTemplate() {}
@@ -197,8 +203,8 @@ std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i)
     const double E2_B = ExpectedLLForEmission(MoveType::BRANCH, prev, curr, MomentType::SECOND);
     const double E2_MD =
         (l2_m + 2 * l_m * E_M + E2_M) * p_m / (p_m + p_d) + l2_d * p_d / (p_m + p_d);
-    const double E2_I =
-        (l2_b + 2 * E_B * l_b + E2_B) * p_b / (p_b + p_s) + (l2_s + 2 * E_S * l_s + E2_S) * p_s / (p_b + p_s);
+    const double E2_I = (l2_b + 2 * E_B * l_b + E2_B) * p_b / (p_b + p_s) +
+                        (l2_s + 2 * E_S * l_s + E2_S) * p_s / (p_b + p_s);
     const double E2_BS = E2_I * (p_s + p_b) / (p_m + p_d);
     const double moment2 = E2_BS + 2 * E_BS * E_MD + E2_MD;
     const double var = moment2 - mean * mean;
@@ -280,9 +286,12 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
     mutOff_ = mut.LengthDiff();
     mutated_ = true;
 
+    // Either the length is 0 or an operation had been applied
     assert(Length() == 0 ||
            ((*this)[Length() - 1].Match == 1.0 && (*this)[Length() - 1].Branch == 0.0 &&
             (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0));
+
+    if (Length() < 2) throw TemplateTooSmall();
 
     return Mutation(mut.Type, mutStart_, mut.Base);
 }
@@ -353,6 +362,8 @@ finish:
             (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0));
 
     assert(!pinStart_ || start_ == 0);
+
+    if (Length() < 2) throw TemplateTooSmall();
 
     return mutApplied;
 }

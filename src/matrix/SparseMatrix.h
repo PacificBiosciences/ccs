@@ -72,6 +72,7 @@ public:  // Information about entries filled by column
     std::pair<size_t, size_t> UsedRowRange(size_t j) const;
     bool IsColumnEmpty(size_t j) const;
     size_t UsedEntries() const;
+    float UsedEntriesRatio() const;
     size_t AllocatedEntries() const;  // an entry may be allocated but not used
 
 public:  // Accessors

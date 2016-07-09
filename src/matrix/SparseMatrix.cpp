@@ -83,6 +83,13 @@ size_t SparseMatrix::UsedEntries() const
     return filledEntries;
 }
 
+float SparseMatrix::UsedEntriesRatio() const
+{
+    const float filled = static_cast<float>(UsedEntries());
+    const float size = static_cast<float>(Rows() * Columns());
+    return filled / size;
+}
+
 size_t SparseMatrix::AllocatedEntries() const
 {
     size_t sum = 0;

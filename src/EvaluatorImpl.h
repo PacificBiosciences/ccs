@@ -68,6 +68,9 @@ public:
     bool ApplyMutation(const Mutation& mut);
     bool ApplyMutations(std::vector<Mutation>* muts);
 
+    int NumFlipFlops() const { return numFlipFlops_; }
+    float AlphaPopulated() const { return alpha_.UsedEntriesRatio(); }
+    float BetaPopulated() const { return beta_.UsedEntriesRatio(); }
 private:
     void Recalculate();
 
@@ -79,6 +82,8 @@ private:
     ScaledMatrix alpha_;
     ScaledMatrix beta_;
     ScaledMatrix extendBuffer_;
+
+    int numFlipFlops_;
 
     friend class Evaluator;
 };

@@ -35,72 +35,47 @@
 
 #pragma once
 
+#include <cstdint>
+#include <functional>
+#include <iostream>
 #include <memory>
-#include <utility>
-#include <vector>
+#include <set>
 
-#include <pacbio/consensus/Read.h>
+#include <pacbio/consensus/AbstractIntegrator.h>
+#include <pacbio/consensus/Evaluator.h>
+#include <pacbio/consensus/Exceptions.h>
+#include <pacbio/consensus/Mutation.h>
 #include <pacbio/consensus/State.h>
-#include <pacbio/consensus/Template.h>
 
 namespace PacBio {
 namespace Consensus {
 
-// forward declaration
-class EvaluatorImpl;
-
-class Evaluator
+class MonoMolecularIntegrator : public AbstractIntegrator
 {
 public:
-    Evaluator() = delete;
-    Evaluator(State);
-    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double minZScore,
-              double scoreDiff);
-
-    // copying is verboten
-    Evaluator(const Evaluator&) = delete;
-    Evaluator& operator=(const Evaluator&) = delete;
+    MonoMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg, const SNR& snr,
+                            const std::string& model);
 
     // move constructor
-    Evaluator(Evaluator&&);
-    // move assign operator
-    Evaluator& operator=(Evaluator&&);
+    MonoMolecularIntegrator(MonoMolecularIntegrator&&);
 
-    ~Evaluator();
+    size_t TemplateLength() const;
 
-    size_t Length() const;  // TODO: is this used anywhere?  If not, delete it.
-    StrandType Strand() const;
-
-    operator bool() const { return IsValid(); }
+    char operator[](size_t i) const;
     operator std::string() const;
-    std::string ReadName() const;
 
     double LL(const Mutation& mut);
-    double LL() const;
+    inline double LL() const { return AbstractIntegrator::LL(); }
+    void ApplyMutation(const Mutation& mut);
+    void ApplyMutations(std::vector<Mutation>* muts);
 
-    std::pair<double, double> NormalParameters() const;
+    State AddRead(const MappedRead& read);
 
-    double ZScore() const;
-
-    bool ApplyMutation(const Mutation& mut);
-    bool ApplyMutations(std::vector<Mutation>* muts);
-
-    State Status() const { return curState_; }
-    int NumFlipFlops() const;
-    float AlphaPopulated() const;
-    float BetaPopulated() const;
-
-    void Release();
-
-private:
-    void CheckZScore(const double minZScore, const std::string& model);
-
-    bool IsValid() const { return curState_ == State::VALID; }
-    void Status(State nextState);
-
-private:
-    std::unique_ptr<EvaluatorImpl> impl_;
-    State curState_;
+protected:
+    std::string mdl_;
+    SNR snr_;
+    Template fwdTpl_;
+    Template revTpl_;
 };
 
 }  // namespace Consensus

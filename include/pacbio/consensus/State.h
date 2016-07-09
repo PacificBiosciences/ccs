@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -35,73 +35,20 @@
 
 #pragma once
 
-#include <memory>
-#include <utility>
-#include <vector>
-
-#include <pacbio/consensus/Read.h>
-#include <pacbio/consensus/State.h>
-#include <pacbio/consensus/Template.h>
-
 namespace PacBio {
 namespace Consensus {
 
-// forward declaration
-class EvaluatorImpl;
-
-class Evaluator
+enum struct State : uint8_t
 {
-public:
-    Evaluator() = delete;
-    Evaluator(State);
-    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double minZScore,
-              double scoreDiff);
+    VALID = 0,
+    ALPHA_BETA_MISMATCH,
+    POOR_ZSCORE,
+    TEMPLATE_TOO_SMALL,
+    MANUALLY_RELEASED,
 
-    // copying is verboten
-    Evaluator(const Evaluator&) = delete;
-    Evaluator& operator=(const Evaluator&) = delete;
-
-    // move constructor
-    Evaluator(Evaluator&&);
-    // move assign operator
-    Evaluator& operator=(Evaluator&&);
-
-    ~Evaluator();
-
-    size_t Length() const;  // TODO: is this used anywhere?  If not, delete it.
-    StrandType Strand() const;
-
-    operator bool() const { return IsValid(); }
-    operator std::string() const;
-    std::string ReadName() const;
-
-    double LL(const Mutation& mut);
-    double LL() const;
-
-    std::pair<double, double> NormalParameters() const;
-
-    double ZScore() const;
-
-    bool ApplyMutation(const Mutation& mut);
-    bool ApplyMutations(std::vector<Mutation>* muts);
-
-    State Status() const { return curState_; }
-    int NumFlipFlops() const;
-    float AlphaPopulated() const;
-    float BetaPopulated() const;
-
-    void Release();
-
-private:
-    void CheckZScore(const double minZScore, const std::string& model);
-
-    bool IsValid() const { return curState_ == State::VALID; }
-    void Status(State nextState);
-
-private:
-    std::unique_ptr<EvaluatorImpl> impl_;
-    State curState_;
+    SIZE
 };
 
-}  // namespace Consensus
-}  // namespace PacBio
+static const char* StateName[] = {"VALID", "ALPHA/BETA MISMATCH", "POOR Z-SCORE", "NULL TEMPLATE"};
+}
+}  //::PacBio::Consensus
