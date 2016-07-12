@@ -138,8 +138,8 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
 
         name << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs";
 
-        if (ccs.Strand && *(ccs.Strand) == StrandEnum::FORWARD) name << "/fwd";
-        if (ccs.Strand && *(ccs.Strand) == StrandEnum::REVERSE) name << "/rev";
+        if (ccs.Strand && *(ccs.Strand) == StrandType::FORWARD) name << "/fwd";
+        if (ccs.Strand && *(ccs.Strand) == StrandType::REVERSE) name << "/rev";
 
         vector<float> snr = {
             static_cast<float>(ccs.SignalToNoise.A), static_cast<float>(ccs.SignalToNoise.C),
@@ -177,8 +177,11 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
 
 #if DIAGNOSTICS
         tags["ms"] = ccs.ElapsedMilliseconds;
-        tags["mt"] = static_cast<int32_t>(ccs.MutationsTested);
-        tags["ma"] = static_cast<int32_t>(ccs.MutationsApplied);
+        tags["mt"] = static_cast<int32_t>(ccs.polishResult.mutationsTested);
+        tags["ma"] = static_cast<int32_t>(ccs.polishResult.mutationsApplied);
+        tags["ap"] = ccs.polishResult.maxAlphaPopulated;
+        tags["bp"] = ccs.polishResult.maxBetaPopulated;
+        tags["ff"] = ccs.polishResult.maxNumFlipFlops;
 #endif
 
         record.Name(name.str())
@@ -208,8 +211,8 @@ void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
     for (const auto& ccs : results) {
         ccsFastq << '@' << *(ccs.Id.MovieName) << '/' << ccs.Id.HoleNumber << "/ccs";
 
-        if (ccs.Strand && *(ccs.Strand) == StrandEnum::FORWARD) ccsFastq << "/fwd";
-        if (ccs.Strand && *(ccs.Strand) == StrandEnum::REVERSE) ccsFastq << "/rev";
+        if (ccs.Strand && *(ccs.Strand) == StrandType::FORWARD) ccsFastq << "/fwd";
+        if (ccs.Strand && *(ccs.Strand) == StrandType::REVERSE) ccsFastq << "/rev";
 
         ccsFastq << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy;
 

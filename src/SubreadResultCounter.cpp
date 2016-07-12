@@ -46,26 +46,23 @@ std::vector<int32_t> SubreadResultCounter::ReturnCountsAsArray() const
     return results;
 }
 
-void SubreadResultCounter::AddResult(AddReadResult result)
+void SubreadResultCounter::AddResult(State result)
 {
     switch (result) {
-        case AddReadResult::ALPHA_BETA_MISMATCH:
+        case State::ALPHA_BETA_MISMATCH:
             AlphaBetaMismatch++;
             break;
-        case AddReadResult::OTHER:
-            Other++;
-            break;
-        case AddReadResult::POOR_ZSCORE:
+        case State::POOR_ZSCORE:
             PoorZScore++;
             break;
-        case AddReadResult::SIZE:
+        case State::SIZE:
             FilteredBySize++;
             break;
-        case AddReadResult::SUCCESS:
+        case State::VALID:
             Success++;
             break;
         default:
-            throw std::runtime_error("Unexpected AddReadResult");
+            throw std::runtime_error("Unexpected State");
             break;
     }
 }
