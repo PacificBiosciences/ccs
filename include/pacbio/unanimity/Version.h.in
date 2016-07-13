@@ -44,7 +44,7 @@ namespace Unanimity {
 
 constexpr auto   LibraryVersion   = "@UNANIMITY_VERSION@";
 constexpr auto   LibraryGitSha1   = "@UNANIMITY_GIT_SHA1@";
-constexpr auto   LibraryChangelog = "@UNANIMITY_CHANGELOG@";
+constexpr auto   LibraryChangelog = "${UNANIMITY_CHANGELOG}";
 constexpr size_t LibraryMajor     = @UNANIMITY_VERSION_MAJOR@;
 constexpr size_t LibraryMinor     = @UNANIMITY_VERSION_MINOR@;
 constexpr size_t LibraryPatch     = @UNANIMITY_VERSION_PATCH@;

@@ -36,7 +36,7 @@ include(uny-gitsha1)
 
 # Config generation
 find_git_sha1(UNY_GIT_SHA1)
-file (STRINGS "CHANGELOG.md" UNY_CHANGELOG)
+file (STRINGS "CHANGELOG.md" UNANIMITY_CHANGELOG)
 configure_file(
     ${UNY_IncludeDir}/pacbio/unanimity/Version.h.in
     ${CMAKE_BINARY_DIR}/generated/pacbio/unanimity/Version.h
