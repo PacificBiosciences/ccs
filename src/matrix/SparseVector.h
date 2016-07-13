@@ -106,7 +106,7 @@ inline SparseVector::SparseVector(size_t logicalLength, size_t beginRow, size_t 
     , storage_(allocatedEndRow_ - allocatedBeginRow_, 0.0)
     , nReallocs_(0)
 {
-    assert(beginRow >= 0 && beginRow <= endRow && endRow <= logicalLength);
+    assert(beginRow <= endRow && endRow <= logicalLength);
     CheckInvariants();
 }
 
@@ -124,7 +124,7 @@ inline void SparseVector::ResetForRange(size_t beginRow, size_t endRow)
 {
     // Allows reuse.  Destructive.
     CheckInvariants();
-    assert(beginRow >= 0 && beginRow <= endRow && endRow <= logicalLength_);
+    assert(beginRow <= endRow && endRow <= logicalLength_);
     size_t newAllocatedBegin = (beginRow > PADDING) ? beginRow - PADDING : 0;
     size_t newAllocatedEnd = std::min(endRow + PADDING, logicalLength_);
     if ((newAllocatedEnd - newAllocatedBegin) > (allocatedEndRow_ - allocatedBeginRow_)) {
@@ -150,7 +150,7 @@ inline void SparseVector::ExpandAllocated(size_t newAllocatedBegin, size_t newAl
 {
     // Expands allocated storage while preserving the contents.
     CheckInvariants();
-    assert(newAllocatedBegin >= 0 && newAllocatedBegin <= newAllocatedEnd &&
+    assert(newAllocatedBegin <= newAllocatedEnd &&
            newAllocatedEnd <= logicalLength_);
     assert(newAllocatedBegin <= allocatedBeginRow_ && newAllocatedEnd >= allocatedEndRow_);
     // Resize the underlying storage.
@@ -175,7 +175,7 @@ inline void SparseVector::ExpandAllocated(size_t newAllocatedBegin, size_t newAl
 
 inline bool SparseVector::IsAllocated(size_t i) const
 {
-    assert(i >= 0 && i < logicalLength_);
+    assert(i < logicalLength_);
     return i >= allocatedBeginRow_ && i < allocatedEndRow_;
 }
 
@@ -196,7 +196,7 @@ inline void SparseVector::Set(size_t i, double v)
     using std::min;
 
     CheckInvariants();
-    assert(i >= 0 && i < logicalLength_);
+    assert(i < logicalLength_);
     if (!IsAllocated(i)) {
         size_t newBeginRow = min((i > PADDING) ? i - PADDING : 0, allocatedBeginRow_);
         size_t newEndRow = min(max(i + PADDING, allocatedEndRow_), logicalLength_);
@@ -216,9 +216,8 @@ inline size_t SparseVector::AllocatedEntries() const
 
 inline void SparseVector::CheckInvariants() const
 {
-    assert(logicalLength_ >= 0);
-    assert(0 <= allocatedBeginRow_ && allocatedBeginRow_ < logicalLength_);
-    assert(0 <= allocatedEndRow_ && allocatedEndRow_ <= logicalLength_);
+    assert(allocatedBeginRow_ < logicalLength_);
+    assert(allocatedEndRow_ <= logicalLength_);
     assert(allocatedBeginRow_ <= allocatedEndRow_);
     assert((allocatedEndRow_ - allocatedBeginRow_) <= storage_.size());
 }

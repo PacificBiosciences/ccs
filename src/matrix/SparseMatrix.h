@@ -139,13 +139,13 @@ inline void SparseMatrix::FinishEditingColumn(size_t j, size_t usedRowsBegin, si
 
 inline std::pair<size_t, size_t> SparseMatrix::UsedRowRange(size_t j) const
 {
-    assert(0 <= j && j < usedRanges_.size());
+    assert(j < usedRanges_.size());
     return usedRanges_[j];
 }
 
 inline bool SparseMatrix::IsColumnEmpty(size_t j) const
 {
-    assert(0 <= j && j < usedRanges_.size());
+    assert(j < usedRanges_.size());
     size_t begin, end;
     std::tie(begin, end) = usedRanges_[j];
     return begin >= end;
