@@ -5,15 +5,28 @@
 <p align="center">C++ library and its applications to generate and process accurate consensus sequences</p>
 
 ***
+## Documentation
 
-## Tools
+ - [Getting Started](doc/INSTALL.md)
+ - Projects
+   - Available
+     - [Arrow Model](dec/ARROW.md)
+     - [Circular Consensus Calling `ccs`](doc/PBCCS.md)
+   - Work in Progress
+     - [Genomic Consensus Calling `gcpp`](doc/GCPP.md)
+     - [Viral Haplotype Phasing `eden`](doc/EDEN.md)
+   - Planned
+     - Minor Variant Calling
+ - [PacBio open source license](LICENSE.txt)
 
-### Circular Consensus Calling
+## Quick Tools Overview
+
+### [Circular Consensus Calling](doc/PBCCS.md)
 
 `ccs` takes multiple reads of the same SMRTbell sequence and combines 
 them, employing a statistical model, to produce one high quality consensus sequence.
     
-### Genomic Consensus Calling
+### [Genomic Consensus Calling](doc/GCPP.md)
 
 `gcpp` will replace the current python [GenomicConsensus](https://github.com/PacificBiosciences/GenomicConsensus), until then please use the existing solution.
 
@@ -21,17 +34,9 @@ them, employing a statistical model, to produce one high quality consensus seque
 
 This tool will be able to precisely call single-nucleotide variants from consensus data.
 
-### Viral Haplotype Phasing
+### [Viral Haplotype Phasing](doc/EDEN.md)
 
 `eden` will leverage CCS reads to identify low-frequency haplotypes within polyploid samples.
-
-## Content
-
- - [Installation](doc/INSTALL.md)
- - Tools and Algorithms
-   - [pbccs](doc/PBCCS.md)
-   - [gcpp](doc/GCPP.md)
-   - [eden](doc/EDEN.md)
 
 ## Help
 
