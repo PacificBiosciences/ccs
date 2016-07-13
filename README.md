@@ -27,11 +27,11 @@ This tool will be able to precisely call single-nucleotide variants from consens
 
 ## Content
 
- - [Installation](doc/install.md)
+ - [Installation](doc/INSTALL.md)
  - Tools and Algorithms
-   - [pbccs](doc/pbccs.md)
-   - [gcpp](doc/gcpp.md)
-   - [eden](doc/eden.md)
+   - [pbccs](doc/PBCCS.md)
+   - [gcpp](doc/GCPP.md)
+   - [eden](doc/EDEN.md)
 
 ## Help
 
