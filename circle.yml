@@ -10,6 +10,8 @@ dependencies:
         - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
         - sudo apt-get update
         - sudo apt-get install g++-4.8
+        - curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+        - sudo apt-get install git-lfs=1.1.0
         - if [ ! -d _deps ] ; then mkdir _deps ; fi  # Create a directory for dependencies, These are static, cache them.
         - pushd _deps ; if [ ! -d cmake-3.3.0-Linux-x86_64 ] ; then wget --no-check-certificate https://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xzf cmake-3.3.0-Linux-x86_64.tar.gz ; fi
         - pushd _deps ; if [ ! -d boost_1_58_0 ] ; then wget https://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 ; tar xjf boost_1_58_0.tar.bz2 ; fi
@@ -22,12 +24,15 @@ dependencies:
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbsparse.git
         - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbchimera.git
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/seqan.git
+        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/PacBioTestData.git
         - pip install --upgrade pip
         - pip install numpy
         - pip install cython
         - pip install h5py
         - pip install pysam
         - pip install git+https://github.com/PacificBiosciences/pbcommand.git git+https://github.com/PacificBiosciences/pbcore.git
+        - pushd _rev_deps/PacBioTestData ; git lfs pull && make python
+
     override:
         - echo "Building PBBAM"
         - mkdir _build_bam
