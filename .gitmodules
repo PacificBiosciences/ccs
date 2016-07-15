@@ -10,3 +10,7 @@
     path = third-party/pbbam
     url = https://github.com/PacificBiosciences/pbbam
     branch = master
+[submodule "third-party/seqan"]
+	path = third-party/seqan
+	url = https://github.com/PacificBiosciences/seqan.git
+    branch = master
