@@ -68,7 +68,7 @@ public:
     /// This routine will fill the alpha and beta matrices, ensuring
     /// that the score computed from the alpha and beta recursions are
     /// identical, refilling back-and-forth if necessary.
-    size_t FillAlphaBeta(M& alpha, M& beta) const throw(AlphaBetaMismatch);
+    size_t FillAlphaBeta(M& alpha, M& beta) const;
 
     /**
      Fill in the alpha matrix.  This matrix has the read run along the rows, and
@@ -707,7 +707,7 @@ Recursor<Derived>::Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const Mappe
 }
 
 template <typename Derived>
-size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const throw(AlphaBetaMismatch)
+size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
 {
     if (tpl_->Length() == 0) throw std::runtime_error("template length is 0, invalid state!");
 

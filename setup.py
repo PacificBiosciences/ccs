@@ -141,7 +141,7 @@ if not os.path.exists(os.path.join(swigLib, modName)):
 
 setup(
     name="ConsensusCore2",
-    version="0.11.0",
+    version="0.13.0",
     author="PacificBiosciences",
     author_email="devnet@pacb.com",
     url="http://www.github.com/PacificBiosciences/ConsensusCore2",

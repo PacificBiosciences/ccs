@@ -38,13 +38,31 @@
 #include <stdexcept>
 #include <string>
 
+#include <pacbio/consensus/State.h>
+
 namespace PacBio {
 namespace Consensus {
 
-class AlphaBetaMismatch : public std::runtime_error
+class StateError : public std::runtime_error
 {
 public:
-    AlphaBetaMismatch() : std::runtime_error("alpha/beta mismatch error!") {}
+    StateError(State state, const std::string& msg) : std::runtime_error(msg), state_(state) {}
+    State WhatState() const { return state_; }
+    virtual const char* what() const noexcept { return std::runtime_error::what(); }
+private:
+    State state_;
+};
+
+class TemplateTooSmall : public StateError
+{
+public:
+    TemplateTooSmall() : StateError(State::TEMPLATE_TOO_SMALL, "Template too short!") {}
+};
+
+class AlphaBetaMismatch : public StateError
+{
+public:
+    AlphaBetaMismatch() : StateError(State::ALPHA_BETA_MISMATCH, "Alpha/beta mismatch!") {}
 };
 
 class ChemistryNotFound : public std::runtime_error

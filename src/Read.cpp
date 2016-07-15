@@ -48,17 +48,12 @@ SNR::SNR(const std::vector<double>& snrs) : A(snrs[0]), C(snrs[1]), G(snrs[2]), 
 }
 
 namespace {
-    double clamp(double val, double lo, double hi)
-    {
-        return std::min(std::max(val, lo), hi);
-    }
+double clamp(double val, double lo, double hi) { return std::min(std::max(val, lo), hi); }
 }  // namespace
 
 SNR ClampSNR(const SNR& val, const SNR& lo, const SNR& hi)
 {
-    return SNR(clamp(val.A, lo.A, hi.A),
-               clamp(val.C, lo.C, hi.C),
-               clamp(val.G, lo.G, hi.G),
+    return SNR(clamp(val.A, lo.A, hi.A), clamp(val.C, lo.C, hi.C), clamp(val.G, lo.G, hi.G),
                clamp(val.T, lo.T, hi.T));
 }
 
@@ -68,7 +63,7 @@ Read::Read(const std::string& name, const std::string& seq, const std::vector<ui
 {
 }
 
-MappedRead::MappedRead(const Read& read, StrandEnum strand, size_t templateStart,
+MappedRead::MappedRead(const Read& read, StrandType strand, size_t templateStart,
                        size_t templateEnd, bool pinStart, bool pinEnd)
     : Read(read)
     , Strand{strand}
@@ -82,12 +77,19 @@ MappedRead::MappedRead(const Read& read, StrandEnum strand, size_t templateStart
 std::ostream& operator<<(std::ostream& os, const MappedRead& mr)
 {
     os << "MappedRead(Read(\"" << mr.Name << "\", \"" << mr.Seq << "\", \"" << mr.Model << "\"), ";
-    if (mr.Strand == StrandEnum::FORWARD)
-        os << "StrandEnum_FORWARD, ";
-    else if (mr.Strand == StrandEnum::REVERSE)
-        os << "StrandEnum_REVERSE, ";
-    else if (mr.Strand == StrandEnum::UNMAPPED)
-        os << "StrandEnum_UNMAPPED, ";
+    switch (mr.Strand) {
+        case StrandType::FORWARD:
+            os << "StrandType_FORWARD, ";
+            break;
+        case StrandType::REVERSE:
+            os << "StrandType_REVERSE, ";
+            break;
+        case StrandType::UNMAPPED:
+            os << "StrandType_UNMAPPED, ";
+            break;
+        default:
+            throw std::runtime_error("Unsupported Strand");
+    }
     os << mr.TemplateStart << ", " << mr.TemplateEnd << ", ";
     os << mr.PinStart << ", " << mr.PinEnd << ")";
     return os;

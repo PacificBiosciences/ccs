@@ -45,6 +45,7 @@
 #include <utility>
 #include <vector>
 
+#include <pacbio/consensus/Exceptions.h>
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/consensus/Mutation.h>
 #include <pacbio/consensus/Read.h>
@@ -160,14 +161,14 @@ void TemplateEquivalence(const size_t nsamp, const size_t nvirt, const size_t le
         vector<VirtualTemplate> vtpls;
         vector<Template> rtpls;
         for (size_t j = 0; j < nvirt; ++j) {
-            size_t start = 0;
-            size_t end = len;
+            int start = 0;
+            int end = len;
             // roughly 33% of the time having a spanning read
             if (randSpanning(gen)) {
                 do {
                     start = randIdx(gen);
                     end = randIdx(gen);
-                } while (start == end);
+                } while (std::abs(start - end) < 2);
                 if (end < start) swap(start, end);
                 ++end;  // increment b by one (end-exclusive)
             }
@@ -244,8 +245,13 @@ void TemplateEquivalence(const size_t nsamp, const size_t nvirt, const size_t le
 
 TEST(TemplateTest, TestVirtualTemplateEquivalence)
 {
-    TemplateEquivalence(1000, 20, 10);
-    TemplateEquivalence(500, 20, 30);
+#if EXTENSIVE_TESTING
+    const int numSamples = 1000;
+#else
+    const int numSamples = 10;
+#endif
+    TemplateEquivalence(numSamples, 20, 10);
+    TemplateEquivalence(numSamples / 2, 20, 30);
 }
 
 TEST(TemplateTest, TestPinning)
@@ -311,36 +317,10 @@ TEST(TemplateTest, NullTemplate)
     const size_t len = tpl.length();
     const Mutation mut(MutationType::DELETION, 0, '-');
 
-    Template master(tpl, ModelFactory::Create(mdl, snr), 0, len, true, true);
-    VirtualTemplate virt(master, 0, len, false, false);
+    ASSERT_THROW(Template("A", ModelFactory::Create(mdl, snr), 0, 1, true, true), TemplateTooSmall);
 
-    EXPECT_EQ(len, master.Length());
-
-    for (size_t i = 1; i <= len; ++i) {
-        master.ApplyMutation(mut);
-        EXPECT_EQ(len - i, master.Length());
-        virt.ApplyMutation(mut);
-        EXPECT_EQ(len - i, virt.Length());
-    }
-
-    {
-        const string A(1, 'A');
-
-        auto mut_ = master.Mutate(mut);
-        EXPECT_FALSE(bool(mut_));
-        master.ApplyMutation(mut);
-
-        mut_ = master.Mutate(Mutation(MutationType::INSERTION, 0, 'A'));
-        ASSERT_TRUE(bool(mut_));
-        EXPECT_EQ(A, ToString(master));
-        master.Reset();
-        master.ApplyMutation(*mut_);
-        EXPECT_EQ(A, ToString(master));
-        virt.ApplyMutation(*mut_);
-        EXPECT_EQ(0, virt.Length());
-    }
+    ASSERT_NO_THROW(Template("AA", ModelFactory::Create(mdl, snr), 0, 2, true, true));
 }
-    
 
 TEST(TemplateTest, P6SiteNormalParameters)
 {
@@ -349,10 +329,9 @@ TEST(TemplateTest, P6SiteNormalParameters)
     auto mdl = "P6-C4";
     Template tester(tpl, ModelFactory::Create(mdl, snr));
     auto results = tester.NormalParameters();
-    
+
     EXPECT_EQ(-9.3915588824261888, results.first);
     EXPECT_EQ(26.883352639390957, results.second);
 }
-   
 
 }  // namespace anonymous

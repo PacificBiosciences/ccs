@@ -44,7 +44,8 @@
 #include <string>
 #include <vector>
 
-#include <pacbio/consensus/Integrator.h>
+#include <pacbio/consensus/MonoMolecularIntegrator.h>
+#include <pacbio/consensus/MultiMolecularIntegrator.h>
 #include <pacbio/consensus/Mutation.h>
 
 using std::string;

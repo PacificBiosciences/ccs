@@ -150,8 +150,7 @@ inline void SparseVector::ExpandAllocated(size_t newAllocatedBegin, size_t newAl
 {
     // Expands allocated storage while preserving the contents.
     CheckInvariants();
-    assert(newAllocatedBegin <= newAllocatedEnd &&
-           newAllocatedEnd <= logicalLength_);
+    assert(newAllocatedBegin <= newAllocatedEnd && newAllocatedEnd <= logicalLength_);
     assert(newAllocatedBegin <= allocatedBeginRow_ && newAllocatedEnd >= allocatedEndRow_);
     // Resize the underlying storage.
     storage_.resize(newAllocatedEnd - newAllocatedBegin);

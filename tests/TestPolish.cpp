@@ -41,7 +41,8 @@
 #include <string>
 #include <tuple>
 
-#include <pacbio/consensus/Integrator.h>
+#include <pacbio/consensus/MonoMolecularIntegrator.h>
+#include <pacbio/consensus/MultiMolecularIntegrator.h>
 #include <pacbio/consensus/Polish.h>
 #include <pacbio/consensus/Read.h>
 #include <pacbio/consensus/Sequence.h>
@@ -62,9 +63,9 @@ TEST(PolishTest, MonoBasic)
 {
     MonoMolecularIntegrator ai("GCGTCGT", IntegratorConfig(), snr, "P6-C4");
 
-    ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
+    ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, "P6-C4"), StrandType::FORWARD, 0, 7, true, true));
+    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandType::FORWARD, 0, 7, true, true));
+    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandType::FORWARD, 0, 7, true, true));
 
     Polish(&ai, PolishConfig());
 
@@ -75,17 +76,14 @@ TEST(PolishTest, MultiBasic)
 {
     MultiMolecularIntegrator ai("GCGTCGT", IntegratorConfig());
 
-    ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(MkRead(ReverseComplement("ACGACGT"), snr, "P6-C4"), StrandEnum::REVERSE,
+    ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, "P6-C4"), StrandType::FORWARD, 0, 7, true, true));
+    ai.AddRead(MappedRead(MkRead(ReverseComplement("ACGACGT"), snr, "P6-C4"), StrandType::REVERSE,
                           0, 7, true, true));
-    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandEnum::FORWARD, 0, 7, true, true));
+    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandType::FORWARD, 0, 7, true, true));
 
-    bool polished;
-    size_t nTested, nApplied;
+    const auto result = Polish(&ai, PolishConfig());
 
-    std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
-
-    EXPECT_TRUE(polished);
+    EXPECT_TRUE(result.hasConverged);
     EXPECT_EQ("ACGACGT", std::string(ai));
 }
 }

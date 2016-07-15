@@ -90,7 +90,7 @@ EvaluatorImpl::EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const Mapp
     , beta_(mr.Length() + 1, recursor_->tpl_->Length() + 1, ScaledMatrix::REVERSE)
     , extendBuffer_(mr.Length() + 1, EXTEND_BUFFER_COLUMNS, ScaledMatrix::FORWARD)
 {
-    recursor_->FillAlphaBeta(alpha_, beta_);
+    numFlipFlops_ = recursor_->FillAlphaBeta(alpha_, beta_);
 }
 
 std::string EvaluatorImpl::ReadName() const { return recursor_->read_.Name; }
@@ -99,7 +99,7 @@ double EvaluatorImpl::LL(const Mutation& mut_)
     // apply the virtual mutation
     boost::optional<Mutation> mut(recursor_->tpl_->Mutate(mut_));
 
-    // if the resulting template is 0, simulate NULL_TEMPLATE (removal)
+    // if the resulting template is 0, simulate TEMPLATE_TOO_SMALL (removal)
     if (recursor_->tpl_->Length() == 0) {
         recursor_->tpl_->Reset();
         return 0.0;
