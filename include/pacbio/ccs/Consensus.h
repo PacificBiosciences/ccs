@@ -51,9 +51,11 @@
 
 #include <OptionParser.h>
 
-#include <pacbio/consensus/Integrator.h>
-#include <pacbio/consensus/Polish.h>
+#include <pacbio/consensus/MonoMolecularIntegrator.h>
 #include <pacbio/consensus/poa/PoaConsensus.h>
+#include <pacbio/consensus/Polish.h>
+#include <pacbio/consensus/State.h>
+#include <pacbio/consensus/StrandType.h>
 
 #include <pbbam/Accuracy.h>
 #include <pbbam/LocalContextFlags.h>
@@ -71,7 +73,7 @@ using SNR = PacBio::Consensus::SNR;
 using QualityValues = PacBio::Consensus::QualityValues;
 using LocalContextFlags = PacBio::BAM::LocalContextFlags;
 using Accuracy = PacBio::BAM::Accuracy;
-using StrandEnum = PacBio::Consensus::StrandEnum;
+using StrandType = PacBio::Consensus::StrandType;
 
 namespace OptionNames {
 // constexpr auto MaxPoaCoverage       = "maxPoaCoverage";
@@ -183,8 +185,9 @@ struct ChunkType
 
 struct ConsensusType
 {
+    Consensus::PolishResult polishResult;
     ReadId Id;
-    boost::optional<StrandEnum> Strand;
+    boost::optional<StrandType> Strand;
     std::string Sequence;
     QualityValues QVs;
     size_t NumPasses;
@@ -192,8 +195,6 @@ struct ConsensusType
     double AvgZScore;
     std::vector<double> ZScores;
     std::vector<int32_t> StatusCounts;
-    size_t MutationsTested;
-    size_t MutationsApplied;
     SNR SignalToNoise;
     float ElapsedMilliseconds;
     boost::optional<std::tuple<int16_t, int16_t, uint8_t>> Barcodes;
@@ -380,7 +381,7 @@ boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
             std::vector<uint8_t>(read.PulseWidth.begin() + readStart,
                                  read.PulseWidth.begin() + readEnd),
             snr, chem),
-        summary.ReverseComplementedRead ? StrandEnum::REVERSE : StrandEnum::FORWARD, tplStart,
+        summary.ReverseComplementedRead ? StrandType::REVERSE : StrandType::FORWARD, tplStart,
         tplEnd, (tplStart == 0) ? true : false, (tplEnd == poaLength) ? true : false);
 
     return boost::make_optional(mappedRead);
@@ -519,15 +520,15 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                 result.Success += 1;
                 result.SubreadCounter.Success += activeReads;
                 result.emplace_back(ConsensusType{
-                    chunk.Id, boost::none, poaConsensus, qvs, possiblePasses, 0, 0,
-                    std::vector<double>(1), result.SubreadCounter.ReturnCountsAsArray(), 0, 0,
+                    PolishResult(), chunk.Id, boost::none, poaConsensus, qvs, possiblePasses, 0, 0,
+                    std::vector<double>(1), result.SubreadCounter.ReturnCountsAsArray(),
                     chunk.SignalToNoise, timer.ElapsedMilliseconds(), chunk.Barcodes});
             } else {
-                const auto mkConsensus = [&](const boost::optional<StrandEnum> strand) {
+                const auto mkConsensus = [&](const boost::optional<StrandType> strand) {
                     // give this consensus attempt a name we can refer to
                     std::string chunkName(chunk.Id);
-                    if (strand && *strand == StrandEnum::FORWARD) chunkName += " [fwd]";
-                    if (strand && *strand == StrandEnum::REVERSE) chunkName += " [rev]";
+                    if (strand && *strand == StrandType::FORWARD) chunkName += " [fwd]";
+                    if (strand && *strand == StrandType::REVERSE) chunkName += " [rev]";
 
                     try {
                         // setup the arrow integrator
@@ -551,11 +552,11 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                                 auto status = ai.AddRead(*mr);
                                 // increment the status count
                                 result.SubreadCounter.AddResult(status);
-                                if (status == AddReadResult::SUCCESS &&
+                                if (status == State::VALID &&
                                     reads[i]->Flags & BAM::ADAPTER_BEFORE &&
                                     reads[i]->Flags & BAM::ADAPTER_AFTER) {
                                     nPasses += 1;
-                                } else if (status != AddReadResult::SUCCESS) {
+                                } else if (status != State::VALID) {
                                     nDropped += 1;
                                     PBLOG_DEBUG << "Skipping read " << mr->Name << ", " << status;
                                 }
@@ -584,7 +585,7 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                                              [&](const SparsePoa::ReadKey key) {
                                                  return key >= 0 &&
                                                         summaries[key].ReverseComplementedRead ==
-                                                            (*strand == StrandEnum::REVERSE);
+                                                            (*strand == StrandType::REVERSE);
                                              }) +
                                          std::count_if(
                                              readKeys.cbegin(), readKeys.cend(),
@@ -605,11 +606,9 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                         const auto zScores = ai.ZScores();
 
                         // find consensus!!
-                        size_t nTested, nApplied;
-                        bool polished;
-                        std::tie(polished, nTested, nApplied) = Polish(&ai, PolishConfig());
+                        const PolishResult polishResult = Polish(&ai, PolishConfig());
 
-                        if (!polished) {
+                        if (!polishResult.hasConverged) {
                             result.NonConvergent += 1;
                             result.SubreadCounter.AssignSuccessToOther();
                             PBLOG_DEBUG << "Skipping " << chunkName << ", failed to converge";
@@ -636,10 +635,10 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                         // return resulting sequence!!
                         result.Success += 1;
                         result.emplace_back(ConsensusType{
-                            chunk.Id, strand, std::string(ai), std::move(qvs), nPasses, predAcc,
-                            zAvg, zScores, result.SubreadCounter.ReturnCountsAsArray(), nTested,
-                            nApplied, chunk.SignalToNoise, timer.ElapsedMilliseconds(),
-                            chunk.Barcodes});
+                            polishResult, chunk.Id, strand, std::string(ai), std::move(qvs), 
+                            nPasses, predAcc, zAvg, zScores, 
+                            result.SubreadCounter.ReturnCountsAsArray(), chunk.SignalToNoise,
+                            timer.ElapsedMilliseconds(), chunk.Barcodes});
                     } catch (const std::exception& e) {
                         result.ExceptionThrown += 1;
                         PBLOG_ERROR << "Skipping " << chunkName << ", caught exception: '"
@@ -648,8 +647,8 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                 };
 
                 if (settings.ByStrand) {
-                    mkConsensus(StrandEnum::FORWARD);
-                    mkConsensus(StrandEnum::REVERSE);
+                    mkConsensus(StrandType::FORWARD);
+                    mkConsensus(StrandType::REVERSE);
                 } else {
                     mkConsensus(boost::none);
                 }
