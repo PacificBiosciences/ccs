@@ -1,0 +1,140 @@
+Notes on the POA implementation
+===============================
+
+Lineage
+-------
+
+The POA is an implementation of the partial order aligner of Lee,
+Grasso, Sharlow (2002).
+
+Our original implementations were done in F# then C# by Pat Marks.
+These was limited to global alignment and couldn't cope with large
+sequences due to memory limitations---there was no capability to do
+banded alignment.  I ported the C# implementation to C++ in
+ConsenusCore for use in Quiver.
+
+All of these implementations are in the same spirit, and the only
+principle difference between them and the description in the Lee paper
+is that our implementations do not maintain the equality relations
+determined by aligned residues (bases).  I see this as a bit of a
+limitation which forces our hand in some ways.  It would be nice to
+have this information.
+
+
+Details of current implementation
+---------------------------------
+
+Basically, we maintain a graph that reads can be aligned against; the
+aligned read can then be inserted into the graph.  At any point a
+"consensus" of the graph can be retrieved.  Information about each
+vertex is contained in a PoaNode struct.
+
+Unlike Pat's implementation, I chose *not* to retain "read pointer"
+information (readId, readPosition) in each PoaNode, because I was
+concerned that this would bloat the graph data, and in particular
+would add considerably to the memory consumption of Quiver.  I work
+around this limitation as I will describe shortly.
+
+The ConsensusCore POA implementation is totally sufficient for
+Quiver's purposes but not sufficient for LAAMM, where very long reads
+can be added to the POA and naive Smith-Waterman approaches are memory
+inefficient.  To support sparse-memory usage, the ConsensusCore
+exposes an API that allows plug-in banding... the client needs only
+provide an "SdpRangeFinder" implementation that identifies SDP anchors
+to be used in determining the subrange of each read that should be
+aligned.  This code was left "pluggable" so that we would not need to
+add a dependency on SDP algorithms in ConsensusCore.  LAAMM implements
+an SdpRangeFinder based on Seqan.
+
+The other "pluggable" aspect is that the read extent information is
+not maintained at all by the ConsensusCore POA; rather, when the
+client inserts a read to the graph, it can get the path of vertices
+the read traces.  It can then, later, see how this path intersects the
+consensus path, to determine extents.  (It has not escaped my notice
+that the extents should really be based on the "aligned residue"
+equivalence relation, which we do not maintain, but in practice this
+is probably fine).
+
+I am on the fence about adding readpointers into the base
+graph---perhaps templated out, so Quiver doesn't get bloated.  It
+seems a more direct way of encoding the information, if we could do it
+compactly enough.
+
+
+Notes on coverage, minCoverage
+------------------------------
+
+In LOCAL or SEMIGLOBAL uses of the POA (so, CCS and LAAMM, but not
+Quiver), reads may represent only a portion of the template---they do
+not go end-to-end.  For these modes we need to maintain some
+information about
+
+Each POA node knows how many reads it represents (pass through the
+vertex, basically).  We also maintain information about the total
+effective width of the graph at any point "the coverage" (known as
+SpanningReads in this codebase).  Formally, we can think of the
+coverage of a vertex as the number of reads that pass through this
+vertex, plus any other reads which pass through at least one ancestor
+and at least one descendant of this vertex.  Pat implements coverage
+exactly from this definition, using the readpointers in his POA.  The
+ConsensusCore POA, since it does not maintain the readpointers, can't
+do this, so instead we use a different approach ("tagSpan" approach)
+where, when each read is added, we incremement the spanning coverage
+for all vertices "covered" by the read.  This approach may be
+suboptimal, and we should explore that.
+
+The coverage information is only important in determining consensus.
+Briefly, we calculate the consensus by looking for a path maximizing a
+score determined as a sum of vertex scores, where each vertex score is
+determined as
+
+   (2 * numReads[v] - coverage[v] - epsilon)
+
+so that if a vertex represents less than half of the coverage at its
+position, its score for inclusion in the POA consensus will be
+negative (discouraging inclusion in the consensus).
+
+`minCoverage` is a parameter to some of the API methods which From the
+API user's point of view, `minCoverage` represents a lower-bound
+estimate of the "basal" level of coverage over the span of the
+template under consideration.  It is used to
+
+Given minCoverage, the vertex score becomes
+
+   (2 * numReads[v] - max(coverage[v], minCoverage) - epsilon)
+
+so minCoverage bounds the computed coverage from below.  A minCoverage
+of 0 thus has no effect; a minCoverage chosen too large could
+discourage inclusion of "borderline" consensus bases.  In practice
+this might manifest as consensus sequences that are truncated at the
+ends.
+
+The value of minCoverage is unclear---it was unclear why it was added,
+why it was deemed necessary.  It might be helpful if we could use it
+to completely replace the local coverage calculation.  We need to do
+some experiments on extensive datasets to see how, in practice, this
+affects observed truncations in HLA datasets.
+
+
+Known issues
+------------
+
+ - TODO: Pruning not yet implemented
+ - TODO: Explore efficacy of coverage, minCoverage in CCS and LAA contexts.
+ - TODO: Explore bad truncation phenotypes
+ - TODO: Better
+
+ - Local coverage is calculated using the old "tagSpan" approach,
+   rather than the fwd/backward union approach Pat developed later.
+   Not clear how big of a problem this is.
+
+ - The boost graph library is a headache.
+
+ - The core code for the alignment dynamic programming, and the
+   traceback-and-thread operation, is trickier than it needs to be.
+   Each of these methods is implementing a simple state machine, but
+   the code does not reflect this simplicity.
+
+
+---
+David Alexander, 2015
