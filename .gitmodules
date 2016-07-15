@@ -6,3 +6,7 @@
 	path = third-party/pbcopper
 	url = https://github.com/PacificBiosciences/pbcopper
 	branch = fused-gtest-gmock
+[submodule "third-party/pbbam"]
+    path = third-party/pbbam
+    url = https://github.com/PacificBiosciences/pbbam
+    branch = master
