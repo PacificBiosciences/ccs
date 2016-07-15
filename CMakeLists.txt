@@ -44,6 +44,7 @@ configure_file(
 
 # shared CXX flags for src & tests
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${UNY_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${UNY_DEBUG_FLAGS}")
 
 # Build library
 # add_subdirectory(src/consensus)
