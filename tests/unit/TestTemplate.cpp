@@ -45,10 +45,10 @@
 #include <utility>
 #include <vector>
 
-#include <pacbio/consensus/Exceptions.h>
+#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/consensus/Mutation.h>
-#include <pacbio/consensus/Read.h>
+#include <pacbio/data/Read.h>
 #include <pacbio/consensus/Template.h>
 
 #include "../src/ModelFactory.h"
@@ -57,6 +57,7 @@
 
 using namespace std;
 using namespace PacBio::Consensus;  // NOLINT
+using namespace PacBio::Exception;  // NOLINT
 
 using ::testing::UnorderedElementsAreArray;
 

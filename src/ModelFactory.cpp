@@ -36,13 +36,15 @@
 #include <stdexcept>
 #include <utility>
 
-#include <pacbio/consensus/Exceptions.h>
+#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/ModelConfig.h>
 
 #include "ModelFactory.h"
 
 namespace PacBio {
 namespace Consensus {
+
+using ChemistryNotFound = PacBio::Exception::ChemistryNotFound;
 
 ModelCreator::ModelCreator(const std::set<std::string>& names)
 {

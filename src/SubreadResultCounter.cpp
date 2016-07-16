@@ -33,11 +33,10 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#include <pacbio/ccs/SubreadResultCounter.h>
+#include <pacbio/data/SubreadResultCounter.h>
 #include <stdexcept>
 
-using namespace PacBio::Consensus;
-using namespace PacBio::CCS;
+using namespace PacBio::Data;
 
 std::vector<int32_t> SubreadResultCounter::ReturnCountsAsArray() const
 {

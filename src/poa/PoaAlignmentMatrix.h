@@ -41,7 +41,7 @@
 
 #pragma once
 
-#include <pacbio/consensus/poa/PoaGraph.h>
+#include <pacbio/denovo/PoaGraph.h>
 
 #include <boost/unordered_map.hpp>
 #include <boost/utility.hpp>
@@ -54,8 +54,10 @@ using boost::noncopyable;
 using boost::unordered_map;
 
 namespace PacBio {
-namespace Consensus {
+namespace Poa {
 namespace detail {
+
+using AlignMode = PacBio::Align::AlignMode;
 
 enum MoveType
 {
@@ -118,4 +120,4 @@ public:
 };
 }
 }
-}  // PacBio::Consensus::detail
+}  // PacBio::Poa::detail

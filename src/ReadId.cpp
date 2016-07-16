@@ -39,12 +39,12 @@
 #include <sstream>
 #include <string>
 
-#include <pacbio/ccs/ReadId.h>
+#include <pacbio/data/ReadId.h>
 
 using namespace std;
 
 namespace PacBio {
-namespace CCS {
+namespace Data {
 
 ReadId::operator std::string() const
 {
@@ -64,5 +64,5 @@ ostream& operator<<(ostream& os, const ReadId& id)
     return os;
 }
 
-}  // namespace CCS
+}  // namespace Data
 }  // namespace PacBio

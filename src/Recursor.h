@@ -42,14 +42,17 @@
 #include <memory>
 #include <utility>
 
-#include <pacbio/consensus/Exceptions.h>
-#include <pacbio/consensus/Read.h>
+#include <pacbio/exception/StateError.h>
+#include <pacbio/data/Read.h>
 #include <pacbio/consensus/Template.h>
 
 #include "matrix/ScaledMatrix.h"
 
 namespace PacBio {
 namespace Consensus {
+
+using StateError = PacBio::Exception::StateError;
+using AlphaBetaMismatch = PacBio::Exception::AlphaBetaMismatch;;
 
 // AbstractRecursor is in Template.h
 

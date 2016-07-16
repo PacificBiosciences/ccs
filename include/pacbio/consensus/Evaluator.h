@@ -39,13 +39,15 @@
 #include <utility>
 #include <vector>
 
-#include <pacbio/consensus/Read.h>
-#include <pacbio/consensus/State.h>
+#include <pacbio/data/Read.h>
+#include <pacbio/data/State.h>
 #include <pacbio/consensus/Template.h>
 
 namespace PacBio {
 namespace Consensus {
 
+using State = PacBio::Data::State;
+using StrandType = PacBio::Data::StrandType;
 // forward declaration
 class EvaluatorImpl;
 

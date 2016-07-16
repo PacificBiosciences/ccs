@@ -37,12 +37,12 @@
 // (Based on the original "Partial Order Aligner" by Lee, Grasso, and Sharlow,
 //  and an implementation in C# by Patrick Marks)
 
-#include <pacbio/consensus/poa/PoaGraph.h>
+#include <pacbio/denovo/PoaGraph.h>
 
 #include "PoaGraphImpl.h"
 
 namespace PacBio {
-namespace Consensus {
+namespace Poa {
 
 // forward declaration
 struct PoaConsensus;
@@ -92,5 +92,5 @@ PoaGraph::PoaGraph() { impl = new detail::PoaGraphImpl(); }
 PoaGraph::PoaGraph(const PoaGraph& other) { impl = new detail::PoaGraphImpl(*other.impl); }
 PoaGraph::PoaGraph(const detail::PoaGraphImpl& o) { impl = new detail::PoaGraphImpl(o); }
 PoaGraph::~PoaGraph() { delete impl; }
-}  // namespace Consensus
+}  // namespace Poa
 }  // namespace PacBio

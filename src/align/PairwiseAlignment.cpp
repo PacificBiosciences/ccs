@@ -41,12 +41,14 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 
-#include <pacbio/consensus/Sequence.h>
-#include <pacbio/consensus/align/PairwiseAlignment.h>
+#include <pacbio/data/Sequence.h>
+#include <pacbio/align/PairwiseAlignment.h>
 // #include <pacbio/consensus/Utils.hpp>
 
 namespace PacBio {
-namespace Consensus {
+namespace Align {
+
+using namespace PacBio::Data;
 
 std::string PairwiseAlignment::Target() const { return target_; }
 std::string PairwiseAlignment::Query() const { return query_; }
@@ -317,5 +319,5 @@ PairwiseAlignment* PairwiseAlignment::FromTranscript(const std::string& transcri
     return new PairwiseAlignment(alnTarget, alnQuery);
 }
 
-}  // namespace Consensus
+}  // namespace Align
 }  // namespace PacBio

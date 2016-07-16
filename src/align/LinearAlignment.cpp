@@ -57,8 +57,8 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 
-#include <pacbio/consensus/align/LinearAlignment.h>
-#include <pacbio/consensus/align/PairwiseAlignment.h>
+#include <pacbio/align/LinearAlignment.h>
+#include <pacbio/align/PairwiseAlignment.h>
 // #include <pacbio/consensus/Utils.h>
 
 //#define DEBUG_LINEAR_ALIGNMENT
@@ -70,7 +70,7 @@ using std::endl;
 #endif  // DEBUG_LINEAR_ALIGNMENT
 
 namespace PacBio {
-namespace Consensus {
+namespace Align {
 namespace {
 
 namespace ublas = boost::numeric::ublas;
@@ -265,5 +265,5 @@ PairwiseAlignment* AlignLinear(const std::string& target, const std::string& que
     return AlignLinear(target, query, NULL, config);
 }
 
-}  // namespace Consensus
+}  // namespace Align
 }  // namespace PacBio

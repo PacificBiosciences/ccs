@@ -40,7 +40,7 @@
 #include <vector>
 
 namespace PacBio {
-namespace Consensus {
+namespace Poa {
 namespace detail {
 
 // This is necessary because of dumb C++ linker rules.
@@ -109,5 +109,5 @@ size_t ArgMax(const VectorL<T>& v)
 }
 
 }  // namespace detail
-}  // namespace Consensus
+}  // namespace Poa
 }  // PacBio

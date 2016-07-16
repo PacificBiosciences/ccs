@@ -40,11 +40,11 @@
 
 #include <string>
 
-#include <pacbio/consensus/Sequence.h>
+#include <pacbio/data/Sequence.h>
 
 using std::string;
 
-using namespace PacBio::Consensus;  // NOLINT
+using namespace PacBio::Data;  // NOLINT
 
 namespace {
 

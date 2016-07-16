@@ -36,7 +36,7 @@ include_directories(SYSTEM
 
 file(GLOB UNY_TEST_CPP "unit/*.cpp")
 
-add_executable(test_unanimity
+add_executable(test_unanimity EXCLUDE_FROM_ALL
     ${UNY_TEST_CPP}
     ${GMOCK_CC}
     ${GMOCK_H}
@@ -44,20 +44,23 @@ add_executable(test_unanimity
 
 target_link_libraries(test_unanimity
     ${UNANIMITY_LIBRARIES}
+    ${PacBioBAM_LIBRARIES}
+    ${HTSLIB_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS}
+    ${ZLIB_LIBRARIES}
 )
 
 if(${ROOT_PROJECT_NAME} STREQUAL "UNANIMITY")
-    add_custom_target(checky test_unanimity
+    add_custom_target(check test_unanimity
         COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${UNY_RootDir}/scripts/cram.py ${UNY_TestsDir}/cram/*.t
-        COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${UNY_TestsDir}/scripts/test_tool_contract.py
+        # COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${UNY_TestsDir}/python/test_tool_contract.py
         DEPENDS ccs)
 endif()
 
 # add_test(test test_unanimity)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND UNY_inc_coverage)
     include(uny-codecoverage)
     SETUP_TARGET_FOR_COVERAGE(coverage test_unanimity coverage)
 endif()

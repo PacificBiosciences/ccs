@@ -39,12 +39,12 @@
 #include <sstream>
 #include <string>
 
-#include <pacbio/ccs/Interval.h>
+#include <pacbio/data/Interval.h>
 
 using namespace std;
 
 namespace PacBio {
-namespace CCS {
+namespace Data {
 
 Interval::operator string() const
 {
@@ -58,5 +58,5 @@ ostream& operator<<(ostream& os, const Interval& interval)
     return os << '[' << interval.Left() << ", " << interval.Right() << ')';
 }
 
-}  // namespace CCS
+}  // namespace Data
 }  // namespace PacBio

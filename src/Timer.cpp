@@ -37,13 +37,13 @@
 
 #include <chrono>
 
-#include <pacbio/ccs/Timer.h>
+#include <pacbio/util/Timer.h>
 
 using std::chrono::steady_clock;
 using std::chrono::milliseconds;
 
 namespace PacBio {
-namespace CCS {
+namespace Util {
 
 Timer::Timer() { Restart(); }
 float Timer::ElapsedMilliseconds() const

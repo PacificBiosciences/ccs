@@ -40,8 +40,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <pacbio/ccs/ChemistryMapping.h>
-#include <pacbio/ccs/ChemistryTriple.h>
+#include <pacbio/data/ChemistryMapping.h>
+#include <pacbio/data/ChemistryTriple.h>
 
 TEST(ChemistryTest, LoadTest)
 {

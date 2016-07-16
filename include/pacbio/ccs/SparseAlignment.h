@@ -51,7 +51,7 @@
 #include <seqan/sequence.h>
 
 #include <pacbio/ccs/ChainSeeds.h>
-#include <pacbio/ccs/Exceptions.h>
+#include <pacbio/exception/CCSExceptions.h>
 
 namespace PacBio {
 namespace CCS {
@@ -224,7 +224,7 @@ seqan::Align<seqan::DnaString, seqan::ArrayGaps> SeedsToAlignment(
     String<Seed<Simple>> chain;
     chainSeedsGlobally(chain, seeds, SparseChaining());
 
-    Align<DnaString, ArrayGaps> alignment;
+    seqan::Align<DnaString, ArrayGaps> alignment;
     resize(rows(alignment), 2);
     assignSource(row(alignment, 0), seq1);
     assignSource(row(alignment, 1), seq2);

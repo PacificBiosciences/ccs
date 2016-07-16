@@ -35,10 +35,10 @@
 
 // Authors: David Alexander, Lance Hepler
 
-#include <pacbio/consensus/align/AlignConfig.h>
+#include <pacbio/align/AlignConfig.h>
 
 namespace PacBio {
-namespace Consensus {
+namespace Align {
 
 AlignParams::AlignParams(int match, int mismatch, int insert, int delete_)
     : Match(match), Mismatch(mismatch), Insert(insert), Delete(delete_)

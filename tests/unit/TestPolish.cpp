@@ -44,10 +44,11 @@
 #include <pacbio/consensus/MonoMolecularIntegrator.h>
 #include <pacbio/consensus/MultiMolecularIntegrator.h>
 #include <pacbio/consensus/Polish.h>
-#include <pacbio/consensus/Read.h>
-#include <pacbio/consensus/Sequence.h>
+#include <pacbio/data/Read.h>
+#include <pacbio/data/Sequence.h>
 
 using namespace PacBio::Consensus;  // NOLINT
+using namespace PacBio::Data;  // NOLINT
 
 namespace {
 

@@ -1,10 +1,12 @@
 
 # External libraries
 
+SET(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+
 # pbcopper
-if (NOT pbcopper)
-	add_subdirectory(${UNY_ThirdPartyDir}/pbcopper external/pbcopper/build)
-endif()
+# if (NOT pbcopper)
+# 	add_subdirectory(${UNY_ThirdPartyDir}/pbcopper external/pbcopper/build)
+# endif()
 
 # Threads
 if (NOT Threads)
@@ -24,21 +26,15 @@ endif()
 # htslib
 if(NOT HTSLIB_INCLUDE_DIRS OR
    NOT HTSLIB_LIBRARIES)
-    if(HTSLIB_ROOTDIR)
-        find_package(htslib
-                     PATHS ${HTSLIB_ROOTDIR}
-                     REQUIRED)
-    else()
-        find_package(htslib
-                     PATHS ${UNY_ThirdPartyDir}/htslib
-                     REQUIRED)
-    endif()
+    find_package(htslib
+                 PATHS ${UNY_ThirdPartyDir}/htslib
+                 REQUIRED)
 endif()
 
 # pbbam
 if (NOT pbbam)
     add_subdirectory(${UNY_ThirdPartyDir}/pbbam external/pbbam/build)
-    if (htslib)
+    if (TARGET htslib)
         add_dependencies(pbbam htslib)
     endif()
 endif()

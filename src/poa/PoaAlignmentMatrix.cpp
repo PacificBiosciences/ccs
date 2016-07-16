@@ -44,7 +44,7 @@
 #include "PoaGraphImpl.h"
 
 namespace PacBio {
-namespace Consensus {
+namespace Poa {
 namespace detail {
 
 void PoaAlignmentMatrixImpl::Print() const
@@ -123,4 +123,4 @@ void PoaAlignmentMatrixImpl::Print() const
 }
 }
 }
-}  // PacBio::Consensus::detail
+}  // PacBio::Poa::detail

@@ -41,12 +41,14 @@
 #include <utility>
 
 #include <pacbio/consensus/AbstractIntegrator.h>
-#include <pacbio/consensus/Sequence.h>
+#include <pacbio/data/Sequence.h>
 
 #include "ModelFactory.h"
 
 namespace PacBio {
 namespace Consensus {
+
+using namespace PacBio::Data;
 
 namespace {
 
@@ -178,5 +180,5 @@ Mutation AbstractIntegrator::ReverseComplement(const Mutation& mut) const
     return Mutation(mut.Type, TemplateLength() - mut.End(), Complement(mut.Base));
 }
 
-}  // namespace Consensus
+}  // namespace Align
 }  // namespace PacBio

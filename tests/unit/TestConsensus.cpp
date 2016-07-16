@@ -42,8 +42,8 @@
 #include <pbbam/LocalContextFlags.h>
 
 #include <pacbio/ccs/Consensus.h>
-#include <pacbio/ccs/ReadId.h>
-#include <pacbio/ccs/SubreadResultCounter.h>
+#include <pacbio/data/ReadId.h>
+#include <pacbio/data/SubreadResultCounter.h>
 
 #include <OptionParser.h>
 

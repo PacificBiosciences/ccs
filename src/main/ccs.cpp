@@ -59,19 +59,27 @@
 #include <pbbam/ReadGroupInfo.h>
 
 #include <pacbio/ccs/Consensus.h>
-#include <pacbio/ccs/ExecUtils.h>
-#include <pacbio/ccs/Interval.h>
-#include <pacbio/ccs/Logging.h>
-#include <pacbio/ccs/ReadId.h>
-#include <pacbio/ccs/Utility.h>
+#include <pacbio/util/ExecUtils.h>
+#include <pacbio/data/Interval.h>
+#include <pacbio/log/Logging.h>
+#include <pacbio/data/ReadId.h>
+#include <pacbio/io/Utility.h>
 #include <pacbio/ccs/Whitelist.h>
-#include <pacbio/ccs/WorkQueue.h>
+#include <pacbio/parallel/WorkQueue.h>
 
 #include <pacbio/Version.h>
 
 using namespace std;
 using namespace PacBio::BAM;
 using namespace PacBio::CCS;
+using namespace PacBio::Data;
+using namespace PacBio::Poa;
+using namespace PacBio::Align;
+using namespace PacBio::Consensus;
+using namespace PacBio::Parallel;
+using namespace PacBio::Util;
+using namespace PacBio::IO;
+using namespace PacBio::Logging;
 
 using boost::none;
 using boost::numeric_cast;
@@ -100,7 +108,7 @@ typedef ReadType<ReadId> Subread;
 typedef ChunkType<ReadId, Subread> Chunk;
 typedef ResultType<ConsensusType> Results;
 
-const auto CircularConsensus = &Consensus<Chunk>;
+const auto CircularConsensus = &PacBio::CCS::Consensus<Chunk>;
 
 inline std::string QVsToASCII(const std::vector<int>& qvs)
 {
@@ -458,11 +466,11 @@ int main(int argc, char** argv)
 
         if (!logFile.empty()) {
             logStream.open(logFile);
-            Logging::Logger::Default(new Logging::Logger(logStream, logLevel));
+            Logger::Default(new Logger(logStream, logLevel));
         } else {
-            Logging::Logger::Default(new Logging::Logger(cerr, logLevel));
+            Logger::Default(new Logger(cerr, logLevel));
         }
-        Logging::InstallSignalHandlers();
+        InstallSignalHandlers();
     }
 
     // start processing chunks!

@@ -43,12 +43,12 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include <pacbio/ccs/Utility.h>
+#include <pacbio/io/Utility.h>
 
 using namespace std;
 
 namespace PacBio {
-namespace CCS {
+namespace IO {
 
 string AbsolutePath(const string& path)
 {

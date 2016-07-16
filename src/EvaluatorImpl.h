@@ -40,7 +40,7 @@
 #include <vector>
 
 #include <pacbio/consensus/Evaluator.h>
-#include <pacbio/consensus/Read.h>
+#include <pacbio/data/Read.h>
 #include <pacbio/consensus/Template.h>
 
 #include "Recursor.h"

@@ -38,11 +38,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <pacbio/consensus/align/AffineAlignment.h>
-#include <pacbio/consensus/align/LinearAlignment.h>
-#include <pacbio/consensus/align/PairwiseAlignment.h>
+#include <pacbio/align/AffineAlignment.h>
+#include <pacbio/align/LinearAlignment.h>
+#include <pacbio/align/PairwiseAlignment.h>
 
-using namespace PacBio::Consensus;  // NOLINT
+using namespace PacBio::Align;  // NOLINT
 using ::testing::ElementsAreArray;
 
 TEST(PairwiseAlignmentTests, RepresentationTests)

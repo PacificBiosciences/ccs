@@ -40,7 +40,7 @@
 
 #include <seqan/seq_io.h>
 
-#include <pacbio/ccs/Utility.h>
+#include <pacbio/io/Utility.h>
 
 #include "TestUtility.h"
 
@@ -65,7 +65,7 @@ bool LoadFastaSequences(std::string fastaFname, std::vector<std::string>& ids,
 
 TEST(UtilityTest, TestFileExtension)
 {
-    using PacBio::CCS::FileExtension;
+    using PacBio::IO::FileExtension;
 
     EXPECT_EQ("bar", FileExtension("/path/to/foo.bar"));
     EXPECT_EQ("bar", FileExtension("/foo.bar"));

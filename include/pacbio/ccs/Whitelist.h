@@ -44,10 +44,12 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
 
-#include <pacbio/ccs/IntervalTree.h>
+#include <pacbio/data/IntervalTree.h>
 
 namespace PacBio {
 namespace CCS {
+
+using IntervalTree = PacBio::Data::IntervalTree;
 
 class Whitelist
 {

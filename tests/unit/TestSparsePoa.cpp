@@ -44,8 +44,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <pacbio/ccs/SparsePoa.h>
-#include <pacbio/consensus/poa/PoaConsensus.h>
+#include <pacbio/denovo/SparsePoa.h>
+#include <pacbio/denovo/PoaConsensus.h>
 
 #include "TestData.h"
 #include "TestUtility.h"
@@ -55,7 +55,7 @@ using std::string;
 
 using namespace boost::assign;
 
-using namespace PacBio::CCS;
+using namespace PacBio::Poa;
 using ::testing::Ge;
 
 TEST(SparsePoaTest, TestLocalStaggered)
