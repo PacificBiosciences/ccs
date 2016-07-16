@@ -47,22 +47,5 @@ add_subdirectory(${UNY_SourceDir})
 
 # Build tests
 if(UNY_build_tests)
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        include(uny-codecoverage)
-    endif()
     add_subdirectory(${UNY_TestsDir})
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        SETUP_TARGET_FOR_COVERAGE(coverage test_unanimity coverage)
-    endif()
-endif()
-
-# Add executables
-if (UNY_build_bin)
-    add_executable(ccs ${UNY_SourceDir}/main/ccs.cpp)
-    
-    target_link_libraries(ccs 
-        ${UNANIMITY_LIBRARIES}
-    )
-
-    install(TARGETS ccs RUNTIME DESTINATION bin)
 endif()

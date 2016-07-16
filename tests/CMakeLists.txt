@@ -56,3 +56,8 @@ if(${ROOT_PROJECT_NAME} STREQUAL "UNANIMITY")
 endif()
 
 # add_test(test test_unanimity)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    include(uny-codecoverage)
+    SETUP_TARGET_FOR_COVERAGE(coverage test_unanimity coverage)
+endif()

@@ -41,3 +41,14 @@ if(${ROOT_PROJECT_NAME} STREQUAL "UNANIMITY")
 else()
     set(UNANIMITY_LIBRARIES ${PRE_LINK} unanimity ${POST_LINK} PARENT_SCOPE CACHE INTERNAL "" FORCE)
 endif()
+
+# add executables
+if (UNY_build_bin)
+    add_executable(ccs ${UNY_SourceDir}/main/ccs.cpp)
+    
+    target_link_libraries(ccs 
+        ${UNANIMITY_LIBRARIES}
+    )
+
+    install(TARGETS ccs RUNTIME DESTINATION bin)
+endif()
