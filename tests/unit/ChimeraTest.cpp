@@ -7,9 +7,11 @@
 #include "pacbio/chimera/ChimeraLabeler.h"
 #include "pacbio/chimera/ChimeraLabel.h"
 
+#include "TestData.h"
+
 using namespace PacBio::Chimera;
 
-const std::string FILENAME = "../../../test/unit/data/test.fasta";
+const std::string FILENAME = tests::DataDir + "/test.fasta";
 
 TEST(ChimeraLabeler, EndToEnd)
 {

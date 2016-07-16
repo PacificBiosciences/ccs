@@ -41,7 +41,7 @@
 
 namespace tests {
 
-const std::string DataDir("@PacBioCCS_TestsDir@/data");
-const std::string ccsExe("@PacBioCCS_BinDir@/ccs");
+const std::string DataDir("@UNY_TestsDir@/data");
+const std::string ccsExe("@CMAKE_BINARY_DIR@/ccs");
 
 } // namespace tests

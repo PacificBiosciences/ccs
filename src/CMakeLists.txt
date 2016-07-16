@@ -1,54 +1,43 @@
+# get all cpp files
+file(GLOB_RECURSE UNY_CPP "*.cpp")
+# exclude executable cpp fles
+file(GLOB_RECURSE UNY_MAIN_CPP "main/*.cpp")
+list(REMOVE_ITEM UNY_CPP ${UNY_MAIN_CPP})
 
-include_directories(. ${PacBioCCS_IncludeDir})
-include_directories(SYSTEM
-    ${Boost_INCLUDE_DIRS}
-    ${PBCONSENSUS_INCLUDE_DIRS}
-    ${HTSLIB_INCLUDE_DIRS}
-    ${PBBAM_INCLUDE_DIRS}
-    ${CPPOPTPARSE_IncludeDir}
-    ${SEQAN_INCLUDE_DIRS}
-    ${CMAKE_BINARY_DIR}/generated/
+# add main library including everything
+add_library(unanimity STATIC
+    ${UNY_CPP}
+    ${CPPOPTPARSE_CPP}
 )
 
-# flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PacBioCCS_CXX_FLAGS}")
-
-# gperftools support
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_EXE_LINKER_FLAGS "-Wl,-no_pie")
-endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-# libpbccs.a
-add_library(pbccs STATIC ${PacBioCCS_CPP} ${PacBioCCS_H})
-
-# ccs
-set(CCS_Sources
-    main/ccs.cpp
-    ${CPPOPTPARSE_CPP}
+# includes
+target_include_directories(unanimity PUBLIC
+    ${UNY_IncludeDir}
+    ${CMAKE_BINARY_DIR}/generated
+    ${Boost_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIRS}
+    ${HTSLIB_INCLUDE_DIRS}
+    ${UNY_ThirdPartyDir}/seqan/include
     ${CPPOPTPARSE_H}
 )
 
-add_executable(ccs ${CCS_Sources})
-target_link_libraries(ccs
-    pbccs
-    ${PBCONSENSUS_LIBRARIES}
-    ${PBBAM_LIBRARIES}
+# link dependency libs
+target_link_libraries(unanimity
+    pbbam
+    pbcopper
     ${HTSLIB_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${CMAKE_DL_LIBS}
 )
 
-# gperftools support
-# if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-#     target_link_libraries(ccs tcmalloc)
-# endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-
-if (TARGET htslib)
-    add_dependencies(ccs htslib)
+if(APPLE)
+    set(PRE_LINK -force_load)
+elseif(UNIX)
+    SET(PRE_LINK -Wl,-whole-archive)
+    SET(POST_LINK -Wl,-no-whole-archive)
 endif()
 
-set_target_properties(ccs PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-)
-install(TARGETS ccs RUNTIME DESTINATION bin)
+# because we can be a dependency, set this in the parent scope if so
+if(${ROOT_PROJECT_NAME} STREQUAL "UNANIMITY")
+    set(UNANIMITY_LIBRARIES ${PRE_LINK} unanimity ${POST_LINK} CACHE INTERNAL "" FORCE)
+else()
+    set(UNANIMITY_LIBRARIES ${PRE_LINK} unanimity ${POST_LINK} PARENT_SCOPE CACHE INTERNAL "" FORCE)
+endif()

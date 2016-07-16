@@ -6,6 +6,8 @@ cmake_policy(SET CMP0048 NEW)
 project(UNANIMITY VERSION 0.0.1 LANGUAGES CXX C)
 cmake_minimum_required(VERSION 3.2)
 
+set(ROOT_PROJECT_NAME ${PROJECT_NAME} CACHE STRING "root project name")
+
 set(PacBioBAM_build_docs    OFF CACHE INTERNAL "" FORCE)
 set(PacBioBAM_build_tests   OFF CACHE INTERNAL "" FORCE)
 set(PacBioBAM_build_tools   OFF CACHE INTERNAL "" FORCE)
@@ -24,7 +26,7 @@ option(UNY_use_ccache   "Build UNANIMITY using ccache, if available." ON)
 set(UNY_RootDir       ${UNANIMITY_SOURCE_DIR})
 set(UNY_IncludeDir    ${UNY_RootDir}/include)
 set(UNY_SourceDir     ${UNY_RootDir}/src)
-set(UNY_TestsDir      ${UNY_RootDir}/test)
+set(UNY_TestsDir      ${UNY_RootDir}/tests)
 set(UNY_ThirdPartyDir ${UNY_RootDir}/third-party)
 
 # Project configuration
@@ -41,41 +43,26 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${UNY_DEBUG_FLAGS}")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${UNY_LINKER_FLAGS}")
 
 # Build library
-file(GLOB_RECURSE UNY_CPP "${UNY_SourceDir}/*.cpp")
-file(GLOB_RECURSE UNY_MAIN_CPP "${UNY_SourceDir}/main/*.cpp")
-list(REMOVE_ITEM UNY_CPP ${UNY_MAIN_CPP})
-add_library(unanimity
-    ${UNY_CPP}
-    ${CPPOPTPARSE_CPP}
-)
-
-target_include_directories(unanimity PUBLIC
-    ${UNY_IncludeDir}
-    ${CMAKE_BINARY_DIR}/generated
-    ${Boost_INCLUDE_DIRS}
-    ${ZLIB_INCLUDE_DIRS}
-    ${HTSLIB_INCLUDE_DIRS}
-    ${UNY_ThirdPartyDir}/seqan/include
-    ${CPPOPTPARSE_H}
-)
-
-# link dependency libs
-target_link_libraries(unanimity 
-    pbbam
-    pbcopper
-    ${HTSLIB_LIBRARIES}
-)
+add_subdirectory(${UNY_SourceDir})
 
 # Build tests
-# if(UNY_build_tests)
-#     include(uny-codecoverage)
-#     add_subdirectory(test/unit)
-#     SETUP_TARGET_FOR_COVERAGE(coverage unanimity_test coverage)
-# endif()
+if(UNY_build_tests)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        include(uny-codecoverage)
+    endif()
+    add_subdirectory(${UNY_TestsDir})
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        SETUP_TARGET_FOR_COVERAGE(coverage test_unanimity coverage)
+    endif()
+endif()
 
+# Add executables
 if (UNY_build_bin)
     add_executable(ccs ${UNY_SourceDir}/main/ccs.cpp)
-    target_link_libraries(ccs unanimity)
+    
+    target_link_libraries(ccs 
+        ${UNANIMITY_LIBRARIES}
+    )
 
     install(TARGETS ccs RUNTIME DESTINATION bin)
 endif()

@@ -16,7 +16,7 @@ if(HAS_NO_UNUSED_LOCAL_TYPEDEFS)
 endif()
 
 # Coverage settings
-set(UNY_DEBUG_FLAGS "${UNY_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
+set(UNY_DEBUG_FLAGS "${UNY_FLAGS} -fprofile-arcs -ftest-coverage")
 
 # Extra testing that will lead to longer compilation times!
 if (SANITIZE)
