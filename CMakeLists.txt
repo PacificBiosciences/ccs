@@ -33,20 +33,36 @@ include(uny-ccache)
 include(uny-compilerflags)
 include(uny-dependencies)
 include(uny-gitsha1)
-
-# Config generation
-find_git_sha1(UNY_GIT_SHA1)
-file (STRINGS "CHANGELOG.md" UNANIMITY_CHANGELOG)
-configure_file(
-    ${UNY_IncludeDir}/pacbio/unanimity/Version.h.in
-    ${CMAKE_BINARY_DIR}/generated/pacbio/unanimity/Version.h
-)
+include(uny-config)
 
 # shared CXX flags for src & tests
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${UNY_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${UNY_DEBUG_FLAGS}")
 
 # Build library
+file(GLOB_RECURSE UNY_CPP "${UNY_SourceDir}/*.cpp")
+add_library(unanimity
+    ${UNY_CPP}
+    ${CPPOPTPARSE_CPP}
+)
+
+target_include_directories(unanimity PUBLIC
+    ${UNY_IncludeDir}
+    ${CMAKE_BINARY_DIR}/generated
+    ${Boost_INCLUDE_DIRS}
+    ${ZLIB_INCLUDE_DIRS}
+    ${HTSLIB_INCLUDE_DIRS}
+    ${UNY_ThirdPartyDir}/seqan/include
+    ${CPPOPTPARSE_H}
+)
+
+# link dependency libs
+target_link_libraries(unanimity 
+    pbbam
+    pbcopper
+    ${HTSLIB_LIBRARIES}
+)
+
 # add_subdirectory(src/consensus)
 
 # Build tests

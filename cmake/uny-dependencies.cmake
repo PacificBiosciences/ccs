@@ -38,6 +38,12 @@ endif()
 # pbbam
 if (NOT pbbam)
     add_subdirectory(${UNY_ThirdPartyDir}/pbbam external/pbbam/build)
+    if (htslib)
+        add_dependencies(pbbam htslib)
+    endif()
 endif()
 
-add_dependencies(pbbam htslib)
+
+# cpp-optparse sources
+set(CPPOPTPARSE_CPP ${UNY_ThirdPartyDir}/cpp-optparse/OptionParser.cpp)
+set(CPPOPTPARSE_H   ${UNY_ThirdPartyDir}/cpp-optparse)
