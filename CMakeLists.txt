@@ -64,8 +64,6 @@ target_link_libraries(unanimity
     ${HTSLIB_LIBRARIES}
 )
 
-# add_subdirectory(src/consensus)
-
 # Build tests
 # if(UNY_build_tests)
 #     include(uny-codecoverage)
@@ -73,9 +71,9 @@ target_link_libraries(unanimity
 #     SETUP_TARGET_FOR_COVERAGE(coverage unanimity_test coverage)
 # endif()
 
-# Build binaries
-# if (UNY_build_bin)
-#     add_subdirectory(src/pbccs)
+if (UNY_build_bin)
+    add_executable(ccs ${UNY_SourceDir}/main/ccs.cpp)
+    target_link_libraries(ccs unanimity)
 
-#     install(TARGETS ${ALL_EXE_TARGETS} RUNTIME DESTINATION bin)
-# endif()
+    install(TARGETS ccs RUNTIME DESTINATION bin)
+endif()
