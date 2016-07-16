@@ -9,55 +9,35 @@ dependencies:
     pre:
         - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
         - sudo apt-get update
-        - sudo apt-get install g++-4.8
         - curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
         - sudo apt-get install git-lfs=1.1.0
         - if [ ! -d _deps ] ; then mkdir _deps ; fi  # Create a directory for dependencies, These are static, cache them.
         - pushd _deps ; if [ ! -d cmake-3.3.0-Linux-x86_64 ] ; then wget --no-check-certificate https://www.cmake.org/files/v3.3/cmake-3.3.0-Linux-x86_64.tar.gz ; tar xzf cmake-3.3.0-Linux-x86_64.tar.gz ; fi
         - pushd _deps ; if [ ! -d boost_1_58_0 ] ; then wget https://downloads.sourceforge.net/project/boost/boost/1.58.0/boost_1_58_0.tar.bz2 ; tar xjf boost_1_58_0.tar.bz2 ; fi
-        - pushd _deps ; if [ ! -f swig-3.0.8/bin/swig ] ; then rm -fr swig-3.0.8* ; mkdir dl ; pushd dl ; wget https://downloads.sourceforge.net/project/swig/swig/swig-3.0.8/swig-3.0.8.tar.gz ; tar xzf swig-3.0.8.tar.gz ; pushd swig-3.0.8 ; ./configure --prefix $(readlink -f ../../swig-3.0.8) ; make ; make install ; fi
+        # - pushd _deps ; if [ ! -f swig-3.0.8/bin/swig ] ; then rm -fr swig-3.0.8* ; mkdir dl ; pushd dl ; wget https://downloads.sourceforge.net/project/swig/swig/swig-3.0.8/swig-3.0.8.tar.gz ; tar xzf swig-3.0.8.tar.gz ; pushd swig-3.0.8 ; ./configure --prefix $(readlink -f ../../swig-3.0.8) ; make ; make install ; fi
         - mkdir _rev_deps  # Create a directory for reverse-dependencies, ie things that depend on us. These are not static, do not cache them.
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/htslib.git
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbbam.git
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/pbccs.git
-        - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pblaa.git
-        - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbsparse.git
-        - pushd _rev_deps ; git clone https://${TOKEN}@github.com/PacificBiosciences/pbchimera.git
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/seqan.git
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/PacBioTestData.git
-        - pip install --upgrade pip
-        - pip install numpy
-        - pip install cython
-        - pip install h5py
-        - pip install pysam
-        - pip install git+https://github.com/PacificBiosciences/pbcommand.git git+https://github.com/PacificBiosciences/pbcore.git
+        # - pip install --upgrade pip
+        # - pip install numpy
+        # - pip install cython
+        # - pip install h5py
+        # - pip install pysam
+        # - pip install git+https://github.com/PacificBiosciences/pbcommand.git git+https://github.com/PacificBiosciences/pbcore.git
         - pushd _rev_deps/PacBioTestData ; git lfs pull && make python
 
-    override:
-        - echo "Building PBBAM"
-        - mkdir _build_bam
-        - pushd _build_bam ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_build_docs=OFF -DPacBioBAM_build_tests=OFF -DPacBioBAM_build_tools=OFF ../_rev_deps/pbbam
-        - pushd _build_bam ; make
 test:
     pre:
+        - git submodule update --init --remote
         - mkdir _build
-        - pushd _build ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Debug -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DEXTENSIVE_TESTING=1 ..
+        - pushd _build ; $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Debug -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) ..
     override:
         - pushd _build ; make
-        - pushd _build ; make check
-        - pushd _build ; rm -rf * ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DEXTENSIVE_TESTING=1 ..
-        - pushd _build ; make clean ; make test_pbconsensus
-        - tests/bin/test_pbconsensus --gtest_filter=IntegratorTest.TestLongTemplateTiming*
-        - CC=gcc-4.8 CXX=g++-4.8 CMAKE_COMMAND=$(readlink -f _deps/cmake-3.3.0-Linux-x86_64/bin/cmake) Boost_INCLUDE_DIRS=$(readlink -f _deps/boost_1_58_0) SWIG_COMMAND=$(readlink -f _deps/swig-3.0.8/bin/swig) VERBOSE=1 pip install --verbose --upgrade --no-deps .
-        - python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
-    post:
-        - echo "Building PBCCS"
-        - mkdir _build_ccs
-        - pushd _build_ccs ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_rev_deps/seqan/include) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_RootDir=$(readlink -f ../_rev_deps/pbbam) -DPBBAM_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbbam/include) -DPBBAM_LIBRARIES=$(readlink -f ../_rev_deps/pbbam/lib/libpbbam.a) -DPacBioConsensus_RootDir=$(readlink -f ..) -DPBCONSENSUS_INCLUDE_DIRS=$(readlink -f ../include) -DPBCONSENSUS_LIBRARIES="-Wl,-whole-archive /home/ubuntu/ConsensusCore2/lib/libpbconsensus.a -Wl,-no-whole-archive" ../_rev_deps/pbccs
-        - pushd _build_ccs ; make
-        - pushd _build_ccs ; make check
-        - echo "Building PBLAA"
-        - mkdir _build_laa
-        - pushd _build_laa ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_rev_deps/seqan/include) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_RootDir=$(readlink -f ../_rev_deps/pbbam) -DPBBAM_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbbam/include) -DPBBAM_LIBRARIES=$(readlink -f ../_rev_deps/pbbam/lib/libpbbam.a) -DPacBioConsensus_RootDir=$(readlink -f ..) -DPBCONSENSUS_INCLUDE_DIRS=$(readlink -f ../include) -DPBCONSENSUS_LIBRARIES="-Wl,-whole-archive /home/ubuntu/ConsensusCore2/lib/libpbconsensus.a -Wl,-no-whole-archive" -DPBCCS_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbccs/include) -DPBCCS_LIBRARIES=$(readlink -f ../_rev_deps/pbccs/lib/libpbccs.a) -DPacBioChimera_RootDir=$(readlink -f ../_rev_deps/pbchimera) ../_rev_deps/pblaa
-        - pushd _build_laa ; make
-        - pushd _build_laa ; make check
+        - pushd _build ; make checky
+        # - CC=gcc-4.8 CXX=g++-4.8 CMAKE_COMMAND=$(readlink -f _deps/cmake-3.3.0-Linux-x86_64/bin/cmake) Boost_INCLUDE_DIRS=$(readlink -f _deps/boost_1_58_0) SWIG_COMMAND=$(readlink -f _deps/swig-3.0.8/bin/swig) VERBOSE=1 pip install --verbose --upgrade --no-deps .
+        # - python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
+    # post:
+        # - echo "Building PBLAA"
+        # - mkdir _build_laa
+        # - pushd _build_laa ; CC=gcc-4.8 CXX=g++-4.8 $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_58_0) -DSEQAN_INCLUDE_DIRS=$(readlink -f ../_rev_deps/seqan/include) -DHTSLIB_ROOTDIR=$(readlink -f ../_rev_deps/htslib) -DPacBioBAM_RootDir=$(readlink -f ../_rev_deps/pbbam) -DPBBAM_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbbam/include) -DPBBAM_LIBRARIES=$(readlink -f ../_rev_deps/pbbam/lib/libpbbam.a) -DPacBioConsensus_RootDir=$(readlink -f ..) -DPBCONSENSUS_INCLUDE_DIRS=$(readlink -f ../include) -DPBCONSENSUS_LIBRARIES="-Wl,-whole-archive /home/ubuntu/ConsensusCore2/lib/libpbconsensus.a -Wl,-no-whole-archive" -DPBCCS_INCLUDE_DIRS=$(readlink -f ../_rev_deps/pbccs/include) -DPBCCS_LIBRARIES=$(readlink -f ../_rev_deps/pbccs/lib/libpbccs.a) -DPacBioChimera_RootDir=$(readlink -f ../_rev_deps/pbchimera) ../_rev_deps/pblaa
+        # - pushd _build_laa ; make
+        # - pushd _build_laa ; make check
