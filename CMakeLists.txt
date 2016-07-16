@@ -42,6 +42,8 @@ SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${UNY_LINKER_FLAGS}")
 
 # Build library
 file(GLOB_RECURSE UNY_CPP "${UNY_SourceDir}/*.cpp")
+file(GLOB_RECURSE UNY_MAIN_CPP "${UNY_SourceDir}/main/*.cpp")
+list(REMOVE_ITEM UNY_CPP ${UNY_MAIN_CPP})
 add_library(unanimity
     ${UNY_CPP}
     ${CPPOPTPARSE_CPP}
