@@ -38,6 +38,7 @@ include(uny-config)
 # shared CXX flags for src & tests
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${UNY_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${UNY_DEBUG_FLAGS}")
+SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${UNY_LINKER_FLAGS}")
 
 # Build library
 file(GLOB_RECURSE UNY_CPP "${UNY_SourceDir}/*.cpp")

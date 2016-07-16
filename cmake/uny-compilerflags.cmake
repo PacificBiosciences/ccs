@@ -4,6 +4,11 @@ include(CheckCXXCompilerFlag)
 # shared CXX flags for all source code & tests
 set(UNY_FLAGS "-std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable")
 
+# gperftools support
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(UNY_LINKER_FLAGS "${UNY_LINKER_FLAGS} -Wl,-no_pie")
+endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
 # NOTE: quash clang warnings w/ Boost
 check_cxx_compiler_flag("-Wno-unused-local-typedefs" HAS_NO_UNUSED_LOCAL_TYPEDEFS)
 if(HAS_NO_UNUSED_LOCAL_TYPEDEFS)
