@@ -43,12 +43,17 @@
 
 #include <pacbio/consensus/AbstractIntegrator.h>
 #include <pacbio/consensus/Evaluator.h>
-#include <pacbio/consensus/Exceptions.h>
+#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/Mutation.h>
-#include <pacbio/consensus/State.h>
+#include <pacbio/data/State.h>
 
 namespace PacBio {
 namespace Consensus {
+
+using MappedRead = PacBio::Data::MappedRead;
+using SNR = PacBio::Data::SNR;
+using State = PacBio::Data::State;
+using TemplateTooSmall = PacBio::Exception::TemplateTooSmall;
 
 class MultiMolecularIntegrator : public AbstractIntegrator
 {
@@ -63,7 +68,7 @@ public:
     void ApplyMutation(const Mutation& mut);
     void ApplyMutations(std::vector<Mutation>* muts);
 
-    State AddRead(const MappedRead& read);
+    Data::State AddRead(const MappedRead& read);
 
 protected:
     std::unique_ptr<AbstractTemplate> GetTemplate(const MappedRead& read, const SNR& snr);

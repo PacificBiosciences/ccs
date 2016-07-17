@@ -36,10 +36,10 @@
 #include <stdexcept>
 #include <string>
 
-#include <pacbio/consensus/Sequence.h>
+#include <pacbio/data/Sequence.h>
 
 namespace PacBio {
-namespace Consensus {
+namespace Data {
 
 char Complement(char base)
 {

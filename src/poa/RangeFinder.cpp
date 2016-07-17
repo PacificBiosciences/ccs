@@ -44,7 +44,7 @@
 #include <boost/optional.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 
-#include <pacbio/consensus/poa/RangeFinder.h>
+#include <pacbio/denovo/RangeFinder.h>
 
 #include "PoaGraphImpl.h"
 
@@ -58,7 +58,7 @@ using std::endl;
 #endif  // DEBUG_RANGE_FINDER
 
 namespace PacBio {
-namespace Consensus {
+namespace Poa {
 namespace detail {
 
 using std::min;
@@ -247,5 +247,5 @@ Interval SdpRangeFinder::FindAlignableRange(Vertex v)
 }
 
 }  // namespace detail
-}  // namespace Consensus
+}  // namespace Poa
 }  // namespace PacBio

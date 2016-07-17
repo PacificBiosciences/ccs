@@ -44,18 +44,19 @@
 
 #include <boost/optional.hpp>
 
-#include <pacbio/consensus/Exceptions.h>
+#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/consensus/Mutation.h>
-#include <pacbio/consensus/Read.h>
+#include <pacbio/data/Read.h>
 
 namespace PacBio {
 namespace Consensus {
 
+using MappedRead = PacBio::Data::MappedRead;
+
 // fwd decl
 class AbstractRecursor;
 class ScaledMatrix;
-struct MappedRead;
 
 class AbstractTemplate
 {

@@ -40,32 +40,32 @@
 #include <utility>
 #include <vector>
 
-#include <pacbio/consensus/Sequence.h>
-#include <pacbio/consensus/align/AlignConfig.h>
-#include <pacbio/consensus/poa/PoaConsensus.h>
-#include <pacbio/consensus/poa/PoaGraph.h>
+#include <pacbio/data/Sequence.h>
+#include <pacbio/align/AlignConfig.h>
+#include <pacbio/denovo/PoaConsensus.h>
+#include <pacbio/denovo/PoaGraph.h>
 
-#include <pacbio/ccs/Logging.h>
+#include <pacbio/log/Logging.h>
 #include <pacbio/ccs/SparseAlignment.h>
-#include <pacbio/ccs/SparsePoa.h>
+#include <pacbio/denovo/SparsePoa.h>
 
-using PacBio::Consensus::detail::SdpAnchorVector;
-using PacBio::Consensus::AlignConfig;
-using PacBio::Consensus::AlignMode;
-using PacBio::Consensus::DefaultPoaConfig;
-using PacBio::Consensus::PoaConsensus;
-using PacBio::Consensus::PoaGraph;
-using PacBio::Consensus::ReverseComplement;
+using PacBio::Poa::detail::SdpAnchorVector;
+using PacBio::Align::AlignConfig;
+using PacBio::Align::AlignMode;
+using PacBio::Poa::DefaultPoaConfig;
+using PacBio::Poa::PoaConsensus;
+using PacBio::Poa::PoaGraph;
+using PacBio::Data::ReverseComplement;
 
 namespace PacBio {
-namespace CCS {
+namespace Poa {
 
 typedef PoaGraph::Vertex Vertex;
 
 SdpAnchorVector SdpRangeFinder::FindAnchors(const std::string& consensusSequence,
                                             const std::string& readSequence) const
 {
-    return SparseAlign<6>(consensusSequence, readSequence);
+    return CCS::SparseAlign<6>(consensusSequence, readSequence);
 }
 
 SparsePoa::SparsePoa()

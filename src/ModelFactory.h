@@ -41,11 +41,18 @@
 #include <string>
 
 namespace PacBio {
+
+// forward declarations
+namespace Data {
+struct SNR;
+}
+
 namespace Consensus {
 
 // forward declarations
-struct SNR;
 class ModelConfig;
+
+using SNR = PacBio::Data::SNR;
 
 // this pattern is based on
 // http://blog.fourthwoods.com/2011/06/04/factory-design-pattern-in-c/

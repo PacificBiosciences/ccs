@@ -41,10 +41,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <pacbio/ccs/Interval.h>
-#include <pacbio/ccs/IntervalTree.h>
+#include <pacbio/data/Interval.h>
+#include <pacbio/data/IntervalTree.h>
 
-using namespace PacBio::CCS;
+using namespace PacBio::Data;
 
 TEST(IntervalTest, Merging)
 {

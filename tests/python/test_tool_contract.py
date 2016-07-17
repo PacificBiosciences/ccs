@@ -22,7 +22,7 @@ CHUNK_INDEX = 1
 
 class TestCCSApp(pbcommand.testkit.PbTestApp):
     # FIXME eventually the 'ccs' binary should handle TCI directly
-    DRIVER_BASE = op.join(CCS_DIR, "bin", "task_pbccs_ccs")
+    DRIVER_BASE = op.join(CCS_DIR, "scripts", "task_pbccs_ccs")
     REQUIRES_PBCORE = True
     INPUT_FILES = [tempfile.NamedTemporaryFile(suffix=".subreadset.xml").name]
     TASK_OPTIONS = {

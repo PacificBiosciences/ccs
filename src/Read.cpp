@@ -36,10 +36,10 @@
 #include <cassert>
 
 #include <pacbio/consensus/ModelConfig.h>
-#include <pacbio/consensus/Read.h>
+#include <pacbio/data/Read.h>
 
 namespace PacBio {
-namespace Consensus {
+namespace Data {
 
 SNR::SNR(const double a, const double c, const double g, const double t) : A(a), C(c), G(g), T(t) {}
 SNR::SNR(const std::vector<double>& snrs) : A(snrs[0]), C(snrs[1]), G(snrs[2]), T(snrs[3])

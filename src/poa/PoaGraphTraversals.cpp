@@ -39,14 +39,16 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/unordered_set.hpp>
 
-#include <pacbio/consensus/poa/PoaGraph.h>
+#include <pacbio/denovo/PoaGraph.h>
 
 #include "PoaGraphImpl.h"
 #include "VectorL.h"
 
 namespace PacBio {
-namespace Consensus {
+namespace Poa {
 namespace detail {
+
+using namespace PacBio::Consensus;
 
 std::string sequenceAlongPath(const BoostGraph& g, const VertexInfoMap& vertexInfoMap,
                               const std::vector<VD>& path)
@@ -452,5 +454,5 @@ vector<ScoredMutation>* PoaGraphImpl::findPossibleVariants(
 }
 
 }  // namespace detail
-}  // namespace Consensus
+}  // namespace Poa
 }  // namespace PacBio

@@ -52,28 +52,36 @@
 #include <OptionParser.h>
 
 #include <pacbio/consensus/MonoMolecularIntegrator.h>
-#include <pacbio/consensus/poa/PoaConsensus.h>
+#include <pacbio/denovo/PoaConsensus.h>
 #include <pacbio/consensus/Polish.h>
-#include <pacbio/consensus/State.h>
-#include <pacbio/consensus/StrandType.h>
+#include <pacbio/data/State.h>
+#include <pacbio/data/StrandType.h>
 
 #include <pbbam/Accuracy.h>
 #include <pbbam/LocalContextFlags.h>
 
-#include <pacbio/ccs/Logging.h>
-#include <pacbio/ccs/ReadId.h>
-#include <pacbio/ccs/SparsePoa.h>
-#include <pacbio/ccs/SubreadResultCounter.h>
-#include <pacbio/ccs/Timer.h>
+#include <pacbio/log/Logging.h>
+#include <pacbio/data/ReadId.h>
+#include <pacbio/denovo/SparsePoa.h>
+#include <pacbio/data/SubreadResultCounter.h>
+#include <pacbio/util/Timer.h>
 
 namespace PacBio {
 namespace CCS {
 
-using SNR = PacBio::Consensus::SNR;
-using QualityValues = PacBio::Consensus::QualityValues;
-using LocalContextFlags = PacBio::BAM::LocalContextFlags;
 using Accuracy = PacBio::BAM::Accuracy;
-using StrandType = PacBio::Consensus::StrandType;
+using Interval = PacBio::Data::Interval;
+using LocalContextFlags = PacBio::BAM::LocalContextFlags;
+using QualityValues = PacBio::Consensus::QualityValues;
+using ReadId = PacBio::Data::ReadId;
+using Read = PacBio::Data::Read;
+using MappedRead = PacBio::Data::MappedRead;
+using SNR = PacBio::Data::SNR;
+using StrandType = PacBio::Data::StrandType;
+using SubreadResultCounter = PacBio::Data::SubreadResultCounter;
+using Timer = PacBio::Util::Timer;
+using PoaAlignmentSummary = PacBio::Poa::PoaAlignmentSummary;
+using SparsePoa = PacBio::Poa::SparsePoa;
 
 namespace OptionNames {
 // constexpr auto MaxPoaCoverage       = "maxPoaCoverage";
@@ -340,7 +348,7 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
 }
 
 template <typename TRead>
-boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
+boost::optional<MappedRead> ExtractMappedRead(
     const TRead& read, const PacBio::Consensus::SNR& snr, const std::string& chem,
     const PoaAlignmentSummary& summary, const size_t poaLength, const ConsensusSettings& settings,
     SubreadResultCounter* resultCounter)
@@ -374,8 +382,8 @@ boost::optional<PacBio::Consensus::MappedRead> ExtractMappedRead(
         return boost::none;
     }
 
-    PacBio::Consensus::MappedRead mappedRead(
-        PacBio::Consensus::Read(
+    MappedRead mappedRead(
+        Read(
             read.Id, read.Seq.substr(readStart, readEnd - readStart),
             std::vector<uint8_t>(read.IPD.begin() + readStart, read.IPD.begin() + readEnd),
             std::vector<uint8_t>(read.PulseWidth.begin() + readStart,

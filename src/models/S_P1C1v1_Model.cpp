@@ -39,7 +39,7 @@
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
-#include <pacbio/consensus/Read.h>
+#include <pacbio/data/Read.h>
 
 #include "../ModelFactory.h"
 #include "../Recursor.h"

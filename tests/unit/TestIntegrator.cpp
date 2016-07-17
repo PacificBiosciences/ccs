@@ -51,7 +51,7 @@
 #include <pacbio/consensus/MonoMolecularIntegrator.h>
 #include <pacbio/consensus/MultiMolecularIntegrator.h>
 #include <pacbio/consensus/Mutation.h>
-#include <pacbio/consensus/Sequence.h>
+#include <pacbio/data/Sequence.h>
 
 #include "Mutations.h"
 #include "RandomDNA.h"
@@ -62,6 +62,7 @@ using std::cout;
 using std::endl;
 
 using namespace PacBio::Consensus;  // NOLINT
+using namespace PacBio::Data;  // NOLINT
 
 using ::testing::UnorderedElementsAreArray;
 

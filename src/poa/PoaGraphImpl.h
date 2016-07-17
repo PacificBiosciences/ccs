@@ -45,8 +45,8 @@
 #include <boost/type_traits.hpp>
 
 #include <pacbio/consensus/Mutation.h>
-#include <pacbio/consensus/align/AlignConfig.h>
-#include <pacbio/consensus/poa/PoaGraph.h>
+#include <pacbio/align/AlignConfig.h>
+#include <pacbio/denovo/PoaGraph.h>
 
 #include "BoostGraph.h"
 #include "PoaAlignmentMatrix.h"
@@ -60,8 +60,10 @@ using std::vector;
 using namespace boost;  // NOLINT
 
 namespace PacBio {
-namespace Consensus {
+namespace Poa {
 namespace detail {
+
+using ScoredMutation = PacBio::Consensus::ScoredMutation;
 
 // FWD
 class SdpRangeFinder;
@@ -259,5 +261,5 @@ std::string sequenceAlongPath(const BoostGraph& g, const VertexInfoMap& vertexIn
                               const std::vector<VD>& path);
 
 }  // namespace detail
-}  // namespace Consensus
+}  // namespace Poa
 }  // namespace PacBio

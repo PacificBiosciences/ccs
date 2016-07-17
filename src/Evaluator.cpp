@@ -38,7 +38,7 @@
 #include <string>
 
 #include <pacbio/consensus/Evaluator.h>
-#include <pacbio/consensus/Exceptions.h>
+#include <pacbio/exception/StateError.h>
 
 #include "EvaluatorImpl.h"
 

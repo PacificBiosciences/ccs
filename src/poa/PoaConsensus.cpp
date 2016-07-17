@@ -42,11 +42,14 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 
-#include <pacbio/consensus/align/AlignConfig.h>
-#include <pacbio/consensus/poa/PoaConsensus.h>
+#include <pacbio/align/AlignConfig.h>
+#include <pacbio/denovo/PoaConsensus.h>
 
 namespace PacBio {
-namespace Consensus {
+namespace Poa {
+
+using AlignConfig = PacBio::Align::AlignConfig;
+using AlignParams = PacBio::Align::AlignParams;
 
 AlignConfig DefaultPoaConfig(AlignMode mode)
 {
@@ -98,5 +101,5 @@ void PoaConsensus::WriteGraphVizFile(std::string filename, int flags) const
     Graph.WriteGraphVizFile(filename, flags, this);
 }
 
-}  // namespace Consensus
+}  // namespace Poa
 }  // namespace PacBio

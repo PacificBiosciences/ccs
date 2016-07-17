@@ -9,6 +9,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(UNY_LINKER_FLAGS "${UNY_LINKER_FLAGS} -Wl,-no_pie")
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
+# static linking
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(UNY_LINKER_FLAGS "${UNY_LINKER_FLAGS} -static-libgcc -static-libstdc++")
+ENDIF()
+
 # NOTE: quash clang warnings w/ Boost
 check_cxx_compiler_flag("-Wno-unused-local-typedefs" HAS_NO_UNUSED_LOCAL_TYPEDEFS)
 if(HAS_NO_UNUSED_LOCAL_TYPEDEFS)
@@ -35,5 +40,4 @@ if (SANITIZE)
 
     # UndefinedBehaviorSanitizer is a fast undefined behavior detector.
     set(UNY_DEBUG_FLAGS "${UNY_DEBUG_FLAGS} -fsanitize=undefined")
-    MESSAGE(${UNY_DEBUG_FLAGS})
 endif()

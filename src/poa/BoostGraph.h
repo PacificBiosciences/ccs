@@ -14,7 +14,7 @@ BOOST_INSTALL_PROPERTY(vertex, info);
 }  // namespace boost
 
 namespace PacBio {
-namespace Consensus {
+namespace Poa {
 namespace detail {
 
 /* using boost::adjacency_list; */

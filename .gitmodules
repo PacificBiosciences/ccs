@@ -2,10 +2,6 @@
 	path = third-party/htslib
 	url = https://github.com/PacificBiosciences/htslib
 	branch = pb
-[submodule "third-party/pbcopper"]
-	path = third-party/pbcopper
-	url = https://github.com/PacificBiosciences/pbcopper
-	branch = fused-gtest-gmock
 [submodule "third-party/pbbam"]
     path = third-party/pbbam
     url = https://github.com/PacificBiosciences/pbbam

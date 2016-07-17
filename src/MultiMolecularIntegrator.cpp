@@ -39,7 +39,7 @@
 #include <utility>
 
 #include <pacbio/consensus/MultiMolecularIntegrator.h>
-#include <pacbio/consensus/Sequence.h>
+#include <pacbio/data/Sequence.h>
 
 #include "ModelFactory.h"
 
@@ -48,7 +48,7 @@ namespace Consensus {
 
 MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
                                                    const IntegratorConfig& cfg)
-    : AbstractIntegrator(cfg), fwdTpl_{tpl}, revTpl_{::PacBio::Consensus::ReverseComplement(tpl)}
+    : AbstractIntegrator(cfg), fwdTpl_{tpl}, revTpl_{::PacBio::Data::ReverseComplement(tpl)}
 {
 }
 
@@ -82,7 +82,7 @@ void MultiMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)
     }
 
     assert(fwdTpl_.length() == revTpl_.length());
-    assert(fwdTpl_ == ::PacBio::Consensus::ReverseComplement(revTpl_));
+    assert(fwdTpl_ == ::PacBio::Data::ReverseComplement(revTpl_));
 }
 
 void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
@@ -103,7 +103,7 @@ void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
     }
 
     assert(fwdTpl_.length() == revTpl_.length());
-    assert(fwdTpl_ == ::PacBio::Consensus::ReverseComplement(revTpl_));
+    assert(fwdTpl_ == ::PacBio::Data::ReverseComplement(revTpl_));
 }
 
 std::unique_ptr<AbstractTemplate> MultiMolecularIntegrator::GetTemplate(const MappedRead& read,

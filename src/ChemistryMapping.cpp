@@ -39,15 +39,18 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include <pacbio/ccs/ChemistryMapping.h>
-#include <pacbio/ccs/ChemistryTriple.h>
-#include <pacbio/ccs/Exceptions.h>
-#include <pacbio/ccs/Utility.h>
+#include <pacbio/data/ChemistryMapping.h>
+#include <pacbio/data/ChemistryTriple.h>
+#include <pacbio/exception/CCSExceptions.h>
+#include <pacbio/io/Utility.h>
 
 using namespace std;
 
 namespace PacBio {
-namespace CCS {
+namespace Data {
+
+using namespace PacBio::IO;
+using namespace PacBio::Exception;
 
 ChemistryMapping::ChemistryMapping(const std::string& mappingXML)
 {
@@ -87,5 +90,5 @@ string ChemistryMapping::MapTriple(const ChemistryTriple& triple, const std::str
     }
 }
 
-}  // namespace CCS
+}  // namespace Data
 }  // namespace PacBio

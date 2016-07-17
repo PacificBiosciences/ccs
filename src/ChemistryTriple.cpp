@@ -38,13 +38,15 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/xpressive/xpressive.hpp>
 
-#include <pacbio/ccs/ChemistryTriple.h>
-#include <pacbio/ccs/Exceptions.h>
+#include <pacbio/data/ChemistryTriple.h>
+#include <pacbio/exception/CCSExceptions.h>
 
 using namespace std;
 
 namespace PacBio {
-namespace CCS {
+namespace Data {
+
+using namespace PacBio::Exception;
 
 ChemistryTriple::ChemistryTriple(const std::string& bindingKit, const std::string& sequencingKit,
                                  const std::string& changeListID)
@@ -81,5 +83,5 @@ bool ChemistryTriple::SetValues(const std::string& bindingKit, const std::string
     return false;
 }
 
-}  // namespace CCS
+}  // namespace Data
 }  // namespace PacBio

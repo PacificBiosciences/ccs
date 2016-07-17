@@ -40,19 +40,17 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/topological_sort.hpp>
 
-#include <pacbio/consensus/align/AlignConfig.h>
-#include <pacbio/consensus/poa/PoaConsensus.h>
-#include <pacbio/consensus/poa/PoaGraph.h>
-#include <pacbio/consensus/poa/RangeFinder.h>
+#include <pacbio/align/AlignConfig.h>
+#include <pacbio/denovo/PoaConsensus.h>
+#include <pacbio/denovo/PoaGraph.h>
+#include <pacbio/denovo/RangeFinder.h>
 
 #include "PoaGraphImpl.h"
 
 namespace boost {
 
-using PacBio::Consensus::detail::VertexInfoMap;
-using PacBio::Consensus::PoaConsensus;
-using PacBio::Consensus::PoaGraph;
-using PacBio::Consensus::detail::VD;
+using namespace PacBio::Poa::detail;
+using namespace PacBio::Poa;
 using boost::format;
 
 class my_label_writer
@@ -113,7 +111,7 @@ private:
 }  // namespace boost
 
 namespace PacBio {
-namespace Consensus {
+namespace Poa {
 namespace detail {
 
 // ----------------- PoaGraphImpl ---------------------
@@ -448,5 +446,5 @@ void PoaGraphImpl::WriteGraphVizFile(const string& filename, int flags,
 }
 
 }  // namespace detail
-}  // namespace Consensus
+}  // namespace Poa
 }  // namespace PacBio

@@ -38,11 +38,13 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <pacbio/consensus/Exceptions.h>
+#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/Template.h>
 
 namespace PacBio {
 namespace Consensus {
+
+using TemplateTooSmall = PacBio::Exception::TemplateTooSmall;
 
 AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const bool pinStart,
                                    const bool pinEnd)

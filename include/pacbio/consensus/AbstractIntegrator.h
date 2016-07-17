@@ -44,12 +44,16 @@
 #include <set>
 
 #include <pacbio/consensus/Evaluator.h>
-#include <pacbio/consensus/Exceptions.h>
+#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/Mutation.h>
-#include <pacbio/consensus/State.h>
+#include <pacbio/data/State.h>
 
 namespace PacBio {
 namespace Consensus {
+
+using MappedRead = PacBio::Data::MappedRead;
+using State = PacBio::Data::State;
+using StrandType = PacBio::Data::StrandType;
 
 struct IntegratorConfig
 {
@@ -58,12 +62,6 @@ struct IntegratorConfig
 
     IntegratorConfig(double minZScore = -3.5, double scoreDiff = 12.5);
 };
-
-inline std::ostream& operator<<(std::ostream& os, State result)
-{
-    os << StateName[static_cast<size_t>(result)];
-    return os;
-}
 
 std::set<std::string> SupportedChemistries();
 

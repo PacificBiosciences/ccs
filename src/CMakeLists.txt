@@ -1,3 +1,6 @@
+# get all header files for IDE support
+file(GLOB_RECURSE UNY_HEADER "${UNY_IncludeDir}/*.h")
+file(GLOB_RECURSE UNY_HIDDEN_HEADER "*.h")
 # get all cpp files
 file(GLOB_RECURSE UNY_CPP "*.cpp")
 # exclude executable cpp fles
@@ -7,6 +10,8 @@ list(REMOVE_ITEM UNY_CPP ${UNY_MAIN_CPP})
 # add main library including everything
 add_library(unanimity STATIC
     ${UNY_CPP}
+    ${UNY_HEADER}
+    ${UNY_HIDDEN_HEADER}
     ${CPPOPTPARSE_CPP}
 )
 
@@ -19,13 +24,7 @@ target_include_directories(unanimity PUBLIC
     ${HTSLIB_INCLUDE_DIRS}
     ${UNY_ThirdPartyDir}/seqan/include
     ${CPPOPTPARSE_H}
-)
-
-# link dependency libs
-target_link_libraries(unanimity
-    pbbam
-    pbcopper
-    ${HTSLIB_LIBRARIES}
+    ${PacBioBAM_INCLUDE_DIRS}
 )
 
 if(APPLE)
@@ -46,9 +45,22 @@ endif()
 if (UNY_build_bin)
     add_executable(ccs ${UNY_SourceDir}/main/ccs.cpp)
     
+    set_target_properties(ccs PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+
     target_link_libraries(ccs 
         ${UNANIMITY_LIBRARIES}
+        ${PacBioBAM_LIBRARIES}
+        ${HTSLIB_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${CMAKE_DL_LIBS}
+        ${ZLIB_LIBRARIES}
     )
+
+    if (TARGET htslib)
+        add_dependencies(ccs htslib)
+    endif()
 
     install(TARGETS ccs RUNTIME DESTINATION bin)
 endif()

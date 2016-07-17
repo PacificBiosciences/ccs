@@ -39,7 +39,7 @@
 #include <utility>
 
 #include <pacbio/consensus/MonoMolecularIntegrator.h>
-#include <pacbio/consensus/Sequence.h>
+#include <pacbio/data/Sequence.h>
 
 #include "ModelFactory.h"
 
@@ -53,7 +53,7 @@ MonoMolecularIntegrator::MonoMolecularIntegrator(const std::string& tpl,
     , mdl_{model}
     , snr_{snr}
     , fwdTpl_(tpl, ModelFactory::Create(mdl_, snr_))
-    , revTpl_(::PacBio::Consensus::ReverseComplement(tpl), ModelFactory::Create(mdl_, snr_))
+    , revTpl_(::PacBio::Data::ReverseComplement(tpl), ModelFactory::Create(mdl_, snr_))
 {
 }
 
@@ -143,7 +143,7 @@ void MonoMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)
 
 #endif
 
-    assert(fwd == ::PacBio::Consensus::ReverseComplement(rev));
+    assert(fwd == ::PacBio::Data::ReverseComplement(rev));
 }
 
 void MonoMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
@@ -175,7 +175,7 @@ void MonoMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
     }
 #endif
 
-    assert(fwd == ::PacBio::Consensus::ReverseComplement(rev));
+    assert(fwd == ::PacBio::Data::ReverseComplement(rev));
 }
 
 }  // namespace Consensus
