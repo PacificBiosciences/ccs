@@ -1,17 +1,17 @@
 
 %{
-#include <pacbio/consensus/align/AlignConfig.h>
-#include <pacbio/consensus/align/PairwiseAlignment.h>
-#include <pacbio/consensus/align/AffineAlignment.h>
-#include <pacbio/consensus/align/LinearAlignment.h>
+#include <pacbio/align/AlignConfig.h>
+#include <pacbio/align/PairwiseAlignment.h>
+#include <pacbio/align/AffineAlignment.h>
+#include <pacbio/align/LinearAlignment.h>
 %}
 
-%newobject PacBio::Consensus::Align;
-%newobject PacBio::Consensus::AlignAffine;
-%newobject PacBio::Consensus::AlignAffineIupac;
-%newobject PacBio::Consensus::AlignLinear;
+%newobject PacBio::Align::Align;
+%newobject PacBio::Align::AlignAffine;
+%newobject PacBio::Align::AlignAffineIupac;
+%newobject PacBio::Align::AlignLinear;
 
-%include <pacbio/consensus/align/AlignConfig.h>
-%include <pacbio/consensus/align/PairwiseAlignment.h>
-%include <pacbio/consensus/align/AffineAlignment.h>
-%include <pacbio/consensus/align/LinearAlignment.h>
+%include <pacbio/align/AlignConfig.h>
+%include <pacbio/align/PairwiseAlignment.h>
+%include <pacbio/align/AffineAlignment.h>
+%include <pacbio/align/LinearAlignment.h>

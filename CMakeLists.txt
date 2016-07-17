@@ -27,6 +27,7 @@ option(UNY_use_ccache   "Build UNANIMITY using ccache, if available." ON)
 set(UNY_RootDir       ${UNANIMITY_SOURCE_DIR})
 set(UNY_IncludeDir    ${UNY_RootDir}/include)
 set(UNY_SourceDir     ${UNY_RootDir}/src)
+set(UNY_SwigDir       ${UNY_RootDir}/swig)
 set(UNY_TestsDir      ${UNY_RootDir}/tests)
 set(UNY_ThirdPartyDir ${UNY_RootDir}/third-party)
 
@@ -49,4 +50,9 @@ add_subdirectory(${UNY_SourceDir})
 # Build tests
 if(UNY_build_tests)
     add_subdirectory(${UNY_TestsDir})
+endif()
+
+# Swig
+if (PYTHON_SWIG)
+    add_subdirectory(${UNY_SwigDir})
 endif()
