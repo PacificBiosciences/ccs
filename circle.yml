@@ -24,7 +24,9 @@ dependencies:
         - pip install git+https://github.com/PacificBiosciences/pbcommand.git git+https://github.com/PacificBiosciences/pbcore.git
         - pushd _deps/PacBioTestData ; git lfs pull && make python
         - git submodule update --init --remote
-
+    override:
+        - CMAKE_COMMAND=$(readlink -f _deps/cmake-3.3.0-Linux-x86_64/bin/cmake) Boost_INCLUDE_DIRS=$(readlink -f _deps/boost_1_58_0) SWIG_COMMAND=$(readlink -f _deps/swig-3.0.8/bin/swig) VERBOSE=1 pip install --verbose --upgrade --no-deps .
+        - python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
 test:
     pre:
         - mkdir _build
