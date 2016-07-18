@@ -9,6 +9,7 @@ configure_file(
 
 include_directories(
     ${UNY_IncludeDir}
+    ${CMAKE_BINARY_DIR}/generated
 )
 
 include(uny-findpythonpath)
@@ -33,7 +34,7 @@ set(SWIG_COMMAND swig CACHE PATH "swig path")
 
 add_custom_command(OUTPUT ConsensusCore2_wrap.cxx
     COMMAND ${SWIG_COMMAND} -Wextra -c++ -python -builtin -module ConsensusCore2
-        -I${UNY_IncludeDir}
+        -I${UNY_IncludeDir} -I${CMAKE_BINARY_DIR}/generated
         -o ${CMAKE_BINARY_DIR}/swig/ConsensusCore2_wrap.cxx -outdir ${CMAKE_BINARY_DIR}/swig
         ${UNY_SwigDir}/ConsensusCore2.i
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/swig/ConsensusCore2.py

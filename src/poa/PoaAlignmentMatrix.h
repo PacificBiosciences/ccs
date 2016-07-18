@@ -57,8 +57,6 @@ namespace PacBio {
 namespace Poa {
 namespace detail {
 
-using AlignMode = PacBio::Align::AlignMode;
-
 enum MoveType
 {
     InvalidMove,  // Invalid move reaching ^ (start)
@@ -115,7 +113,7 @@ public:
     const PoaGraphImpl* graph_;
     AlignmentColumnMap columns_;
     std::string readSequence_;
-    AlignMode mode_;
+    PacBio::Align::AlignMode mode_;
     float score_;
 };
 }

@@ -38,7 +38,8 @@
 namespace PacBio {
 namespace Consensus {
 
-AbstractRecursor::AbstractRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+AbstractRecursor::AbstractRecursor(std::unique_ptr<AbstractTemplate>&& tpl, 
+                                   const PacBio::Data::MappedRead& mr,
                                    const double scoreDiff)
     : tpl_{std::forward<std::unique_ptr<AbstractTemplate>>(tpl)}
     , read_{mr}

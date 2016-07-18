@@ -46,8 +46,6 @@
 namespace PacBio {
 namespace Data {
 
-using StrandType = PacBio::Data::StrandType;
-
 struct SNR
 {
     double A;

@@ -46,6 +46,8 @@
 #include "../ModelFactory.h"
 #include "../Recursor.h"
 
+using namespace PacBio::Data;
+
 namespace PacBio {
 namespace Consensus {
 namespace {

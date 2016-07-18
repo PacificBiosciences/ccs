@@ -44,11 +44,11 @@
 #include "../ModelFactory.h"
 #include "../Recursor.h"
 
+using namespace PacBio::Data;
+
 namespace PacBio {
 namespace Consensus {
 namespace {
-
-using SNR = PacBio::Data::SNR;
 
 constexpr double kEps = 0.00505052456472967;
 constexpr double kCounterWeight = 1.894736842105264607;

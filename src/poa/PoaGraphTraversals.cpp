@@ -48,6 +48,7 @@ namespace PacBio {
 namespace Poa {
 namespace detail {
 
+using namespace PacBio::Align;
 using namespace PacBio::Consensus;
 
 std::string sequenceAlongPath(const BoostGraph& g, const VertexInfoMap& vertexInfoMap,

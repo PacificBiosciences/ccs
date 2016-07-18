@@ -59,7 +59,7 @@ public:
 
     SubreadResultCounter();
     std::vector<int32_t> ReturnCountsAsArray() const;
-    void AddResult(PacBio::Consensus::State);
+    void AddResult(PacBio::Data::State);
     /* Certain conditions may make reads that were on their
        way to success go to the garbage bin, in this case we reassign
        all the success reads to the other category */

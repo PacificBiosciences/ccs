@@ -45,9 +45,7 @@
 
 namespace PacBio {
 namespace Consensus {
-
-using State = PacBio::Data::State;
-using StrandType = PacBio::Data::StrandType;
+    
 // forward declaration
 class EvaluatorImpl;
 
@@ -55,8 +53,8 @@ class Evaluator
 {
 public:
     Evaluator() = delete;
-    Evaluator(State);
-    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double minZScore,
+    Evaluator(PacBio::Data::State);
+    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr, double minZScore,
               double scoreDiff);
 
     // copying is verboten
@@ -71,7 +69,7 @@ public:
     ~Evaluator();
 
     size_t Length() const;  // TODO: is this used anywhere?  If not, delete it.
-    StrandType Strand() const;
+    PacBio::Data::StrandType Strand() const;
 
     operator bool() const { return IsValid(); }
     operator std::string() const;
@@ -87,7 +85,7 @@ public:
     bool ApplyMutation(const Mutation& mut);
     bool ApplyMutations(std::vector<Mutation>* muts);
 
-    State Status() const { return curState_; }
+    PacBio::Data::State Status() const { return curState_; }
     int NumFlipFlops() const;
     float AlphaPopulated() const;
     float BetaPopulated() const;
@@ -97,12 +95,12 @@ public:
 private:
     void CheckZScore(const double minZScore, const std::string& model);
 
-    bool IsValid() const { return curState_ == State::VALID; }
-    void Status(State nextState);
+    bool IsValid() const { return curState_ == PacBio::Data::State::VALID; }
+    void Status(PacBio::Data::State nextState);
 
 private:
     std::unique_ptr<EvaluatorImpl> impl_;
-    State curState_;
+    PacBio::Data::State curState_;
 };
 
 }  // namespace Consensus

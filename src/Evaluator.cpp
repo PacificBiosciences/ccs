@@ -42,6 +42,9 @@
 
 #include "EvaluatorImpl.h"
 
+using namespace PacBio::Data;
+using namespace PacBio::Exception;
+
 namespace PacBio {
 namespace Consensus {
 namespace {

@@ -52,8 +52,6 @@
 namespace PacBio {
 namespace Consensus {
 
-using MappedRead = PacBio::Data::MappedRead;
-
 // fwd decl
 class AbstractRecursor;
 class ScaledMatrix;
@@ -79,7 +77,7 @@ public:
 
     // access model configuration
     virtual std::unique_ptr<AbstractRecursor> CreateRecursor(
-        std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const = 0;
+        std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr, double scoreDiff) const = 0;
     virtual double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                          MomentType moment) const = 0;
 
@@ -121,7 +119,7 @@ public:
     bool ApplyMutation(const Mutation& mut);
 
     inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                            const MappedRead& mr,
+                                                            const PacBio::Data::MappedRead& mr,
                                                             double scoreDiff) const;
 
     inline double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
@@ -153,7 +151,7 @@ public:
     bool ApplyMutation(const Mutation& mut);
 
     inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                            const MappedRead& mr,
+                                                            const PacBio::Data::MappedRead& mr,
                                                             double scoreDiff) const;
 
     inline double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
@@ -170,7 +168,7 @@ protected:
     typedef ScaledMatrix M;
 
 public:
-    AbstractRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+    AbstractRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
                      double scoreDiff);
     virtual ~AbstractRecursor() {}
     virtual size_t FillAlphaBeta(M& alpha, M& beta) const = 0;
@@ -185,7 +183,7 @@ public:
 
 public:
     std::unique_ptr<AbstractTemplate> tpl_;
-    MappedRead read_;
+    PacBio::Data::MappedRead read_;
 
 protected:
     double scoreDiff_;  // reciprocal of "natural scale"
@@ -223,7 +221,7 @@ size_t VirtualTemplate::Length() const
 }
 
 std::unique_ptr<AbstractRecursor> Template::CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                           const MappedRead& mr,
+                                                           const PacBio::Data::MappedRead& mr,
                                                            double scoreDiff) const
 {
     return cfg_->CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
@@ -255,7 +253,7 @@ boost::optional<Mutation> VirtualTemplate::Mutate(const Mutation& mut)
 }
 
 inline std::unique_ptr<AbstractRecursor> VirtualTemplate::CreateRecursor(
-    std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
+    std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr, double scoreDiff) const
 {
     return master_.CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
                                   scoreDiff);

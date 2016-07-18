@@ -51,9 +51,6 @@
 namespace PacBio {
 namespace Consensus {
 
-using StateError = PacBio::Exception::StateError;
-using AlphaBetaMismatch = PacBio::Exception::AlphaBetaMismatch;;
-
 // AbstractRecursor is in Template.h
 
 // TODO(lhepler) comment about use of CRTP
@@ -64,7 +61,7 @@ public:
     // \brief Construct a Recursor from a Template and a MappedRead,
     // The scoreDiff here is passed in negative logScale and converted
     // to the appropriate divisor.
-    Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+    Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
              double scoreDiff = 12.5);
 
     /// \brief Fill the alpha and beta matrices.
@@ -702,7 +699,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
 }
 
 template <typename Derived>
-Recursor<Derived>::Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+Recursor<Derived>::Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
                             const double scoreDiff)
     : AbstractRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
     , emissions_{Derived::EncodeRead(read_)}
@@ -748,7 +745,7 @@ size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
     }
 
     if (std::abs(1.0 - alphaV / betaV) > ALPHA_BETA_MISMATCH_TOLERANCE || !std::isfinite(betaV))
-        throw AlphaBetaMismatch();
+        throw PacBio::Exception::AlphaBetaMismatch();
 
     return flipflops;
 }

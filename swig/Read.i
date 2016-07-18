@@ -1,7 +1,7 @@
 
 // TODO(lhepler): remove these, figure out %ignore
-%warnfilter(509) PacBio::Data::Read::Read;
-%warnfilter(509) PacBio::Data::MappedRead::MappedRead;
+%warnfilter(509) PacBio::Data::Read;
+%warnfilter(509) PacBio::Data::MappedRead;
 
 %{
 #include <pacbio/data/StrandType.h>

@@ -39,6 +39,8 @@
 
 #include "EvaluatorImpl.h"
 
+using namespace PacBio::Data;
+
 namespace PacBio {
 namespace Consensus {
 namespace {  // anonymous

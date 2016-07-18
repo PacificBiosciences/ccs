@@ -47,6 +47,8 @@
 
 #include "PoaGraphImpl.h"
 
+using namespace PacBio::Align;
+
 namespace boost {
 
 using namespace PacBio::Poa::detail;
