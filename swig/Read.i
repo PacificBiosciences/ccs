@@ -1,15 +1,15 @@
 
 // TODO(lhepler): remove these, figure out %ignore
-%warnfilter(509) PacBio::Consensus::Read::Read;
-%warnfilter(509) PacBio::Consensus::MappedRead::MappedRead;
+%warnfilter(509) PacBio::Data::Read;
+%warnfilter(509) PacBio::Data::MappedRead;
 
 %{
-#include <pacbio/consensus/StrandType.h>
-#include <pacbio/consensus/Read.h>
+#include <pacbio/data/StrandType.h>
+#include <pacbio/data/Read.h>
 %}
 
-%feature("notabstract") PacBio::Consensus::Read;
-%feature("notabstract") PacBio::Consensus::MappedRead;
+%feature("notabstract") PacBio::Data::Read;
+%feature("notabstract") PacBio::Data::MappedRead;
 
-%include <pacbio/consensus/StrandType.h>
-%include <pacbio/consensus/Read.h>
+%include <pacbio/data/StrandType.h>
+%include <pacbio/data/Read.h>

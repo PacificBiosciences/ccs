@@ -43,28 +43,34 @@
 namespace PacBio {
 namespace Exception {
 
-using State = PacBio::Data::State;
-
 class StateError : public std::runtime_error
 {
 public:
-    StateError(State state, const std::string& msg) : std::runtime_error(msg), state_(state) {}
-    State WhatState() const { return state_; }
+    StateError(PacBio::Data::State state, const std::string& msg) 
+        : std::runtime_error(msg)
+        , state_(state) 
+    {}
+
+    PacBio::Data::State WhatState() const { return state_; }
     virtual const char* what() const noexcept { return std::runtime_error::what(); }
 private:
-    State state_;
+    PacBio::Data::State state_;
 };
 
 class TemplateTooSmall : public StateError
 {
 public:
-    TemplateTooSmall() : StateError(State::TEMPLATE_TOO_SMALL, "Template too short!") {}
+    TemplateTooSmall() 
+        : StateError(PacBio::Data::State::TEMPLATE_TOO_SMALL, "Template too short!") 
+    {}
 };
 
 class AlphaBetaMismatch : public StateError
 {
 public:
-    AlphaBetaMismatch() : StateError(State::ALPHA_BETA_MISMATCH, "Alpha/beta mismatch!") {}
+    AlphaBetaMismatch() 
+        : StateError(PacBio::Data::State::ALPHA_BETA_MISMATCH, "Alpha/beta mismatch!") 
+    {}
 };
 
 class ChemistryNotFound : public std::runtime_error

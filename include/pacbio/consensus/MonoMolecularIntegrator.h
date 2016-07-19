@@ -50,16 +50,10 @@
 namespace PacBio {
 namespace Consensus {
 
-using MappedRead = PacBio::Data::MappedRead;
-using SNR = PacBio::Data::SNR;
-using State = PacBio::Data::State;
-using TemplateTooSmall = PacBio::Exception::TemplateTooSmall;
-
-
 class MonoMolecularIntegrator : public AbstractIntegrator
 {
 public:
-    MonoMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg, const SNR& snr,
+    MonoMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg, const PacBio::Data::SNR& snr,
                             const std::string& model);
 
     // move constructor
@@ -75,11 +69,11 @@ public:
     void ApplyMutation(const Mutation& mut);
     void ApplyMutations(std::vector<Mutation>* muts);
 
-    State AddRead(const MappedRead& read);
+    PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read);
 
 protected:
     std::string mdl_;
-    SNR snr_;
+    PacBio::Data::SNR snr_;
     Template fwdTpl_;
     Template revTpl_;
 };

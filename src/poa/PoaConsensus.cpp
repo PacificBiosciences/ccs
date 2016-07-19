@@ -48,8 +48,7 @@
 namespace PacBio {
 namespace Poa {
 
-using AlignConfig = PacBio::Align::AlignConfig;
-using AlignParams = PacBio::Align::AlignParams;
+using namespace PacBio::Align;
 
 AlignConfig DefaultPoaConfig(AlignMode mode)
 {

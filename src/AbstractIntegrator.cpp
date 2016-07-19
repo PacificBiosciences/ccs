@@ -45,6 +45,7 @@
 
 #include "ModelFactory.h"
 
+
 namespace PacBio {
 namespace Consensus {
 
@@ -74,7 +75,7 @@ AbstractIntegrator::AbstractIntegrator(AbstractIntegrator&& ai)
 }
 
 AbstractIntegrator::~AbstractIntegrator() {}
-State AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& read)
+Data::State AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl, const Data::MappedRead& read)
 {
     // TODO(atoepfer) Why don't we add those reads and tag them as TEMPLATE_TOO_SMALL
     //                and effectively keep book about them? This logic should be
@@ -165,9 +166,9 @@ std::vector<std::pair<double, double>> AbstractIntegrator::NormalParameters() co
         [](const Evaluator& eval) { return eval.NormalParameters(); });
 }
 
-std::vector<State> AbstractIntegrator::States() const
+std::vector<Data::State> AbstractIntegrator::States() const
 {
-    return TransformEvaluators<State>([](const Evaluator& eval) { return eval.Status(); });
+    return TransformEvaluators<Data::State>([](const Evaluator& eval) { return eval.Status(); });
 }
 
 std::vector<StrandType> AbstractIntegrator::StrandTypes() const

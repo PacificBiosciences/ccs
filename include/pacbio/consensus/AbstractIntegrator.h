@@ -51,10 +51,6 @@
 namespace PacBio {
 namespace Consensus {
 
-using MappedRead = PacBio::Data::MappedRead;
-using State = PacBio::Data::State;
-using StrandType = PacBio::Data::StrandType;
-
 struct IntegratorConfig
 {
     double MinZScore;
@@ -86,7 +82,7 @@ public:
     virtual void ApplyMutation(const Mutation& mut) = 0;
     virtual void ApplyMutations(std::vector<Mutation>* muts) = 0;
 
-    virtual State AddRead(const MappedRead& read) = 0;
+    virtual PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read) = 0;
 
     // For debugging purposes
     // (Note that these include results include all evaluators, even the inactive ones)
@@ -103,8 +99,8 @@ public:
     std::vector<float> BetaPopulated() const;
     float MaxBetaPopulated() const;
 
-    std::vector<State> States() const;
-    std::vector<StrandType> StrandTypes() const;
+    std::vector<PacBio::Data::State> States() const;
+    std::vector<PacBio::Data::StrandType> StrandTypes() const;
 
     // TODO(atoepfer) Does anyone have a clue if we can make one function out
     //                of those two?
@@ -140,7 +136,7 @@ protected:
     // move constructor
     AbstractIntegrator(AbstractIntegrator&&);
 
-    State AddRead(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& read);
+    PacBio::Data::State AddRead(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& read);
 
     IntegratorConfig cfg_;
     std::vector<Evaluator> evals_;

@@ -77,11 +77,14 @@ using ReadId = PacBio::Data::ReadId;
 using Read = PacBio::Data::Read;
 using MappedRead = PacBio::Data::MappedRead;
 using SNR = PacBio::Data::SNR;
+using State = PacBio::Data::State;
 using StrandType = PacBio::Data::StrandType;
 using SubreadResultCounter = PacBio::Data::SubreadResultCounter;
 using Timer = PacBio::Util::Timer;
 using PoaAlignmentSummary = PacBio::Poa::PoaAlignmentSummary;
 using SparsePoa = PacBio::Poa::SparsePoa;
+using AlignConfig = PacBio::Align::AlignConfig;
+using AlignMode = PacBio::Align::AlignMode;
 
 namespace OptionNames {
 // constexpr auto MaxPoaCoverage       = "maxPoaCoverage";
@@ -349,7 +352,7 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
 
 template <typename TRead>
 boost::optional<MappedRead> ExtractMappedRead(
-    const TRead& read, const PacBio::Consensus::SNR& snr, const std::string& chem,
+    const TRead& read, const PacBio::Data::SNR& snr, const std::string& chem,
     const PoaAlignmentSummary& summary, const size_t poaLength, const ConsensusSettings& settings,
     SubreadResultCounter* resultCounter)
 {

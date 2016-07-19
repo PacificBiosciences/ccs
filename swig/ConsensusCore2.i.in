@@ -9,7 +9,7 @@
 
 %pythoncode
 %{
-__version__ = "@PacBioConsensus_VERSION@"
+__version__ = "@UNANIMITY_VERSION@"
 %}
 
 %ignore *::operator[];
@@ -75,6 +75,7 @@ namespace std
 %enddef
 
 // no include dependencies
+%include "State.i"
 %include "Alignment.i"
 %include "Coverage.i"
 %include "ModelConfig.i"

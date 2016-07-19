@@ -47,11 +47,14 @@
 #include <pacbio/consensus/MonoMolecularIntegrator.h>
 #include <pacbio/consensus/MultiMolecularIntegrator.h>
 #include <pacbio/consensus/Mutation.h>
+#include <pacbio/data/Read.h>
 
 using std::string;
 using std::vector;
 using std::cout;
 using std::endl;
+
+using namespace PacBio::Data;
 
 namespace PacBio {
 namespace Consensus {

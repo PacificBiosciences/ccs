@@ -49,8 +49,6 @@
 namespace PacBio {
 namespace CCS {
 
-using IntervalTree = PacBio::Data::IntervalTree;
-
 class Whitelist
 {
 public:
@@ -76,14 +74,14 @@ public:
             // only 1 part, it's a ZMW range
             if (parts.size() == 1) {
                 if (movieZmws.empty()) {
-                    globalZmws = IntervalTree::FromString(parts[0]);
+                    globalZmws = PacBio::Data::IntervalTree::FromString(parts[0]);
                     continue;
                 }
             }
             // two parts, but *:_? again, it's just a ZMW range
             else if (parts.size() == 2 && parts[0] == "*") {
                 if (movieZmws.empty()) {
-                    globalZmws = IntervalTree::FromString(parts[1]);
+                    globalZmws = PacBio::Data::IntervalTree::FromString(parts[1]);
                     continue;
                 }
             }
@@ -93,7 +91,7 @@ public:
                 if (parts[1] == "*")
                     movieZmws[parts[0]] = boost::none;
                 else
-                    movieZmws[parts[0]] = IntervalTree::FromString(parts[1]);
+                    movieZmws[parts[0]] = PacBio::Data::IntervalTree::FromString(parts[1]);
 
                 continue;
             }
@@ -117,8 +115,8 @@ public:
 
 private:
     bool all;
-    boost::optional<IntervalTree> globalZmws;
-    std::map<std::string, boost::optional<IntervalTree>> movieZmws;
+    boost::optional<PacBio::Data::IntervalTree> globalZmws;
+    std::map<std::string, boost::optional<PacBio::Data::IntervalTree>> movieZmws;
 };
 
 }  // namespace CCS

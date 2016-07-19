@@ -52,7 +52,7 @@ namespace Consensus {
 class EvaluatorImpl
 {
 public:
-    EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
+    EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
                   double scoreDiff = 12.5);
 
     std::string ReadName() const;

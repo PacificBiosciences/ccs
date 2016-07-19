@@ -41,14 +41,14 @@
 
 namespace PacBio {
 
-constexpr auto   LibraryVersion   = "@UNANIMITY_VERSION@";
-constexpr auto   LibraryGitSha1   = "@UNANIMITY_GIT_SHA1@";
-constexpr auto   LibraryChangelog = "${UNANIMITY_CHANGELOG}";
-constexpr size_t LibraryMajor     = @UNANIMITY_VERSION_MAJOR@;
-constexpr size_t LibraryMinor     = @UNANIMITY_VERSION_MINOR@;
-constexpr size_t LibraryPatch     = @UNANIMITY_VERSION_PATCH@;
+constexpr char   LibraryVersion[]   = "@UNANIMITY_VERSION@";
+constexpr char   LibraryGitSha1[]   = "@UNANIMITY_GIT_SHA1@";
+constexpr char   LibraryChangelog[] = "${UNANIMITY_CHANGELOG}";
+constexpr size_t LibraryMajor       = @UNANIMITY_VERSION_MAJOR@;
+constexpr size_t LibraryMinor       = @UNANIMITY_VERSION_MINOR@;
+constexpr size_t LibraryPatch       = @UNANIMITY_VERSION_PATCH@;
 
-constexpr auto   CCSVersion       = "${CCS_VERSION}";
+constexpr char   CCSVersion[]       = "${CCS_VERSION}";
 
 std::string CCSVersionString()
 { return CCSVersion; }
