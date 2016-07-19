@@ -40,13 +40,24 @@
 namespace PacBio {
 namespace Consensus {
 
+/// This struct contains the results of AbstractIntegrator::Polish()
 struct PolishResult
 {
+    // Did Polish() converge?
     bool hasConverged = false;
+    // How many mutations have been tested?
     size_t mutationsTested = 0;
+    // How many mutations have been actually applied?
     size_t mutationsApplied = 0;
+
+    // For each iteration in Polish(), get the max of all Evaluators to 
+    // diagnose the worst performing one.
+    // 
+    // Maximal ratio of populated alpha cells 
     std::vector<float> maxAlphaPopulated;
+    // Maximal ratio of populated beta cells
     std::vector<float> maxBetaPopulated;
+    // Maximal number of flip flop events
     std::vector<int> maxNumFlipFlops;
 };
 }
