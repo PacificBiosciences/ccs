@@ -102,26 +102,6 @@ public:
     std::vector<PacBio::Data::State> States() const;
     std::vector<PacBio::Data::StrandType> StrandTypes() const;
 
-    // TODO(atoepfer) Does anyone have a clue if we can make one function out
-    //                of those two?
-    template <typename T>
-    inline std::vector<T> TransformEvaluators(std::function<T(Evaluator&)> functor)
-    {
-        std::vector<T> vec;
-        vec.reserve(evals_.size());
-        std::transform(evals_.begin(), evals_.end(), std::back_inserter(vec), functor);
-        return vec;
-    }
-
-    template <typename T>
-    inline std::vector<T> TransformEvaluators(std::function<T(const Evaluator&)> functor) const
-    {
-        std::vector<T> vec;
-        vec.reserve(evals_.size());
-        std::transform(evals_.begin(), evals_.end(), std::back_inserter(vec), functor);
-        return vec;
-    }
-
     template <typename T>
     inline T MaxElement(const std::vector<T>& in) const
     {
@@ -146,6 +126,25 @@ private:
     {
         const auto AddNoInf = [](double a, double b) { return a + (std::isinf(b) ? 0.0 : b); };
         return std::accumulate(input.cbegin(), input.cend(), 0.0, AddNoInf);
+    }
+
+    // TODO(atoepfer) How can we use const_cast to convert this?
+    template <typename T>
+    inline std::vector<T> TransformEvaluators(std::function<T(Evaluator eval&)> functor)
+    {
+        std::vector<T> vec;
+        vec.reserve(evals_.size());
+        std::transform(evals_.begin(), evals_.end(), std::back_inserter(vec), functor);
+        return vec;
+    }
+
+    template <typename T>
+    inline std::vector<T> TransformEvaluators(std::function<T(const Evaluator&)> functor) const
+    {
+        std::vector<T> vec;
+        vec.reserve(evals_.size());
+        std::transform(evals_.begin(), evals_.end(), std::back_inserter(vec), functor);
+        return vec;
     }
 };
 
