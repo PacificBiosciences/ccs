@@ -59,7 +59,7 @@ class S_P1C1v1_Model : public ModelConfig
     REGISTER_MODEL(S_P1C1v1_Model);
 
 public:
-    static std::set<std::string> Names() { return {"S/P1-C1.1"}; }
+    static std::set<std::string> Names() { return {"S/P1-C1.1::PwSnrA"}; }
     S_P1C1v1_Model(const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;

@@ -236,23 +236,23 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
               ***********  EDGE_CONDITION ************
              */
             if (i > 0 && j > 0) {
-                thisMoveScore =
-                    alpha(i - 1, j - 1) * prevTransProbs.Match *
-                    Derived::EmissionPr(MoveType::MATCH, curReadEm, prevTplBase, currTplBase);
+                thisMoveScore = alpha(i - 1, j - 1) * prevTransProbs.Match *
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::MATCH, curReadEm, prevTplBase, currTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
             if (i > 1) {
                 // Branch, due to pinning, can't "insert" first or last read base
-                thisMoveScore =
-                    alpha(i - 1, j) * currTransProbs.Branch *
-                    Derived::EmissionPr(MoveType::BRANCH, curReadEm, currTplBase, nextTplBase);
+                thisMoveScore = alpha(i - 1, j) * currTransProbs.Branch *
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::BRANCH, curReadEm, currTplBase, nextTplBase);
                 score = Combine(score, thisMoveScore);
 
                 // Stick
-                thisMoveScore =
-                    alpha(i - 1, j) * currTransProbs.Stick *
-                    Derived::EmissionPr(MoveType::STICK, curReadEm, currTplBase, nextTplBase);
+                thisMoveScore = alpha(i - 1, j) * currTransProbs.Stick *
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::STICK, curReadEm, currTplBase, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
@@ -292,9 +292,9 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
         auto currTplBase = (*tpl_)[J - 1].Idx;
         assert(J < 2 || prevTplBase == (*tpl_)[J - 2].Idx);
         // end in the homopolymer state for now.
-        auto likelihood =
-            alpha(I - 1, J - 1) *
-            Derived::EmissionPr(MoveType::MATCH, emissions_[I - 1], prevTplBase, currTplBase);
+        auto likelihood = alpha(I - 1, J - 1) *
+                          static_cast<const Derived*>(this)->EmissionPr(
+                              MoveType::MATCH, emissions_[I - 1], prevTplBase, currTplBase);
         alpha.StartEditingColumn(J, I, I + 1);
         alpha.Set(I, J, likelihood);
         alpha.FinishEditingColumn<false>(J, I, I + 1);
@@ -343,27 +343,27 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
             // Match
             if (i + 1 < I) {
                 thisMoveScore = beta(i + 1, j + 1) * currTransProbs.Match *
-                                Derived::EmissionPr(MoveType::MATCH, nextReadEm, currTransProbs.Idx,
-                                                    nextTplBase);
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::MATCH, nextReadEm, currTransProbs.Idx, nextTplBase);
                 score = Combine(score, thisMoveScore);
             } else if (i + 1 == I && j + 1 == J) {
-                thisMoveScore =
-                    beta(i + 1, j + 1) * Derived::EmissionPr(MoveType::MATCH, nextReadEm,
-                                                             currTransProbs.Idx, nextTplBase);
+                thisMoveScore = beta(i + 1, j + 1) *
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::MATCH, nextReadEm, currTransProbs.Idx, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
             // Branch, can only transition to an insertion for the 2nd to last read base and before
             if (0 < i && i < I) {
                 thisMoveScore = beta(i + 1, j) * currTransProbs.Branch *
-                                Derived::EmissionPr(MoveType::BRANCH, nextReadEm,
-                                                    currTransProbs.Idx, nextTplBase);
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::BRANCH, nextReadEm, currTransProbs.Idx, nextTplBase);
                 score = Combine(score, thisMoveScore);
 
                 // Stick, can only transition to an insertion for the 2nd to last read base
                 thisMoveScore = beta(i + 1, j) * currTransProbs.Stick *
-                                Derived::EmissionPr(MoveType::STICK, nextReadEm, currTransProbs.Idx,
-                                                    nextTplBase);
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::STICK, nextReadEm, currTransProbs.Idx, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
@@ -401,8 +401,8 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
      * information */
     {
         beta.StartEditingColumn(0, 0, 1);
-        auto match_emission_prob =
-            Derived::EmissionPr(MoveType::MATCH, emissions_[0], kDefaultBase, (*tpl_)[0].Idx);
+        auto match_emission_prob = static_cast<const Derived*>(this)->EmissionPr(
+            MoveType::MATCH, emissions_[0], kDefaultBase, (*tpl_)[0].Idx);
         beta.Set(0, 0, match_emission_prob * beta(1, 1));
         beta.FinishEditingColumn<false>(0, 0, 1);
     }
@@ -439,10 +439,10 @@ double Recursor<Derived>::LinkAlphaBeta(const M& alpha, size_t alphaColumn, cons
         if (i < I) {
             const uint8_t readEm = emissions_[i];
             // Match
-            thisMoveScore =
-                alpha(i, alphaColumn - 1) * prevTplParams.Match *
-                Derived::EmissionPr(MoveType::MATCH, readEm, prevTplParams.Idx, currTplParams.Idx) *
-                beta(i + 1, betaColumn);
+            thisMoveScore = alpha(i, alphaColumn - 1) * prevTplParams.Match *
+                            static_cast<const Derived*>(this)->EmissionPr(
+                                MoveType::MATCH, readEm, prevTplParams.Idx, currTplParams.Idx) *
+                            beta(i + 1, betaColumn);
             v = Combine(v, thisMoveScore);
         }
 
@@ -520,30 +520,32 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
             if (i > 0 && j > 0) {
                 double prev = extCol == 0 ? alpha(i - 1, j - 1) : ext(i - 1, extCol - 1);
                 if (i < maxDownMovePossible && j < maxLeftMovePossible) {
-                    thisMoveScore = prev * prevTplParams.Match *
-                                    Derived::EmissionPr(MoveType::MATCH, currReadEm,
-                                                        prevTplParams.Idx, currTplParams.Idx);
+                    thisMoveScore =
+                        prev * prevTplParams.Match *
+                        static_cast<const Derived*>(this)->EmissionPr(
+                            MoveType::MATCH, currReadEm, prevTplParams.Idx, currTplParams.Idx);
                 } else if (i == maxDownMovePossible && j == maxLeftMovePossible) {
                     thisMoveScore =
-                        prev * Derived::EmissionPr(MoveType::MATCH, currReadEm, prevTplParams.Idx,
-                                                   currTplParams.Idx);
+                        prev *
+                        static_cast<const Derived*>(this)->EmissionPr(
+                            MoveType::MATCH, currReadEm, prevTplParams.Idx, currTplParams.Idx);
                 }
                 score = thisMoveScore;
             }
 
             // Branch
             if (i > 1 && i < maxDownMovePossible && j != maxLeftMovePossible) {
-                thisMoveScore =
-                    ext(i - 1, extCol) * currTplParams.Branch *
-                    Derived::EmissionPr(MoveType::BRANCH, currReadEm, currTplBase, nextTplBase);
+                thisMoveScore = ext(i - 1, extCol) * currTplParams.Branch *
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::BRANCH, currReadEm, currTplBase, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
             // Stick
             if (i > 1 && i < maxDownMovePossible && j != maxLeftMovePossible) {
-                thisMoveScore =
-                    ext(i - 1, extCol) * currTplParams.Stick *
-                    Derived::EmissionPr(MoveType::STICK, currReadEm, currTplBase, nextTplBase);
+                thisMoveScore = ext(i - 1, extCol) * currTplParams.Stick *
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::STICK, currReadEm, currTplBase, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
@@ -651,9 +653,10 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
                 // All these checks should be reorganized, redundand subexpressions
                 // combined.
                 if (j > firstColumn && i > 0) {
-                    thisMoveScore = next * currTplParams.Match *
-                                    Derived::EmissionPr(MoveType::MATCH, nextReadEm,
-                                                        currTplParams.Idx, nextTplBase);
+                    thisMoveScore =
+                        next * currTplParams.Match *
+                        static_cast<const Derived*>(this)->EmissionPr(
+                            MoveType::MATCH, nextReadEm, currTplParams.Idx, nextTplBase);
                     score = Combine(score, thisMoveScore);
                 }
             }
@@ -661,16 +664,16 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
             // Branch
             if (0 < i && i < I && firstColumn < j) {
                 thisMoveScore = ext(i + 1, extCol) * currTplParams.Branch *
-                                Derived::EmissionPr(MoveType::BRANCH, nextReadEm, currTplParams.Idx,
-                                                    nextTplBase);
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::BRANCH, nextReadEm, currTplParams.Idx, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
             // Stick
             if (0 < i && i < I && firstColumn < j) {
                 thisMoveScore = ext(i + 1, extCol) * currTplParams.Stick *
-                                Derived::EmissionPr(MoveType::STICK, nextReadEm, currTplParams.Idx,
-                                                    nextTplBase);
+                                static_cast<const Derived*>(this)->EmissionPr(
+                                    MoveType::STICK, nextReadEm, currTplParams.Idx, nextTplBase);
                 score = Combine(score, thisMoveScore);
             }
 
@@ -691,8 +694,8 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
     {
         ext.StartEditingColumn(0, 0, 1);
         const double match_trans_prob = (lastExtColumn == 0) ? beta(1, lastColumn + 1) : ext(1, 1);
-        const double match_emission_prob =
-            Derived::EmissionPr(MoveType::MATCH, emissions_[0], kDefaultBase, (*tpl_)[0].Idx);
+        const double match_emission_prob = static_cast<const Derived*>(this)->EmissionPr(
+            MoveType::MATCH, emissions_[0], kDefaultBase, (*tpl_)[0].Idx);
         ext.Set(0, 0, match_trans_prob * match_emission_prob);
         ext.FinishEditingColumn<false>(0, 0, 1);
     }

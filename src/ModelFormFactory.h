@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,45 +33,62 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Author: Lance Hepler
+
 #pragma once
 
-#include <stdexcept>
+#include <map>
+#include <memory>
 #include <string>
 
-#include <pacbio/data/State.h>
+#include <boost/property_tree/ptree.hpp>
+
+#include "ModelFactory.h"
 
 namespace PacBio {
-namespace Exception {
+namespace Consensus {
 
-class StateError : public std::runtime_error
+// this pattern is based on
+// http://blog.fourthwoods.com/2011/06/04/factory-design-pattern-in-c/
+class ModelFormCreator
 {
 public:
-    StateError(PacBio::Data::State state, const std::string& msg)
-        : std::runtime_error(msg)
-        , state_(state)
-    {}
+    virtual ~ModelFormCreator() {}
+    virtual std::unique_ptr<ModelCreator> LoadParams(
+        const boost::property_tree::ptree& pt) const = 0;
+};
 
-    PacBio::Data::State WhatState() const { return state_; }
-    virtual const char* what() const noexcept { return std::runtime_error::what(); }
+class ModelFormFactory
+{
+public:
+    static bool LoadModel(const std::string& path);
+    static bool Register(const std::string& form, ModelFormCreator* ctor);
+
 private:
-    PacBio::Data::State state_;
+    static std::map<std::string, ModelFormCreator*>& CreatorTable();
 };
 
-class TemplateTooSmall : public StateError
+template <typename T>
+class ModelFormCreatorImpl : public ModelFormCreator
 {
 public:
-    TemplateTooSmall()
-        : StateError(PacBio::Data::State::TEMPLATE_TOO_SMALL, "Template too short!")
-    {}
+    ModelFormCreatorImpl<T>(const std::string& form)
+    {
+        if (!ModelFormFactory::Register(form, this))
+            throw std::runtime_error("duplicate model form inserted into form factory!");
+    }
+
+    virtual std::unique_ptr<ModelCreator> LoadParams(const boost::property_tree::ptree& pt) const
+    {
+        return std::unique_ptr<ModelCreator>(new T(pt));
+    }
 };
 
-class AlphaBetaMismatch : public StateError
-{
-public:
-    AlphaBetaMismatch()
-        : StateError(PacBio::Data::State::ALPHA_BETA_MISMATCH, "Alpha/beta mismatch!")
-    {}
-};
+#define REGISTER_MODELFORM(cls) \
+private:                        \
+    static const ModelFormCreatorImpl<cls> creator_
 
-}  // namespace Exception
+#define REGISTER_MODELFORM_IMPL(cls) const ModelFormCreatorImpl<cls> cls::creator_(cls::Name())
+
+}  // namespace Consensus
 }  // namespace PacBio

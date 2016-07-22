@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,45 +33,22 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Author: Lance Hepler
+
 #pragma once
 
-#include <stdexcept>
+#include <set>
 #include <string>
 
-#include <pacbio/data/State.h>
-
 namespace PacBio {
-namespace Exception {
+namespace Consensus {
 
-class StateError : public std::runtime_error
-{
-public:
-    StateError(PacBio::Data::State state, const std::string& msg)
-        : std::runtime_error(msg)
-        , state_(state)
-    {}
+std::set<std::string> SupportedModels();
+std::set<std::string> SupportedChemistries();
 
-    PacBio::Data::State WhatState() const { return state_; }
-    virtual const char* what() const noexcept { return std::runtime_error::what(); }
-private:
-    PacBio::Data::State state_;
-};
+bool OverrideModel(const std::string& model);
+bool UnOverrideModel();
 
-class TemplateTooSmall : public StateError
-{
-public:
-    TemplateTooSmall()
-        : StateError(PacBio::Data::State::TEMPLATE_TOO_SMALL, "Template too short!")
-    {}
-};
-
-class AlphaBetaMismatch : public StateError
-{
-public:
-    AlphaBetaMismatch()
-        : StateError(PacBio::Data::State::ALPHA_BETA_MISMATCH, "Alpha/beta mismatch!")
-    {}
-};
-
-}  // namespace Exception
-}  // namespace PacBio
+size_t LoadModels(const std::string& path);
+}
+}

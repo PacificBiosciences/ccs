@@ -41,7 +41,6 @@
 #include <iostream>
 #include <memory>
 #include <numeric>
-#include <set>
 
 #include <pacbio/consensus/Evaluator.h>
 #include <pacbio/exception/StateError.h>
@@ -58,8 +57,6 @@ struct IntegratorConfig
 
     IntegratorConfig(double minZScore = -3.5, double scoreDiff = 12.5);
 };
-
-std::set<std::string> SupportedChemistries();
 
 class AbstractIntegrator
 {

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2015-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,12 +33,18 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Author: Lance Hepler
+
 #pragma once
 
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
+
+#include <boost/optional.hpp>
+
+#include <pacbio/exception/ModelError.h>
 
 namespace PacBio {
 
@@ -59,32 +65,42 @@ using SNR = PacBio::Data::SNR;
 class ModelCreator
 {
 public:
-    ModelCreator(const std::set<std::string>& names);
     virtual ~ModelCreator() {}
     virtual std::unique_ptr<ModelConfig> Create(const SNR&) const = 0;
-};
-
-template <typename T>
-class ModelCreatorImpl : public ModelCreator
-{
-public:
-    ModelCreatorImpl<T>(const std::set<std::string>& names) : ModelCreator(names) {}
-    virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
-    {
-        return std::unique_ptr<ModelConfig>(new T(snr));
-    }
 };
 
 class ModelFactory
 {
 public:
     static std::unique_ptr<ModelConfig> Create(const std::string& name, const SNR&);
-    static bool Register(const std::string& name, ModelCreator* ctor);
-    static std::set<std::string> SupportedChemistries();
+    static bool Register(const std::string& name, std::unique_ptr<ModelCreator>&& ctor);
+    static boost::optional<std::string> Resolve(const std::string& name);
+    static std::set<std::string> SupportedModels();
 
 private:
-    static std::map<std::string, ModelCreator*>& CreatorTable();
+    static std::map<std::string, std::unique_ptr<ModelCreator>>& CreatorTable();
 };
+
+template <typename T>
+class ModelCreatorImpl : public ModelCreator
+{
+public:
+    ModelCreatorImpl<T>() {}
+    ModelCreatorImpl<T>(const std::set<std::string>& names)
+    {
+        for (const std::string& name : names)
+            if (!ModelFactory::Register(name + "::Compiled",
+                                        std::unique_ptr<ModelCreator>(new ModelCreatorImpl<T>())))
+                throw PacBio::Exception::DuplicateModel(name);
+    }
+
+    virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
+    {
+        return std::unique_ptr<ModelConfig>(new T(snr));
+    }
+};
+
+boost::optional<std::string>& ModelOverride();
 
 #define REGISTER_MODEL(cls) \
 private:                    \

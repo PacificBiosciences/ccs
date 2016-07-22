@@ -49,6 +49,10 @@ class Constants(object):
     NO_POLISH_DEFAULT=False
     BY_STRAND_ID="pbccs.task_options.by_strand"
     BY_STRAND_DEFAULT=False
+    MODEL_PATH_ID="pbccs.task_options.model_path"
+    MODEL_PATH_DEFAULT=""
+    MODEL_SPEC_ID="pbccs.task_options.model_spec"
+    MODEL_SPEC_DEFAULT=""
     #
     REPORT_FIELDS = {
         "CCS generated": "num_ccs_reads",
@@ -106,6 +110,10 @@ def resolved_tool_contract_runner(rtc):
             rtc.task.options[Constants.MIN_PREDICTED_ACCURACY_ID],
         "--noPolish" if rtc.task.options[Constants.NO_POLISH_ID] else "",
         "--byStrand" if rtc.task.options[Constants.BY_STRAND_ID] else "",
+        ("--modelPath=%s" % rtc.task.options[Constants.MODEL_PATH_ID]) if \
+                rtc.task.options[Constants.MODEL_PATH_ID] else "",
+        ("--modelSpec=%s" % rtc.task.options[Constants.MODEL_SPEC_ID]) if \
+                rtc.task.options[Constants.MODEL_SPEC_ID] else "",
         subreads_file,
         output_file
     ]
@@ -186,6 +194,14 @@ def get_parser():
                   default=Constants.BY_STRAND_DEFAULT,
                   name="By Strand CCS",
                   description="For each ZMW, generate two CCS sequences, one for each strand")
+    p.add_str(Constants.MODEL_PATH_ID, "modelPath",
+              default=Constants.MODEL_PATH_DEFAULT,
+              name="Model(s) Path",
+              description="Path to model parameter file(s)")
+    p.add_str(Constants.MODEL_SPEC_ID, "modelSpec",
+              default=Constants.MODEL_SPEC_DEFAULT,
+              name="Model Override",
+              description="Override default model selection with a provided model specification")
     return p
 
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,45 +33,45 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Author: Lance Hepler
+
 #pragma once
 
-#include <stdexcept>
-#include <string>
-
-#include <pacbio/data/State.h>
+#include <boost/property_tree/ptree.hpp>
 
 namespace PacBio {
-namespace Exception {
-
-class StateError : public std::runtime_error
+namespace Consensus {
+template <size_t I>
+void ReadMatrix(double (&mat)[I], const boost::property_tree::ptree& pt)
 {
-public:
-    StateError(PacBio::Data::State state, const std::string& msg)
-        : std::runtime_error(msg)
-        , state_(state)
-    {}
+    if (pt.size() != I) throw std::invalid_argument("bad size (1D)");
+    size_t i = 0;
+    for (const auto& item : pt) {
+        mat[i] = item.second.get_value<double>();
+        ++i;
+    }
+}
 
-    PacBio::Data::State WhatState() const { return state_; }
-    virtual const char* what() const noexcept { return std::runtime_error::what(); }
-private:
-    PacBio::Data::State state_;
-};
-
-class TemplateTooSmall : public StateError
+template <size_t I, size_t J>
+void ReadMatrix(double (&mat)[I][J], const boost::property_tree::ptree& pt)
 {
-public:
-    TemplateTooSmall()
-        : StateError(PacBio::Data::State::TEMPLATE_TOO_SMALL, "Template too short!")
-    {}
-};
+    if (pt.size() != I) throw std::invalid_argument("bad size (2D)");
+    size_t i = 0;
+    for (const auto& item : pt) {
+        ReadMatrix<J>(mat[i], item.second);
+        ++i;
+    }
+}
 
-class AlphaBetaMismatch : public StateError
+template <size_t I, size_t J, size_t K>
+void ReadMatrix(double (&mat)[I][J][K], const boost::property_tree::ptree& pt)
 {
-public:
-    AlphaBetaMismatch()
-        : StateError(PacBio::Data::State::ALPHA_BETA_MISMATCH, "Alpha/beta mismatch!")
-    {}
-};
-
-}  // namespace Exception
-}  // namespace PacBio
+    if (pt.size() != I) throw std::invalid_argument("bad size (3D)");
+    size_t i = 0;
+    for (const auto& item : pt) {
+        ReadMatrix<J, K>(mat[i], item.second);
+        ++i;
+    }
+}
+}
+}

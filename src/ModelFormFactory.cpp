@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,45 +33,67 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#pragma once
+// Author: Lance Hepler
 
-#include <stdexcept>
+#include <map>
 #include <string>
+#include <utility>
 
-#include <pacbio/data/State.h>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
+#include <pacbio/exception/ModelError.h>
+
+#include "ModelFactory.h"
+#include "ModelFormFactory.h"
 
 namespace PacBio {
-namespace Exception {
+namespace Consensus {
 
-class StateError : public std::runtime_error
+using ModelError = PacBio::Exception::ModelError;
+
+std::map<std::string, ModelFormCreator*>& ModelFormFactory::CreatorTable()
 {
-public:
-    StateError(PacBio::Data::State state, const std::string& msg)
-        : std::runtime_error(msg)
-        , state_(state)
-    {}
+    static std::map<std::string, ModelFormCreator*> tbl;
+    return tbl;
+}
 
-    PacBio::Data::State WhatState() const { return state_; }
-    virtual const char* what() const noexcept { return std::runtime_error::what(); }
-private:
-    PacBio::Data::State state_;
-};
-
-class TemplateTooSmall : public StateError
+bool ModelFormFactory::LoadModel(const std::string& path)
 {
-public:
-    TemplateTooSmall()
-        : StateError(PacBio::Data::State::TEMPLATE_TOO_SMALL, "Template too short!")
-    {}
-};
+    using boost::property_tree::ptree;
+    using boost::property_tree::read_json;
 
-class AlphaBetaMismatch : public StateError
+    ptree pt;
+
+    try {
+        read_json(path, pt);
+        // verify we're looking at consensus model parameters
+        std::string version = pt.get<std::string>("ConsensusModelVersion");
+        if (version != "3.0.0") return false;
+    } catch (boost::property_tree::ptree_error) {
+        return false;
+    }
+
+    const std::string chemistry = pt.get<std::string>("ChemistryName");
+    const std::string form = pt.get<std::string>("ModelForm");
+
+    const auto tbl = CreatorTable();
+    const auto it = tbl.find(form);
+
+    if (it == tbl.end()) return false;
+
+    const std::string name = chemistry + "::" + form + "::" + "FromFile";
+
+    try {
+        return ModelFactory::Register(name, it->second->LoadParams(pt));
+    } catch (ModelError& e) {
+        return false;
+    }
+}
+
+bool ModelFormFactory::Register(const std::string& form, ModelFormCreator* ctor)
 {
-public:
-    AlphaBetaMismatch()
-        : StateError(PacBio::Data::State::ALPHA_BETA_MISMATCH, "Alpha/beta mismatch!")
-    {}
-};
-
-}  // namespace Exception
-}  // namespace PacBio
+    return CreatorTable().insert(std::make_pair(form, ctor)).second;
+}
+}
+}
