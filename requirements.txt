@@ -1,0 +1,8 @@
+numpy
+cython
+h5py
+pysam==0.9.0
+cram
+nose
+git+https://github.com/PacificBiosciences/pbcommand.git
+git+https://github.com/PacificBiosciences/pbcore.git

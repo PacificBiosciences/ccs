@@ -38,3 +38,16 @@ Invoke the different `make` targets, currently available
   ```sh
   $ make pbccs
   ```
+
+### Install ConsensusCore2 python library for GenomicConsensus
+
+Building from scratch requires system-wide installed boost (>=1.5.8), 
+cmake (3.2), python 2.x, and a c++11 compiler (>=gcc-5.3.0, clang):
+
+  ```sh
+  git clone https://github.com/PacificBiosciences/unanimity && \
+  cd unanimity                                              && \
+  git submodule update --init --remote                      && \
+  pip install --update --no-deps -r requirements.txt        && \
+  pip install --upgrade --no-deps .
+  ```

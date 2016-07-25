@@ -17,14 +17,12 @@ dependencies:
         - pushd _deps ; if [ ! -f swig-3.0.8/bin/swig ] ; then rm -fr swig-3.0.8* ; mkdir dl ; pushd dl ; wget https://downloads.sourceforge.net/project/swig/swig/swig-3.0.8/swig-3.0.8.tar.gz ; tar xzf swig-3.0.8.tar.gz ; pushd swig-3.0.8 ; ./configure --prefix $(readlink -f ../../swig-3.0.8) ; make ; make install ; fi
         - pushd _deps ; git clone https://github.com/PacificBiosciences/PacBioTestData.git
         - pip install --upgrade pip
-        - pip install numpy cython h5py pysam cram nose 
-        - pip install --upgrade --no-deps git+https://github.com/PacificBiosciences/pbcommand.git
-        - pip install --upgrade --no-deps git+https://github.com/PacificBiosciences/pbcore.git
+        - pip install --upgrade --no-deps -r requirements.txt
         - pushd _deps/PacBioTestData ; git lfs pull && make python
         - mkdir _rev_deps  # Create a directory for reverse-dependencies, ie things that depend on us. These are not static, do not cache them.
         # Build ConsensusCore
-        - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/ConsensusCore.git
-        - pushd _rev_deps/ConsensusCore ; python setup.py install --boost=$(readlink -f ../../_deps/boost_1_60_0) --swig=$(readlink -f ../../_deps/swig-3.0.8/bin/swig)
+        - pushd _deps ; git clone https://github.com/PacificBiosciences/ConsensusCore.git
+        - pushd _deps/ConsensusCore ; python setup.py install --boost=$(readlink -f ../../_deps/boost_1_60_0) --swig=$(readlink -f ../../_deps/swig-3.0.8/bin/swig)
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/GenomicConsensus.git
         - git submodule update --init --remote
     override:
