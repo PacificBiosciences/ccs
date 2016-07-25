@@ -1,6 +1,7 @@
 
 # External libraries
 
+# Get static libraries
 SET(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 
 # pbcopper
@@ -32,14 +33,27 @@ if(NOT HTSLIB_INCLUDE_DIRS OR
 endif()
 
 # pbbam
-if (NOT pbbam)
+if (NOT PacBioBAM_INCLUDE_DIRS OR
+    NOT PacBioBAM_LIBRARIES)
+    set(PacBioBAM_build_docs    OFF CACHE INTERNAL "" FORCE)
+    set(PacBioBAM_build_tests   OFF CACHE INTERNAL "" FORCE)
+    set(PacBioBAM_build_tools   OFF CACHE INTERNAL "" FORCE)
     add_subdirectory(${UNY_ThirdPartyDir}/pbbam external/pbbam/build)
     if (TARGET htslib)
         add_dependencies(pbbam htslib)
     endif()
 endif()
 
-
 # cpp-optparse sources
-set(CPPOPTPARSE_CPP ${UNY_ThirdPartyDir}/cpp-optparse/OptionParser.cpp)
-set(CPPOPTPARSE_H   ${UNY_ThirdPartyDir}/cpp-optparse)
+if (NOT CPPOPTPARSE_CPP)
+    set(CPPOPTPARSE_CPP ${UNY_ThirdPartyDir}/cpp-optparse/OptionParser.cpp CACHE INTERNAL "" FORCE)
+endif()
+
+if (NOT CPPOPTPARSE_IncludeDir)
+    set(CPPOPTPARSE_IncludeDir ${UNY_ThirdPartyDir}/cpp-optparse CACHE INTERNAL "" FORCE)
+endif()
+
+# seqan headers
+if (NOT SEQAN_INCLUDE_DIRS)
+    set(SEQAN_INCLUDE_DIRS ${UNY_ThirdPartyDir}/seqan/include CACHE INTERNAL "" FORCE)
+endif()

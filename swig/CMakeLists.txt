@@ -47,7 +47,7 @@ add_library(_ConsensusCore2 MODULE
 )
 
 target_link_libraries(_ConsensusCore2
-    ${UNANIMITY_LIBRARIES}
+    ${UNY_LIBRARIES}
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

@@ -16,15 +16,22 @@ add_library(unanimity STATIC
 )
 
 # includes
-target_include_directories(unanimity PUBLIC
+set(UNY_INCLUDE_DIRS
     ${UNY_IncludeDir}
     ${CMAKE_BINARY_DIR}/generated
     ${Boost_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
-    ${UNY_ThirdPartyDir}/seqan/include
-    ${CPPOPTPARSE_H}
+    ${SEQAN_INCLUDE_DIRS}
+    ${CPPOPTPARSE_IncludeDir}
     ${PacBioBAM_INCLUDE_DIRS}
+    CACHE INTERNAL
+    "${PROJECT_NAME}: Include Directories"
+    FORCE
+)
+
+target_include_directories(unanimity PUBLIC
+    ${UNY_INCLUDE_DIRS}
 )
 
 if(APPLE)
@@ -34,11 +41,21 @@ elseif(UNIX)
     SET(POST_LINK -Wl,-no-whole-archive)
 endif()
 
-# because we can be a dependency, set this in the parent scope if so
-if(${ROOT_PROJECT_NAME} STREQUAL "UNANIMITY")
-    set(UNANIMITY_LIBRARIES ${PRE_LINK} unanimity ${POST_LINK} CACHE INTERNAL "" FORCE)
-else()
-    set(UNANIMITY_LIBRARIES ${PRE_LINK} unanimity ${POST_LINK} PARENT_SCOPE CACHE INTERNAL "" FORCE)
+set(UNY_LIBRARIES 
+    ${PRE_LINK} 
+    unanimity
+    ${POST_LINK}
+    ${ZLIB_LIBRARIES}
+    ${HTSLIB_LIBRARIES}
+    ${PacBioBAM_LIBRARIES}
+    CACHE INTERNAL "" FORCE)
+
+if (TARGET htslib)
+    add_dependencies(unanimity htslib)
+endif()
+
+if (TARGET pbbam)
+    add_dependencies(unanimity pbbam)
 endif()
 
 # add executables
@@ -50,16 +67,17 @@ if (UNY_build_bin)
     )
 
     target_link_libraries(ccs 
-        ${UNANIMITY_LIBRARIES}
-        ${PacBioBAM_LIBRARIES}
-        ${HTSLIB_LIBRARIES}
+        ${UNY_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${CMAKE_DL_LIBS}
-        ${ZLIB_LIBRARIES}
     )
 
     if (TARGET htslib)
         add_dependencies(ccs htslib)
+    endif()
+
+    if (TARGET pbbam)
+        add_dependencies(ccs pbbam)
     endif()
 
     install(TARGETS ccs RUNTIME DESTINATION bin)
