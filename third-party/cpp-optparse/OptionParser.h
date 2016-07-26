@@ -141,17 +141,27 @@ class Value {
     Value() : str(), valid(false) {}
     Value(const std::string& v) : str(v), valid(true) {}
 
-    operator const char*()    { return str.c_str(); }
-    operator bool()           { return integralConvert<bool>(valid, str); }
-    operator short()          { return integralConvert<short>(valid, str); }
-    operator unsigned short() { return integralConvert<unsigned short>(valid, str); }
-    operator int()            { return integralConvert<int>(valid, str); }
-    operator unsigned int()   { return integralConvert<unsigned int>(valid, str); }
-    operator long()           { return integralConvert<long>(valid, str); }
-    operator unsigned long()  { return integralConvert<unsigned long>(valid, str); }
-    operator float()          { return floatingPointConvert<float>(valid, str); }
-    operator double()         { return floatingPointConvert<double>(valid, str); }
-    operator long double()    { return floatingPointConvert<long double>(valid, str); }
+    operator const char*()          { return str.c_str(); }
+    operator bool()                 { return integralConvert<bool>(valid, str); }
+    operator bool()           const { return integralConvert<bool>(valid, str); }
+    operator short()                { return integralConvert<short>(valid, str); }
+    operator short()          const { return integralConvert<short>(valid, str); }
+    operator unsigned short()       { return integralConvert<unsigned short>(valid, str); }
+    operator unsigned short() const { return integralConvert<unsigned short>(valid, str); }
+    operator int()                  { return integralConvert<int>(valid, str); }
+    operator int()            const { return integralConvert<int>(valid, str); }
+    operator unsigned int()         { return integralConvert<unsigned int>(valid, str); }
+    operator unsigned int()   const { return integralConvert<unsigned int>(valid, str); }
+    operator long()                 { return integralConvert<long>(valid, str); }
+    operator long()           const { return integralConvert<long>(valid, str); }
+    operator unsigned long()        { return integralConvert<unsigned long>(valid, str); }
+    operator unsigned long()  const { return integralConvert<unsigned long>(valid, str); }
+    operator float()                { return floatingPointConvert<float>(valid, str); }
+    operator float()          const { return floatingPointConvert<float>(valid, str); }
+    operator double()               { return floatingPointConvert<double>(valid, str); }
+    operator double()         const { return floatingPointConvert<double>(valid, str); }
+    operator long double()          { return floatingPointConvert<long double>(valid, str); }
+    operator long double()    const { return floatingPointConvert<long double>(valid, str); }
 
 private:
     const std::string str;
