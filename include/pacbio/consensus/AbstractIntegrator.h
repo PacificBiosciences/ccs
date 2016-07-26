@@ -102,32 +102,6 @@ public:
     std::vector<PacBio::Data::State> States() const;
     std::vector<PacBio::Data::StrandType> StrandTypes() const;
 
-    // TODO(atoepfer) Does anyone have a clue if we can make one function out
-    //                of those two?
-    template <typename T>
-    inline std::vector<T> TransformEvaluators(std::function<T(Evaluator&)> functor)
-    {
-        std::vector<T> vec;
-        vec.reserve(evals_.size());
-        std::transform(evals_.begin(), evals_.end(), std::back_inserter(vec), functor);
-        return vec;
-    }
-
-    template <typename T>
-    inline std::vector<T> TransformEvaluators(std::function<T(const Evaluator&)> functor) const
-    {
-        std::vector<T> vec;
-        vec.reserve(evals_.size());
-        std::transform(evals_.begin(), evals_.end(), std::back_inserter(vec), functor);
-        return vec;
-    }
-
-    template <typename T>
-    inline T MaxElement(const std::vector<T>& in) const
-    {
-        return *std::max_element(in.cbegin(), in.end());
-    }
-
 protected:
     Mutation ReverseComplement(const Mutation& mut) const;
 
@@ -142,12 +116,39 @@ protected:
     std::vector<Evaluator> evals_;
 
 private:
-    inline double AccumulateNoInf(std::vector<double> input) const
+    /// Extract a feature vector from a vector of Evaluators for non-const functions.
+    template <typename T>
+    inline std::vector<T> TransformEvaluators(std::function<T(Evaluator&)> functor)
     {
-        const auto AddNoInf = [](double a, double b) { return a + (std::isinf(b) ? 0.0 : b); };
-        return std::accumulate(input.cbegin(), input.cend(), 0.0, AddNoInf);
+        // TODO(atoepfer) How can we use const_cast to convert this?
+        std::vector<T> vec;
+        vec.reserve(evals_.size());
+        std::transform(evals_.begin(), evals_.end(), std::back_inserter(vec), functor);
+        return vec;
+    }
+
+    /// Extract a feature vector from a vector of Evaluators for const functions.
+    template <typename T>
+    inline std::vector<T> TransformEvaluators(std::function<T(const Evaluator&)> functor) const
+    {
+        std::vector<T> vec;
+        vec.reserve(evals_.size());
+        std::transform(evals_.begin(), evals_.end(), std::back_inserter(vec), functor);
+        return vec;
     }
 };
+
+/// Accumulate all non inf or -inf doubles.
+inline double AccumulateNoInf(std::vector<double> input)
+{
+    const auto AddNoInf = [](double a, double b) { return a + (std::isinf(b) ? 0.0 : b); };
+    return std::accumulate(input.cbegin(), input.cend(), 0.0, AddNoInf);
+}
+
+/// Helper function to get maximal number from a vector.
+template <typename T>
+inline T MaxElement(const std::vector<T>& in)
+{ return *std::max_element(in.cbegin(), in.end()); }
 
 }  // namespace Consensus
 }  // namespace PacBio
