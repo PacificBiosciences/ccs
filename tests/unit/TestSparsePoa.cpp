@@ -219,7 +219,13 @@ std::string rc(const std::string& a)
     return b;
 }
 
-TEST(SparsePoaTest, SingleReadx100)
+#if EXTENSIVE_TESTING
+constexpr size_t numIterations = 100;
+#else
+constexpr size_t numIterations = 10;
+#endif
+
+TEST(SparsePoaTest, SingleReadNTimes)
 {
     std::mt19937 gen(42);
     std::uniform_int_distribution<size_t> d(2000, 20000);
@@ -227,7 +233,7 @@ TEST(SparsePoaTest, SingleReadx100)
 
     const std::string bases = "ACGT";
 
-    for (size_t i = 0; i < 100; ++i) {
+    for (size_t i = 0; i < numIterations; ++i) {
         size_t len = 0;
         std::string seq;
 
@@ -252,7 +258,7 @@ TEST(SparsePoaTest, SingleReadx100)
     }
 }
 
-TEST(SparsePoaTest, SingleAndHalfx100)
+TEST(SparsePoaTest, SingleAndHalfNTimes)
 {
     std::mt19937 gen(42);
     std::uniform_int_distribution<size_t> d(1000, 5000);
@@ -260,7 +266,7 @@ TEST(SparsePoaTest, SingleAndHalfx100)
 
     const std::string bases = "ACGT";
 
-    for (size_t i = 0; i < 100; ++i) {
+    for (size_t i = 0; i < numIterations; ++i) {
         size_t len = 0;
         std::string seq1, seq2;
 
