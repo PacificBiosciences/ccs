@@ -8,10 +8,6 @@ cmake_minimum_required(VERSION 3.2)
 
 set(ROOT_PROJECT_NAME ${PROJECT_NAME} CACHE STRING "root project name")
 
-set(PacBioBAM_build_docs    OFF CACHE INTERNAL "" FORCE)
-set(PacBioBAM_build_tests   OFF CACHE INTERNAL "" FORCE)
-set(PacBioBAM_build_tools   OFF CACHE INTERNAL "" FORCE)
-
 # Build type
 IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: Debug Release Profile RelWithDebInfo" FORCE)

@@ -43,9 +43,7 @@ add_executable(test_unanimity EXCLUDE_FROM_ALL
 )
 
 target_link_libraries(test_unanimity
-    ${UNANIMITY_LIBRARIES}
-    ${PacBioBAM_LIBRARIES}
-    ${HTSLIB_LIBRARIES}
+    ${UNY_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${CMAKE_DL_LIBS}
     ${ZLIB_LIBRARIES}
