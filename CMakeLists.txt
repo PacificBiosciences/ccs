@@ -16,7 +16,7 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 # Build-time options
 option(UNY_build_bin    "Build binaries." ON)
 option(UNY_build_tests  "Build UNANIMITY's unit tests." ON)
-option(UNY_inc_coverage "Include UNANIMITY's coverage script." ON)
+option(UNY_inc_coverage "Include UNANIMITY's coverage script." OFF)
 option(UNY_use_ccache   "Build UNANIMITY using ccache, if available." ON)
 
 # Main project paths
