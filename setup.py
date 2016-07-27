@@ -128,9 +128,9 @@ class MyBuildExt(build_ext):
         cmake.add_definition_from_env("Boost_INCLUDE_DIRS")
         cmake.add_definition_from_env("PYTHON_INCLUDE_DIRS")
         cmake.add_definition_from_env("SWIG_COMMAND")
+        cmake.add_definition_from_env("CMAKE_BUILD_TYPE", "RelWithDebInfo")
         cmake.add_definition("PYTHON_SWIG", "1")
         cmake.add_definition("PYTHON_EXECUTABLE", sys.executable)
-        cmake.set_build_type("RelWithDebInfo")
         cmake.set_generator("Ninja" if which("ninja", env) else "Default")
         targets = ["_ConsensusCore2"]
         try:
