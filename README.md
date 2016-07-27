@@ -10,14 +10,14 @@
  - [Getting Started](doc/INSTALL.md)
  - Projects
    - Available
-     - [Arrow Model](dec/ARROW.md)
+     - Consensus Core
      - [Circular Consensus Calling `ccs`](doc/PBCCS.md)
    - Work in Progress
-     - [Genomic Consensus Calling `gcpp`](doc/GCPP.md)
-     - [Viral Haplotype Phasing `eden`](doc/EDEN.md)
+     - Genomic Consensus Calling `gcpp`
+     - Viral Haplotype Phasing `eden`
    - Planned
      - Minor Variant Calling
- - [PacBio open source license](LICENSE.txt)
+ - [PacBio open source license](LICENSE)
 
 ## Quick Tools Overview
 
