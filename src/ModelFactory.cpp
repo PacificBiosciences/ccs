@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2015-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,8 +33,15 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Author: Lance Hepler
+
+#include <set>
 #include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
+
+#include <boost/optional.hpp>
 
 #include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/ModelConfig.h>
@@ -43,42 +50,100 @@
 
 namespace PacBio {
 namespace Consensus {
+namespace {
 
 using ChemistryNotFound = PacBio::Exception::ChemistryNotFound;
 
-ModelCreator::ModelCreator(const std::set<std::string>& names)
+size_t Count(const std::string& str, const std::string& delim)
 {
-    for (const std::string& name : names)
-        if (!ModelFactory::Register(name, this))
-            throw std::runtime_error("duplicate model inserted into factory!");
+    size_t count = 0;
+    size_t start = 0;
+
+    while ((start = str.find(delim, start)) != std::string::npos) {
+        ++count;
+        start += delim.length();
+    }
+
+    return count;
+}
+
 }
 
 std::unique_ptr<ModelConfig> ModelFactory::Create(const std::string& name, const SNR& snr)
 {
-    const auto it = CreatorTable().find(name);
+    boost::optional<std::string> model(boost::none);
 
-    if (it == CreatorTable().end()) throw ChemistryNotFound(name);
+    if (!(model = ModelOverride()))
+        if (!(model = Resolve(name)))
+            throw ChemistryNotFound(name);
+
+    const auto& tbl = CreatorTable();
+    const auto it = tbl.find(*model);
+
+    if (it == tbl.end()) throw ChemistryNotFound(name);
 
     return it->second->Create(snr);
 }
 
-bool ModelFactory::Register(const std::string& name, ModelCreator* const ctor)
+bool ModelFactory::Register(const std::string& name, std::unique_ptr<ModelCreator>&& ctor)
 {
-    return CreatorTable().insert(std::make_pair(name, ctor)).second;
+    return CreatorTable()
+        .insert(std::make_pair(name, std::forward<std::unique_ptr<ModelCreator>>(ctor)))
+        .second;
 }
 
-std::set<std::string> ModelFactory::SupportedChemistries()
+boost::optional<std::string> ModelFactory::Resolve(const std::string& name)
 {
+    const std::vector<std::string> forms = {"PwSnr", "PwSnrA", "Snr", "Marginal"};
+    const std::vector<std::string> origins = {"FromFile", "Compiled"};
+    const auto& tbl = CreatorTable();
+    const size_t nParts = Count(name, "::") + 1;
+
+    if (nParts == 3) {
+        if (tbl.find(name) != tbl.end())
+            return name;
+    }
+
+    else if (nParts == 2) {
+        for (const auto& origin : origins) {
+            const std::string model = name + "::" + origin;
+            if (tbl.find(model) != tbl.end())
+                return model;
+        }
+    }
+
+    else if (nParts == 1) {
+        for (const auto& form : forms) {
+            for (const auto& origin : origins) {
+                const std::string model = name + "::" + form + "::" + origin;
+                if (tbl.find(model) != tbl.end())
+                    return model;
+            }
+        }
+    }
+
+    return boost::none;
+}
+
+std::set<std::string> ModelFactory::SupportedModels()
+{
+    const auto& tbl = CreatorTable();
     std::set<std::string> result;
-    for (const auto& item : ModelFactory::CreatorTable())
+    for (const auto& item : tbl)
         result.insert(item.first);
     return result;
 }
 
-std::map<std::string, ModelCreator*>& ModelFactory::CreatorTable()
+std::map<std::string, std::unique_ptr<ModelCreator>>& ModelFactory::CreatorTable()
 {
-    static std::map<std::string, ModelCreator*> tbl;
+    static std::map<std::string, std::unique_ptr<ModelCreator>> tbl;
     return tbl;
+}
+
+boost::optional<std::string>& ModelOverride()
+{
+    static boost::optional<std::string> ovr = boost::none;
+    return ovr;
 }
 
 }  // Consensus

@@ -66,6 +66,7 @@
 #include <pacbio/io/Utility.h>
 #include <pacbio/ccs/Whitelist.h>
 #include <pacbio/parallel/WorkQueue.h>
+#include <pacbio/consensus/ModelSelection.h>
 
 #include <pacbio/Version.h>
 
@@ -100,6 +101,8 @@ constexpr auto NumThreads = "numThreads";
 constexpr auto LogFile = "logFile";
 constexpr auto LogLevel = "logLevel";
 constexpr auto RichQVs = "richQVs";
+constexpr auto ModelPath = "modelPath";
+constexpr auto ModelSpec = "modelSpec";
 }  // namespace OptionNames
 }  // namespace CCS
 }  // namespace PacBio
@@ -397,6 +400,10 @@ int main(int argc, char** argv)
     parser.add_option(em + OptionNames::ReportFile)
         .set_default("ccs_report.txt")
         .help("Where to write the results report. Default = %default");
+    parser.add_option("-M", em + OptionNames::ModelPath)
+        .help("Path to a model file or directory containing model files. Default = none");
+    parser.add_option("-m", em + OptionNames::ModelSpec)
+        .help("Name of chemistry or model to use, overriding default selection. Default = none");
     parser.add_option(em + OptionNames::NumThreads)
         .type("int")
         .set_default(0)
@@ -473,10 +480,24 @@ int main(int argc, char** argv)
         InstallSignalHandlers();
     }
 
+    // load models from file or directory
+    //
+    //
+    {
+        string modelPath(options.get(OptionNames::ModelPath));
+        if (!modelPath.empty()) {
+            PBLOG_INFO << "Loading model parameters from: '" << modelPath << "'";
+            if (!LoadModels(modelPath)) {
+                PBLOG_FATAL << "Failed to load models from: " << modelPath;
+                exit(-1);
+            }
+        }
+    }
+
     // start processing chunks!
     //
     //
-    const auto avail = PacBio::Consensus::SupportedChemistries();
+    const auto avail = SupportedChemistries();
 
     PBLOG_DEBUG << "Found consensus models for: (" << join(avail, ", ") << ')';
 
@@ -485,23 +506,32 @@ int main(int argc, char** argv)
     // test that all input chemistries are supported
     {
         set<string> used;
-        try {
-            used = ds.SequencingChemistries();
-        } catch (InvalidSequencingChemistryException& e) {
-            PBLOG_FATAL << e.what();
-            exit(-1);
+        string modelSpec(options.get(OptionNames::ModelSpec));
+        if (!modelSpec.empty()) {
+            PBLOG_INFO << "Overriding model selection with: '" << modelSpec << "'";
+            if (!(OverrideModel(modelSpec) && used.insert(modelSpec).second)) {
+                PBLOG_FATAL << "Failed to find specified model: " << modelSpec;
+                exit(-1);
+            }
+        } else {
+            try {
+                used = ds.SequencingChemistries();
+            } catch (InvalidSequencingChemistryException& e) {
+                PBLOG_FATAL << e.what();
+                exit(-1);
+            }
+
+            vector<string> unavail;
+
+            set_difference(used.begin(), used.end(), avail.begin(), avail.end(),
+                           back_inserter(unavail));
+
+            if (!unavail.empty()) {
+                PBLOG_FATAL << "Unsupported chemistries found: (" << join(unavail, ", ") << "), "
+                            << "supported chemistries are: (" << join(avail, ", ") << ")";
+                exit(-1);
+            }
         }
-        vector<string> unavail;
-
-        set_difference(used.begin(), used.end(), avail.begin(), avail.end(),
-                       back_inserter(unavail));
-
-        if (!unavail.empty()) {
-            PBLOG_FATAL << "Unsupported chemistries found: \"" << join(unavail, "\", \"") << "\""
-                        << ", supported chemistries are: \"" << join(avail, "\", \"") << "\"";
-            exit(-1);
-        }
-
         PBLOG_DEBUG << "Using consensus models for: (" << join(used, ", ") << ')';
     }
 
@@ -549,7 +579,7 @@ int main(int argc, char** argv)
         const auto outputPrefix = outputFile.substr(0, outputFile.size() - 4);
         // Save dataset
         std::ofstream ccsOut(outputPrefix + ".consensusreadset.xml");
-        ccsSet.SaveToStream(ccsOut); 
+        ccsSet.SaveToStream(ccsOut);
     } else if (outputExt == "fastq" || outputExt == "fq")
         writer = async(launch::async, FastqWriterThread, ref(workQueue), ref(outputFile));
     else

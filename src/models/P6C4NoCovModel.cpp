@@ -58,7 +58,7 @@ class P6C4NoCovModel : public ModelConfig
     REGISTER_MODEL(P6C4NoCovModel);
 
 public:
-    static std::set<std::string> Names() { return {"P6-C4"}; }
+    static std::set<std::string> Names() { return {"P6-C4::Snr"}; }
     P6C4NoCovModel(const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;

@@ -59,7 +59,6 @@ constexpr float NEG_FLOAT_INF = -std::numeric_limits<float>::infinity();
 
 }  // anonymous namespace
 
-std::set<std::string> SupportedChemistries() { return ModelFactory::SupportedChemistries(); }
 IntegratorConfig::IntegratorConfig(const double minZScore, const double scoreDiff)
     : MinZScore{minZScore}, ScoreDiff{scoreDiff}
 {
