@@ -293,8 +293,6 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
            ((*this)[Length() - 1].Match == 1.0 && (*this)[Length() - 1].Branch == 0.0 &&
             (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0));
 
-    if (Length() < 2) throw TemplateTooSmall();
-
     return Mutation(mut.Type, mutStart_, mut.Base);
 }
 
