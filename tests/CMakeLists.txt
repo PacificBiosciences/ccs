@@ -52,7 +52,7 @@ target_link_libraries(test_unanimity
 if(${ROOT_PROJECT_NAME} STREQUAL "UNANIMITY")
     add_custom_target(check test_unanimity
         COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${UNY_RootDir}/scripts/cram.py ${UNY_TestsDir}/cram/*.t
-        # COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${UNY_TestsDir}/python/test_tool_contract.py
+        COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${UNY_TestsDir}/python/test_tool_contract.py
         DEPENDS ccs)
 endif()
 
