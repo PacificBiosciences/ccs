@@ -175,6 +175,16 @@ std::vector<StrandType> AbstractIntegrator::StrandTypes() const
     return TransformEvaluators<StrandType>([](const Evaluator& eval) { return eval.Strand(); });
 }
 
+const AbstractMatrix& AbstractIntegrator::Alpha(size_t idx) const
+{
+    return evals_[idx].Alpha();
+}
+
+const AbstractMatrix& AbstractIntegrator::Beta(size_t idx) const
+{
+    return evals_[idx].Beta();
+}
+
 Mutation AbstractIntegrator::ReverseComplement(const Mutation& mut) const
 {
     return Mutation(mut.Type, TemplateLength() - mut.End(), Complement(mut.Base));

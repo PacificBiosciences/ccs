@@ -184,6 +184,17 @@ void Evaluator::Status(State nextState)
 }
 
 void Evaluator::Release() { Status(State::MANUALLY_RELEASED); }
+
+const AbstractMatrix& Evaluator::Alpha() const
+{
+    return impl_->Alpha();
+}
+
+const AbstractMatrix& Evaluator::Beta() const
+{
+    return impl_->Beta();
+}
+
 void Evaluator::CheckZScore(const double minZScore, const std::string& model)
 {
     // the zscore filter is disabled under the following conditions

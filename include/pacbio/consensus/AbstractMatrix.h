@@ -35,62 +35,28 @@
 
 #pragma once
 
-#include <memory>
-#include <utility>
-#include <vector>
-
-#include <pacbio/consensus/Evaluator.h>
-#include <pacbio/data/Read.h>
-#include <pacbio/consensus/Template.h>
-
-#include "Recursor.h"
-#include "matrix/ScaledMatrix.h"
-
 namespace PacBio {
 namespace Consensus {
 
-class EvaluatorImpl
-{
+// AbstractMatrix is a superclass of the matrix types used in the arrow
+// banded dynamic programming.  It exposes a minimal interface only
+// intended for diagnostic purposes (looking at a matrix from Python,
+// seeing how well the banding is working, ...).  No matrix implementation
+// details are exposed---one can think of this as effectively an opaque
+// data type.
+class AbstractMatrix {
 public:
-    EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
-                  double scoreDiff = 12.5);
-
-    std::string ReadName() const;
-
-    double LL(const Mutation& mut);
-    double LL() const;
-
-    // TODO: Comments are nice!  Explain what this is about---ZScore calculation?
-    std::pair<double, double> NormalParameters() const;
-
-    double ZScore() const;
-
-    bool ApplyMutation(const Mutation& mut);
-    bool ApplyMutations(std::vector<Mutation>* muts);
-
-    int NumFlipFlops() const { return numFlipFlops_; }
-    float AlphaPopulated() const { return alpha_.UsedEntriesRatio(); }
-    float BetaPopulated() const { return beta_.UsedEntriesRatio(); }
+    // Method SWIG clients can use to get a native matrix (e.g. Numpy)
+    // mat must be filled as a ROW major matrix, and the understanding
+    // is that the entries represent natural-logs of probabilities.
+    // N.B.: Needs int, not size_t dimensions, for SWIG/numpy
+    virtual void ToHostMatrix(double** mat, int* rows, int* cols) const = 0;
 
 public:
-    const AbstractMatrix& Alpha() const;
-    const AbstractMatrix& Beta() const;
-
-private:
-    void Recalculate();
-
-private:
-    std::unique_ptr<AbstractRecursor>
-        recursor_;  // TODO: does this need to be a pointer?  is it always non-null?
-                    // are we making it a UP just so we can do a fwd decl and still have
-                    // RAII semantics?
-    ScaledMatrix alpha_;
-    ScaledMatrix beta_;
-    ScaledMatrix extendBuffer_;
-
-    int numFlipFlops_;
-
-    friend class Evaluator;
+    // Methods for inquiring about matrix occupancy.
+    virtual size_t UsedEntries() const = 0;
+    virtual float UsedEntriesRatio() const = 0;
+    virtual size_t AllocatedEntries() const = 0;  // an entry may be allocated but not used
 };
 
 }  // namespace Consensus

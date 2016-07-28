@@ -48,6 +48,7 @@ namespace Consensus {
     
 // forward declaration
 class EvaluatorImpl;
+class AbstractMatrix;
 
 class Evaluator
 {
@@ -91,6 +92,10 @@ public:
     float BetaPopulated() const;
 
     void Release();
+
+public:
+    const AbstractMatrix& Alpha() const;
+    const AbstractMatrix& Beta() const;
 
 private:
     void CheckZScore(const double minZScore, const std::string& model);

@@ -99,12 +99,12 @@ size_t SparseMatrix::AllocatedEntries() const
     return sum;
 }
 
-void SparseMatrix::ToHostMatrix(double** mat, size_t* rows, size_t* cols) const
+void SparseMatrix::ToHostMatrix(double** mat, int* rows, int* cols) const
 {
     const double nan = std::numeric_limits<double>::quiet_NaN();
     *mat = new double[Rows() * Columns()];
-    *rows = Rows();
-    *cols = Columns();
+    *rows = static_cast<int>(Rows());
+    *cols = static_cast<int>(Columns());
     for (size_t i = 0; i < Rows(); i++) {
         for (size_t j = 0; j < Columns(); j++) {
             (*mat)[i * Columns() + j] = IsAllocated(i, j) ? Get(i, j) : nan;
