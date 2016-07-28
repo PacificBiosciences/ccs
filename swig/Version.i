@@ -5,7 +5,7 @@
 
 %pythoncode
 %{
-__version__ = "@UNANIMITY_VERSION@"
+__version__ = UnanimityVersion()
 %}
 
 %include <pacbio/Version.h>

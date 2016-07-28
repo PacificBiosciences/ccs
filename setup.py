@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import os
 import os.path
+import re
 import sys
 
 from copy import copy
@@ -11,6 +12,17 @@ from distutils.util import strtobool
 from setuptools import setup, Extension
 from shutil import copy2, rmtree
 from subprocess import Popen
+
+def ParseVersion():
+    thisDir = os.path.dirname(os.path.realpath(__file__))
+    cmakeLists = os.path.join(thisDir, "CMakeLists.txt")
+    regexp = re.compile(r'project\([^ ]+ VERSION (\d+\.\d+\.\d+) [^\)]+\)')
+    with open(cmakeLists) as handle:
+        for line in handle:
+            m = regexp.search(line)
+            if m:
+                return m.group(1)
+    raise RuntimeError("unable to find version string!")
 
 def which(program, env=os.environ):
     def isExe(fpath):
@@ -133,7 +145,7 @@ class MyBuildExt(build_ext):
 
 setup(
     name="ConsensusCore2",
-    version="0.13.0",
+    version=ParseVersion(),
     author="PacificBiosciences",
     author_email="devnet@pacb.com",
     url="http://www.github.com/PacificBiosciences/ConsensusCore2",

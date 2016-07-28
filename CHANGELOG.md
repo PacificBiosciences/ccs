@@ -1,5 +1,13 @@
 # UNANIMITY - CHANGELOG
 
+## [2.0.1]
+
+### Added
+ - Bump version (to cc2 + ccs)
+ - Unify CCS and CC2 versioning under unanimity
+ - Cleanup python/swig generation
+ - Cleanup version handling
+
 ## [0.0.1]
 
 ### Added

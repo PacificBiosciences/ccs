@@ -40,28 +40,24 @@
 #include <string>
 
 namespace PacBio {
+namespace {
+constexpr char   UnyVersion[]    = "@UNANIMITY_VERSION@";
+constexpr char   UnyGitSha1[]    = "@UNANIMITY_GIT_SHA1@";
+constexpr char   UnyChangelog[]  = "${UNANIMITY_CHANGELOG}";
+constexpr size_t UnyVersionMajor = @UNANIMITY_VERSION_MAJOR@;
+constexpr size_t UnyVersionMinor = @UNANIMITY_VERSION_MINOR@;
+constexpr size_t UnyVersionPatch = @UNANIMITY_VERSION_PATCH@;
+}
 
-constexpr char   LibraryVersion[]   = "@UNANIMITY_VERSION@";
-constexpr char   LibraryGitSha1[]   = "@UNANIMITY_GIT_SHA1@";
-constexpr char   LibraryChangelog[] = "${UNANIMITY_CHANGELOG}";
-constexpr size_t LibraryMajor       = @UNANIMITY_VERSION_MAJOR@;
-constexpr size_t LibraryMinor       = @UNANIMITY_VERSION_MINOR@;
-constexpr size_t LibraryPatch       = @UNANIMITY_VERSION_PATCH@;
+std::string UnanimityVersion()
+{ return UnyVersion; }
 
-constexpr char   CCSVersion[]       = "${CCS_VERSION}";
+std::string UnanimityGitSha1()
+{ return UnyGitSha1; }
 
-std::string CCSVersionString()
-{ return CCSVersion; }
-
-std::string LibraryVersionString()
-{ return LibraryVersion; }
-
-std::string LibraryGitSha1String()
-{ return LibraryGitSha1; }
-
-std::string Changelog()
+std::string UnanimityChangelog()
 {
-    std::string changelog(LibraryChangelog);
+    std::string changelog(UnyChangelog);
     std::replace(changelog.begin(), changelog.end(), ';', '\n');
     return changelog;
 }
