@@ -26,7 +26,7 @@ include_directories(SYSTEM
 # and the original ConsensusCore used it by default.
 # We could use python -c "print(sysconfig.get_config_var('CCSHARED'))",
 # but it's honestly unnecessary and requires providing PYTHON_EXECUTABLE
-target_compile_options(unanimity PUBLIC -fPIC)
+target_compile_options(cc2 PUBLIC -fPIC)
 add_compile_options(-fPIC)
 
 # ConsensusCore2_wrap.cxx
@@ -46,8 +46,14 @@ add_library(_ConsensusCore2 MODULE
     ConsensusCore2_wrap.cxx
 )
 
+set(CC2_LIBRARIES 
+    ${PRE_LINK}
+    cc2
+    ${POST_LINK}
+    CACHE INTERNAL "" FORCE)
+
 target_link_libraries(_ConsensusCore2
-    ${UNY_LIBRARIES}
+    ${CC2_LIBRARIES}
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
