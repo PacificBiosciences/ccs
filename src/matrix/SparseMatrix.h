@@ -44,11 +44,12 @@
 #include <vector>
 
 #include "SparseVector.h"
+#include <pacbio/consensus/AbstractMatrix.h>
 
 namespace PacBio {
 namespace Consensus {
 
-class SparseMatrix
+class SparseMatrix : public AbstractMatrix
 {
 public:  // Constructor, destructor
     SparseMatrix(size_t rows, size_t cols);
@@ -83,9 +84,7 @@ public:  // Accessors
     void ClearColumn(size_t j);
 
 public:
-    // Method SWIG clients can use to get a native matrix (e.g. Numpy)
-    // mat must be filled as a ROW major matrix
-    void ToHostMatrix(double** mat, size_t* rows, size_t* cols) const;
+    void ToHostMatrix(double** mat, int* rows, int* cols) const;
 
 private:
     static double* EmptyCell();

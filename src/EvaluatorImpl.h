@@ -69,8 +69,11 @@ public:
     bool ApplyMutations(std::vector<Mutation>* muts);
 
     int NumFlipFlops() const { return numFlipFlops_; }
-    float AlphaPopulated() const { return alpha_.UsedEntriesRatio(); }
-    float BetaPopulated() const { return beta_.UsedEntriesRatio(); }
+
+public:
+    const AbstractMatrix& Alpha() const;
+    const AbstractMatrix& Beta() const;
+
 private:
     void Recalculate();
 

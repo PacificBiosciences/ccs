@@ -80,5 +80,19 @@ std::ostream& operator<<(std::ostream& os, const ScaledMatrix& mat)
     return os;
 }
 
+void ScaledMatrix::ToHostMatrix(double** mat, int* rows, int* cols) const
+{
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    *mat = new double[Rows() * Columns()];
+    *rows = Rows();
+    *cols = Columns();
+    for (size_t i = 0; i < Rows(); i++) {
+        for (size_t j = 0; j < Columns(); j++) {
+            (*mat)[i * Columns() + j] =
+                    IsAllocated(i, j) ? std::log(Get(i, j)) + GetLogScale(j) : nan;
+        }
+    }
+}
+
 }  // namespace Consensus
 }  // namespace PacBio

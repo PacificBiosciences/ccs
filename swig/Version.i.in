@@ -3,4 +3,9 @@
 #include <pacbio/Version.h>
 %}
 
+%pythoncode
+%{
+__version__ = "@UNANIMITY_VERSION@"
+%}
+
 %include <pacbio/Version.h>

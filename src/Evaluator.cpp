@@ -133,18 +133,6 @@ int Evaluator::NumFlipFlops() const
     return NEG_INT_INF;
 }
 
-float Evaluator::AlphaPopulated() const
-{
-    if (IsValid()) return impl_->AlphaPopulated();
-    return NEG_FLOAT_INF;
-}
-
-float Evaluator::BetaPopulated() const
-{
-    if (IsValid()) return impl_->BetaPopulated();
-    return NEG_FLOAT_INF;
-}
-
 bool Evaluator::ApplyMutation(const Mutation& mut)
 {
     bool mutApplied = false;
@@ -184,6 +172,17 @@ void Evaluator::Status(State nextState)
 }
 
 void Evaluator::Release() { Status(State::MANUALLY_RELEASED); }
+
+const AbstractMatrix& Evaluator::Alpha() const
+{
+    return impl_->Alpha();
+}
+
+const AbstractMatrix& Evaluator::Beta() const
+{
+    return impl_->Beta();
+}
+
 void Evaluator::CheckZScore(const double minZScore, const std::string& model)
 {
     // the zscore filter is disabled under the following conditions

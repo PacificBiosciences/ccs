@@ -50,6 +50,8 @@
 namespace PacBio {
 namespace Consensus {
 
+class AbstractMatrix;
+
 struct IntegratorConfig
 {
     double MinZScore;
@@ -90,14 +92,16 @@ public:
     std::vector<int> NumFlipFlops() const;
     int MaxNumFlipFlops() const;
 
-    std::vector<float> AlphaPopulated() const;
     float MaxAlphaPopulated() const;
-
-    std::vector<float> BetaPopulated() const;
     float MaxBetaPopulated() const;
 
     std::vector<PacBio::Data::State> States() const;
     std::vector<PacBio::Data::StrandType> StrandTypes() const;
+
+public:
+    // Abstract matrix access for SWIG and diagnostics
+    const AbstractMatrix& Alpha(size_t idx) const;
+    const AbstractMatrix& Beta(size_t idx) const;
 
 protected:
     Mutation ReverseComplement(const Mutation& mut) const;

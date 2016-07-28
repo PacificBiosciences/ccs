@@ -234,10 +234,15 @@ bool EvaluatorImpl::ApplyMutations(std::vector<Mutation>* muts)
     return false;
 }
 
-/*
-Matrix* AlphaMatrix();
-Matrix* BetaMatrix();
-*/
+const AbstractMatrix& EvaluatorImpl::Alpha() const
+{
+    return alpha_;
+}
+
+const AbstractMatrix& EvaluatorImpl::Beta() const
+{
+    return beta_;
+}
 
 }  // namespace Consensus
 }  // namespace PacBio

@@ -35,76 +35,28 @@
 
 #pragma once
 
-#include <memory>
-#include <utility>
-#include <vector>
-
-#include <pacbio/data/Read.h>
-#include <pacbio/data/State.h>
-#include <pacbio/consensus/Template.h>
-
 namespace PacBio {
 namespace Consensus {
-    
-// forward declaration
-class EvaluatorImpl;
-class AbstractMatrix;
 
-class Evaluator
-{
+// AbstractMatrix is a superclass of the matrix types used in the arrow
+// banded dynamic programming.  It exposes a minimal interface only
+// intended for diagnostic purposes (looking at a matrix from Python,
+// seeing how well the banding is working, ...).  No matrix implementation
+// details are exposed---one can think of this as effectively an opaque
+// data type.
+class AbstractMatrix {
 public:
-    Evaluator() = delete;
-    Evaluator(PacBio::Data::State);
-    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr, double minZScore,
-              double scoreDiff);
-
-    // copying is verboten
-    Evaluator(const Evaluator&) = delete;
-    Evaluator& operator=(const Evaluator&) = delete;
-
-    // move constructor
-    Evaluator(Evaluator&&);
-    // move assign operator
-    Evaluator& operator=(Evaluator&&);
-
-    ~Evaluator();
-
-    size_t Length() const;  // TODO: is this used anywhere?  If not, delete it.
-    PacBio::Data::StrandType Strand() const;
-
-    operator bool() const { return IsValid(); }
-    bool IsValid() const { return curState_ == PacBio::Data::State::VALID; }
-
-    operator std::string() const;
-    std::string ReadName() const;
-
-    double LL(const Mutation& mut);
-    double LL() const;
-
-    std::pair<double, double> NormalParameters() const;
-
-    double ZScore() const;
-
-    bool ApplyMutation(const Mutation& mut);
-    bool ApplyMutations(std::vector<Mutation>* muts);
-
-    PacBio::Data::State Status() const { return curState_; }
-    int NumFlipFlops() const;
-
-    void Release();
+    // Method SWIG clients can use to get a native matrix (e.g. Numpy)
+    // mat must be filled as a ROW major matrix, and the understanding
+    // is that the entries represent natural-logs of probabilities.
+    // N.B.: Needs int, not size_t dimensions, for SWIG/numpy
+    virtual void ToHostMatrix(double** mat, int* rows, int* cols) const = 0;
 
 public:
-    const AbstractMatrix& Alpha() const;
-    const AbstractMatrix& Beta() const;
-
-private:
-    void CheckZScore(const double minZScore, const std::string& model);
-
-    void Status(PacBio::Data::State nextState);
-
-private:
-    std::unique_ptr<EvaluatorImpl> impl_;
-    PacBio::Data::State curState_;
+    // Methods for inquiring about matrix occupancy.
+    virtual size_t UsedEntries() const = 0;
+    virtual float UsedEntriesRatio() const = 0;
+    virtual size_t AllocatedEntries() const = 0;  // an entry may be allocated but not used
 };
 
 }  // namespace Consensus

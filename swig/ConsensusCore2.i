@@ -7,11 +7,6 @@
 #define SWIG_FILE_WITH_INIT
 %}
 
-%pythoncode
-%{
-__version__ = "@UNANIMITY_VERSION@"
-%}
-
 %ignore *::operator[];
 %ignore *::operator=;
 %ignore *::operator<<;
@@ -78,6 +73,7 @@ namespace std
 %include "State.i"
 %include "Alignment.i"
 %include "Coverage.i"
+%include "Matrix.i"
 %include "ModelConfig.i"
 %include "Mutation.i"
 %include "Polish.i"
