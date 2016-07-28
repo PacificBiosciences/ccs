@@ -7,11 +7,6 @@
 #define SWIG_FILE_WITH_INIT
 %}
 
-%pythoncode
-%{
-__version__ = "@UNANIMITY_VERSION@"
-%}
-
 %ignore *::operator[];
 %ignore *::operator=;
 %ignore *::operator<<;

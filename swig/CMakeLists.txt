@@ -3,8 +3,8 @@
 file(MAKE_DIRECTORY  ${UNY_SwigDir}/lib)
 
 configure_file(
-    ${UNY_SwigDir}/ConsensusCore2.i.in
-    ${UNY_SwigDir}/ConsensusCore2.i
+    ${UNY_SwigDir}/Version.i.in
+    ${UNY_SwigDir}/Version.i
 )
 
 include_directories(
