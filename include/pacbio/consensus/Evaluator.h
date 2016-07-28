@@ -73,6 +73,8 @@ public:
     PacBio::Data::StrandType Strand() const;
 
     operator bool() const { return IsValid(); }
+    bool IsValid() const { return curState_ == PacBio::Data::State::VALID; }
+
     operator std::string() const;
     std::string ReadName() const;
 
@@ -100,7 +102,6 @@ public:
 private:
     void CheckZScore(const double minZScore, const std::string& model);
 
-    bool IsValid() const { return curState_ == PacBio::Data::State::VALID; }
     void Status(PacBio::Data::State nextState);
 
 private:
