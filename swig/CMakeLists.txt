@@ -1,16 +1,6 @@
 
 # output directory
-file(MAKE_DIRECTORY  ${UNY_SwigDir}/lib)
-
-configure_file(
-    ${UNY_SwigDir}/Version.i.in
-    ${UNY_SwigDir}/Version.i
-)
-
-include_directories(
-    ${UNY_IncludeDir}
-    ${CMAKE_BINARY_DIR}/generated
-)
+file(MAKE_DIRECTORY  ${CMAKE_BINARY_DIR}/swig/lib)
 
 include(uny-findpythonpath)
 find_python_inc(PYTHON_INCLUDE_DIRS)
@@ -30,7 +20,7 @@ target_compile_options(cc2 PUBLIC -fPIC)
 add_compile_options(-fPIC)
 
 # ConsensusCore2_wrap.cxx
-set(SWIG_COMMAND swig CACHE PATH "swig path")
+set(SWIG_COMMAND swig CACHE PATH "swig PATH")
 
 add_custom_command(OUTPUT ConsensusCore2_wrap.cxx
     COMMAND ${SWIG_COMMAND} -Wextra -c++ -python -builtin -module ConsensusCore2
@@ -38,7 +28,7 @@ add_custom_command(OUTPUT ConsensusCore2_wrap.cxx
         -o ${CMAKE_BINARY_DIR}/swig/ConsensusCore2_wrap.cxx -outdir ${CMAKE_BINARY_DIR}/swig
         ${UNY_SwigDir}/ConsensusCore2.i
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/swig/ConsensusCore2.py
-        ${UNY_SwigDir}/lib/__init__.py
+        ${CMAKE_BINARY_DIR}/swig/lib/__init__.py
 )
 
 # _ConsensusCore2.so
@@ -46,7 +36,12 @@ add_library(_ConsensusCore2 MODULE
     ConsensusCore2_wrap.cxx
 )
 
-set(CC2_LIBRARIES 
+target_include_directories(_ConsensusCore2
+    PUBLIC ${UNY_IncludeDir}
+    PUBLIC ${CMAKE_BINARY_DIR}/generated
+)
+
+set(CC2_LIBRARIES
     ${PRE_LINK}
     cc2
     ${POST_LINK}
@@ -61,6 +56,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 set_target_properties(_ConsensusCore2 PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${UNY_SwigDir}/lib
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/swig/lib
     PREFIX ""
 )
