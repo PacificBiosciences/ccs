@@ -3,22 +3,26 @@ from __future__ import print_function
 
 import os
 import os.path
+import re
 import sys
 
 from copy import copy
-from distutils import sysconfig
-from distutils.command.clean import clean as dclean
-from distutils.errors import CompileError
+from distutils.command.build_ext import build_ext
 from distutils.util import strtobool
-from setuptools import setup
-from setuptools.dist import Distribution
-from shutil import rmtree
+from setuptools import setup, Extension
+from shutil import copy2, rmtree
 from subprocess import Popen
-from tempfile import mkdtemp
 
-thisDir = os.path.dirname(os.path.realpath(__file__))
-swigLib = os.path.join(thisDir, "swig", "lib")
-modName = "_ConsensusCore2.so"
+def ParseVersion():
+    thisDir = os.path.dirname(os.path.realpath(__file__))
+    cmakeLists = os.path.join(thisDir, "CMakeLists.txt")
+    regexp = re.compile(r'project\([^ ]+ VERSION (\d+\.\d+\.\d+) [^\)]+\)')
+    with open(cmakeLists) as handle:
+        for line in handle:
+            m = regexp.search(line)
+            if m:
+                return m.group(1)
+    raise RuntimeError("unable to find version string!")
 
 def which(program, env=os.environ):
     def isExe(fpath):
@@ -34,18 +38,6 @@ def which(program, env=os.environ):
             if isExe(exe):
                 return exe
     return None
-
-
-class MyClean(dclean):
-    def run(self):
-        rmtree(swigLib, ignore_errors=True)
-        dclean.run(self)
-
-
-class MyDist(Distribution):
-    def has_ext_modules(self):
-        return True
-
 
 class CMake(object):
     def __init__(self, env=os.environ, verbose=False):
@@ -78,7 +70,7 @@ class CMake(object):
         self.definitions[key] = value
 
     def add_definition_from_env(self, key, default=None):
-        value = env.get(key, default)
+        value = self.env.get(key, default)
         if value:
             self.add_definition(key, value)
 
@@ -105,27 +97,32 @@ class CMake(object):
                 self.build.append("-v")
         self.generator = gen
 
-    def __call__(self, directory):
+    def __call__(self, sourceDir, binaryDir, targets=[]):
         configure = copy(self.configure)
         if self.generator:
             configure.append("-G{0}".format(self.generator))
         for k, v in self.definitions.iteritems():
             configure.append("-D{0}={1}".format(k, v))
-        configure.append(directory)
+        configure.append(sourceDir)
         print("Configuring with command `{0}`".format(" ".join(configure)), file=sys.stderr)
-        retcode = Popen(configure, cwd=buildDir, env=env).wait()
+        retcode = Popen(configure, cwd=binaryDir, env=self.env).wait()
         if retcode != 0:
             raise RuntimeError("failed to configure the project")
-        print("Building with command `{0}`".format(" ".join(self.build)), file=sys.stderr)
-        retcode = Popen(self.build, cwd=buildDir).wait()
+        build = self.build + targets
+        print("Building with command `{0}`".format(" ".join(build)), file=sys.stderr)
+        retcode = Popen(build, cwd=binaryDir).wait()
         if retcode != 0:
             raise RuntimeError("failed to build the project")
 
-
-# build the library if we haven't already
-if not os.path.exists(os.path.join(swigLib, modName)):
-    buildDir = mkdtemp()
-    try:
+class MyBuildExt(build_ext):
+    def build_extension(self, ext):
+        destDir = os.path.dirname(self.get_ext_fullpath(ext.name))
+        thisDir = os.path.dirname(os.path.realpath(__file__))
+        try:
+            os.makedirs(self.build_temp)
+            os.makedirs(destDir)
+        except OSError:
+            pass
         env = os.environ.copy()
         cmake = CMake(env)
         cmake.add_definition_from_env("Boost_INCLUDE_DIRS")
@@ -135,23 +132,28 @@ if not os.path.exists(os.path.join(swigLib, modName)):
         cmake.add_definition("PYTHON_EXECUTABLE", sys.executable)
         cmake.set_build_type("RelWithDebInfo")
         cmake.set_generator("Ninja" if which("ninja", env) else "Default")
-        cmake(thisDir)
-    finally:
-        rmtree(buildDir)
+        targets = ["_ConsensusCore2"]
+        try:
+            cmake(thisDir, self.build_temp, targets)
+        except RuntimeError:
+            # if this happens we're probably under pip and need to regenerate
+            rmtree(self.build_temp)
+            os.makedirs(self.build_temp)
+            cmake(thisDir, self.build_temp, targets)
+        for fname in ("_ConsensusCore2.so", "__init__.py"):
+            copy2(os.path.join(self.build_temp, "swig", "lib", fname), destDir)
 
 setup(
     name="ConsensusCore2",
-    version="0.13.0",
+    version=ParseVersion(),
     author="PacificBiosciences",
     author_email="devnet@pacb.com",
     url="http://www.github.com/PacificBiosciences/ConsensusCore2",
     description="A library for generating consensus sequences for PacBio data",
     license="BSD",
-    packages=["ConsensusCore2"],
-    package_dir={"ConsensusCore2": swigLib},
-    package_data={"ConsensusCore2": [modName]},
+    ext_package="ConsensusCore2",
+    ext_modules=[Extension("_ConsensusCore2", [])],
     install_requires=["numpy >= 1.6.0"],
     setup_requires=["numpy >= 1.6.0"],
-    distclass=MyDist,
-    cmdclass={"clean": MyClean}
+    cmdclass={"build_ext": MyBuildExt}
     )
