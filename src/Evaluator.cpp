@@ -133,18 +133,6 @@ int Evaluator::NumFlipFlops() const
     return NEG_INT_INF;
 }
 
-float Evaluator::AlphaPopulated() const
-{
-    if (IsValid()) return impl_->AlphaPopulated();
-    return NEG_FLOAT_INF;
-}
-
-float Evaluator::BetaPopulated() const
-{
-    if (IsValid()) return impl_->BetaPopulated();
-    return NEG_FLOAT_INF;
-}
-
 bool Evaluator::ApplyMutation(const Mutation& mut)
 {
     bool mutApplied = false;

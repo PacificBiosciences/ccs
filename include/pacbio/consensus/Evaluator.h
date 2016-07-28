@@ -90,8 +90,6 @@ public:
 
     PacBio::Data::State Status() const { return curState_; }
     int NumFlipFlops() const;
-    float AlphaPopulated() const;
-    float BetaPopulated() const;
 
     void Release();
 

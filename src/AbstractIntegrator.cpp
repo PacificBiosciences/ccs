@@ -41,6 +41,8 @@
 #include <utility>
 
 #include <pacbio/consensus/AbstractIntegrator.h>
+#include <pacbio/consensus/AbstractMatrix.h>
+
 #include <pacbio/data/Sequence.h>
 
 #include "ModelFactory.h"
@@ -126,18 +128,26 @@ std::vector<int> AbstractIntegrator::NumFlipFlops() const
 }
 
 int AbstractIntegrator::MaxNumFlipFlops() const { return MaxElement<int>(NumFlipFlops()); }
-std::vector<float> AbstractIntegrator::AlphaPopulated() const
+
+
+float AbstractIntegrator::MaxAlphaPopulated() const
 {
-    return TransformEvaluators<float>([](const Evaluator& eval) { return eval.AlphaPopulated(); });
+    const auto functor = [](const Evaluator& eval) {
+        return (eval.IsValid() ? eval.Alpha().UsedEntriesRatio() : NEG_FLOAT_INF);
+    };
+    auto alphaPopulated = TransformEvaluators<float>(functor);
+    return MaxElement<float>(alphaPopulated);
 }
 
-float AbstractIntegrator::MaxAlphaPopulated() const { return MaxElement<float>(AlphaPopulated()); }
-std::vector<float> AbstractIntegrator::BetaPopulated() const
+float AbstractIntegrator::MaxBetaPopulated() const
 {
-    return TransformEvaluators<float>([](const Evaluator& eval) { return eval.BetaPopulated(); });
+    const auto functor = [](const Evaluator& eval) {
+        return (eval.IsValid() ? eval.Beta().UsedEntriesRatio() : NEG_FLOAT_INF);
+    };
+    auto betaPopulated = TransformEvaluators<float>(functor);
+    return MaxElement<float>(betaPopulated);
 }
 
-float AbstractIntegrator::MaxBetaPopulated() const { return MaxElement<float>(BetaPopulated()); }
 double AbstractIntegrator::AvgZScore() const
 {
     double mean = 0.0, var = 0.0;

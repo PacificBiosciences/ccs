@@ -92,10 +92,7 @@ public:
     std::vector<int> NumFlipFlops() const;
     int MaxNumFlipFlops() const;
 
-    std::vector<float> AlphaPopulated() const;
     float MaxAlphaPopulated() const;
-
-    std::vector<float> BetaPopulated() const;
     float MaxBetaPopulated() const;
 
     std::vector<PacBio::Data::State> States() const;
