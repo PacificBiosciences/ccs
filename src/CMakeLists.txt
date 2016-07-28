@@ -1,19 +1,14 @@
 # get all header files for IDE support
 file(GLOB_RECURSE UNY_HEADER "${UNY_IncludeDir}/*.h")
 file(GLOB_RECURSE UNY_HIDDEN_HEADER "*.h")
-# get all cpp files
-file(GLOB_RECURSE UNY_CPP "*.cpp")
-# exclude executable cpp fles
-file(GLOB_RECURSE UNY_MAIN_CPP "main/*.cpp")
-list(REMOVE_ITEM UNY_CPP ${UNY_MAIN_CPP})
-
-# add main library including everything
-add_library(unanimity STATIC
-    ${UNY_CPP}
-    ${UNY_HEADER}
-    ${UNY_HIDDEN_HEADER}
-    ${CPPOPTPARSE_CPP}
-)
+# get sources for src/align
+file(GLOB UNY_ALIGN_CPP  "align/*.cpp")
+# get sources for src/matrix
+file(GLOB UNY_MATRIX_CPP "matrix/*.cpp")
+# get sources for src/models
+file(GLOB UNY_MODELS_CPP "models/*.cpp")
+# get sources for src/poa
+file(GLOB UNY_POA_CPP    "poa/*.cpp")
 
 # includes
 set(UNY_INCLUDE_DIRS
@@ -30,55 +25,93 @@ set(UNY_INCLUDE_DIRS
     FORCE
 )
 
-target_include_directories(unanimity PUBLIC
+include_directories(
     ${UNY_INCLUDE_DIRS}
 )
 
-if(APPLE)
-    set(PRE_LINK -force_load)
-elseif(UNIX)
-    SET(PRE_LINK -Wl,-whole-archive)
-    SET(POST_LINK -Wl,-no-whole-archive)
-endif()
+# add subset of sources that only contains cc2
+add_library(cc2 STATIC
+    ${UNY_ALIGN_CPP}
+    ${UNY_MATRIX_CPP}
+    ${UNY_MODELS_CPP}
+    ${UNY_POA_CPP}
+    AbstractIntegrator.cpp
+    Coverage.cpp
+    Evaluator.cpp
+    EvaluatorImpl.cpp
+    ModelConfig.cpp
+    ModelFactory.cpp
+    ModelFormFactory.cpp
+    ModelSelection.cpp
+    MonoMolecularIntegrator.cpp
+    MultiMolecularIntegrator.cpp
+    Mutation.cpp
+    Polish.cpp
+    Read.cpp
+    Recursor.cpp
+    Sequence.cpp
+    Template.cpp
+)
 
-set(UNY_LIBRARIES 
-    ${PRE_LINK} 
-    unanimity
-    ${POST_LINK}
-    ${ZLIB_LIBRARIES}
-    ${HTSLIB_LIBRARIES}
-    ${PacBioBAM_LIBRARIES}
-    CACHE INTERNAL "" FORCE)
-
-if (TARGET htslib)
-    add_dependencies(unanimity htslib)
-endif()
-
-if (TARGET pbbam)
-    add_dependencies(unanimity pbbam)
-endif()
-
-# add executables
-if (UNY_build_bin)
-    add_executable(ccs ${UNY_SourceDir}/main/ccs.cpp)
-    
-    set_target_properties(ccs PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+# only build if NOT called from pip install
+if (NOT PYTHON_SWIG)
+    # add main library including everything
+    add_library(unanimity STATIC
+        ${UNY_HEADER}
+        ${UNY_HIDDEN_HEADER}
+        ${CPPOPTPARSE_CPP}
+        ChainSeeds.cpp
+        ChemistryMapping.cpp
+        ChemistryTriple.cpp
+        Consensus.cpp
+        Interval.cpp
+        ReadId.cpp
+        SparsePoa.cpp
+        SubreadResultCounter.cpp
+        Timer.cpp
+        Utility.cpp
     )
 
-    target_link_libraries(ccs 
-        ${UNY_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${CMAKE_DL_LIBS}
-    )
+    set(UNY_LIBRARIES 
+        ${PRE_LINK}
+        cc2
+        unanimity
+        ${POST_LINK}
+        ${ZLIB_LIBRARIES}
+        ${HTSLIB_LIBRARIES}
+        ${PacBioBAM_LIBRARIES}
+        CACHE INTERNAL "" FORCE)
 
     if (TARGET htslib)
-        add_dependencies(ccs htslib)
+        add_dependencies(unanimity htslib)
     endif()
 
     if (TARGET pbbam)
-        add_dependencies(ccs pbbam)
+        add_dependencies(unanimity pbbam)
     endif()
 
-    install(TARGETS ccs RUNTIME DESTINATION bin)
+    # add executables
+    if (UNY_build_bin)
+        add_executable(ccs ${UNY_SourceDir}/main/ccs.cpp)
+        
+        set_target_properties(ccs PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
+
+        target_link_libraries(ccs 
+            ${UNY_LIBRARIES}
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${CMAKE_DL_LIBS}
+        )
+
+        if (TARGET htslib)
+            add_dependencies(ccs htslib)
+        endif()
+
+        if (TARGET pbbam)
+            add_dependencies(ccs pbbam)
+        endif()
+
+        install(TARGETS ccs RUNTIME DESTINATION bin)
+    endif()
 endif()

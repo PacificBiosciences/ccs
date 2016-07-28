@@ -19,41 +19,44 @@ if(NOT Boost_INCLUDE_DIRS)
     find_package(Boost REQUIRED)
 endif()
 
-# ZLIB
-if (NOT ZLIB_INCLUDE_DIRS OR NOT ZLIB_LIBRARIES)
-    find_package(ZLIB REQUIRED)
-endif()
-
-# htslib
-if(NOT HTSLIB_INCLUDE_DIRS OR
-   NOT HTSLIB_LIBRARIES)
-    find_package(htslib
-                 PATHS ${UNY_ThirdPartyDir}/htslib
-                 REQUIRED)
-endif()
-
-# pbbam
-if (NOT PacBioBAM_INCLUDE_DIRS OR
-    NOT PacBioBAM_LIBRARIES)
-    set(PacBioBAM_build_docs    OFF CACHE INTERNAL "" FORCE)
-    set(PacBioBAM_build_tests   OFF CACHE INTERNAL "" FORCE)
-    set(PacBioBAM_build_tools   OFF CACHE INTERNAL "" FORCE)
-    add_subdirectory(${UNY_ThirdPartyDir}/pbbam external/pbbam/build)
-    if (TARGET htslib)
-        add_dependencies(pbbam htslib)
+# only require if NOT called from pip install
+if (NOT PYTHON_SWIG)
+    # ZLIB
+    if (NOT ZLIB_INCLUDE_DIRS OR NOT ZLIB_LIBRARIES)
+        find_package(ZLIB REQUIRED)
     endif()
-endif()
 
-# cpp-optparse sources
-if (NOT CPPOPTPARSE_CPP)
-    set(CPPOPTPARSE_CPP ${UNY_ThirdPartyDir}/cpp-optparse/OptionParser.cpp CACHE INTERNAL "" FORCE)
-endif()
+    # htslib
+    if(NOT HTSLIB_INCLUDE_DIRS OR
+       NOT HTSLIB_LIBRARIES)
+        find_package(htslib
+                     PATHS ${UNY_ThirdPartyDir}/htslib
+                     REQUIRED)
+    endif()
 
-if (NOT CPPOPTPARSE_IncludeDir)
-    set(CPPOPTPARSE_IncludeDir ${UNY_ThirdPartyDir}/cpp-optparse CACHE INTERNAL "" FORCE)
-endif()
+    # pbbam
+    if (NOT PacBioBAM_INCLUDE_DIRS OR
+        NOT PacBioBAM_LIBRARIES)
+        set(PacBioBAM_build_docs    OFF CACHE INTERNAL "" FORCE)
+        set(PacBioBAM_build_tests   OFF CACHE INTERNAL "" FORCE)
+        set(PacBioBAM_build_tools   OFF CACHE INTERNAL "" FORCE)
+        add_subdirectory(${UNY_ThirdPartyDir}/pbbam external/pbbam/build)
+        if (TARGET htslib)
+            add_dependencies(pbbam htslib)
+        endif()
+    endif()
 
-# seqan headers
-if (NOT SEQAN_INCLUDE_DIRS)
-    set(SEQAN_INCLUDE_DIRS ${UNY_ThirdPartyDir}/seqan/include CACHE INTERNAL "" FORCE)
+    # cpp-optparse sources
+    if (NOT CPPOPTPARSE_CPP)
+        set(CPPOPTPARSE_CPP ${UNY_ThirdPartyDir}/cpp-optparse/OptionParser.cpp CACHE INTERNAL "" FORCE)
+    endif()
+
+    if (NOT CPPOPTPARSE_IncludeDir)
+        set(CPPOPTPARSE_IncludeDir ${UNY_ThirdPartyDir}/cpp-optparse CACHE INTERNAL "" FORCE)
+    endif()
+
+    # seqan headers
+    if (NOT SEQAN_INCLUDE_DIRS)
+        set(SEQAN_INCLUDE_DIRS ${UNY_ThirdPartyDir}/seqan/include CACHE INTERNAL "" FORCE)
+    endif()
 endif()

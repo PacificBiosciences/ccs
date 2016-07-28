@@ -40,6 +40,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${UNY_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${UNY_DEBUG_FLAGS}")
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${UNY_LINKER_FLAGS}")
 
+if(APPLE)
+    set(PRE_LINK -force_load)
+elseif(UNIX)
+    SET(PRE_LINK -Wl,-whole-archive)
+    SET(POST_LINK -Wl,-no-whole-archive)
+endif()
+
 # Build library
 add_subdirectory(${UNY_SourceDir})
 
