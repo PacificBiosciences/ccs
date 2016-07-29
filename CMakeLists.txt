@@ -10,7 +10,7 @@ set(ROOT_PROJECT_NAME ${PROJECT_NAME} CACHE STRING "root project name")
 
 # Build type
 IF(NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: Debug Release Profile RelWithDebInfo" FORCE)
+    SET(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: Debug Release Profile RelWithDebInfo ReleaseWithAssert" FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 # Build-time options
@@ -30,22 +30,11 @@ set(UNY_ThirdPartyDir ${UNY_RootDir}/third-party)
 # Project configuration
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake ${CMAKE_MODULE_PATH})
 include(uny-ccache)
+include(uny-releasewithassert)
 include(uny-compilerflags)
 include(uny-dependencies)
 include(uny-gitsha1)
 include(uny-config)
-
-# shared CXX flags for src & tests
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${UNY_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${UNY_DEBUG_FLAGS}")
-SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${UNY_LINKER_FLAGS}")
-
-if(APPLE)
-    set(PRE_LINK -force_load)
-elseif(UNIX)
-    SET(PRE_LINK -Wl,-whole-archive)
-    SET(POST_LINK -Wl,-no-whole-archive)
-endif()
 
 # Build library
 add_subdirectory(${UNY_SourceDir})

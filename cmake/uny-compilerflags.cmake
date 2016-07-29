@@ -41,3 +41,17 @@ if (SANITIZE)
     # UndefinedBehaviorSanitizer is a fast undefined behavior detector.
     set(UNY_DEBUG_FLAGS "${UNY_DEBUG_FLAGS} -fsanitize=undefined")
 endif()
+
+# shared CXX flags for src & tests
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${UNY_FLAGS}")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${UNY_DEBUG_FLAGS}")
+SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${UNY_LINKER_FLAGS}")
+
+
+# Set additionally needed linker flags
+if(APPLE)
+    set(PRE_LINK -force_load)
+elseif(UNIX)
+    SET(PRE_LINK -Wl,-whole-archive)
+    SET(POST_LINK -Wl,-no-whole-archive)
+endif()

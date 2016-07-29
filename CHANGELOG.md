@@ -3,6 +3,7 @@
 ## [2.0.1]
 
 ### Added
+ - Add new ReleaseWithAssert CMAKE_BUILD_TYPE
  - Bump version (to cc2 + ccs)
  - Unify CCS and CC2 versioning under unanimity
  - Cleanup python/swig generation
