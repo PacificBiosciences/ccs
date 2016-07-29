@@ -57,6 +57,9 @@ public:
     virtual size_t UsedEntries() const = 0;
     virtual float UsedEntriesRatio() const = 0;
     virtual size_t AllocatedEntries() const = 0;  // an entry may be allocated but not used
+
+public:
+    virtual ~AbstractMatrix() {}
 };
 
 }  // namespace Consensus
