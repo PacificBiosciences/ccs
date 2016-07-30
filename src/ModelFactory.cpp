@@ -85,6 +85,11 @@ std::unique_ptr<ModelConfig> ModelFactory::Create(const std::string& name, const
     return it->second->Create(snr);
 }
 
+std::unique_ptr<ModelConfig> ModelFactory::Create(const PacBio::Data::Read& read)
+{
+    return Create(read.Model, read.SignalToNoise);
+}
+
 bool ModelFactory::Register(const std::string& name, std::unique_ptr<ModelCreator>&& ctor)
 {
     return CreatorTable()

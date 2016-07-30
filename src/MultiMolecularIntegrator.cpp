@@ -55,10 +55,11 @@ MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
 {
 }
 
-State MultiMolecularIntegrator::AddRead(const MappedRead& read)
+static std::unique_ptr<ModelConfig> Create(const std::string& name, const SNR&);
+State MultiMolecularIntegrator::AddRead(const PacBio::Data::MappedRead& read)
 {
     try {
-        return AbstractIntegrator::AddRead(GetTemplate(read, read.SignalToNoise), read);
+        return AbstractIntegrator::AddRead(GetTemplate(read), read);
     } catch (const TemplateTooSmall& e) {
         return State::TEMPLATE_TOO_SMALL;
     }
@@ -109,8 +110,7 @@ void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
     assert(fwdTpl_ == ::PacBio::Data::ReverseComplement(revTpl_));
 }
 
-std::unique_ptr<AbstractTemplate> MultiMolecularIntegrator::GetTemplate(const MappedRead& read,
-                                                                        const SNR& snr)
+std::unique_ptr<AbstractTemplate> MultiMolecularIntegrator::GetTemplate(const PacBio::Data::MappedRead& read)
 {
     const size_t len = read.TemplateEnd - read.TemplateStart;
 
@@ -119,14 +119,14 @@ std::unique_ptr<AbstractTemplate> MultiMolecularIntegrator::GetTemplate(const Ma
         const size_t end = read.TemplateEnd;
 
         return std::unique_ptr<AbstractTemplate>(
-            new Template(fwdTpl_.substr(start, len), ModelFactory::Create(read.Model, snr), start,
+            new Template(fwdTpl_.substr(start, len), ModelFactory::Create(read), start,
                          end, read.PinStart, read.PinEnd));
     } else if (read.Strand == StrandType::REVERSE) {
         const size_t start = revTpl_.size() - read.TemplateEnd;
         const size_t end = revTpl_.size() - read.TemplateStart;
 
         return std::unique_ptr<AbstractTemplate>(
-            new Template(revTpl_.substr(start, len), ModelFactory::Create(read.Model, snr), start,
+            new Template(revTpl_.substr(start, len), ModelFactory::Create(read), start,
                          end, read.PinEnd, read.PinStart));
     }
 

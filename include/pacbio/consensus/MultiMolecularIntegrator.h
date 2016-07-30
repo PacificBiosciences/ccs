@@ -46,6 +46,7 @@
 #include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/Mutation.h>
 #include <pacbio/data/State.h>
+#include <pacbio/data/Read.h>
 
 namespace PacBio {
 namespace Consensus {
@@ -66,8 +67,7 @@ public:
     PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read);
 
 protected:
-    std::unique_ptr<AbstractTemplate> GetTemplate(const PacBio::Data::MappedRead& read, 
-                                                  const PacBio::Data::SNR& snr);
+    std::unique_ptr<AbstractTemplate> GetTemplate(const PacBio::Data::MappedRead& read);
 
     std::string fwdTpl_;
     std::string revTpl_;
