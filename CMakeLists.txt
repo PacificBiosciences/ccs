@@ -29,9 +29,11 @@ set(UNY_ThirdPartyDir ${UNY_RootDir}/third-party)
 
 # Project configuration
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake ${CMAKE_MODULE_PATH})
+
+# Fixed order, do not sort or shuffle
 include(uny-ccache)
-include(uny-releasewithassert)
 include(uny-compilerflags)
+include(uny-releasewithassert)
 include(uny-dependencies)
 include(uny-gitsha1)
 include(uny-config)
