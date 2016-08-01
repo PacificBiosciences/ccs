@@ -251,23 +251,6 @@ Results FastqWriterThread(WorkQueue<Results>& queue, const string& fname)
     return counts;
 }
 
-// TODO(lhepler) move this into ConsensusCore2
-bool ValidBaseFeatures(const DataSet& ds)
-{
-    for (const auto& bam : ds.BamFiles()) {
-        for (const auto& rg : bam.Header().ReadGroups()) {
-            // P6-C4 and S/P1-C1/beta do not require covariates besides SNR
-            if (rg.SequencingChemistry() == "P6-C4" || rg.SequencingChemistry() == "S/P1-C1/beta")
-                continue;
-            // everything else requires IPD and PulseWidth
-            else if (!rg.HasBaseFeature(BaseFeature::IPD) ||
-                     !rg.HasBaseFeature(BaseFeature::PULSE_WIDTH))
-                return false;
-        }
-    }
-    return true;
-}
-
 BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv, const DataSet& ds)
 {
     using boost::algorithm::join;
