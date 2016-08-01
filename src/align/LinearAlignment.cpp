@@ -157,7 +157,7 @@ std::string OptimalTranscript(const std::string& target, int j1, int j2, const s
     //
     // Base case
     //
-    if ((j2 - j1 <= 1) || (i2 - i1 <= 1)) {
+    if ((j2 - j1 < 1) || (i2 - i1 < 1)) {
         x = NWTranscript(target, j1, j2, query, i1, i2, &segmentScore);
     }
 
