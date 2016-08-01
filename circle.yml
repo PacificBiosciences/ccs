@@ -28,14 +28,14 @@ dependencies:
         - pushd _rev_deps ; git clone https://github.com/PacificBiosciences/GenomicConsensus.git
         - git submodule update --init --remote
     override:
-        - CMAKE_COMMAND=$(readlink -f _deps/cmake-3.3.0-Linux-x86_64/bin/cmake) Boost_INCLUDE_DIRS=$(readlink -f _deps/boost_1_60_0) SWIG_COMMAND=$(readlink -f _deps/swig-3.0.8/bin/swig) VERBOSE=1 pip install --verbose --upgrade --no-deps .
+        - CMAKE_BUILD_TYPE=ReleaseWithAssert CMAKE_COMMAND=$(readlink -f _deps/cmake-3.3.0-Linux-x86_64/bin/cmake) Boost_INCLUDE_DIRS=$(readlink -f _deps/boost_1_60_0) SWIG_COMMAND=$(readlink -f _deps/swig-3.0.8/bin/swig) VERBOSE=1 pip install --verbose --upgrade --no-deps .
         - python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
         - pushd _rev_deps/GenomicConsensus ; pip install --verbose .
+        - pushd _rev_deps/GenomicConsensus ; make check # Test GC
 test:
     pre:
         - mkdir _build
         - pushd _build ; $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_60_0) ..
-        - pushd _rev_deps/GenomicConsensus ; make check # Test GC
     override:
         - pushd _build ; make
         - pushd _build ; make check
