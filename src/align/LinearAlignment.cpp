@@ -91,7 +91,10 @@ const AlignConfig config(params, AlignMode::GLOBAL);
 std::string NWTranscript(const std::string& target, int j1, int j2, const std::string& query,
                          int i1, int i2, int* score)
 {
-    assert((i1 <= i2) && (j1 <= j2));
+    // If j1 > j2 or i1 > i2, the respective subtarget or subquery is empty, 
+    // ergo we have pure insertions or deletions.
+    assert((i2 - i1 >= -1) && (j2 - j1 >= -1)); 
+    
     // implement this inline later
     std::string T = target.substr(j1 - 1, j2 - j1 + 1);
     std::string Q = query.substr(i1 - 1, i2 - i1 + 1);
