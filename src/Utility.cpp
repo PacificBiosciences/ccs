@@ -117,5 +117,21 @@ vector<string> FlattenFofn(const vector<string>& files)
     return res;
 }
 
+bool ValidBaseFeatures(const PacBio::BAM::DataSet& ds)
+{   
+    for (const auto& bam : ds.BamFiles()) {
+        for (const auto& rg : bam.Header().ReadGroups()) {
+            // P6-C4 and S/P1-C1/beta do not require covariates besides SNR
+            if (rg.SequencingChemistry() == "P6-C4" || rg.SequencingChemistry() == "S/P1-C1/beta")
+                continue;
+            // everything else requires IPD and PulseWidth
+            else if (!rg.HasBaseFeature(PacBio::BAM::BaseFeature::IPD) ||
+                     !rg.HasBaseFeature(PacBio::BAM::BaseFeature::PULSE_WIDTH))
+                return false;
+        }
+    }
+    return true;
+}
+
 }  // namespace CCS
 }  // namespace PacBio
