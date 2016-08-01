@@ -223,7 +223,7 @@ std::string OptimalTranscript(const std::string& target, int j1, int j2, const s
         // Find where optimal path crosses the mid row
         //
         ublas::vector<int> sum = Sm + Sp;
-        int j = std::max_element(sum.begin() + j1, sum.begin() + j2 + 1) - sum.begin();
+        int j = std::max_element(sum.begin() + j1 - 1, sum.begin() + j2 + 1) - sum.begin();
         segmentScore = sum[j];
 
         int segment1Score, segment2Score;
