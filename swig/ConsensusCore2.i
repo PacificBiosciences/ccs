@@ -84,6 +84,7 @@ namespace std
 // %include "Template.i"
 
 // after Read.i
+%include "Evaluator.i"
 %include "Integrator.i"
 %include "Poa.i"
 
