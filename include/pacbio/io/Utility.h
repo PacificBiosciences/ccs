@@ -41,6 +41,8 @@
 #include <string>
 #include <vector>
 
+#include <pbbam/DataSet.h>
+
 namespace PacBio {
 namespace IO {
 
@@ -64,6 +66,8 @@ struct SnrInfo
 };
 
 std::vector<std::string> FlattenFofn(const std::vector<std::string>& files);
+
+bool ValidBaseFeatures(const PacBio::BAM::DataSet& ds);
 
 }  // namespace IO
 }  // namespace PacBio
