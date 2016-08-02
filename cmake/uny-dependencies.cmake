@@ -9,11 +9,6 @@ SET(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 # 	add_subdirectory(${UNY_ThirdPartyDir}/pbcopper external/pbcopper/build)
 # endif()
 
-# Threads
-if (NOT Threads)
-	find_package(Threads REQUIRED)
-endif()
-
 # Boost
 if(NOT Boost_INCLUDE_DIRS)
     find_package(Boost REQUIRED)
@@ -21,6 +16,11 @@ endif()
 
 # only require if NOT called from pip install
 if (NOT PYTHON_SWIG)
+    # Threads
+    if (NOT Threads)
+        find_package(Threads REQUIRED)
+    endif()
+
     # ZLIB
     if (NOT ZLIB_INCLUDE_DIRS OR NOT ZLIB_LIBRARIES)
         find_package(ZLIB REQUIRED)
