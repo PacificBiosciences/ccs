@@ -4,6 +4,7 @@
 
 ### Added
  - Fix index errors in the Hirschberg aligner
+ - Added a cleaner interface for AddRead/GetTemplate
 
 ## [2.0.1]
 
