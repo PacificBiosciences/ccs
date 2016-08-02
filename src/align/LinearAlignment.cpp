@@ -91,7 +91,10 @@ const AlignConfig config(params, AlignMode::GLOBAL);
 std::string NWTranscript(const std::string& target, int j1, int j2, const std::string& query,
                          int i1, int i2, int* score)
 {
-    assert((i1 <= i2) && (j1 <= j2));
+    // If j1 > j2 or i1 > i2, the respective subtarget or subquery is empty, 
+    // ergo we have pure insertions or deletions.
+    assert((i2 - i1 >= -1) && (j2 - j1 >= -1)); 
+    
     // implement this inline later
     std::string T = target.substr(j1 - 1, j2 - j1 + 1);
     std::string Q = query.substr(i1 - 1, i2 - i1 + 1);
@@ -154,7 +157,7 @@ std::string OptimalTranscript(const std::string& target, int j1, int j2, const s
     //
     // Base case
     //
-    if ((j2 - j1 <= 1) || (i2 - i1 <= 1)) {
+    if ((j2 - j1 < 1) || (i2 - i1 < 1)) {
         x = NWTranscript(target, j1, j2, query, i1, i2, &segmentScore);
     }
 
@@ -220,7 +223,7 @@ std::string OptimalTranscript(const std::string& target, int j1, int j2, const s
         // Find where optimal path crosses the mid row
         //
         ublas::vector<int> sum = Sm + Sp;
-        int j = std::max_element(sum.begin() + j1, sum.begin() + j2 + 1) - sum.begin();
+        int j = std::max_element(sum.begin() + j1 - 1, sum.begin() + j2 + 1) - sum.begin();
         segmentScore = sum[j];
 
         int segment1Score, segment2Score;

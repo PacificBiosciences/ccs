@@ -1,5 +1,10 @@
 # UNANIMITY - CHANGELOG
 
+## [2.0.2]
+
+### Added
+ - Fix index errors in the Hirschberg aligner
+
 ## [2.0.1]
 
 ### Added
