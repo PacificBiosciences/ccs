@@ -44,6 +44,7 @@
 
 #include <boost/optional.hpp>
 
+#include <pacbio/data/Read.h>
 #include <pacbio/exception/ModelError.h>
 
 namespace PacBio {
@@ -79,6 +80,7 @@ class ModelFactory
 {
 public:
     static std::unique_ptr<ModelConfig> Create(const std::string& name, const SNR&);
+    static std::unique_ptr<ModelConfig> Create(const PacBio::Data::Read& read);
     static bool Register(const std::string& name, std::unique_ptr<ModelCreator>&& ctor);
     static boost::optional<std::string> Resolve(const std::string& name);
     static std::set<std::string> SupportedModels();
