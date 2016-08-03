@@ -59,17 +59,17 @@ public:
     // move constructor
     MonoMolecularIntegrator(MonoMolecularIntegrator&&);
 
-    size_t TemplateLength() const;
+    size_t TemplateLength() const override;
 
-    char operator[](size_t i) const;
-    operator std::string() const;
+    char operator[](size_t i) const override;
+    operator std::string() const override;
 
-    double LL(const Mutation& mut);
-    inline double LL() const { return AbstractIntegrator::LL(); }
-    void ApplyMutation(const Mutation& mut);
-    void ApplyMutations(std::vector<Mutation>* muts);
+    double LL(const Mutation& mut) override;
+    inline double LL() const override { return AbstractIntegrator::LL(); }
+    void ApplyMutation(const Mutation& mut) override;
+    void ApplyMutations(std::vector<Mutation>* muts) override;
 
-    PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read);
+    PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read) override;
 
 protected:
     std::string mdl_;

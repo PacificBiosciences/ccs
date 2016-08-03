@@ -72,9 +72,9 @@ public:  // Information about entries filled by column
     void FinishEditingColumn(size_t j, size_t usedBegin, size_t usedEnd);
     std::pair<size_t, size_t> UsedRowRange(size_t j) const;
     bool IsColumnEmpty(size_t j) const;
-    size_t UsedEntries() const;
-    float UsedEntriesRatio() const;
-    size_t AllocatedEntries() const;  // an entry may be allocated but not used
+    size_t UsedEntries() const override;
+    float UsedEntriesRatio() const override;
+    size_t AllocatedEntries() const override;  // an entry may be allocated but not used
 
 public:  // Accessors
     const double& operator()(size_t i, size_t j) const;
@@ -84,7 +84,7 @@ public:  // Accessors
     void ClearColumn(size_t j);
 
 public:
-    void ToHostMatrix(double** mat, int* rows, int* cols) const;
+    void ToHostMatrix(double** mat, int* rows, int* cols) const override;
 
 private:
     static double* EmptyCell();

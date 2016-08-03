@@ -58,10 +58,10 @@ public:
 public:  // constructor/destructor
     ScaledMatrix(size_t rows, size_t cols, Direction dir);
     ScaledMatrix(const ScaledMatrix& other);
-    ~ScaledMatrix(void) = default;
+    ~ScaledMatrix(void) override = default;
 
 public:
-    void Reset(size_t rows, size_t cols);
+    void Reset(size_t rows, size_t cols) override;
     Direction SetDirection(Direction dir);
 
 public:  // nullability
@@ -77,7 +77,7 @@ public:  // Scaling and normalization
     double GetLogProdScales() const;
 
 public:  // Convenient matrix access for SWIG
-    void ToHostMatrix(double** mat, int* rows, int* cols) const;
+    void ToHostMatrix(double** mat, int* rows, int* cols) const override;
 
 private:
     std::vector<double> logScalars_;
