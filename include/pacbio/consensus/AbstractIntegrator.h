@@ -139,13 +139,6 @@ private:
     }
 };
 
-/// Accumulate all non inf or -inf doubles.
-inline double AccumulateNoInf(std::vector<double> input)
-{
-    const auto AddNoInf = [](double a, double b) { return a + (std::isinf(b) ? 0.0 : b); };
-    return std::accumulate(input.cbegin(), input.cend(), 0.0, AddNoInf);
-}
-
 /// Helper function to get maximal number from a vector.
 template <typename T>
 inline T MaxElement(const std::vector<T>& in)
