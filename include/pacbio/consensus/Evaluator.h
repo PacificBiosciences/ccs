@@ -54,7 +54,7 @@ class Evaluator
 {
 public:
     Evaluator() = delete;
-    Evaluator(PacBio::Data::State);
+    explicit Evaluator(PacBio::Data::State);
     Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr, double minZScore,
               double scoreDiff);
 
