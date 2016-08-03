@@ -102,6 +102,13 @@ private:
 
 std::ostream& operator<<(std::ostream&, const AbstractTemplate&);
 
+// Note about inlined virtual functions from the C++ faq:
+// "The only time an inline virtual call can be inlined is when the compiler 
+// knows the "exact class" of the object which is the target of the virtual 
+// function call. This can happen only when the compiler has an actual object 
+// rather than a pointer or reference to an object. I.e., either with a local 
+// object, a global/static object, or a fully contained object inside a composite."
+
 class Template : public AbstractTemplate
 {
 public:
