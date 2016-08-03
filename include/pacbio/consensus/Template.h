@@ -102,6 +102,13 @@ private:
 
 std::ostream& operator<<(std::ostream&, const AbstractTemplate&);
 
+// Note about inlined virtual functions from the C++ faq:
+// "The only time an inline virtual call can be inlined is when the compiler 
+// knows the "exact class" of the object which is the target of the virtual 
+// function call. This can happen only when the compiler has an actual object 
+// rather than a pointer or reference to an object. I.e., either with a local 
+// object, a global/static object, or a fully contained object inside a composite."
+
 class Template : public AbstractTemplate
 {
 public:
@@ -109,21 +116,21 @@ public:
     Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg, size_t start, size_t end,
              bool pinStart, bool pinEnd);
 
-    inline size_t Length() const;
-    inline const TemplatePosition& operator[](size_t i) const;
+    inline size_t Length() const override;
+    inline const TemplatePosition& operator[](size_t i) const override;
 
-    inline bool IsMutated() const;
-    boost::optional<Mutation> Mutate(const Mutation& mut);
-    void Reset();
+    inline bool IsMutated() const override;
+    boost::optional<Mutation> Mutate(const Mutation& mut) override;
+    void Reset() override;
 
-    bool ApplyMutation(const Mutation& mut);
+    bool ApplyMutation(const Mutation& mut) override;
 
     inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                             const PacBio::Data::MappedRead& mr,
-                                                            double scoreDiff) const;
+                                                            double scoreDiff) const override;
 
     inline double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                        MomentType moment) const;
+                                        MomentType moment) const override;
 
 private:
     std::unique_ptr<ModelConfig> cfg_;
@@ -142,20 +149,20 @@ class VirtualTemplate : public AbstractTemplate
 public:
     VirtualTemplate(const Template& master, size_t start, size_t end, bool pinStart, bool pinEnd);
 
-    inline size_t Length() const;
-    inline const TemplatePosition& operator[](size_t i) const;
+    inline size_t Length() const override;
+    inline const TemplatePosition& operator[](size_t i) const override;
 
-    inline bool IsMutated() const;
-    inline boost::optional<Mutation> Mutate(const Mutation&);
-    inline void Reset() {}
-    bool ApplyMutation(const Mutation& mut);
+    inline bool IsMutated() const override;
+    inline boost::optional<Mutation> Mutate(const Mutation&) override;
+    inline void Reset() override {}
+    bool ApplyMutation(const Mutation& mut) override;
 
     inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                             const PacBio::Data::MappedRead& mr,
-                                                            double scoreDiff) const;
+                                                            double scoreDiff) const override;
 
     inline double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                        MomentType moment) const;
+                                        MomentType moment) const override;
 
 private:
     Template const& master_;
