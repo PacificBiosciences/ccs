@@ -175,12 +175,20 @@ void Evaluator::Release() { Status(State::MANUALLY_RELEASED); }
 
 const AbstractMatrix& Evaluator::Alpha() const
 {
-    return impl_->Alpha();
+    if (IsValid()) {
+        return impl_->Alpha();
+    } else {
+        return ScaledMatrix::Null();
+    }
 }
 
 const AbstractMatrix& Evaluator::Beta() const
 {
-    return impl_->Beta();
+    if (IsValid()) {
+        return impl_->Beta();
+    } else {
+        return ScaledMatrix::Null();
+    }
 }
 
 void Evaluator::CheckZScore(const double minZScore, const std::string& model)
