@@ -45,6 +45,8 @@
 
 #include <pacbio/data/Sequence.h>
 
+#include <pacbio/exception/InvalidEvaluatorException.h>
+
 #include "ModelFactory.h"
 
 
@@ -52,6 +54,7 @@ namespace PacBio {
 namespace Consensus {
 
 using namespace PacBio::Data;
+using namespace PacBio::Exception;
 
 namespace {
 
@@ -89,31 +92,64 @@ Data::State AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
     return evals_.back().Status();
 }
 
-double AbstractIntegrator::LL(const Mutation& fwdMut) { return AccumulateNoInf(LLs(fwdMut)); }
-double AbstractIntegrator::LL() const { return AccumulateNoInf(LLs()); }
+double AbstractIntegrator::LL(const Mutation& fwdMut) 
+{ 
+    const auto lls = LLs(fwdMut);
+    return std::accumulate(lls.cbegin(), lls.cend(), 0.0); 
+}
+
+double AbstractIntegrator::LL() const 
+{
+    const auto lls = LLs();
+    return std::accumulate(lls.cbegin(), lls.cend(), 0.0); 
+}
+
 std::vector<double> AbstractIntegrator::LLs(const Mutation& fwdMut)
 {
     const Mutation revMut(ReverseComplement(fwdMut));
+    
+    // Compute individual LLs of each Evaluator
+    std::vector<double> lls;
+    lls.reserve(evals_.size());
+    for (auto& e : evals_)
+    {
+        // Ignore invalid Evaluators
+        if (!e.IsValid()) continue;
 
-    const auto functor = [&fwdMut, &revMut](Evaluator& eval) {
-        switch (eval.Strand()) {
+        double ll;
+
+        switch (e.Strand()) {
             case StrandType::FORWARD:
-                return eval.LL(fwdMut);
+                ll = e.LL(fwdMut);
+                break;
             case StrandType::REVERSE:
-                return eval.LL(revMut);
+                ll = e.LL(revMut);
+                break;
             case StrandType::UNMAPPED:
-                return NEG_DBL_INF;
+                // unmapped Evaluators should not be used
+                throw InvalidEvaluatorException("Unmapped read in mutation testing");
             default:
                 throw std::runtime_error("Unknown StrandType");
         }
-    };
 
-    return TransformEvaluators<double>(functor);
+        // If the mutation of interest caused a corner-case failure,
+        // release this Evaluator and report this issue via an exception.
+        if (std::isinf(ll))
+        {
+            std::string name = e.ReadName();
+            e.Release();
+            throw InvalidEvaluatorException("-INF in mutation testing: " + name);
+        }
+        // Otherwise, store the ll
+        lls.emplace_back(ll);
+    }
+
+    return lls;
 }
 
 std::vector<double> AbstractIntegrator::LLs() const
 {
-    const auto functor = [](const Evaluator& eval) { return eval.LL(); };
+    const auto functor = [](const Evaluator& eval) { return eval.IsValid() ? eval.LL() : 0; };
     return TransformEvaluators<double>(functor);
 }
 

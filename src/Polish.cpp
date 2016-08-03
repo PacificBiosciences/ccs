@@ -49,6 +49,8 @@
 #include <pacbio/consensus/AbstractIntegrator.h>
 #include <pacbio/consensus/Polish.h>
 
+#include <pacbio/exception/InvalidEvaluatorException.h>
+
 using namespace std;
 
 namespace PacBio {
@@ -202,15 +204,36 @@ PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
     for (size_t i = 0; i < cfg.MaximumIterations; ++i) {
         // find the best mutations given our parameters
         {
-            const double LL = ai->LL();
             list<ScoredMutation> scoredMuts;
+            int mutationsTested = 0;
+            bool hasNewInvalidEvaluator;
 
-            for (const auto& mut : muts) {
-                const double ll = ai->LL(mut);
-                if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
-                ++result.mutationsTested;
-            }
+            // Compute new sets of possible mutations until no Evaluators are
+            // being invalided.
+            do
+            {
+                // Compute the LL only with the active Evaluators
+                const double LL = ai->LL();
+                
+                hasNewInvalidEvaluator = false;
+                try {
+                    // Get set of possible mutations
+                    for (const auto& mut : muts) {
+                        const double ll = ai->LL(mut);
+                        if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
+                        ++mutationsTested;
+                    }
+                } catch (const Exception::InvalidEvaluatorException& e) {
+                    // If an Evaluator exception occured,
+                    // retry without problematic Evaluator
+                    std::cerr << e.what() << std::endl;
+                    hasNewInvalidEvaluator = true;
+                    scoredMuts.clear();
+                    mutationsTested = 0;
+                }
+            } while (hasNewInvalidEvaluator);
 
+            result.mutationsTested += mutationsTested;
             // take best mutations in separation window, apply them
             muts = BestMutations(&scoredMuts, cfg.MutationSeparation);
         }
@@ -295,7 +318,15 @@ vector<int> ConsensusQualities(AbstractIntegrator& ai)
             if (m.Start() > i) continue;
             // TODO (lhepler): this is dumb, but untestable mutations,
             //   aka insertions at ends, cause all sorts of weird issues
-            const double score = ai.LL(m) - LL;
+            double score;
+            try {
+                score = ai.LL(m) - LL;
+            } catch (const Exception::InvalidEvaluatorException& e) {
+                // If an Evaluator exception occured, report and skip! 
+                // We need to handle this!
+                std::cerr << "In Polish::ConsensusQualities(ai):" << e.what() << std::endl;
+                continue;
+            }
             // this really should never happen
             if (score >= 0.0) continue;
             scoreSum += exp(score);
