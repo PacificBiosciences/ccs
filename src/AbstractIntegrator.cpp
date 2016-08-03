@@ -185,6 +185,11 @@ std::vector<StrandType> AbstractIntegrator::StrandTypes() const
     return TransformEvaluators<StrandType>([](const Evaluator& eval) { return eval.Strand(); });
 }
 
+const Evaluator& AbstractIntegrator::GetEvaluator(size_t idx) const
+{
+    return evals_[idx];
+}
+
 const AbstractMatrix& AbstractIntegrator::Alpha(size_t idx) const
 {
     return evals_[idx].Alpha();
