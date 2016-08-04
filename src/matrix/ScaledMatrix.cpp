@@ -42,7 +42,7 @@
 namespace PacBio {
 namespace Consensus {
 
-ScaledMatrix::ScaledMatrix(int rows, int cols, Direction dir)
+ScaledMatrix::ScaledMatrix(size_t rows, size_t cols, Direction dir)
     : SparseMatrix(rows, cols), logScalars_(cols, 0.0), dir_{dir}
 {
 }

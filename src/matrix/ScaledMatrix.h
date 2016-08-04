@@ -56,7 +56,7 @@ public:
     };
 
 public:  // constructor/destructor
-    ScaledMatrix(int rows, int cols, Direction dir);
+    ScaledMatrix(size_t rows, size_t cols, Direction dir);
     ScaledMatrix(const ScaledMatrix& other);
     ~ScaledMatrix(void) = default;
 
