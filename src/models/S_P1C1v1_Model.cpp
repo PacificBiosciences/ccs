@@ -283,7 +283,7 @@ S_P1C1v1_Model::S_P1C1v1_Model(const SNR& snr) : snr_(snr)
     }
 
     const double snr2 = snr1 * snr1, snr3 = snr2 * snr1;
-    for (int ctx = 0; ctx < CONTEXT_NUMBER; ++ctx) {
+    for (size_t ctx = 0; ctx < CONTEXT_NUMBER; ++ctx) {
         double sum = 1.0;
         ctxTrans_[ctx][0] = 1.0;
         for (size_t j = 0; j < 3; ++j) {
