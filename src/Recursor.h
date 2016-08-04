@@ -615,7 +615,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
     for (size_t j = 0; j <= lastColumn && j <= numExtColumns; ++j)
         beginRow = std::min(static_cast<int>(beta.UsedRowRange(lastColumn - j).first), beginRow);
 
-    for (int j = lastColumn; j + numExtColumns > lastColumn; j--) {
+    for (int j = lastColumn; j + numExtColumns - lastColumn > 0; j--) {
         /* Convert from old template to new template coordinates.
            lengthDiff will be 0 for substitution, -1 for deletion and +1 for
            insertion
