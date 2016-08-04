@@ -72,7 +72,7 @@ public:  // information about entries filled by column
     void FinishEditingColumn(size_t j, size_t usedBegin, size_t usedEnd, double max_val = 0.0);
 
 public:  // Scaling and normalization
-    double GetLogScale(int j) const;
+    double GetLogScale(size_t j) const;
     double GetLogProdScales(size_t s, int e) const;
     double GetLogProdScales() const;
 
@@ -124,7 +124,7 @@ inline void ScaledMatrix::FinishEditingColumn(const size_t j, const size_t usedB
     SparseMatrix::FinishEditingColumn(j, usedBegin, usedEnd);
 }
 
-inline double ScaledMatrix::GetLogScale(int j) const { return logScalars_[j]; }
+inline double ScaledMatrix::GetLogScale(size_t j) const { return logScalars_[j]; }
 inline double ScaledMatrix::GetLogProdScales(size_t beginColumn, int endColumn) const
 {
     double f, l;
