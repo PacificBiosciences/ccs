@@ -720,7 +720,7 @@ size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
     size_t I = read_.Length();
     size_t J = tpl_->Length();
     int flipflops = 0;
-    int maxSize = std::max(100, static_cast<int>(0.5 + REBANDING_THRESHOLD * (I + 1) * (J + 1)));
+    size_t maxSize = std::max(100ul, static_cast<size_t>(0.5 + REBANDING_THRESHOLD * (I + 1) * (J + 1)));
 
     // if we use too much space, do at least one more round
     // to take advantage of rebanding
