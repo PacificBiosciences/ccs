@@ -69,7 +69,7 @@ public:  // nullability
 
 public:  // information about entries filled by column
     template <bool maxProvided>
-    void FinishEditingColumn(int j, int usedBegin, int usedEnd, double max_val = 0.0);
+    void FinishEditingColumn(size_t j, size_t usedBegin, size_t usedEnd, double max_val = 0.0);
 
 public:  // Scaling and normalization
     double GetLogScale(int j) const;
@@ -93,13 +93,13 @@ inline const ScaledMatrix& ScaledMatrix::Null()
 }
 
 template <bool maxProvided>
-inline void ScaledMatrix::FinishEditingColumn(const int j, const int usedBegin, const int usedEnd,
-                                              double max_val)
+inline void ScaledMatrix::FinishEditingColumn(const size_t j, const size_t usedBegin, 
+                                              const size_t usedEnd, double max_val)
 {
     // get the constant to scale by
     if (!maxProvided) {
         max_val = 0.0;
-        for (int i = usedBegin; i < usedEnd; ++i) {
+        for (size_t i = usedBegin; i < usedEnd; ++i) {
             max_val = std::max(max_val, SparseMatrix::Get(i, j));
         }
     }
@@ -113,7 +113,7 @@ inline void ScaledMatrix::FinishEditingColumn(const int j, const int usedBegin, 
 
     // set it
     if (max_val != 0.0 && max_val != 1.0) {
-        for (int i = usedBegin; i < usedEnd; ++i) {
+        for (size_t i = usedBegin; i < usedEnd; ++i) {
             SparseMatrix::Set(i, j, SparseMatrix::Get(i, j) / max_val);
         }
         logScalars_[j] = last + std::log(max_val);
