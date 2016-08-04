@@ -620,7 +620,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
            lengthDiff will be 0 for substitution, -1 for deletion and +1 for
            insertion
          */
-        int jp = j + lengthDiff;
+        size_t jp = j + lengthDiff;
         // What is the current extension column we are adding data into.
         int extCol = lastExtColumn - (lastColumn - j);
 
