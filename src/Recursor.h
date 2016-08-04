@@ -320,7 +320,7 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
 
     // Recursively calculate [Probability transition to next state] *
     // [Probability of emission at that state] * [Probability from that state]
-    for (int j = J - 1; j > 0; --j) {
+    for (size_t j = J - 1; j > 0; --j) {
         const auto nextTplPos = (*tpl_)[j];
         const auto nextTplBase = nextTplPos.Idx;
         const auto currTransProbs = (*tpl_)[j - 1];
