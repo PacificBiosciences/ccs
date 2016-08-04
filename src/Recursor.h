@@ -499,7 +499,7 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
 
         ext.StartEditingColumn(extCol, beginRow, endRow);
 
-        int i;
+        size_t i;
         double score = 0.0;
         double max_score = score;
         // Grab values that will be useful for the whole column
