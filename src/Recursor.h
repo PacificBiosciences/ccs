@@ -613,7 +613,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
         std::tie(beginRow, endRow) = beta.UsedRowRange(lastColumn + 1);
     else
         std::tie(beginRow, endRow) = beta.UsedRowRange(lastColumn);
-    for (int j = 0; j <= lastColumn && j <= numExtColumns; ++j)
+    for (size_t j = 0; j <= lastColumn && j <= numExtColumns; ++j)
         beginRow = std::min(static_cast<int>(beta.UsedRowRange(lastColumn - j).first), beginRow);
 
     for (int j = lastColumn; j + numExtColumns > lastColumn; j--) {
