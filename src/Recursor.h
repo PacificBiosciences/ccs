@@ -622,7 +622,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
          */
         size_t jp = j + lengthDiff;
         // What is the current extension column we are adding data into.
-        int extCol = lastExtColumn - (lastColumn - j);
+        size_t extCol = lastExtColumn - (lastColumn - j);
 
         ext.StartEditingColumn(extCol, beginRow, endRow);
 
