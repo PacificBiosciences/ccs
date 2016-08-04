@@ -635,54 +635,44 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
         double max_score = 0.0;
 
         for (int i = endRow - 1; i >= beginRow; i--) {
-            uint8_t nextReadEm = 4;  // 'N'
-            if (i < I) {
-                nextReadEm = emissions_[i];
-            }
-            double thisMoveScore = 0.0;
+            assert(i < static_cast<int>(I));
+            assert(j < static_cast<int>(J));
+            uint8_t nextReadEm = emissions_[i];
             double score = 0.0;
 
-            // Match
-            // TODO: Remove these checks, we should always be on the left side
-            // of the matrix....
-            if (i < I && j < J) {
-                double next =
-                    (extCol == lastExtColumn) ? beta(i + 1, j + 1) : ext(i + 1, extCol + 1);
-
+            if (0 < i && firstColumn < j) {
+                bool extColIsLastExtColumn = static_cast<int>(extCol) == lastExtColumn;
+                // Match
+                const double matchNext = extColIsLastExtColumn
+                                            ? beta(i + 1, j + 1) 
+                                            : ext(i + 1, extCol + 1);
                 // First and last have to start with an emission
-                // TODO: So ugly we need to clean this up!
-                // All these checks should be reorganized, redundand subexpressions
-                // combined.
-                if (j > firstColumn && i > 0) {
-                    thisMoveScore =
-                        next * currTplParams.Match *
-                        static_cast<const Derived*>(this)->EmissionPr(
-                            MoveType::MATCH, nextReadEm, currTplParams.Idx, nextTplBase);
-                    score = Combine(score, thisMoveScore);
-                }
-            }
+                const double matchScore =
+                    matchNext * currTplParams.Match *
+                    static_cast<const Derived*>(this)->EmissionPr(
+                        MoveType::MATCH, nextReadEm, currTplParams.Idx, nextTplBase);
+                score = Combine(score, matchScore);
 
-            // Branch
-            if (0 < i && i < I && firstColumn < j) {
-                thisMoveScore = ext(i + 1, extCol) * currTplParams.Branch *
-                                static_cast<const Derived*>(this)->EmissionPr(
-                                    MoveType::BRANCH, nextReadEm, currTplParams.Idx, nextTplBase);
-                score = Combine(score, thisMoveScore);
-            }
+                // Branch
+                const double branchScore = 
+                    ext(i + 1, extCol) * currTplParams.Branch *
+                    static_cast<const Derived*>(this)->EmissionPr(
+                        MoveType::BRANCH, nextReadEm, currTplParams.Idx, nextTplBase);
+                score = Combine(score, branchScore);
 
-            // Stick
-            if (0 < i && i < I && firstColumn < j) {
-                thisMoveScore = ext(i + 1, extCol) * currTplParams.Stick *
-                                static_cast<const Derived*>(this)->EmissionPr(
-                                    MoveType::STICK, nextReadEm, currTplParams.Idx, nextTplBase);
-                score = Combine(score, thisMoveScore);
-            }
+                // Stick
+                const double stickScore =
+                    ext(i + 1, extCol) * currTplParams.Stick *
+                    static_cast<const Derived*>(this)->EmissionPr(
+                        MoveType::STICK, nextReadEm, currTplParams.Idx, nextTplBase);
+                score = Combine(score, stickScore);
 
-            // Deletion
-            if (0 < i && firstColumn < j && j < J) {
-                double next = (extCol == lastExtColumn) ? beta(i, j + 1) : ext(i, extCol + 1);
-                thisMoveScore = next * currTplParams.Deletion;
-                score = Combine(score, thisMoveScore);
+                // Deletion
+                double const delNext = extColIsLastExtColumn
+                                        ? beta(i, j + 1) 
+                                        : ext(i, extCol + 1);
+                double const deletionScore = delNext * currTplParams.Deletion;
+                score = Combine(score, deletionScore);
             }
 
             ext.Set(i, extCol, score);
