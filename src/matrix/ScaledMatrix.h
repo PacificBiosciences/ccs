@@ -73,7 +73,7 @@ public:  // information about entries filled by column
 
 public:  // Scaling and normalization
     double GetLogScale(int j) const;
-    double GetLogProdScales(int s, int e) const;
+    double GetLogProdScales(size_t s, int e) const;
     double GetLogProdScales() const;
 
 public:  // Convenient matrix access for SWIG
@@ -125,7 +125,7 @@ inline void ScaledMatrix::FinishEditingColumn(const size_t j, const size_t usedB
 }
 
 inline double ScaledMatrix::GetLogScale(int j) const { return logScalars_[j]; }
-inline double ScaledMatrix::GetLogProdScales(int beginColumn, int endColumn) const
+inline double ScaledMatrix::GetLogProdScales(size_t beginColumn, int endColumn) const
 {
     double f, l;
     if (dir_ == FORWARD) {
