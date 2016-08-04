@@ -196,7 +196,7 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
     auto prevTransProbs = kDefaultTplPos;
     uint8_t prevTplBase = prevTransProbs.Idx;
 
-    for (int j = 1; j < J; ++j)  // Note due to offset with reads and otherwise, this is ugly-ish
+    for (size_t j = 1; j < J; ++j)  // Note due to offset with reads and otherwise, this is ugly-ish
     {
         // Load up the transition parameters for this context
 
