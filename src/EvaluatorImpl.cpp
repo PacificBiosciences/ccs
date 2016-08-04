@@ -119,7 +119,8 @@ double EvaluatorImpl::LL(const Mutation& mut_)
     bool atEnd = (mut->End() + 3) > beta_.Columns();
 
     if (!atBegin && !atEnd) {
-        int extendStartCol, extendLength = 2;
+        const size_t extendLength = 2;
+        size_t extendStartCol;
 
         if (mut->Type == MutationType::DELETION) {
             // Future thought: If we revise the semantic of Extra,
