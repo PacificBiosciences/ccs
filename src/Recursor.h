@@ -592,7 +592,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
 
     // How far back do we have to go until we are at the zero (first) column?
     // we always go all the way back.
-    int numExtColumns = 1 + lengthDiff + lastColumn;
+    size_t numExtColumns = 1 + lengthDiff + lastColumn;
     int firstColumn = 0 - lengthDiff;
     int lastExtColumn = numExtColumns - 1;
 
