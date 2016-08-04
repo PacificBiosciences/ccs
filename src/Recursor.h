@@ -602,7 +602,6 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
     assert(lastColumn < 4);  // Since we are only testing mutations of size 1,
                              // and the check prior for a beginning mutation is
                              // < 3, max = 2 + 1 = 3
-    assert(lastColumn >= 0);
     assert(ext.Columns() >= numExtColumns);
     assert(beta.Rows() == I + 1 && ext.Rows() == I + 1);
     assert(abs(lengthDiff) < 2);
