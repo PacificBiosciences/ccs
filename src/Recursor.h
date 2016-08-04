@@ -509,7 +509,7 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
         if (j > 1) {
             prevTplParams = (*tpl_)[j - 2];
         }
-        uint8_t nextTplBase;
+        uint8_t nextTplBase = -1; // This value is never being used, but it silences notorious gcc
         if (j != maxLeftMovePossible) {
             nextTplBase = (*tpl_)[j].Idx;
         }
