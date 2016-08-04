@@ -427,7 +427,7 @@ double Recursor<Derived>::LinkAlphaBeta(const M& alpha, size_t alphaColumn, cons
     assert(alphaColumn > 1 && absoluteColumn > 1);
     assert(absoluteColumn <= tpl_->Length());
 
-    int usedBegin, usedEnd;
+    size_t usedBegin, usedEnd;
     std::tie(usedBegin, usedEnd) =
         RangeUnion(alpha.UsedRowRange(alphaColumn - 2), alpha.UsedRowRange(alphaColumn - 1),
                    beta.UsedRowRange(betaColumn), beta.UsedRowRange(betaColumn + 1));
@@ -437,7 +437,7 @@ double Recursor<Derived>::LinkAlphaBeta(const M& alpha, size_t alphaColumn, cons
     const auto currTplParams = (*tpl_)[absoluteColumn - 1];
     const auto prevTplParams = (*tpl_)[absoluteColumn - 2];
 
-    for (int i = usedBegin; i < usedEnd; i++) {
+    for (size_t i = usedBegin; i < usedEnd; i++) {
         if (i < I) {
             const uint8_t readEm = emissions_[i];
             // Match
