@@ -329,13 +329,15 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
 
         beta.StartEditingColumn(j, hintBeginRow, hintEndRow);
 
-        int i;
+        size_t i;
         double score = 0.0;
         double thresholdScore = 0.0;
         double maxScore = 0.0;
 
-        int beginRow, endRow = hintEndRow;
-        for (i = endRow - 1; i > 0 && (score >= thresholdScore || i >= hintBeginRow); --i) {
+        size_t endRow = hintEndRow;
+        for (i = endRow > 0 ? endRow - 1 : 0; // Since we stop if i <= 0, do not allow i to be neg
+             i > 0 && (score >= thresholdScore || i >= hintBeginRow); 
+             --i) {
             const uint8_t nextReadEm = emissions_[i];
             double thisMoveScore = 0.0;
             score = 0.0;
@@ -382,7 +384,7 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
             }
         }
 
-        beginRow = i + 1;
+        size_t beginRow = i + 1;
         // DumpBetaMatrix(beta);
         // Now, revise the hints to tell the caller where the mass of the
         // distribution really lived in this column.
