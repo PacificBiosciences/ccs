@@ -2,8 +2,8 @@
 ``ConsensusCore2``: design and implementation
 ===========================================
 
-Authors: David Alexander, Nigel Delaney, Lance Hepler, Armin Töpfer
-Last modified: July 27, 2016
+Authors: David Alexander, Michael Brown, Nigel Delaney, Lance Hepler, Armin Töpfer
+Last modified: August 5, 2016
 
 
 Motivation
@@ -140,3 +140,21 @@ Model parameter lookup
 
 Training
 ````````
+
+Identifying (and removing) abberant reads: the "ZScore" concept
+```````````````````````````````````````````````````````````````
+
+Basic explanation goes here.
+
+For the mathematical details of how the variance and expectation are
+calculated, see :ref:`zscore-math`.
+
+
+
+Appendices: the gory details
+----------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   ZScoreMath
