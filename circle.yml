@@ -30,7 +30,7 @@ dependencies:
     override:
         - CMAKE_BUILD_TYPE=ReleaseWithAssert CMAKE_COMMAND=$(readlink -f _deps/cmake-3.3.0-Linux-x86_64/bin/cmake) Boost_INCLUDE_DIRS=$(readlink -f _deps/boost_1_60_0) SWIG_COMMAND=$(readlink -f _deps/swig-3.0.8/bin/swig) VERBOSE=1 pip install --verbose --upgrade --no-deps .
         - python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
-        - pushd _rev_deps/GenomicConsensus ; pip install --verbose .
+        - pushd _rev_deps/GenomicConsensus ; pip install --upgrade --no-deps --verbose .
         - pushd _rev_deps/GenomicConsensus ; make check # Test GC
 test:
     pre:
