@@ -33,6 +33,7 @@ add_library(cc2 STATIC
     ${UNY_POA_CPP}
     AbstractIntegrator.cpp
     Coverage.cpp
+    EasyReadScorer.cpp
     Evaluator.cpp
     EvaluatorImpl.cpp
     ModelConfig.cpp

@@ -98,6 +98,8 @@ public:
     std::vector<PacBio::Data::State> States() const;
     std::vector<PacBio::Data::StrandType> StrandTypes() const;
 
+    const Evaluator& GetEvaluator(size_t idx) const;
+
 public:
     // Abstract matrix access for SWIG and diagnostics
     const AbstractMatrix& Alpha(size_t idx) const;
