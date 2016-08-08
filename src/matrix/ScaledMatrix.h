@@ -93,7 +93,7 @@ inline const ScaledMatrix& ScaledMatrix::Null()
 }
 
 template <bool maxProvided>
-inline void ScaledMatrix::FinishEditingColumn(const size_t j, const size_t usedBegin, 
+inline void ScaledMatrix::FinishEditingColumn(const size_t j, const size_t usedBegin,
                                               const size_t usedEnd, double max_val)
 {
     // get the constant to scale by

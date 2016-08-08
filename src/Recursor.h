@@ -335,9 +335,8 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
         double maxScore = 0.0;
 
         size_t endRow = hintEndRow;
-        for (i = endRow > 0 ? endRow - 1 : 0; // Since we stop if i <= 0, do not allow i to be neg
-             i > 0 && (score >= thresholdScore || i >= hintBeginRow); 
-             --i) {
+        for (i = endRow > 0 ? endRow - 1 : 0;  // Since we stop if i <= 0, do not allow i to be neg
+             i > 0 && (score >= thresholdScore || i >= hintBeginRow); --i) {
             const uint8_t nextReadEm = emissions_[i];
             double thisMoveScore = 0.0;
             score = 0.0;
@@ -509,7 +508,7 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
         if (j > 1) {
             prevTplParams = (*tpl_)[j - 2];
         }
-        uint8_t nextTplBase = -1; // This value is never being used, but it silences notorious gcc
+        uint8_t nextTplBase = -1;  // This value is never being used, but it silences notorious gcc
         if (j != maxLeftMovePossible) {
             nextTplBase = (*tpl_)[j].Idx;
         }
@@ -643,34 +642,31 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
             if (0 < i && firstColumn < j) {
                 bool extColIsLastExtColumn = static_cast<int>(extCol) == lastExtColumn;
                 // Match
-                const double matchNext = extColIsLastExtColumn
-                                            ? beta(i + 1, j + 1) 
-                                            : ext(i + 1, extCol + 1);
+                const double matchNext =
+                    extColIsLastExtColumn ? beta(i + 1, j + 1) : ext(i + 1, extCol + 1);
                 // First and last have to start with an emission
                 const double matchScore =
                     matchNext * currTplParams.Match *
-                    static_cast<const Derived*>(this)->EmissionPr(
-                        MoveType::MATCH, nextReadEm, currTplParams.Idx, nextTplBase);
+                    static_cast<const Derived*>(this)->EmissionPr(MoveType::MATCH, nextReadEm,
+                                                                  currTplParams.Idx, nextTplBase);
                 score = Combine(score, matchScore);
 
                 // Branch
-                const double branchScore = 
+                const double branchScore =
                     ext(i + 1, extCol) * currTplParams.Branch *
-                    static_cast<const Derived*>(this)->EmissionPr(
-                        MoveType::BRANCH, nextReadEm, currTplParams.Idx, nextTplBase);
+                    static_cast<const Derived*>(this)->EmissionPr(MoveType::BRANCH, nextReadEm,
+                                                                  currTplParams.Idx, nextTplBase);
                 score = Combine(score, branchScore);
 
                 // Stick
                 const double stickScore =
                     ext(i + 1, extCol) * currTplParams.Stick *
-                    static_cast<const Derived*>(this)->EmissionPr(
-                        MoveType::STICK, nextReadEm, currTplParams.Idx, nextTplBase);
+                    static_cast<const Derived*>(this)->EmissionPr(MoveType::STICK, nextReadEm,
+                                                                  currTplParams.Idx, nextTplBase);
                 score = Combine(score, stickScore);
 
                 // Deletion
-                double const delNext = extColIsLastExtColumn
-                                        ? beta(i, j + 1) 
-                                        : ext(i, extCol + 1);
+                double const delNext = extColIsLastExtColumn ? beta(i, j + 1) : ext(i, extCol + 1);
                 double const deletionScore = delNext * currTplParams.Deletion;
                 score = Combine(score, deletionScore);
             }
@@ -711,7 +707,8 @@ size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
     size_t I = read_.Length();
     size_t J = tpl_->Length();
     int flipflops = 0;
-    size_t maxSize = std::max(100ul, static_cast<size_t>(0.5 + REBANDING_THRESHOLD * (I + 1) * (J + 1)));
+    size_t maxSize =
+        std::max(100ul, static_cast<size_t>(0.5 + REBANDING_THRESHOLD * (I + 1) * (J + 1)));
 
     // if we use too much space, do at least one more round
     // to take advantage of rebanding

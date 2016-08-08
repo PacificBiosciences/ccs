@@ -393,7 +393,6 @@ size_t VirtualTemplate::Length() const
     return end_ - start_;
 }
 
-
 // inline function impls
 bool AbstractTemplate::InRange(const size_t start, const size_t end) const
 {
@@ -426,7 +425,7 @@ std::unique_ptr<AbstractRecursor> Template::CreateRecursor(std::unique_ptr<Abstr
                                 scoreDiff);
 }
 double Template::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                              MomentType moment) const
+                                       MomentType moment) const
 {
     return cfg_->ExpectedLLForEmission(move, prev, curr, moment);
 }
@@ -451,13 +450,14 @@ boost::optional<Mutation> VirtualTemplate::Mutate(const Mutation& mut)
 }
 
 std::unique_ptr<AbstractRecursor> VirtualTemplate::CreateRecursor(
-    std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr, double scoreDiff) const
+    std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
+    double scoreDiff) const
 {
     return master_.CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
                                   scoreDiff);
 }
 double VirtualTemplate::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                                     MomentType moment) const
+                                              MomentType moment) const
 {
     return master_.ExpectedLLForEmission(move, prev, curr, moment);
 }
