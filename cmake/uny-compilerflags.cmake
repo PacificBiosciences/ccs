@@ -20,6 +20,11 @@ if(HAS_NO_UNUSED_LOCAL_TYPEDEFS)
     set(UNY_FLAGS "${UNY_FLAGS} -Wno-unused-local-typedefs")
 endif()
 
+# Cannot use this until pbbam complies
+# if (CMAKE_COMPILER_IS_GNUCXX)
+#     set(UNY_FLAGS "${UNY_FLAGS} -Werror=suggest-override")
+# endif()
+
 # Coverage settings
 if (UNY_inc_coverage)
     set(UNY_COV_FLAGS "${UNY_FLAGS} -fprofile-arcs -ftest-coverage")

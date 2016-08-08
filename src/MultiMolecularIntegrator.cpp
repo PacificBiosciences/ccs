@@ -55,7 +55,6 @@ MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
 {
 }
 
-static std::unique_ptr<ModelConfig> Create(const std::string& name, const SNR&);
 State MultiMolecularIntegrator::AddRead(const PacBio::Data::MappedRead& read)
 {
     try {

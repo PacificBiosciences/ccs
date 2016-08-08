@@ -339,6 +339,9 @@ TEST(LinearAlignmentTests, BasicTest)
     a = AlignLinear(ref, read, &score);
     peerAlignment = Align(ref, read, &peerScore, config);
     EXPECT_EQ(score, peerScore);
+
+    delete a;
+    delete peerAlignment;
 }
 
 #if 0

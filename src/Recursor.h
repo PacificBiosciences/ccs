@@ -196,7 +196,7 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
     auto prevTransProbs = kDefaultTplPos;
     uint8_t prevTplBase = prevTransProbs.Idx;
 
-    for (int j = 1; j < J; ++j)  // Note due to offset with reads and otherwise, this is ugly-ish
+    for (size_t j = 1; j < J; ++j)  // Note due to offset with reads and otherwise, this is ugly-ish
     {
         // Load up the transition parameters for this context
 
@@ -320,7 +320,7 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
 
     // Recursively calculate [Probability transition to next state] *
     // [Probability of emission at that state] * [Probability from that state]
-    for (int j = J - 1; j > 0; --j) {
+    for (size_t j = J - 1; j > 0; --j) {
         const auto nextTplPos = (*tpl_)[j];
         const auto nextTplBase = nextTplPos.Idx;
         const auto currTransProbs = (*tpl_)[j - 1];
@@ -329,13 +329,14 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
 
         beta.StartEditingColumn(j, hintBeginRow, hintEndRow);
 
-        int i;
+        size_t i;
         double score = 0.0;
         double thresholdScore = 0.0;
         double maxScore = 0.0;
 
-        int beginRow, endRow = hintEndRow;
-        for (i = endRow - 1; i > 0 && (score >= thresholdScore || i >= hintBeginRow); --i) {
+        size_t endRow = hintEndRow;
+        for (i = endRow > 0 ? endRow - 1 : 0;  // Since we stop if i <= 0, do not allow i to be neg
+             i > 0 && (score >= thresholdScore || i >= hintBeginRow); --i) {
             const uint8_t nextReadEm = emissions_[i];
             double thisMoveScore = 0.0;
             score = 0.0;
@@ -382,7 +383,7 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
             }
         }
 
-        beginRow = i + 1;
+        size_t beginRow = i + 1;
         // DumpBetaMatrix(beta);
         // Now, revise the hints to tell the caller where the mass of the
         // distribution really lived in this column.
@@ -425,7 +426,7 @@ double Recursor<Derived>::LinkAlphaBeta(const M& alpha, size_t alphaColumn, cons
     assert(alphaColumn > 1 && absoluteColumn > 1);
     assert(absoluteColumn <= tpl_->Length());
 
-    int usedBegin, usedEnd;
+    size_t usedBegin, usedEnd;
     std::tie(usedBegin, usedEnd) =
         RangeUnion(alpha.UsedRowRange(alphaColumn - 2), alpha.UsedRowRange(alphaColumn - 1),
                    beta.UsedRowRange(betaColumn), beta.UsedRowRange(betaColumn + 1));
@@ -435,7 +436,7 @@ double Recursor<Derived>::LinkAlphaBeta(const M& alpha, size_t alphaColumn, cons
     const auto currTplParams = (*tpl_)[absoluteColumn - 1];
     const auto prevTplParams = (*tpl_)[absoluteColumn - 2];
 
-    for (int i = usedBegin; i < usedEnd; i++) {
+    for (size_t i = usedBegin; i < usedEnd; i++) {
         if (i < I) {
             const uint8_t readEm = emissions_[i];
             // Match
@@ -497,7 +498,7 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
 
         ext.StartEditingColumn(extCol, beginRow, endRow);
 
-        int i;
+        size_t i;
         double score = 0.0;
         double max_score = score;
         // Grab values that will be useful for the whole column
@@ -507,7 +508,7 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
         if (j > 1) {
             prevTplParams = (*tpl_)[j - 2];
         }
-        uint8_t nextTplBase;
+        uint8_t nextTplBase = -1;  // This value is never being used, but it silences notorious gcc
         if (j != maxLeftMovePossible) {
             nextTplBase = (*tpl_)[j].Idx;
         }
@@ -590,7 +591,7 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
 
     // How far back do we have to go until we are at the zero (first) column?
     // we always go all the way back.
-    int numExtColumns = 1 + lengthDiff + lastColumn;
+    size_t numExtColumns = 1 + lengthDiff + lastColumn;
     int firstColumn = 0 - lengthDiff;
     int lastExtColumn = numExtColumns - 1;
 
@@ -600,7 +601,6 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
     assert(lastColumn < 4);  // Since we are only testing mutations of size 1,
                              // and the check prior for a beginning mutation is
                              // < 3, max = 2 + 1 = 3
-    assert(lastColumn >= 0);
     assert(ext.Columns() >= numExtColumns);
     assert(beta.Rows() == I + 1 && ext.Rows() == I + 1);
     assert(abs(lengthDiff) < 2);
@@ -611,17 +611,17 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
         std::tie(beginRow, endRow) = beta.UsedRowRange(lastColumn + 1);
     else
         std::tie(beginRow, endRow) = beta.UsedRowRange(lastColumn);
-    for (int j = 0; j <= lastColumn && j <= numExtColumns; ++j)
+    for (size_t j = 0; j <= lastColumn && j <= numExtColumns; ++j)
         beginRow = std::min(static_cast<int>(beta.UsedRowRange(lastColumn - j).first), beginRow);
 
-    for (int j = lastColumn; j + numExtColumns > lastColumn; j--) {
+    for (int j = lastColumn; j + numExtColumns - lastColumn > 0; j--) {
         /* Convert from old template to new template coordinates.
            lengthDiff will be 0 for substitution, -1 for deletion and +1 for
            insertion
          */
-        int jp = j + lengthDiff;
+        size_t jp = j + lengthDiff;
         // What is the current extension column we are adding data into.
-        int extCol = lastExtColumn - (lastColumn - j);
+        size_t extCol = lastExtColumn - (lastColumn - j);
 
         ext.StartEditingColumn(extCol, beginRow, endRow);
 
@@ -634,54 +634,41 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
         double max_score = 0.0;
 
         for (int i = endRow - 1; i >= beginRow; i--) {
-            uint8_t nextReadEm = 4;  // 'N'
-            if (i < I) {
-                nextReadEm = emissions_[i];
-            }
-            double thisMoveScore = 0.0;
+            assert(i < static_cast<int>(I));
+            assert(j < static_cast<int>(J));
+            uint8_t nextReadEm = emissions_[i];
             double score = 0.0;
 
-            // Match
-            // TODO: Remove these checks, we should always be on the left side
-            // of the matrix....
-            if (i < I && j < J) {
-                double next =
-                    (extCol == lastExtColumn) ? beta(i + 1, j + 1) : ext(i + 1, extCol + 1);
-
+            if (0 < i && firstColumn < j) {
+                bool extColIsLastExtColumn = static_cast<int>(extCol) == lastExtColumn;
+                // Match
+                const double matchNext =
+                    extColIsLastExtColumn ? beta(i + 1, j + 1) : ext(i + 1, extCol + 1);
                 // First and last have to start with an emission
-                // TODO: So ugly we need to clean this up!
-                // All these checks should be reorganized, redundand subexpressions
-                // combined.
-                if (j > firstColumn && i > 0) {
-                    thisMoveScore =
-                        next * currTplParams.Match *
-                        static_cast<const Derived*>(this)->EmissionPr(
-                            MoveType::MATCH, nextReadEm, currTplParams.Idx, nextTplBase);
-                    score = Combine(score, thisMoveScore);
-                }
-            }
+                const double matchScore =
+                    matchNext * currTplParams.Match *
+                    static_cast<const Derived*>(this)->EmissionPr(MoveType::MATCH, nextReadEm,
+                                                                  currTplParams.Idx, nextTplBase);
+                score = Combine(score, matchScore);
 
-            // Branch
-            if (0 < i && i < I && firstColumn < j) {
-                thisMoveScore = ext(i + 1, extCol) * currTplParams.Branch *
-                                static_cast<const Derived*>(this)->EmissionPr(
-                                    MoveType::BRANCH, nextReadEm, currTplParams.Idx, nextTplBase);
-                score = Combine(score, thisMoveScore);
-            }
+                // Branch
+                const double branchScore =
+                    ext(i + 1, extCol) * currTplParams.Branch *
+                    static_cast<const Derived*>(this)->EmissionPr(MoveType::BRANCH, nextReadEm,
+                                                                  currTplParams.Idx, nextTplBase);
+                score = Combine(score, branchScore);
 
-            // Stick
-            if (0 < i && i < I && firstColumn < j) {
-                thisMoveScore = ext(i + 1, extCol) * currTplParams.Stick *
-                                static_cast<const Derived*>(this)->EmissionPr(
-                                    MoveType::STICK, nextReadEm, currTplParams.Idx, nextTplBase);
-                score = Combine(score, thisMoveScore);
-            }
+                // Stick
+                const double stickScore =
+                    ext(i + 1, extCol) * currTplParams.Stick *
+                    static_cast<const Derived*>(this)->EmissionPr(MoveType::STICK, nextReadEm,
+                                                                  currTplParams.Idx, nextTplBase);
+                score = Combine(score, stickScore);
 
-            // Deletion
-            if (0 < i && firstColumn < j && j < J) {
-                double next = (extCol == lastExtColumn) ? beta(i, j + 1) : ext(i, extCol + 1);
-                thisMoveScore = next * currTplParams.Deletion;
-                score = Combine(score, thisMoveScore);
+                // Deletion
+                double const delNext = extColIsLastExtColumn ? beta(i, j + 1) : ext(i, extCol + 1);
+                double const deletionScore = delNext * currTplParams.Deletion;
+                score = Combine(score, deletionScore);
             }
 
             ext.Set(i, extCol, score);
@@ -720,7 +707,8 @@ size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
     size_t I = read_.Length();
     size_t J = tpl_->Length();
     int flipflops = 0;
-    int maxSize = std::max(100, static_cast<int>(0.5 + REBANDING_THRESHOLD * (I + 1) * (J + 1)));
+    size_t maxSize =
+        std::max(100ul, static_cast<size_t>(0.5 + REBANDING_THRESHOLD * (I + 1) * (J + 1)));
 
     // if we use too much space, do at least one more round
     // to take advantage of rebanding

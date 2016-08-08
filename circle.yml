@@ -34,7 +34,7 @@ dependencies:
 test:
     pre:
         - mkdir _build
-        - pushd _build ; $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_60_0) ..
+        - pushd _build ; $(readlink -f ../_deps/cmake-3.3.0-Linux-x86_64/bin/cmake) -DBoost_INCLUDE_DIRS=$(readlink -f ../_deps/boost_1_60_0) -DCMAKE_BUILD_TYPE=ReleaseWithAssert ..
     override:
         - pushd _build ; make
         - pushd _build ; make check

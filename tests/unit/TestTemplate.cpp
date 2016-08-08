@@ -174,7 +174,7 @@ void TemplateEquivalence(const size_t nsamp, const size_t nvirt, const size_t le
                 ++end;  // increment b by one (end-exclusive)
             }
             const bool pinStart = (start == 0) ? randPin(gen) : false;
-            const bool pinEnd = (end == len) ? randPin(gen) : false;
+            const bool pinEnd = (end == static_cast<int>(len)) ? randPin(gen) : false;
             ASSERT_LT(start, end);
             coords.emplace_back(make_tuple(start, end, pinStart, pinEnd));
             vtpls.emplace_back(VirtualTemplate(master, start, end, pinStart, pinEnd));

@@ -56,15 +56,15 @@ class MultiMolecularIntegrator : public AbstractIntegrator
 public:
     MultiMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg);
 
-    size_t TemplateLength() const;
+    size_t TemplateLength() const override;
 
-    char operator[](size_t i) const;
-    operator std::string() const;
+    char operator[](size_t i) const override;
+    operator std::string() const override;
 
-    void ApplyMutation(const Mutation& mut);
-    void ApplyMutations(std::vector<Mutation>* muts);
+    void ApplyMutation(const Mutation& mut) override;
+    void ApplyMutations(std::vector<Mutation>* muts) override;
 
-    PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read);
+    PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read) override;
 
 protected:
     std::unique_ptr<AbstractTemplate> GetTemplate(const PacBio::Data::MappedRead& read);

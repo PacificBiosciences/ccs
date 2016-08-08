@@ -244,7 +244,7 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumn(VD v, const AlignmentCo
         return curCol;
     }
 
-    assert(beginRow < endRow || beginRow == 0 || beginRow == sequence.length());
+    assert(beginRow < endRow || beginRow == 0 || beginRow == static_cast<int>(sequence.length()));
 
     curCol = new AlignmentColumn(v, beginRow, endRow);
     const PoaNode& vertexInfo = vertexInfoMap_[v];

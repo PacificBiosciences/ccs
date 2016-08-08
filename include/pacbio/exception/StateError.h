@@ -52,7 +52,7 @@ public:
     {}
 
     PacBio::Data::State WhatState() const { return state_; }
-    virtual const char* what() const noexcept { return std::runtime_error::what(); }
+    virtual const char* what() const noexcept override { return std::runtime_error::what(); }
 private:
     PacBio::Data::State state_;
 };

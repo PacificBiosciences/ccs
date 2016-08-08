@@ -56,12 +56,12 @@ public:
     };
 
 public:  // constructor/destructor
-    ScaledMatrix(int rows, int cols, Direction dir);
+    ScaledMatrix(size_t rows, size_t cols, Direction dir);
     ScaledMatrix(const ScaledMatrix& other);
-    ~ScaledMatrix(void) = default;
+    ~ScaledMatrix(void) override = default;
 
 public:
-    void Reset(size_t rows, size_t cols);
+    void Reset(size_t rows, size_t cols) override;
     Direction SetDirection(Direction dir);
 
 public:  // nullability
@@ -69,15 +69,15 @@ public:  // nullability
 
 public:  // information about entries filled by column
     template <bool maxProvided>
-    void FinishEditingColumn(int j, int usedBegin, int usedEnd, double max_val = 0.0);
+    void FinishEditingColumn(size_t j, size_t usedBegin, size_t usedEnd, double max_val = 0.0);
 
 public:  // Scaling and normalization
-    double GetLogScale(int j) const;
-    double GetLogProdScales(int s, int e) const;
+    double GetLogScale(size_t j) const;
+    double GetLogProdScales(size_t s, size_t e) const;
     double GetLogProdScales() const;
 
 public:  // Convenient matrix access for SWIG
-    void ToHostMatrix(double** mat, int* rows, int* cols) const;
+    void ToHostMatrix(double** mat, int* rows, int* cols) const override;
 
 private:
     std::vector<double> logScalars_;
@@ -93,13 +93,13 @@ inline const ScaledMatrix& ScaledMatrix::Null()
 }
 
 template <bool maxProvided>
-inline void ScaledMatrix::FinishEditingColumn(const int j, const int usedBegin, const int usedEnd,
-                                              double max_val)
+inline void ScaledMatrix::FinishEditingColumn(const size_t j, const size_t usedBegin,
+                                              const size_t usedEnd, double max_val)
 {
     // get the constant to scale by
     if (!maxProvided) {
         max_val = 0.0;
-        for (int i = usedBegin; i < usedEnd; ++i) {
+        for (size_t i = usedBegin; i < usedEnd; ++i) {
             max_val = std::max(max_val, SparseMatrix::Get(i, j));
         }
     }
@@ -113,7 +113,7 @@ inline void ScaledMatrix::FinishEditingColumn(const int j, const int usedBegin, 
 
     // set it
     if (max_val != 0.0 && max_val != 1.0) {
-        for (int i = usedBegin; i < usedEnd; ++i) {
+        for (size_t i = usedBegin; i < usedEnd; ++i) {
             SparseMatrix::Set(i, j, SparseMatrix::Get(i, j) / max_val);
         }
         logScalars_[j] = last + std::log(max_val);
@@ -124,8 +124,8 @@ inline void ScaledMatrix::FinishEditingColumn(const int j, const int usedBegin, 
     SparseMatrix::FinishEditingColumn(j, usedBegin, usedEnd);
 }
 
-inline double ScaledMatrix::GetLogScale(int j) const { return logScalars_[j]; }
-inline double ScaledMatrix::GetLogProdScales(int beginColumn, int endColumn) const
+inline double ScaledMatrix::GetLogScale(size_t j) const { return logScalars_[j]; }
+inline double ScaledMatrix::GetLogProdScales(size_t beginColumn, size_t endColumn) const
 {
     double f, l;
     if (dir_ == FORWARD) {
