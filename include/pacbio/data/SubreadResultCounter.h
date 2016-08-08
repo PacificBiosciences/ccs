@@ -39,7 +39,7 @@
 #include <iostream>
 #include <vector>
 
-#include <pacbio/consensus/MonoMolecularIntegrator.h>
+#include <pacbio/data/State.h>
 
 namespace PacBio {
 namespace Data {
