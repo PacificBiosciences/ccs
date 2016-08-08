@@ -89,7 +89,7 @@ void ScaledMatrix::ToHostMatrix(double** mat, int* rows, int* cols) const
     for (size_t i = 0; i < Rows(); i++) {
         for (size_t j = 0; j < Columns(); j++) {
             (*mat)[i * Columns() + j] =
-                    IsAllocated(i, j) ? std::log(Get(i, j)) + GetLogScale(j) : nan;
+                IsAllocated(i, j) ? std::log(Get(i, j)) + GetLogScale(j) : nan;
         }
     }
 }

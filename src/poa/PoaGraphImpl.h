@@ -44,8 +44,8 @@
 #include <boost/static_assert.hpp>
 #include <boost/type_traits.hpp>
 
-#include <pacbio/consensus/Mutation.h>
 #include <pacbio/align/AlignConfig.h>
+#include <pacbio/consensus/Mutation.h>
 #include <pacbio/denovo/PoaGraph.h>
 
 #include "BoostGraph.h"
@@ -161,8 +161,8 @@ class PoaGraphImpl
     const AlignmentColumn* makeAlignmentColumn(VD v,
                                                const AlignmentColumnMap& alignmentColumnForVertex,
                                                const std::string& sequence,
-                                               const PacBio::Align::AlignConfig& config, int beginRow,
-                                               int endRow) const;
+                                               const PacBio::Align::AlignConfig& config,
+                                               int beginRow, int endRow) const;
 
     const AlignmentColumn* makeAlignmentColumnForExit(
         VD v, const AlignmentColumnMap& alignmentColumnForVertex, const std::string& sequence,
@@ -227,10 +227,12 @@ public:
     void threadFirstRead(std::string sequence, std::vector<Vertex>* readPathOutput = NULL);
 
     void tracebackAndThread(std::string sequence,
-                            const AlignmentColumnMap& alignmentColumnForVertex, PacBio::Align::AlignMode mode,
+                            const AlignmentColumnMap& alignmentColumnForVertex,
+                            PacBio::Align::AlignMode mode,
                             std::vector<Vertex>* readPathOutput = NULL);
 
-    vector<PacBio::Consensus::ScoredMutation>* findPossibleVariants(const std::vector<Vertex>& bestPath) const;
+    vector<PacBio::Consensus::ScoredMutation>* findPossibleVariants(
+        const std::vector<Vertex>& bestPath) const;
 
 public:
     PoaGraphImpl();
@@ -242,12 +244,14 @@ public:
 
     void AddFirstRead(const std::string& sequence, std::vector<Vertex>* readPathOutput = NULL);
 
-    PoaAlignmentMatrix* TryAddRead(const std::string& sequence, const PacBio::Align::AlignConfig& config,
+    PoaAlignmentMatrix* TryAddRead(const std::string& sequence,
+                                   const PacBio::Align::AlignConfig& config,
                                    SdpRangeFinder* rangeFinder = NULL) const;
 
     void CommitAdd(PoaAlignmentMatrix* mat, std::vector<Vertex>* readPathOutput = NULL);
 
-    PoaConsensus* FindConsensus(const PacBio::Align::AlignConfig& config, int minCoverage = -INT_MAX);
+    PoaConsensus* FindConsensus(const PacBio::Align::AlignConfig& config,
+                                int minCoverage = -INT_MAX);
 
     size_t NumReads() const;
     string ToGraphViz(int flags, const PoaConsensus* pc) const;

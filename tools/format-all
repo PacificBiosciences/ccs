@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# This command can be run by the user to clang-format everything.
+
+PLATFORM=$(uname)
+CLANGFORMAT="./tools/${PLATFORM}/clang-format -style=file"
+
+find src \( -name *.cpp -or -name *.h \) -print0 | xargs -n1 -0 ${CLANGFORMAT} -i

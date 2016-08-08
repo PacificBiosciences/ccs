@@ -17,6 +17,7 @@
      - Viral Haplotype Phasing `eden`
    - Planned
      - Minor Variant Calling
+ - [Developer environment](doc/DEVELOPER.md)
  - [PacBio open source license](LICENSE)
 
 ## Quick Tools Overview
