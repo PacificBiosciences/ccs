@@ -7,8 +7,7 @@ dependencies:
         - "_deps/boost_1_60_0"
         - "_deps/swig-3.0.8"
     pre:
-        # - sudo apt-get update
-        # - sudo apt-get install ninja-build
+        - ./tools/check-formatting --all
         - curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
         - sudo apt-get install git-lfs=1.1.0
         - if [ ! -d _deps ] ; then mkdir _deps ; fi  # Create a directory for dependencies, These are static, cache them.
