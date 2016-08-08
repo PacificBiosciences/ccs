@@ -89,7 +89,7 @@ public:
 protected:
     AbstractTemplate(size_t start, size_t end, bool pinStart, bool pinEnd);
 
-    inline bool InRange(size_t start, size_t end) const;
+    bool InRange(size_t start, size_t end) const;
 
     size_t start_;
     size_t end_;
@@ -109,21 +109,21 @@ public:
     Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg, size_t start, size_t end,
              bool pinStart, bool pinEnd);
 
-    inline size_t Length() const override;
-    inline const TemplatePosition& operator[](size_t i) const override;
+    size_t Length() const override;
+    const TemplatePosition& operator[](size_t i) const override;
 
-    inline bool IsMutated() const override;
+    bool IsMutated() const override;
     boost::optional<Mutation> Mutate(const Mutation& mut) override;
     void Reset() override;
 
     bool ApplyMutation(const Mutation& mut) override;
 
-    inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                            const PacBio::Data::MappedRead& mr,
-                                                            double scoreDiff) const override;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
+                                                     const PacBio::Data::MappedRead& mr,
+                                                     double scoreDiff) const override;
 
-    inline double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                        MomentType moment) const override;
+    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                 MomentType moment) const override;
 
 private:
     std::unique_ptr<ModelConfig> cfg_;
@@ -142,20 +142,20 @@ class VirtualTemplate : public AbstractTemplate
 public:
     VirtualTemplate(const Template& master, size_t start, size_t end, bool pinStart, bool pinEnd);
 
-    inline size_t Length() const override;
-    inline const TemplatePosition& operator[](size_t i) const override;
+    size_t Length() const override;
+    const TemplatePosition& operator[](size_t i) const override;
 
-    inline bool IsMutated() const override;
-    inline boost::optional<Mutation> Mutate(const Mutation&) override;
-    inline void Reset() override {}
+    bool IsMutated() const override;
+    boost::optional<Mutation> Mutate(const Mutation&) override;
+    void Reset() override {}
     bool ApplyMutation(const Mutation& mut) override;
 
-    inline std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                            const PacBio::Data::MappedRead& mr,
-                                                            double scoreDiff) const override;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
+                                                     const PacBio::Data::MappedRead& mr,
+                                                     double scoreDiff) const override;
 
-    inline double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                        MomentType moment) const override;
+    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                 MomentType moment) const override;
 
 private:
     Template const& master_;
@@ -188,81 +188,6 @@ public:
 protected:
     double scoreDiff_;  // reciprocal of "natural scale"
 };
-
-// inline function impls
-bool AbstractTemplate::InRange(const size_t start, const size_t end) const
-{
-    if ((pinStart_ || start_ < end) && (pinEnd_ || start < end_)) return true;
-    return false;
-}
-
-size_t Template::Length() const { return tpl_.size() + mutOff_; }
-const TemplatePosition& Template::operator[](size_t i) const
-{
-    // if no mutation, or everything up to the base before mutStart_, just return
-    // what we have
-    if (!IsMutated() || i + 1 < mutStart_) return tpl_[i];
-
-    // if we're beyond the mutation position, take the appropriate base
-    else if (i > mutStart_)
-        return tpl_[i - mutOff_];
-
-    // otherwise if we're the base before mutStart_, 0, else 1 of our mutated tpl
-    // params
-    return mutTpl_[i == mutStart_];
-}
-
-bool Template::IsMutated() const { return mutated_; }
-size_t VirtualTemplate::Length() const
-{
-    if (IsMutated()) return end_ - start_ + master_.mutOff_;
-
-    return end_ - start_;
-}
-
-std::unique_ptr<AbstractRecursor> Template::CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                           const PacBio::Data::MappedRead& mr,
-                                                           double scoreDiff) const
-{
-    return cfg_->CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
-                                scoreDiff);
-}
-inline double Template::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                              MomentType moment) const
-{
-    return cfg_->ExpectedLLForEmission(move, prev, curr, moment);
-}
-
-const TemplatePosition& VirtualTemplate::operator[](const size_t i) const
-{
-    if (master_.IsMutated() && !pinStart_ && master_.mutEnd_ <= start_)
-        return master_[start_ + i + master_.mutOff_];
-    return master_[start_ + i];
-}
-
-bool VirtualTemplate::IsMutated() const
-{
-    return master_.IsMutated() && InRange(master_.mutStart_, master_.mutEnd_);
-}
-
-boost::optional<Mutation> VirtualTemplate::Mutate(const Mutation& mut)
-{
-    if (!master_.IsMutated()) throw std::runtime_error("virtual template badness");
-    if (!InRange(mut.Start(), mut.End())) return boost::optional<Mutation>(boost::none);
-    return boost::optional<Mutation>(Mutation(mut.Type, mut.Start() - start_, mut.Base));
-}
-
-inline std::unique_ptr<AbstractRecursor> VirtualTemplate::CreateRecursor(
-    std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr, double scoreDiff) const
-{
-    return master_.CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
-                                  scoreDiff);
-}
-inline double VirtualTemplate::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                                     MomentType moment) const
-{
-    return master_.ExpectedLLForEmission(move, prev, curr, moment);
-}
 
 }  // namespace Consensus
 }  // namespace PacBio

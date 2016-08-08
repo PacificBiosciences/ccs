@@ -384,5 +384,83 @@ bool VirtualTemplate::ApplyMutation(const Mutation& mut)
     return mutApplied;
 }
 
+size_t Template::Length() const { return tpl_.size() + mutOff_; }
+
+size_t VirtualTemplate::Length() const
+{
+    if (IsMutated()) return end_ - start_ + master_.mutOff_;
+
+    return end_ - start_;
+}
+
+
+// inline function impls
+bool AbstractTemplate::InRange(const size_t start, const size_t end) const
+{
+    if ((pinStart_ || start_ < end) && (pinEnd_ || start < end_)) return true;
+    return false;
+}
+
+const TemplatePosition& Template::operator[](size_t i) const
+{
+    // if no mutation, or everything up to the base before mutStart_, just return
+    // what we have
+    if (!IsMutated() || i + 1 < mutStart_) return tpl_[i];
+
+    // if we're beyond the mutation position, take the appropriate base
+    else if (i > mutStart_)
+        return tpl_[i - mutOff_];
+
+    // otherwise if we're the base before mutStart_, 0, else 1 of our mutated tpl
+    // params
+    return mutTpl_[i == mutStart_];
+}
+
+bool Template::IsMutated() const { return mutated_; }
+
+std::unique_ptr<AbstractRecursor> Template::CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
+                                                           const PacBio::Data::MappedRead& mr,
+                                                           double scoreDiff) const
+{
+    return cfg_->CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
+                                scoreDiff);
+}
+double Template::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                              MomentType moment) const
+{
+    return cfg_->ExpectedLLForEmission(move, prev, curr, moment);
+}
+
+const TemplatePosition& VirtualTemplate::operator[](const size_t i) const
+{
+    if (master_.IsMutated() && !pinStart_ && master_.mutEnd_ <= start_)
+        return master_[start_ + i + master_.mutOff_];
+    return master_[start_ + i];
+}
+
+bool VirtualTemplate::IsMutated() const
+{
+    return master_.IsMutated() && InRange(master_.mutStart_, master_.mutEnd_);
+}
+
+boost::optional<Mutation> VirtualTemplate::Mutate(const Mutation& mut)
+{
+    if (!master_.IsMutated()) throw std::runtime_error("virtual template badness");
+    if (!InRange(mut.Start(), mut.End())) return boost::optional<Mutation>(boost::none);
+    return boost::optional<Mutation>(Mutation(mut.Type, mut.Start() - start_, mut.Base));
+}
+
+std::unique_ptr<AbstractRecursor> VirtualTemplate::CreateRecursor(
+    std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr, double scoreDiff) const
+{
+    return master_.CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
+                                  scoreDiff);
+}
+double VirtualTemplate::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+                                                     MomentType moment) const
+{
+    return master_.ExpectedLLForEmission(move, prev, curr, moment);
+}
+
 }  // namespace Consensus
 }  // namespace PacBio
