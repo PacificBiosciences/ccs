@@ -43,8 +43,8 @@
 #include <utility>
 #include <vector>
 
-#include "SparseVector.h"
 #include <pacbio/consensus/AbstractMatrix.h>
+#include "SparseVector.h"
 
 namespace PacBio {
 namespace Consensus {

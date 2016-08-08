@@ -47,7 +47,6 @@
 
 #include "ModelFactory.h"
 
-
 namespace PacBio {
 namespace Consensus {
 
@@ -76,7 +75,8 @@ AbstractIntegrator::AbstractIntegrator(AbstractIntegrator&& ai)
 }
 
 AbstractIntegrator::~AbstractIntegrator() {}
-Data::State AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl, const Data::MappedRead& read)
+Data::State AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
+                                        const Data::MappedRead& read)
 {
     // TODO(atoepfer) Why don't we add those reads and tag them as TEMPLATE_TOO_SMALL
     //                and effectively keep book about them? This logic should be
@@ -128,7 +128,6 @@ std::vector<int> AbstractIntegrator::NumFlipFlops() const
 }
 
 int AbstractIntegrator::MaxNumFlipFlops() const { return MaxElement<int>(NumFlipFlops()); }
-
 
 float AbstractIntegrator::MaxAlphaPopulated() const
 {
@@ -185,20 +184,11 @@ std::vector<StrandType> AbstractIntegrator::StrandTypes() const
     return TransformEvaluators<StrandType>([](const Evaluator& eval) { return eval.Strand(); });
 }
 
-const Evaluator& AbstractIntegrator::GetEvaluator(size_t idx) const
-{
-    return evals_[idx];
-}
+const Evaluator& AbstractIntegrator::GetEvaluator(size_t idx) const { return evals_[idx]; }
 
-const AbstractMatrix& AbstractIntegrator::Alpha(size_t idx) const
-{
-    return evals_[idx].Alpha();
-}
+const AbstractMatrix& AbstractIntegrator::Alpha(size_t idx) const { return evals_[idx].Alpha(); }
 
-const AbstractMatrix& AbstractIntegrator::Beta(size_t idx) const
-{
-    return evals_[idx].Beta();
-}
+const AbstractMatrix& AbstractIntegrator::Beta(size_t idx) const { return evals_[idx].Beta(); }
 
 Mutation AbstractIntegrator::ReverseComplement(const Mutation& mut) const
 {

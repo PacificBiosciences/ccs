@@ -40,8 +40,8 @@
 #include <vector>
 
 #include <pacbio/consensus/Evaluator.h>
-#include <pacbio/data/Read.h>
 #include <pacbio/consensus/Template.h>
+#include <pacbio/data/Read.h>
 
 #include "Recursor.h"
 #include "matrix/ScaledMatrix.h"

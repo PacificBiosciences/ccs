@@ -40,14 +40,14 @@
 #include <utility>
 #include <vector>
 
-#include <pacbio/data/Sequence.h>
 #include <pacbio/align/AlignConfig.h>
+#include <pacbio/data/Sequence.h>
 #include <pacbio/denovo/PoaConsensus.h>
 #include <pacbio/denovo/PoaGraph.h>
 
-#include <pacbio/log/Logging.h>
 #include <pacbio/ccs/SparseAlignment.h>
 #include <pacbio/denovo/SparsePoa.h>
+#include <pacbio/log/Logging.h>
 
 using PacBio::Poa::detail::SdpAnchorVector;
 using PacBio::Align::AlignConfig;

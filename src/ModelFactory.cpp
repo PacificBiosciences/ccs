@@ -43,8 +43,8 @@
 
 #include <boost/optional.hpp>
 
-#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/ModelConfig.h>
+#include <pacbio/exception/StateError.h>
 
 #include "ModelFactory.h"
 
@@ -66,7 +66,6 @@ size_t Count(const std::string& str, const std::string& delim)
 
     return count;
 }
-
 }
 
 std::unique_ptr<ModelConfig> ModelFactory::Create(const std::string& name, const SNR& snr)
@@ -74,8 +73,7 @@ std::unique_ptr<ModelConfig> ModelFactory::Create(const std::string& name, const
     boost::optional<std::string> model(boost::none);
 
     if (!(model = ModelOverride()))
-        if (!(model = Resolve(name)))
-            throw ChemistryNotFound(name);
+        if (!(model = Resolve(name))) throw ChemistryNotFound(name);
 
     const auto& tbl = CreatorTable();
     const auto it = tbl.find(*model);
@@ -105,15 +103,13 @@ boost::optional<std::string> ModelFactory::Resolve(const std::string& name)
     const size_t nParts = Count(name, "::") + 1;
 
     if (nParts == 3) {
-        if (tbl.find(name) != tbl.end())
-            return name;
+        if (tbl.find(name) != tbl.end()) return name;
     }
 
     else if (nParts == 2) {
         for (const auto& origin : origins) {
             const std::string model = name + "::" + origin;
-            if (tbl.find(model) != tbl.end())
-                return model;
+            if (tbl.find(model) != tbl.end()) return model;
         }
     }
 
@@ -121,8 +117,7 @@ boost::optional<std::string> ModelFactory::Resolve(const std::string& name)
         for (const auto& form : forms) {
             for (const auto& origin : origins) {
                 const std::string model = name + "::" + form + "::" + origin;
-                if (tbl.find(model) != tbl.end())
-                    return model;
+                if (tbl.find(model) != tbl.end()) return model;
             }
         }
     }

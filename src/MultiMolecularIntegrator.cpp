@@ -110,7 +110,8 @@ void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
     assert(fwdTpl_ == ::PacBio::Data::ReverseComplement(revTpl_));
 }
 
-std::unique_ptr<AbstractTemplate> MultiMolecularIntegrator::GetTemplate(const PacBio::Data::MappedRead& read)
+std::unique_ptr<AbstractTemplate> MultiMolecularIntegrator::GetTemplate(
+    const PacBio::Data::MappedRead& read)
 {
     const size_t len = read.TemplateEnd - read.TemplateStart;
 
@@ -118,16 +119,16 @@ std::unique_ptr<AbstractTemplate> MultiMolecularIntegrator::GetTemplate(const Pa
         const size_t start = read.TemplateStart;
         const size_t end = read.TemplateEnd;
 
-        return std::unique_ptr<AbstractTemplate>(
-            new Template(fwdTpl_.substr(start, len), ModelFactory::Create(read), start,
-                         end, read.PinStart, read.PinEnd));
+        return std::unique_ptr<AbstractTemplate>(new Template(fwdTpl_.substr(start, len),
+                                                              ModelFactory::Create(read), start,
+                                                              end, read.PinStart, read.PinEnd));
     } else if (read.Strand == StrandType::REVERSE) {
         const size_t start = revTpl_.size() - read.TemplateEnd;
         const size_t end = revTpl_.size() - read.TemplateStart;
 
-        return std::unique_ptr<AbstractTemplate>(
-            new Template(revTpl_.substr(start, len), ModelFactory::Create(read), start,
-                         end, read.PinEnd, read.PinStart));
+        return std::unique_ptr<AbstractTemplate>(new Template(revTpl_.substr(start, len),
+                                                              ModelFactory::Create(read), start,
+                                                              end, read.PinEnd, read.PinStart));
     }
 
     throw std::invalid_argument("read is unmapped!");

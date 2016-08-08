@@ -41,8 +41,8 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 
-#include <pacbio/data/Sequence.h>
 #include <pacbio/align/PairwiseAlignment.h>
+#include <pacbio/data/Sequence.h>
 // #include <pacbio/consensus/Utils.hpp>
 
 namespace PacBio {

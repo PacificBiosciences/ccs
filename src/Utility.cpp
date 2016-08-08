@@ -118,7 +118,7 @@ vector<string> FlattenFofn(const vector<string>& files)
 }
 
 bool ValidBaseFeatures(const PacBio::BAM::DataSet& ds)
-{   
+{
     for (const auto& bam : ds.BamFiles()) {
         for (const auto& rg : bam.Header().ReadGroups()) {
             // P6-C4 and S/P1-C1/beta do not require covariates besides SNR

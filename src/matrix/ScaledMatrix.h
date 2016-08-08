@@ -76,7 +76,7 @@ public:  // Scaling and normalization
     double GetLogProdScales(int s, int e) const;
     double GetLogProdScales() const;
 
-public: // Convenient matrix access for SWIG
+public:  // Convenient matrix access for SWIG
     void ToHostMatrix(double** mat, int* rows, int* cols) const;
 
 private:

@@ -38,8 +38,8 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/Template.h>
+#include <pacbio/exception/StateError.h>
 
 namespace PacBio {
 namespace Consensus {

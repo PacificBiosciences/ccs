@@ -42,9 +42,9 @@
 #include <memory>
 #include <utility>
 
-#include <pacbio/exception/StateError.h>
-#include <pacbio/data/Read.h>
 #include <pacbio/consensus/Template.h>
+#include <pacbio/data/Read.h>
+#include <pacbio/exception/StateError.h>
 
 #include "matrix/ScaledMatrix.h"
 
@@ -702,8 +702,8 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
 }
 
 template <typename Derived>
-Recursor<Derived>::Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
-                            const double scoreDiff)
+Recursor<Derived>::Recursor(std::unique_ptr<AbstractTemplate>&& tpl,
+                            const PacBio::Data::MappedRead& mr, const double scoreDiff)
     : AbstractRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
     , emissions_{Derived::EncodeRead(read_)}
 {
