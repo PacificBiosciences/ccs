@@ -21,11 +21,10 @@ See the tools:
 
 To enable the checking as a pre-commit hook, place the following in
 ~.git/hooks/pre-commit~ (and make that file executable):
-#+BEGIN_SRC sh
+```sh
 #!/bin/bash
 ./tools/check-formatting --staged
-#+END_SRC
-
+```
 
 ### Tips
 - We should *not* reformat bundled third-party code as it will make it
