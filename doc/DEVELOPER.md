@@ -14,18 +14,18 @@ checked and guaranteed before checkin.
 
 ### How?
 See the tools:
-  - ~tools/check-formatting --staged~ for fast style-checking of
+  - `tools/check-formatting --staged` for fast style-checking of
     changed files, in a git commit/push hook;
-  - ~tools/check-formatting --all~ for slower style-checking of everything
-  - ~tools/format-all~ to format everything
+  - `tools/check-formatting --all` for slower style-checking of everything
+  - `tools/format-all`to format everything
 
 To enable the checking as a pre-commit hook, place the following in
-~.git/hooks/pre-commit~ (and make that file executable):
-#+BEGIN_SRC sh
+`.git/hooks/pre-commit` (and make that file executable):
+
+```sh
 #!/bin/bash
 ./tools/check-formatting --staged
-#+END_SRC
-
+```
 
 ### Tips
 - We should *not* reformat bundled third-party code as it will make it
@@ -35,7 +35,7 @@ To enable the checking as a pre-commit hook, place the following in
 
 - If clang-format mangles something (for example, a comment block with
   ASCII art or significant whitespace), you can protect a block using
-  ~// clang-format off~ and then ~// clang-format on~.
+  `// clang-format off` and then `// clang-format on`.
 
 * What are these binaries?
   The `clang-format` binaries that are checked in are static builds of
