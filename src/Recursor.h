@@ -68,7 +68,7 @@ public:
     /// This routine will fill the alpha and beta matrices, ensuring
     /// that the score computed from the alpha and beta recursions are
     /// identical, refilling back-and-forth if necessary.
-    size_t FillAlphaBeta(M& alpha, M& beta) const;
+    size_t FillAlphaBeta(M& alpha, M& beta, double tol) const;
 
     /**
      Fill in the alpha matrix.  This matrix has the read run along the rows, and
@@ -152,7 +152,6 @@ typedef std::pair<size_t, size_t> Interval;
 // TODO(dalexander): put these into a RecursorConfig struct
 // TODO(anybody): Hmmm... not sure what the heck to do about these...
 constexpr int MAX_FLIP_FLOPS = 5;
-constexpr double ALPHA_BETA_MISMATCH_TOLERANCE = 0.001;
 constexpr double REBANDING_THRESHOLD = 0.04;
 
 constexpr uint8_t kDefaultBase = 0;  // corresponding to A, usually
@@ -697,7 +696,7 @@ Recursor<Derived>::Recursor(std::unique_ptr<AbstractTemplate>&& tpl,
 }
 
 template <typename Derived>
-size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
+size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b, const double tol) const
 {
     if (tpl_->Length() == 0) throw std::runtime_error("template length is 0, invalid state!");
 
@@ -725,7 +724,7 @@ size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
         alphaV = std::log(a(I, J)) + a.GetLogProdScales() + unweight;
         betaV = std::log(b(0, 0)) + b.GetLogProdScales() + unweight;
 
-        if (std::abs(1.0 - alphaV / betaV) <= ALPHA_BETA_MISMATCH_TOLERANCE) break;
+        if (std::abs(1.0 - alphaV / betaV) <= tol) break;
 
         if (flipflops % 2 == 0)
             FillAlpha(b, a);
@@ -735,7 +734,7 @@ size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
         ++flipflops;
     }
 
-    if (std::abs(1.0 - alphaV / betaV) > ALPHA_BETA_MISMATCH_TOLERANCE || !std::isfinite(betaV))
+    if (std::abs(1.0 - alphaV / betaV) > tol || !std::isfinite(betaV))
         throw PacBio::Exception::AlphaBetaMismatch();
 
     return flipflops;
