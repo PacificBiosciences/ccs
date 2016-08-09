@@ -28,7 +28,7 @@ Z-Score for Filtering
 ---------------------
 
 One attempt at identifying garbage reads is the "Z-Score" described
-here [PBEP_4.pdf](PBEP_4.pdf).
+here [PBEP_4.pdf]
 
 The idea is to compute the expected log probability of sequences
 output by an HMM. Thus when presented with a sequence that has a
@@ -42,8 +42,8 @@ conditions.
 
 Here is the result from PBEF_4.pdf:
 
-| term       | meaning
-|------------| -------
-| $p_m$      | match transistion probability
-| $p_d$      | delettion transistion probability
+| term       | meaning |
+|------------| ------- |
+| $p_m$      | match transistion probability |
+| $p_d$      | delettion transistion probability |
 
