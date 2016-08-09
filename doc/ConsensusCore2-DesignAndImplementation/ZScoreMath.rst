@@ -40,10 +40,36 @@ emissions each with corresponding probabilities, it is reasonable that
 sums of log probabilities might be close to normal under certain
 conditions.
 
-Here is the result from PBEF_4.pdf:
+Here is the basic HMM structure with match, branch (same match base
+insert), stick (different match base insert), delete:
+
+(pacbioHMM.svg.png)
+
+Here is the result verbatim from PBEF_4.pdf:
 
 | term       | meaning |
 |------------| ------- |
 | $p_m$      | match transistion probability |
 | $p_d$      | delettion transistion probability |
+
+# TODO: this doesn't seem to render correctly on github
+
+LL = log(prob)
+
+expected LL from context = expected LL from match/delete + expected LL from insertions
+
+# break into simple match/delete and insert chains
+
+expected LL from match/delete = $ (l_m + E[M]) \frac{p_m}{p_m+p_d} + l_d \frac{p_d}{p_m+p_d} $
+
+# transistion weighted (LL from match trans+emis) and (LL from delete trans)
+
+expected LL from insertions = $E[I] \frac{p_s+p_b}{p_m+p_d}$
+
+# expected insertion LL weighted by expected length of insertion
+
+$E[I] = (l_b+E[B]) \frac{p_b}{p_b+p_s} + (l_s+E[S]) \frac{p_s}{p_b+p_s}
+
+# transition weighted LL branch transition/emission and LL stick transition/emission within insertion
+
 
