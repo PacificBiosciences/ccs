@@ -56,15 +56,14 @@ namespace Align {
 ///                 By default 10.
 /// \param  TShape  The SeqAn shape specialization.  By default Ungapped.
 /// \param  TIndex  The SeqAn index specialization.  By default Q-Gram.
-template<size_t   TSize  = 10,
-         typename TShape = seqan::UngappedShape<TSize>,
-         typename TIndex = seqan::IndexQGram<TShape>>
+template <size_t TSize = 10, typename TShape = seqan::UngappedShape<TSize>,
+          typename TIndex = seqan::IndexQGram<TShape>>
 struct FindSeedsConfig
 {
-    typedef TIndex    IndexType;
-    typedef TShape    ShapeType;
+    typedef TIndex IndexType;
+    typedef TShape ShapeType;
     static const size_t Size = TSize;
 };
 
-} // Align
-} // PacBio
+}  // Align
+}  // PacBio

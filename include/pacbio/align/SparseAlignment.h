@@ -45,9 +45,9 @@
 #include <seqan/seeds.h>
 #include <seqan/sequence.h>
 
+#include <pacbio/align/ChainSeeds.h>
 #include <pacbio/align/FindSeeds.h>
 #include <pacbio/align/FindSeedsConfig.h>
-#include <pacbio/align/ChainSeeds.h>
 
 namespace PacBio {
 namespace Align {
@@ -65,14 +65,13 @@ namespace {
 /// \param[in] scoring       The alignment scoring configuration
 /// \param[in] config        The alignment type configuration
 ///
-/// \returns  The full banded alignment between the two sequences 
+/// \returns  The full banded alignment between the two sequences
 ///
-template<typename TAlignConfig, typename TScoring>
-const seqan::Align<seqan::DnaString, seqan::ArrayGaps>
-SeedsToAlignment(const seqan::DnaString& seq1, const seqan::DnaString& seq2,
-                 const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds,
-                 const TScoring& scoring,
-                 const TAlignConfig& config)
+template <typename TAlignConfig, typename TScoring>
+const seqan::Align<seqan::DnaString, seqan::ArrayGaps> SeedsToAlignment(
+    const seqan::DnaString& seq1, const seqan::DnaString& seq2,
+    const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds, const TScoring& scoring,
+    const TAlignConfig& config)
 {
     using namespace seqan;
 
@@ -97,10 +96,10 @@ SeedsToAlignment(const seqan::DnaString& seq1, const seqan::DnaString& seq2,
 /// \param[in] seq2   The reference sequence as a DnaString
 ///
 /// \returns   The SDP alignment as a SeedString
-/// 
+///
 template <size_t TSize>
-const seqan::String<seqan::Seed<seqan::Simple>>
-SparseAlign(const seqan::DnaString& seq1, const seqan::DnaString& seq2)
+const seqan::String<seqan::Seed<seqan::Simple>> SparseAlign(const seqan::DnaString& seq1,
+                                                            const seqan::DnaString& seq2)
 {
     using namespace seqan;
 
@@ -114,8 +113,7 @@ SparseAlign(const seqan::DnaString& seq1, const seqan::DnaString& seq2)
     String<Seed<Simple>> chain;
     ChainSeeds(&chains, seeds, chainConfig);
 
-    if (chains.size() == 0)
-        return chain;
+    if (chains.size() == 0) return chain;
 
     return chains[0];
 }
@@ -125,28 +123,27 @@ SparseAlign(const seqan::DnaString& seq1, const seqan::DnaString& seq2)
 /// \param[in] seq1   The query sequence as a DnaString
 /// \param[in] seq2   The reference sequence as a DnaString
 ///
-/// \returns   A flag for the best orientation found, and the SDP alignment 
+/// \returns   A flag for the best orientation found, and the SDP alignment
 ///             from that orientation as a SeedString, in an std::pair
-/// 
-const std::pair<size_t, seqan::String<seqan::Seed<seqan::Simple>>>
-BestSparseAlign(const seqan::DnaString& seq1, const seqan::DnaString& seq2)
+///
+const std::pair<size_t, seqan::String<seqan::Seed<seqan::Simple>>> BestSparseAlign(
+    const seqan::DnaString& seq1, const seqan::DnaString& seq2)
 {
     using namespace seqan;
 
     //TODO(bbowman) Clean this up, pronto
-    DnaString seq2_str(seq2); 
+    DnaString seq2_str(seq2);
     reverseComplement(seq2_str);
     const std::string seq2rc(toCString(CharString(seq2_str)));
 
     const auto& fwd = SparseAlign<10>(seq1, seq2);
     const auto& rev = SparseAlign<10>(seq1, seq2rc);
 
-    if (length(fwd) > length(rev))
-        return std::make_pair(0, fwd);
+    if (length(fwd) > length(rev)) return std::make_pair(0, fwd);
     return std::make_pair(1, rev);
 }
 
-/// \brief Generate an SDP alignment from two sequences and hide the 
+/// \brief Generate an SDP alignment from two sequences and hide the
 ///         SeqAn library dependencies
 ///
 /// \param[in] seq1   The query sequence as an std::string
@@ -154,10 +151,10 @@ BestSparseAlign(const seqan::DnaString& seq1, const seqan::DnaString& seq2)
 ///
 /// \returns   A vector of pairs, representing Kmer start positions
 ///             that match in the query and reference sequences
-/// 
+///
 template <size_t TSize>
-const std::vector<std::pair<size_t, size_t>>
-SparseAlign(const std::string& seq1, const std::string& seq2)
+const std::vector<std::pair<size_t, size_t>> SparseAlign(const std::string& seq1,
+                                                         const std::string& seq2)
 {
     using namespace seqan;
     using namespace std;
@@ -167,8 +164,7 @@ SparseAlign(const std::string& seq1, const std::string& seq2)
 
     vector<pair<size_t, size_t>> result;
 
-    for (const auto& s : chain)
-    {
+    for (const auto& s : chain) {
         result.push_back(make_pair(beginPositionH(s), beginPositionV(s)));
     }
 
@@ -176,4 +172,5 @@ SparseAlign(const std::string& seq1, const std::string& seq2)
 }
 
 }  // Anonymous namespace
-}}  // ::PacBio::Align
+}
+}  // ::PacBio::Align

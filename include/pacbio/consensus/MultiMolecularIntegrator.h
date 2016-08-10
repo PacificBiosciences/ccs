@@ -43,10 +43,10 @@
 
 #include <pacbio/consensus/AbstractIntegrator.h>
 #include <pacbio/consensus/Evaluator.h>
-#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/Mutation.h>
-#include <pacbio/data/State.h>
 #include <pacbio/data/Read.h>
+#include <pacbio/data/State.h>
+#include <pacbio/exception/StateError.h>
 
 namespace PacBio {
 namespace Consensus {

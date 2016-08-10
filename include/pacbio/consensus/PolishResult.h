@@ -50,10 +50,10 @@ struct PolishResult
     // How many mutations have been actually applied?
     size_t mutationsApplied = 0;
 
-    // For each iteration in Polish(), get the max of all Evaluators to 
+    // For each iteration in Polish(), get the max of all Evaluators to
     // diagnose the worst performing one.
-    // 
-    // Maximal ratio of populated alpha cells 
+    //
+    // Maximal ratio of populated alpha cells
     std::vector<float> maxAlphaPopulated;
     // Maximal ratio of populated beta cells
     std::vector<float> maxBetaPopulated;

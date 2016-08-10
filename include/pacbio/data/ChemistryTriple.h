@@ -51,10 +51,12 @@ public:
     unsigned MinorVersion;
 
     ChemistryTriple() : BindingKit{0}, SequencingKit{0}, MajorVersion{0}, MinorVersion{0} {}
+
     ChemistryTriple(const std::string& bindingKit, const std::string& sequencingKit,
                     const std::string& changeListID);
 
     static ChemistryTriple Null() { return ChemistryTriple(); }
+
     bool IsNull() const
     {
         return BindingKit == 0 and SequencingKit == 0 and MajorVersion == 0 and MinorVersion == 0;

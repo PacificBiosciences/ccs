@@ -52,18 +52,18 @@
 #include <OptionParser.h>
 
 #include <pacbio/consensus/MonoMolecularIntegrator.h>
-#include <pacbio/denovo/PoaConsensus.h>
 #include <pacbio/consensus/Polish.h>
 #include <pacbio/data/State.h>
 #include <pacbio/data/StrandType.h>
+#include <pacbio/denovo/PoaConsensus.h>
 
 #include <pbbam/Accuracy.h>
 #include <pbbam/LocalContextFlags.h>
 
-#include <pacbio/log/Logging.h>
 #include <pacbio/data/ReadId.h>
-#include <pacbio/denovo/SparsePoa.h>
 #include <pacbio/data/SubreadResultCounter.h>
+#include <pacbio/denovo/SparsePoa.h>
+#include <pacbio/log/Logging.h>
 #include <pacbio/util/Timer.h>
 
 namespace PacBio {
@@ -351,10 +351,12 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
 }
 
 template <typename TRead>
-boost::optional<MappedRead> ExtractMappedRead(
-    const TRead& read, const PacBio::Data::SNR& snr, const std::string& chem,
-    const PoaAlignmentSummary& summary, const size_t poaLength, const ConsensusSettings& settings,
-    SubreadResultCounter* resultCounter)
+boost::optional<MappedRead> ExtractMappedRead(const TRead& read, const PacBio::Data::SNR& snr,
+                                              const std::string& chem,
+                                              const PoaAlignmentSummary& summary,
+                                              const size_t poaLength,
+                                              const ConsensusSettings& settings,
+                                              SubreadResultCounter* resultCounter)
 {
     constexpr size_t kStickyEnds = 7;
 
@@ -386,12 +388,11 @@ boost::optional<MappedRead> ExtractMappedRead(
     }
 
     MappedRead mappedRead(
-        Read(
-            read.Id, read.Seq.substr(readStart, readEnd - readStart),
-            std::vector<uint8_t>(read.IPD.begin() + readStart, read.IPD.begin() + readEnd),
-            std::vector<uint8_t>(read.PulseWidth.begin() + readStart,
-                                 read.PulseWidth.begin() + readEnd),
-            snr, chem),
+        Read(read.Id, read.Seq.substr(readStart, readEnd - readStart),
+             std::vector<uint8_t>(read.IPD.begin() + readStart, read.IPD.begin() + readEnd),
+             std::vector<uint8_t>(read.PulseWidth.begin() + readStart,
+                                  read.PulseWidth.begin() + readEnd),
+             snr, chem),
         summary.ReverseComplementedRead ? StrandType::REVERSE : StrandType::FORWARD, tplStart,
         tplEnd, (tplStart == 0) ? true : false, (tplEnd == poaLength) ? true : false);
 
@@ -646,8 +647,8 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                         // return resulting sequence!!
                         result.Success += 1;
                         result.emplace_back(ConsensusType{
-                            polishResult, chunk.Id, strand, std::string(ai), std::move(qvs), 
-                            nPasses, predAcc, zAvg, zScores, 
+                            polishResult, chunk.Id, strand, std::string(ai), std::move(qvs),
+                            nPasses, predAcc, zAvg, zScores,
                             result.SubreadCounter.ReturnCountsAsArray(), chunk.SignalToNoise,
                             timer.ElapsedMilliseconds(), chunk.Barcodes});
                     } catch (const std::exception& e) {

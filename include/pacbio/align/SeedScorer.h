@@ -39,40 +39,40 @@
 
 #include <stdbool.h>
 
-#include <seqan/seeds.h>
 #include <seqan/index.h>
+#include <seqan/seeds.h>
 
 namespace PacBio {
 namespace Align {
 
-template<typename TConfig>
+template <typename TConfig>
 class SeedScorer
 {
 
 public:  // Template types and values
-   typedef typename TConfig::IndexType IndexType;
-   typedef typename TConfig::ShapeType ShapeType;
-   size_t Size = TConfig::Size;
-   
+    typedef typename TConfig::IndexType IndexType;
+    typedef typename TConfig::ShapeType ShapeType;
+    size_t Size = TConfig::Size;
+
 public:  // Derived types and values
-   typedef seqan::Index<seqan::StringSet<seqan::DnaString>, IndexType> TIndex;
-   typedef seqan::Finder<TIndex> TFinder;
-   typedef seqan::Dna TAlphabet;
-   typedef typename seqan::ValueSize<TAlphabet>::Type TAlphabetSize;
-   // Equivalent to BLASR's "T_Tuple"
-   typedef seqan::Shape<seqan::Dna, ShapeType> TShape;
-   // Equivalent to BLASR's "MatchPos"
-   typedef seqan::Seed<seqan::Simple> TSeed;
+    typedef seqan::Index<seqan::StringSet<seqan::DnaString>, IndexType> TIndex;
+    typedef seqan::Finder<TIndex> TFinder;
+    typedef seqan::Dna TAlphabet;
+    typedef typename seqan::ValueSize<TAlphabet>::Type TAlphabetSize;
+    // Equivalent to BLASR's "T_Tuple"
+    typedef seqan::Shape<seqan::Dna, ShapeType> TShape;
+    // Equivalent to BLASR's "MatchPos"
+    typedef seqan::Seed<seqan::Simple> TSeed;
 
 public:  // structors
-    SeedScorer(const TIndex& index, 
-               const size_t kmerSize)
+    SeedScorer(const TIndex& index, const size_t kmerSize)
         : index_(index)
         , shape_(seqan::indexShape(index))
         , kmerFinder_(index)
         , kmerSize_(kmerSize)
         , alphabetSize_(seqan::ValueSize<seqan::Dna>::VALUE)
-    {}
+    {
+    }
 
     // Move constructor
     SeedScorer(SeedScorer&& src) = delete;
@@ -86,7 +86,6 @@ public:  // structors
     ~SeedScorer() = default;
 
 public:  // non-modifying methods
-
     /// Score a given seed found that matches the reference index, returning
     /// a number approximating it's log-likehood.
     ///
@@ -96,9 +95,7 @@ public:  // non-modifying methods
     /// \param  query  The query sequence being
     /// \param  pValue  The number of occurences
     /// \return  bool  Flag whether the scoring succeeded
-    bool operator()(const seqan::DnaString& query,
-                    const TSeed& seed,
-                    const size_t referenceIdx,
+    bool operator()(const seqan::DnaString& query, const TSeed& seed, const size_t referenceIdx,
                     float& score)
     {
         // Default
@@ -113,25 +110,24 @@ public:  // non-modifying methods
         // If the match is shorter than our Kmer-size, just assume we will
         // always find a match (e.g. return 0, since it's Log(1.0))
         size_t currSeedSize = seqan::seedSize(seed);
-        if (currSeedSize < kmerSize_)
-        {
+        if (currSeedSize < kmerSize_) {
             score = 0.0f;
             return true;
         }
-       
+
         /*std::cout << "S " << 0 << " " 
                   << seqan::beginPositionV(seed) << " "
                   << seqan::endPositionV(seed) << " "
                   << seqan::endPositionV(seed) - seqan::beginPositionH(seed) << " "
                   << count << " "
                   << score << std::endl;*/
-                  
+
         // Iterate over each successor seed in the match
-        for (size_t i = 1; i <= currSeedSize - kmerSize_; ++i)
-        {
+        for (size_t i = 1; i <= currSeedSize - kmerSize_; ++i) {
             //std::cout << "i:" << i << " " << seqan::beginPositionH(seed) << " " << currSeedSize << " " << Size << std::endl;
             size_t nextShapeCount = 0;
-            size_t nextPossibleCount = CountPossibleSuccessors(query, seed, i, referenceIdx, nextShapeCount);
+            size_t nextPossibleCount =
+                CountPossibleSuccessors(query, seed, i, referenceIdx, nextShapeCount);
 
             /*std::cout << "S " << i << " " 
                       << seqan::beginPositionV(seed) << " "
@@ -144,8 +140,7 @@ public:  // non-modifying methods
 
             // There is no background distribution available for this
             // sequence context, therefore no way to evaluate p-value.
-            if (nextPossibleCount == 0) 
-                return false;
+            if (nextPossibleCount == 0) return false;
 
             // Add the log-probability of seeing this particule successor to
             // the running sum of the pValue
@@ -163,10 +158,8 @@ public:  // non-modifying methods
     ///
     /// \param  TSeed  the position and length of the query
     /// \return  size_t  the total occurrences of all possible successors
-    size_t CountPossibleSuccessors(const seqan::DnaString& query,
-                                   const TSeed& seed,
-                                   const size_t offset,
-                                   const size_t referenceIdx,
+    size_t CountPossibleSuccessors(const seqan::DnaString& query, const TSeed& seed,
+                                   const size_t offset, const size_t referenceIdx,
                                    size_t& nextShapeCount)
     {
         // Initialize return values
@@ -179,19 +172,18 @@ public:  // non-modifying methods
 
         // Pull-out pointers to the successor string and it's N-1 root
         seqan::DnaString referenceString = seqan::infix(query, beginPos, endPos);
-        seqan::DnaString rootString = seqan::prefix(referenceString, kmerSize_-1);
-        //std::cout << referenceString << " " 
+        seqan::DnaString rootString = seqan::prefix(referenceString, kmerSize_ - 1);
+        //std::cout << referenceString << " "
         //          << rootString << std::endl;
 
         // Count the number of occurrences of all possible successor strings
-        for (TAlphabetSize i = 0; i < alphabetSize_; ++i)
-        {
+        for (TAlphabetSize i = 0; i < alphabetSize_; ++i) {
             seqan::DnaString testString = rootString;
             seqan::append(testString, alphabet_[i]);
             size_t testStringCount = CountOccurrences(testString, referenceIdx);
-            //std::cout << referenceString << " " 
-            //          << rootString << " " 
-            //          << alphabet_[i] << " " 
+            //std::cout << referenceString << " "
+            //          << rootString << " "
+            //          << alphabet_[i] << " "
             //          << testString << " "
             //          << testStringCount << std::endl;
 
@@ -199,8 +191,7 @@ public:  // non-modifying methods
             nextPossibleCount += testStringCount;
 
             // If the test successor is equal to the actual successor, save it.
-            if (testString == referenceString)
-                nextShapeCount = testStringCount;
+            if (testString == referenceString) nextShapeCount = testStringCount;
         }
 
         // Return the sum of the counts of all possible successor strings
@@ -208,26 +199,23 @@ public:  // non-modifying methods
         return nextPossibleCount;
     }
 
-    /// Count the number of times a given sequence is found in the index, 
+    /// Count the number of times a given sequence is found in the index,
     /// usually representing all Kmers found in a reference.
     ///
     /// Equivalent to BLASR's GetTupleCount function.
     ///
     /// \param  query  The sequence whose occurrences are to be counted
     /// \return  the number of occurences
-    size_t CountOccurrences(const seqan::DnaString& query,
-                            const size_t referenceIdx)
+    size_t CountOccurrences(const seqan::DnaString& query, const size_t referenceIdx)
     {
         using namespace seqan;
 
         //std::cout << "CO " << query << " " << referenceIdx << std::endl;
         size_t occurrences = 0;
         clear(kmerFinder_);
-        while (find(kmerFinder_, query))
-        {
+        while (find(kmerFinder_, query)) {
             //std::cout << position(kmerFinder_) << std::endl;
-            if (getValueI1(position(kmerFinder_)) == referenceIdx)
-                occurrences += 1;
+            if (getValueI1(position(kmerFinder_)) == referenceIdx) occurrences += 1;
         }
         //std::cout << "CO " << query << " " << referenceIdx << " " << occurrences << std::endl;
         return occurrences;
@@ -241,18 +229,15 @@ public:  // non-modifying methods
     /// \param  query  The sequence from which a substring will be counted
     /// \param  seed  A seed with the start-position of the Kmer start position
     /// \return  the number of occurences
-    size_t CountOccurrences(const seqan::DnaString& query,
-                            const TSeed& seed,
+    size_t CountOccurrences(const seqan::DnaString& query, const TSeed& seed,
                             const size_t referenceIdx)
     {
         using namespace seqan;
 
         size_t occurrences = 0;
         hash(shape_, begin(query) + beginPositionH(seed));
-        for (const auto o : getOccurrences(index_, shape_))
-        {
-            if (getValueI1(o) == referenceIdx)
-                occurrences += 1;
+        for (const auto o : getOccurrences(index_, shape_)) {
+            if (getValueI1(o) == referenceIdx) occurrences += 1;
         }
         return occurrences;
     }
@@ -263,8 +248,7 @@ private:  // data
     TFinder kmerFinder_;
     size_t kmerSize_;
     TAlphabetSize alphabetSize_;
-    char alphabet_ [4] = {'A', 'C', 'G', 'T'};
-
+    char alphabet_[4] = {'A', 'C', 'G', 'T'};
 };
-
-}}  // ::PacBio::Align
+}
+}  // ::PacBio::Align

@@ -62,7 +62,6 @@ extern uint8_t TranslationTable[256];
 class AbstractRecursor;
 class AbstractTemplate;
 
-
 struct TemplatePosition
 {
     char Base;
@@ -94,7 +93,8 @@ class ModelConfig
 public:
     virtual ~ModelConfig() {}
     virtual std::unique_ptr<AbstractRecursor> CreateRecursor(
-        std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr, double scoreDiff) const = 0;
+        std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
+        double scoreDiff) const = 0;
     virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
     virtual double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                          MomentType moment) const = 0;

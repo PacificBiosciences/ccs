@@ -39,13 +39,13 @@
 #include <utility>
 #include <vector>
 
+#include <pacbio/consensus/Template.h>
 #include <pacbio/data/Read.h>
 #include <pacbio/data/State.h>
-#include <pacbio/consensus/Template.h>
 
 namespace PacBio {
 namespace Consensus {
-    
+
 // forward declaration
 class EvaluatorImpl;
 class AbstractMatrix;
@@ -55,8 +55,8 @@ class Evaluator
 public:
     Evaluator() = delete;
     explicit Evaluator(PacBio::Data::State);
-    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr, double minZScore,
-              double scoreDiff);
+    Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
+              double minZScore, double scoreDiff);
 
     // copying is verboten
     Evaluator(const Evaluator&) = delete;

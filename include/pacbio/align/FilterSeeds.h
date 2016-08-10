@@ -59,7 +59,7 @@ namespace Align {
 ///
 /// \param  seeds  Any container-type of seeds that supports
 ///                range-based iteration.
-template<size_t TSize, typename TContainer>
+template <size_t TSize, typename TContainer>
 size_t CountSeeds(const TContainer& seeds)
 {
     using namespace seqan;
@@ -67,8 +67,7 @@ size_t CountSeeds(const TContainer& seeds)
     size_t count = length(seeds);
 
 #ifdef MERGESEEDS
-    for (const auto& seed : seeds)
-    {
+    for (const auto& seed : seeds) {
         count += seedSize(seed) - TSize;
     }
 #endif
@@ -84,30 +83,25 @@ size_t CountSeeds(const TContainer& seeds)
 /// \param  seeds  A map of Int<-->SeedSet pairs, linking the index
 ///                of the reference sequence to the seeds found within.
 /// \param  size_t  The number of top hits to retain and report
-template<size_t TSize>
+template <size_t TSize>
 void FilterSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* seeds,
                  const size_t nBest)
 {
     using namespace std;
 
     // If we already have fewer
-    if (seeds->size() <= nBest)
-        return;
+    if (seeds->size() <= nBest) return;
 
     // keep a priority queue of the biggest hits,
     // sorted ascendingly. Bump the least value if a new one is bigger.
     priority_queue<size_t, std::vector<size_t>, std::greater<size_t>> best;
 
-    for (const auto& kv : *seeds)
-    {
+    for (const auto& kv : *seeds) {
         size_t nSeeds = CountSeeds<TSize>(kv.second);
 
-        if (best.size() < nBest)
-        {
+        if (best.size() < nBest) {
             best.push(nSeeds);
-        }
-        else if (nSeeds > best.top())
-        {
+        } else if (nSeeds > best.top()) {
             best.pop();
             best.push(nSeeds);
         }
@@ -116,14 +110,10 @@ void FilterSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* s
     // Erase all SeedSets with fewer seeds that the smallest
     // item that made it into the queue.
     size_t minSize = best.top();
-    for (auto it = seeds->begin(); it != seeds->end(); )
-    {
-        if (CountSeeds<TSize>(it->second) < minSize)
-        {
+    for (auto it = seeds->begin(); it != seeds->end();) {
+        if (CountSeeds<TSize>(it->second) < minSize) {
             it = seeds.erase(it);
-        }
-        else
-        {
+        } else {
             ++it;
         }
     }
