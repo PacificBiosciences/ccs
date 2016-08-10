@@ -189,6 +189,7 @@ inline const double& SparseVector::operator()(size_t i) const
 }
 
 inline double SparseVector::Get(size_t i) const { return (*this)(i); }
+
 inline void SparseVector::Set(size_t i, double v)
 {
     using std::max;
@@ -206,6 +207,7 @@ inline void SparseVector::Set(size_t i, double v)
 }
 
 inline void SparseVector::Clear() { std::fill(storage_.begin(), storage_.end(), 0.0); }
+
 inline size_t SparseVector::AllocatedEntries() const
 {
     // We want the real memory usage.  std::vector is holding some memory back

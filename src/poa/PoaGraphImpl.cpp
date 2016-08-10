@@ -428,6 +428,7 @@ void PoaGraphImpl::CommitAdd(PoaAlignmentMatrix* mat_, std::vector<Vertex>* read
 }
 
 size_t PoaGraphImpl::NumReads() const { return numReads_; }
+
 string PoaGraphImpl::ToGraphViz(int flags, const PoaConsensus* pc) const
 {
     std::stringstream ss;

@@ -95,6 +95,7 @@ const PoaConsensus* PoaConsensus::FindConsensus(const std::vector<std::string>& 
 }
 
 std::string PoaConsensus::ToGraphViz(int flags) const { return Graph.ToGraphViz(flags, this); }
+
 void PoaConsensus::WriteGraphVizFile(std::string filename, int flags) const
 {
     Graph.WriteGraphVizFile(filename, flags, this);

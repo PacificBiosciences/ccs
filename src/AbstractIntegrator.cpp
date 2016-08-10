@@ -69,12 +69,14 @@ IntegratorConfig::IntegratorConfig(const double minZScore, const double scoreDif
 }
 
 AbstractIntegrator::AbstractIntegrator(const IntegratorConfig& cfg) : cfg_{cfg} {}
+
 AbstractIntegrator::AbstractIntegrator(AbstractIntegrator&& ai)
     : cfg_{ai.cfg_}, evals_{std::move(ai.evals_)}
 {
 }
 
 AbstractIntegrator::~AbstractIntegrator() {}
+
 Data::State AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
                                         const Data::MappedRead& read)
 {
@@ -90,7 +92,9 @@ Data::State AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
 }
 
 double AbstractIntegrator::LL(const Mutation& fwdMut) { return AccumulateNoInf(LLs(fwdMut)); }
+
 double AbstractIntegrator::LL() const { return AccumulateNoInf(LLs()); }
+
 std::vector<double> AbstractIntegrator::LLs(const Mutation& fwdMut)
 {
     const Mutation revMut(ReverseComplement(fwdMut));

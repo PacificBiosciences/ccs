@@ -110,11 +110,13 @@ inline const SparseMatrix& SparseMatrix::Null()
 }
 
 inline bool SparseMatrix::IsNull() const { return (Rows() == 0 && Columns() == 0); }
+
 //
 // Size information
 //
 inline size_t SparseMatrix::Rows() const { return nRows_; }
 inline size_t SparseMatrix::Columns() const { return nCols_; }
+
 //
 // Entry range queries per column
 //
@@ -170,6 +172,7 @@ inline bool SparseMatrix::IsAllocated(size_t i, size_t j) const
 }
 
 inline double SparseMatrix::Get(size_t i, size_t j) const { return (*this)(i, j); }
+
 inline void SparseMatrix::Set(size_t i, size_t j, double v)
 {
     assert(columnBeingEdited_ == j);

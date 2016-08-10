@@ -124,6 +124,7 @@ std::pair<double, double> AbstractTemplate::NormalParameters() const
 }
 
 size_t AbstractTemplate::TrueLength() const { return end_ - start_; }
+
 /* See PBEP #4 for a write-up of this code and an explanation of the algorithm.
 
      The R script below can be used to validate the moments are calculated correctly by

@@ -62,6 +62,7 @@ SparseMatrix::SparseMatrix(const SparseMatrix& other)
 }
 
 SparseMatrix::~SparseMatrix() {}
+
 void SparseMatrix::Reset(const size_t rows, const size_t cols)
 {
     std::vector<std::unique_ptr<SparseVector>>(cols).swap(columns_);

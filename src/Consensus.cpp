@@ -56,5 +56,6 @@ ConsensusSettings::ConsensusSettings(const optparse::Values& options)
     , MinSNR{static_cast<double>(options.get(OptionNames::MinSnr))}
 {
 }
+
 }  // namespace CCS
 }  // namespace PacBio
