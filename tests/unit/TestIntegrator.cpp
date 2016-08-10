@@ -58,11 +58,12 @@
 
 using std::string;
 using std::vector;
+using std::cerr;
 using std::cout;
 using std::endl;
 
 using namespace PacBio::Consensus;  // NOLINT
-using namespace PacBio::Data;  // NOLINT
+using namespace PacBio::Data;       // NOLINT
 
 using ::testing::UnorderedElementsAreArray;
 
@@ -360,11 +361,11 @@ TEST(IntegratorTest, TestFailAddRead)
                                     true, true)));
 }
 
-TEST(IntegratorTest, TestSucessAddRead)
+TEST(IntegratorTest, TestSuccessAddRead)
 {
     const string tpl = "AA";
     const vector<uint8_t> pw(tpl.length(), 1);
-    auto mdl = P6C4;
+    const auto mdl = P6C4;
     MultiMolecularIntegrator ai(tpl, cfg);
 
     EXPECT_EQ(State::VALID, ai.AddRead(MappedRead(MkRead(tpl, snr, mdl, pw), StrandType::FORWARD, 0,

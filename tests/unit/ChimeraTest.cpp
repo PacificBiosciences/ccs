@@ -3,8 +3,8 @@
 
 #include <seqan/seq_io.h>
 
-#include "pacbio/chimera/ChimeraLabeler.h"
 #include "pacbio/chimera/ChimeraLabel.h"
+#include "pacbio/chimera/ChimeraLabeler.h"
 
 #include "TestData.h"
 
@@ -28,8 +28,7 @@ TEST(ChimeraLabeler, MinimalEndToEnd)
     std::vector<std::string> idList;
     std::vector<Dna5String> seqList;
 
-    for (size_t i = 0; i < length(ids); ++i)
-    {
+    for (size_t i = 0; i < length(ids); ++i) {
         idList.push_back(toCString(static_cast<CharString>(ids[i])));
         seqList.push_back(static_cast<Dna5String>(seqs[i]));
     }
@@ -59,18 +58,17 @@ TEST(ChimeraLabeler, ExtensiveEndToEnd)
     using namespace seqan;
 
     SeqFileIn inputHandle(FILENAME2.c_str());
-    
+
     // Parse the records
     StringSet<CharString> ids;
     StringSet<Dna5String> seqs;
     readRecords(ids, seqs, inputHandle);
-        
+
     // Declare the vectors we'll use to actually perform the Chimera-labeling
     std::vector<std::string> idList;
     std::vector<Dna5String> seqList;
 
-    for (size_t i = 0; i < length(ids); ++i)
-    {
+    for (size_t i = 0; i < length(ids); ++i) {
         idList.push_back(toCString(static_cast<CharString>(ids[i])));
         seqList.push_back(static_cast<Dna5String>(seqs[i]));
     }
