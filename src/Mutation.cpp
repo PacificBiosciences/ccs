@@ -56,7 +56,9 @@ bool Mutation::IsInsertion() const { return Type == MutationType::INSERTION; }
 bool Mutation::IsSubstitution() const { return Type == MutationType::SUBSTITUTION; }
 bool Mutation::IsAnyInsertion() const { return Type == MutationType::ANY_INSERTION; }
 bool Mutation::IsAnySubstitution() const { return Type == MutationType::ANY_SUBSTITUTION; }
+
 size_t Mutation::Start() const { return start_; }
+
 size_t Mutation::End() const
 {
     if (Type == MutationType::INSERTION || Type == MutationType::ANY_INSERTION) return start_;
@@ -90,7 +92,9 @@ Mutation::operator std::string() const
 }
 
 ScoredMutation Mutation::WithScore(double score) const { return ScoredMutation(*this, score); }
+
 ScoredMutation::ScoredMutation(const Mutation& mut, double score) : Mutation(mut), Score{score} {}
+
 std::ostream& operator<<(std::ostream& out, const MutationType type)
 {
     out << "MutationType::";

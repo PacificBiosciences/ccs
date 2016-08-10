@@ -75,6 +75,7 @@ void PoaGraph::CommitAdd(PoaAlignmentMatrix* mat, std::vector<Vertex>* readPathO
 }
 
 size_t PoaGraph::NumReads() const { return impl->NumReads(); }
+
 const PoaConsensus* PoaGraph::FindConsensus(const AlignConfig& config, int minCoverage) const
 {
     return impl->FindConsensus(config, minCoverage);
@@ -91,8 +92,12 @@ void PoaGraph::WriteGraphVizFile(const string& filename, int flags, const PoaCon
 }
 
 PoaGraph::PoaGraph() { impl = new detail::PoaGraphImpl(); }
+
 PoaGraph::PoaGraph(const PoaGraph& other) { impl = new detail::PoaGraphImpl(*other.impl); }
+
 PoaGraph::PoaGraph(const detail::PoaGraphImpl& o) { impl = new detail::PoaGraphImpl(o); }
+
 PoaGraph::~PoaGraph() { delete impl; }
+
 }  // namespace Poa
 }  // namespace PacBio

@@ -72,8 +72,10 @@ public:
     }
 
     inline size_t Length() const { return right - left; }
+
     inline size_t Left() const { return left; }
     inline size_t Right() const { return right; }
+
     // this also handles adjacency
     inline bool Overlaps(const Interval& other) const
     {
@@ -83,7 +85,9 @@ public:
     }
 
     inline bool Contains(const size_t value) const { return (left <= value) && (value < right); }
+
     inline bool Covers(const Interval& other) const { return (Intersect(other) == other); }
+
     inline Interval Intersect(const Interval& other) const
     {
         if (!Overlaps(other))
@@ -114,6 +118,7 @@ public:
     }
 
     inline bool operator!=(const Interval& other) const { return !(*this == other); }
+
     inline Interval& operator++()
     {
         ++left;
@@ -121,16 +126,22 @@ public:
     }
 
     inline Interval operator++(int) { return Interval(left++, right); }
+
     inline size_t operator*() const { return left; }
+
     inline Interval begin() const { return Interval(left, right); }
+
     inline Interval end() const { return Interval(right, right); }
+
     inline operator std::tuple<size_t, size_t>() const { return std::make_tuple(left, right); }
+
     inline operator std::tuple<size_t&, size_t&>()
     {
         return std::make_tuple(std::ref(left), std::ref(right));
     }
 
     operator std::string() const;
+
     friend std::ostream& operator<<(std::ostream& os, const Interval& interval);
 
     static Interval FromString(const std::string& str)

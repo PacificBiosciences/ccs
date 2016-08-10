@@ -77,6 +77,7 @@ Evaluator::Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& 
 }
 
 Evaluator::Evaluator(Evaluator&& eval) : impl_{std::move(eval.impl_)}, curState_{eval.curState_} {}
+
 Evaluator& Evaluator::operator=(Evaluator&& eval)
 {
     impl_ = move(eval.impl_);
@@ -85,6 +86,7 @@ Evaluator& Evaluator::operator=(Evaluator&& eval)
 }
 
 Evaluator::~Evaluator() {}
+
 size_t Evaluator::Length() const
 {
     if (IsValid()) return impl_->recursor_->tpl_->Length();

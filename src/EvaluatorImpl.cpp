@@ -96,6 +96,7 @@ EvaluatorImpl::EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const Mapp
 }
 
 std::string EvaluatorImpl::ReadName() const { return recursor_->read_.Name; }
+
 double EvaluatorImpl::LL(const Mutation& mut_)
 {
     // apply the virtual mutation

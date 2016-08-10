@@ -125,6 +125,7 @@ inline void ScaledMatrix::FinishEditingColumn(const size_t j, const size_t usedB
 }
 
 inline double ScaledMatrix::GetLogScale(size_t j) const { return logScalars_[j]; }
+
 inline double ScaledMatrix::GetLogProdScales(size_t beginColumn, size_t endColumn) const
 {
     double f, l;

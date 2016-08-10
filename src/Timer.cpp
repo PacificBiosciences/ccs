@@ -46,6 +46,7 @@ namespace PacBio {
 namespace Util {
 
 Timer::Timer() { Restart(); }
+
 float Timer::ElapsedMilliseconds() const
 {
     auto tock = steady_clock::now();
@@ -53,6 +54,8 @@ float Timer::ElapsedMilliseconds() const
 }
 
 float Timer::ElapsedSeconds() const { return ElapsedMilliseconds() / 1000; }
+
 void Timer::Restart() { tick = steady_clock::now(); }
+
 }  // namespace CCS
 }  // namespace PacBio

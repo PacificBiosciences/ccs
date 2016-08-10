@@ -44,7 +44,8 @@ namespace Consensus {
 // seeing how well the banding is working, ...).  No matrix implementation
 // details are exposed---one can think of this as effectively an opaque
 // data type.
-class AbstractMatrix {
+class AbstractMatrix
+{
 public:
     // Method SWIG clients can use to get a native matrix (e.g. Numpy)
     // mat must be filled as a ROW major matrix, and the understanding

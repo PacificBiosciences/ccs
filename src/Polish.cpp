@@ -281,6 +281,7 @@ inline int ScoreSumToQV(const double scoreSum)
 {
     return ProbabilityToQV(1.0 - 1.0 / (1.0 + scoreSum));
 }
+
 }  // anonymous namespace
 
 vector<int> ConsensusQualities(AbstractIntegrator& ai)

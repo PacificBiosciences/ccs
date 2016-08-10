@@ -45,8 +45,8 @@
 #include <seqan/seeds.h>
 #include <seqan/sequence.h>
 
-#include <pacbio/align/FindSeedsConfig.h>
 #include <pacbio/align/ChainSeeds.h>
+#include <pacbio/align/FindSeedsConfig.h>
 #include <pacbio/align/HomopolymerHasher.h>
 
 /* 
@@ -92,20 +92,15 @@ namespace Align {
 /// \param  k  The second interger, or the subtrahend
 ///
 /// \return  size_t  The difference
-inline
-size_t SafeSubtract(size_t size, size_t k)
-{
-    return size > k ? size - k : 0;
-}
+inline size_t SafeSubtract(size_t size, size_t k) { return size > k ? size - k : 0; }
 
 /// Find all matching seeds between two DNA sequences
 ///
 /// \param  seeds  The SeedSet object to store the results in
 /// \param  seq1  The first, or query, sequence
 /// \param  seq2  The second, or reference, sequence
-template<typename TConfig>
-void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>* seeds,
-               const seqan::DnaString& seq1, 
+template <typename TConfig>
+void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>* seeds, const seqan::DnaString& seq1,
                const seqan::DnaString& seq2)
 {
     using namespace seqan;
@@ -123,18 +118,15 @@ void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>* seeds,
     size_t end = SafeSubtract(length(seq2) + 1, TConfig::Size);
 
     hashInit(shape, start);
-    for (size_t i = 0; i < end; i++)
-    {
+    for (size_t i = 0; i < end; i++) {
         hashNext(shape, start + i);
 #ifdef FILTERHOMOPOLYMERS
-        if (isHomopolymer(hashNext(shape, start + i)))
-            continue;
+        if (isHomopolymer(hashNext(shape, start + i))) continue;
 #endif
 
         auto hits = getOccurrences(index, shape);
 
-        for (const auto& hit : hits)
-        {
+        for (const auto& hit : hits) {
             Seed<Simple> seed(hit, i, TConfig::Size);
 
 #ifdef MERGESEEDS
@@ -147,19 +139,20 @@ void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>* seeds,
     }
 }
 
-/// Find all matching seeds between a DNA index and the sequences 
+/// Find all matching seeds between a DNA index and the sequences
 /// represented in some supplied index of the type specified in TConfig.
 /// Since some index types, most notably the QGram index, can store seeds
-/// from multiple references, the return value has to be a map of seed sets 
+/// from multiple references, the return value has to be a map of seed sets
 /// rather than a single one.
 ///
 /// \param  seeds  A map of integers-SeedSet pairs for storing results
 /// \param  index  The index of of the various
 /// \param  seq  The query sequence
-template<typename TConfig>
-void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* seeds,
-               const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
-               const seqan::DnaString& seq)
+template <typename TConfig>
+void FindSeeds(
+    std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* seeds,
+    const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
+    const seqan::DnaString& seq)
 {
     using namespace seqan;
     using namespace std;
@@ -177,19 +170,16 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* see
 
     hashInit(shape, start);
 
-    for (size_t i = 0; i < end; i++)
-    {
+    for (size_t i = 0; i < end; i++) {
         hashNext(shape, start + i);
 
 #ifdef FILTERHOMOPOLYMERS
-        if (isHomopolymer(hashNext(shape, start + i)))
-            continue;
+        if (isHomopolymer(hashNext(shape, start + i))) continue;
 #endif
 
         auto hits = getOccurrences(index, shape);
 
-        for (const auto& hit : hits)
-        {
+        for (const auto& hit : hits) {
             size_t rIdx = getValueI1(hit);
 
             size_t j = getValueI2(hit);
@@ -205,10 +195,10 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* see
     }
 }
 
-/// Find all matching seeds between a DNA index and the sequences 
+/// Find all matching seeds between a DNA index and the sequences
 /// represented in some supplied index of the type specified in TConfig.
 /// Since some index types, most notably the QGram index, can store seeds
-/// from multiple references, the return value has to be a map of seed sets 
+/// from multiple references, the return value has to be a map of seed sets
 /// rather than a single one.  In addition the query sequence may itself
 /// be in the index, in which case we pass in it's known index so we do
 /// not count it.
@@ -217,15 +207,15 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* see
 /// \param  index  The index of of the various
 /// \param  seq  The query sequence
 /// \param  qIdx  The index of the query in the ... index, so it can be ignored
-template<typename TConfig>
-void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* seeds,
-               const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
-               const seqan::DnaString& seq,
-               const size_t qIdx)
+template <typename TConfig>
+void FindSeeds(
+    std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* seeds,
+    const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
+    const seqan::DnaString& seq, const size_t qIdx)
 {
     using namespace seqan;
     using namespace std;
-    
+
     typedef Shape<Dna, typename TConfig::ShapeType> TShape;
 
     TShape shape = indexShape(index);
@@ -239,23 +229,19 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* see
 
     hashInit(shape, start);
 
-    for (size_t i = 0; i < end; i++)
-    {
+    for (size_t i = 0; i < end; i++) {
         hashNext(shape, start + i);
 
 #ifdef FILTERHOMOPOLYMERS
-        if (isHomopolymer(hashNext(shape, start + i)))
-            continue;
+        if (isHomopolymer(hashNext(shape, start + i))) continue;
 #endif
 
         auto hits = getOccurrences(index, shape);
 
-        for (const auto& hit : hits)
-        {
+        for (const auto& hit : hits) {
             size_t rIdx;
 
-            if ((rIdx = getValueI1(hit)) == qIdx)
-                continue;
+            if ((rIdx = getValueI1(hit)) == qIdx) continue;
 
             size_t j = getValueI2(hit);
             Seed<Simple> seed(i, j, TConfig::Size);
@@ -270,5 +256,5 @@ void FindSeeds(std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* see
     }
 }
 
-} // Align
-} // PacBio
+}  // Align
+}  // PacBio

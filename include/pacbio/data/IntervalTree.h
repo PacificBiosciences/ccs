@@ -146,7 +146,9 @@ public:
     inline const_iterator begin() const { return storage.begin(); }
     inline iterator end() { return storage.end(); }
     inline const_iterator end() const { return storage.end(); }
+
     inline size_t size() const { return storage.size(); }
+
     static IntervalTree FromString(const std::string& str)
     {
         std::vector<std::string> components;

@@ -46,6 +46,7 @@ ScaledMatrix::ScaledMatrix(size_t rows, size_t cols, Direction dir)
     : SparseMatrix(rows, cols), logScalars_(cols, 0.0), dir_{dir}
 {
 }
+
 ScaledMatrix::ScaledMatrix(const ScaledMatrix& other)
     : SparseMatrix(other), logScalars_(other.logScalars_)
 {

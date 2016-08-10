@@ -320,7 +320,7 @@ private:
 
 // trace is disabled under Release builds (-DNDEBUG)
 #ifdef NDEBUG
-#define PBLOGGER_LEVEL(lg, lvl)                                             \
+#define PBLOGGER_LEVEL(lg, lvl)                                   \
     if (PacBio::Logging::lvl != PacBio::Logging::LogLevel::TRACE) \
     PacBio::Logging::LogMessage(__FILE__, __func__, __LINE__, PacBio::Logging::lvl, (lg))
 #else

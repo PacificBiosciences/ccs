@@ -40,8 +40,8 @@
 namespace PacBio {
 
 namespace Data {
-    struct MappedRead;
-} // PacBio::Data
+struct MappedRead;
+}  // PacBio::Data
 
 namespace Consensus {
 
@@ -52,7 +52,8 @@ class Evaluator;
 // scoring machinery.  This is suitable for experimental purposes,
 // not intended for use in production code.
 //
-class EasyReadScorer {
+class EasyReadScorer
+{
 
 public:
     //
@@ -60,12 +61,9 @@ public:
     // look up the model, populate the template object, etc.
     //
     static Evaluator* MakeEvaluator(const std::string& tplString,
-                                    const PacBio::Data::MappedRead& mappedRead,
-                                    double minZScore,
+                                    const PacBio::Data::MappedRead& mappedRead, double minZScore,
                                     double scoreDiff);
 };
 
-
 }  // PacBio::Consensus
 }  // PacBio
-

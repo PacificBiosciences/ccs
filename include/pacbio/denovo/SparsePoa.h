@@ -132,8 +132,7 @@ public:
     //
     // Serialize the POA graph to std::string
     //
-    std::string ToGraphViz(int flags = 0,
-                           const PacBio::Poa::PoaConsensus* pc = nullptr) const;
+    std::string ToGraphViz(int flags = 0, const PacBio::Poa::PoaConsensus* pc = nullptr) const;
 
     //
     // Serialize the POA graph to a file

@@ -95,7 +95,9 @@ State MonoMolecularIntegrator::AddRead(const MappedRead& read)
 }
 
 size_t MonoMolecularIntegrator::TemplateLength() const { return fwdTpl_.TrueLength(); }
+
 char MonoMolecularIntegrator::operator[](const size_t i) const { return fwdTpl_[i].Base; }
+
 MonoMolecularIntegrator::operator std::string() const
 {
     std::string result;

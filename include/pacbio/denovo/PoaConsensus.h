@@ -53,7 +53,8 @@ class PoaGraph;
 class PoaGraphPath;
 class ScoredMutation;
 
-PacBio::Align::AlignConfig DefaultPoaConfig(PacBio::Align::AlignMode mode = PacBio::Align::AlignMode::GLOBAL);
+PacBio::Align::AlignConfig DefaultPoaConfig(
+    PacBio::Align::AlignMode mode = PacBio::Align::AlignMode::GLOBAL);
 
 /// \brief A multi-sequence consensus obtained from a partial-order alignment
 struct PoaConsensus : private boost::noncopyable
@@ -78,10 +79,10 @@ struct PoaConsensus : private boost::noncopyable
     static const PoaConsensus* FindConsensus(const std::vector<std::string>& reads);
 
     static const PoaConsensus* FindConsensus(const std::vector<std::string>& reads,
-                                             const PacBio::Align::AlignConfig& config, 
+                                             const PacBio::Align::AlignConfig& config,
                                              int minCoverage = -INT_MAX);
 
-    static const PoaConsensus* FindConsensus(const std::vector<std::string>& reads, 
+    static const PoaConsensus* FindConsensus(const std::vector<std::string>& reads,
                                              PacBio::Align::AlignMode mode,
                                              int minCoverage = -INT_MAX);
 

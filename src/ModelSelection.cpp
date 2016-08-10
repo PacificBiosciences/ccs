@@ -52,6 +52,7 @@ namespace PacBio {
 namespace Consensus {
 
 std::set<std::string> SupportedModels() { return ModelFactory::SupportedModels(); }
+
 std::set<std::string> SupportedChemistries()
 {
     std::set<std::string> chems;

@@ -44,17 +44,13 @@
 namespace PacBio {
 namespace Align {
 
-template<typename TShape>
+template <typename TShape>
 class HomopolymerHasher
 {
 
 public:  // Structors
-
     // Default constructor
-    HomopolymerHasher(TShape& shape)
-    {
-        Initialize(shape);
-    }
+    HomopolymerHasher(TShape& shape) { Initialize(shape); }
 
     // Move constructor
     HomopolymerHasher(HomopolymerHasher&& src) = delete;
@@ -68,10 +64,9 @@ public:  // Structors
     ~HomopolymerHasher() = default;
 
 private:  // Internal class methods
-
     /// Initialize the hasher object by creating all possible
     /// homopolymer templates that fill the shape used by the
-    /// index and saves them for later used by 
+    /// index and saves them for later used by
     ///
     /// \param  shape  The Q-gram shape used in the index
     void Initialize(const TShape& shape)
@@ -80,26 +75,21 @@ private:  // Internal class methods
 
         const char dna[4] = {'A', 'C', 'G', 'T'};
 
-        for (size_t i = 0; i < 4; i++)
-        {
+        for (size_t i = 0; i < 4; i++) {
             DnaString s = std::string(length(shape), dna[i]);
             hashes[i] = seqan::hash(shape, begin(s));
         }
     }
 
 public:  // Main Function
-
     /// Given the hash of a Q-Gram, check whether it matches the
     /// pattern of one of the stored hashes for known homopolymers.
     /// If so return True, otherwise False.
-    /// 
+    ///
     /// \param  h  The Q-Gram hash of the query sequence
-    inline
-    bool operator()(const unsigned h) const
+    inline bool operator()(const unsigned h) const
     {
-        if (h == hashes[0] || h == hashes[1] ||
-            h == hashes[2] || h == hashes[3])
-            return true;
+        if (h == hashes[0] || h == hashes[1] || h == hashes[2] || h == hashes[3]) return true;
 
         return false;
     }

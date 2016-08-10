@@ -37,15 +37,15 @@
 
 #pragma once
 
-#include <limits>
-#include <vector>
-#include <set>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <limits>
+#include <set>
 #include <string>
+#include <vector>
 
-#include <seqan/sequence.h>
 #include <seqan/graph_msa.h>
+#include <seqan/sequence.h>
 
 #include "ChimeraLabel.h"
 
@@ -284,10 +284,11 @@ public:  // Modifying methods
             {
                 auto label = TestPossibleChimera(id, sequence, parentIds);
 
-                if (label.score > 0.0f){
+                if (label.score > 0.0f) {
                     if (verbose) {
                         std::cout << "consensus '" << id << "' has a possible cross-over at "
-                                  << label.crossover << " with a score of " << label.score << std::endl;
+                                  << label.crossover << " with a score of " << label.score
+                                  << std::endl;
                         std::cout << "possible parents are '" << label.leftParentId << "' and '"
                                   << label.rightParentId << "'" << std::endl;
                     }
@@ -299,11 +300,14 @@ public:  // Modifying methods
 #endif
                 } else {
                     if (verbose)
-                        std::cout << "consensus '" << id
-                                  << "' had no possible cross-overs with positive scores, assumed real" << std::endl;
+                        std::cout
+                            << "consensus '" << id
+                            << "' had no possible cross-overs with positive scores, assumed real"
+                            << std::endl;
 #ifdef PBLOG_DEBUG
-                    PBLOG_DEBUG << "consensus '" << id
-                                << "' has no possible cross-overs with positive scores, assumed real";
+                    PBLOG_DEBUG
+                        << "consensus '" << id
+                        << "' has no possible cross-overs with positive scores, assumed real";
 #endif
                 }
 

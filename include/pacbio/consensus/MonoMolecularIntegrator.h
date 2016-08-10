@@ -43,9 +43,9 @@
 
 #include <pacbio/consensus/AbstractIntegrator.h>
 #include <pacbio/consensus/Evaluator.h>
-#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/Mutation.h>
 #include <pacbio/data/State.h>
+#include <pacbio/exception/StateError.h>
 
 namespace PacBio {
 namespace Consensus {
@@ -53,8 +53,8 @@ namespace Consensus {
 class MonoMolecularIntegrator : public AbstractIntegrator
 {
 public:
-    MonoMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg, const PacBio::Data::SNR& snr,
-                            const std::string& model);
+    MonoMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg,
+                            const PacBio::Data::SNR& snr, const std::string& model);
 
     // move constructor
     MonoMolecularIntegrator(MonoMolecularIntegrator&&);

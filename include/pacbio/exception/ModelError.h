@@ -44,9 +44,7 @@ namespace Exception {
 class ModelError : public std::runtime_error
 {
 public:
-    ModelError(const std::string& msg)
-        : std::runtime_error(msg)
-    {}
+    ModelError(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 class ChemistryNotFound : public ModelError

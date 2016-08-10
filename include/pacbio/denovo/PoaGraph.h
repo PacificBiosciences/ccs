@@ -101,7 +101,7 @@ public:
     //
     void AddFirstRead(const std::string& sequence, std::vector<Vertex>* readPathOutput = NULL);
 
-    PoaAlignmentMatrix* TryAddRead(const std::string& sequence, 
+    PoaAlignmentMatrix* TryAddRead(const std::string& sequence,
                                    const PacBio::Align::AlignConfig& config,
                                    detail::SdpRangeFinder* rangeFinder = NULL) const;
 

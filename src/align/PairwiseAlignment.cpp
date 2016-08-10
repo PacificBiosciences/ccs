@@ -51,15 +51,20 @@ namespace Align {
 using namespace PacBio::Data;
 
 std::string PairwiseAlignment::Target() const { return target_; }
+
 std::string PairwiseAlignment::Query() const { return query_; }
+
 float PairwiseAlignment::Accuracy() const { return ((float)(Matches())) / Length(); }
+
 std::string PairwiseAlignment::Transcript() const { return transcript_; }
+
 int PairwiseAlignment::Matches() const
 {
     return std::count(transcript_.begin(), transcript_.end(), 'M');
 }
 
 int PairwiseAlignment::Errors() const { return Length() - Matches(); }
+
 int PairwiseAlignment::Mismatches() const
 {
     return std::count(transcript_.begin(), transcript_.end(), 'R');
@@ -76,6 +81,7 @@ int PairwiseAlignment::Deletions() const
 }
 
 int PairwiseAlignment::Length() const { return target_.length(); }
+
 PairwiseAlignment::PairwiseAlignment(const std::string& target, const std::string& query)
     : target_(target), query_(query), transcript_(target_.length(), 'Z')
 {

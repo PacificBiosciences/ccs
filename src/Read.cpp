@@ -42,13 +42,16 @@ namespace PacBio {
 namespace Data {
 
 SNR::SNR(const double a, const double c, const double g, const double t) : A(a), C(c), G(g), T(t) {}
+
 SNR::SNR(const std::vector<double>& snrs) : A(snrs[0]), C(snrs[1]), G(snrs[2]), T(snrs[3])
 {
     assert(snrs.size() == 4);
 }
 
 namespace {
+
 double clamp(double val, double lo, double hi) { return std::min(std::max(val, lo), hi); }
+
 }  // namespace
 
 SNR ClampSNR(const SNR& val, const SNR& lo, const SNR& hi)

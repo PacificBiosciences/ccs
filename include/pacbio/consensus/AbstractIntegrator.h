@@ -43,9 +43,9 @@
 #include <numeric>
 
 #include <pacbio/consensus/Evaluator.h>
-#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/Mutation.h>
 #include <pacbio/data/State.h>
+#include <pacbio/exception/StateError.h>
 
 namespace PacBio {
 namespace Consensus {
@@ -113,7 +113,8 @@ protected:
     // move constructor
     AbstractIntegrator(AbstractIntegrator&&);
 
-    PacBio::Data::State AddRead(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& read);
+    PacBio::Data::State AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
+                                const PacBio::Data::MappedRead& read);
 
     IntegratorConfig cfg_;
     std::vector<Evaluator> evals_;
@@ -151,7 +152,9 @@ inline double AccumulateNoInf(std::vector<double> input)
 /// Helper function to get maximal number from a vector.
 template <typename T>
 inline T MaxElement(const std::vector<T>& in)
-{ return *std::max_element(in.cbegin(), in.end()); }
+{
+    return *std::max_element(in.cbegin(), in.end());
+}
 
 }  // namespace Consensus
 }  // namespace PacBio

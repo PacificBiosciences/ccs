@@ -65,8 +65,11 @@ State MultiMolecularIntegrator::AddRead(const PacBio::Data::MappedRead& read)
 }
 
 size_t MultiMolecularIntegrator::TemplateLength() const { return fwdTpl_.length(); }
+
 char MultiMolecularIntegrator::operator[](const size_t i) const { return fwdTpl_[i]; }
+
 MultiMolecularIntegrator::operator std::string() const { return fwdTpl_; }
+
 void MultiMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)
 {
     const Mutation revMut(ReverseComplement(fwdMut));
