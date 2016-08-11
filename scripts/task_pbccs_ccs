@@ -149,10 +149,10 @@ def get_parser():
                            name="ConsensusReadSet",
                            description="Output DataSet XML file",
                            default_name="ccs")
-    p.add_output_file_type(FileTypes.TXT, "ccs_report_txt",
-                           name="CCS report",
+    p.add_output_file_type(FileTypes.TXT, "ccs_summary_txt",
+                           name="CCS run summary",
                            description="Text report summarizing run statistics",
-                           default_name="ccs_report")
+                           default_name="ccs_summary")
     p.add_float(Constants.MIN_SNR_ID, "minSnr",
                 default=Constants.MIN_SNR_DEFAULT,
                 name="Minimum SNR",
