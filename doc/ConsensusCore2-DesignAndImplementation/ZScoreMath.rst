@@ -96,11 +96,11 @@ An HMM can identify these localized bursts. The Viterbi path assigns
 each match/delete state to a position in the read: (ref_i->read_j
 prob_i). Because the HMM is a regular language, we known if ref_i
 derives the string with prob_i and ref_{i+1} derives with prob_{i+1}
-then ref_i derives it's portion with probability (prob_i -
-prob_{i+1}). This is the part of the HMM that accounts for a single
-reference base. We can use the same Z-Score ideas to determine
-outliers. If the subHMM derives 4 or less bases 99.999% of the time,
-then if in the Viterbi path, a derivation of 200 bases is observed,
-then we can conclude this is an outlier bursty insert between this and
-then next reference base. Similar ideas exist for forward / backward /
-posterior.
+then ref_i derives it's portion with probability (prob_i / prob_{i+1}
+or differences in log probability). This is the part of the HMM that
+accounts for a single reference base. We can use the same Z-Score
+ideas to determine outliers. If the subHMM derives 4 or less bases
+99.999% of the time, then if in the Viterbi path, a derivation of 200
+bases is observed, then we can conclude this is an outlier bursty
+insert between this and then next reference base. Similar ideas exist
+for forward / backward / posterior.
