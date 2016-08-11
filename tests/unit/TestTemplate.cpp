@@ -45,11 +45,11 @@
 #include <utility>
 #include <vector>
 
-#include <pacbio/exception/StateError.h>
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/consensus/Mutation.h>
-#include <pacbio/data/Read.h>
 #include <pacbio/consensus/Template.h>
+#include <pacbio/data/Read.h>
+#include <pacbio/exception/StateError.h>
 
 #include "../src/ModelFactory.h"
 #include "Mutations.h"

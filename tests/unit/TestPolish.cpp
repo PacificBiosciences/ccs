@@ -48,7 +48,7 @@
 #include <pacbio/data/Sequence.h>
 
 using namespace PacBio::Consensus;  // NOLINT
-using namespace PacBio::Data;  // NOLINT
+using namespace PacBio::Data;       // NOLINT
 
 namespace {
 

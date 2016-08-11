@@ -44,8 +44,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <pacbio/denovo/SparsePoa.h>
 #include <pacbio/denovo/PoaConsensus.h>
+#include <pacbio/denovo/SparsePoa.h>
 
 #include "TestData.h"
 #include "TestUtility.h"

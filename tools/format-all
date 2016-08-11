@@ -5,4 +5,4 @@
 PLATFORM=$(uname)
 CLANGFORMAT="./tools/${PLATFORM}/clang-format -style=file"
 
-find src include \( -name *.cpp -or -name *.h \) -print0 | xargs -n1 -0 ${CLANGFORMAT} -i
+find include src tests/unit \( -name *.cpp -or -name *.h \) -print0 | xargs -n1 -0 ${CLANGFORMAT} -i

@@ -48,8 +48,8 @@
 #include <utility>
 #include <vector>
 
-#include <pacbio/consensus/Mutation.h>
 #include <pacbio/align/AlignConfig.h>
+#include <pacbio/consensus/Mutation.h>
 #include <pacbio/denovo/PoaConsensus.h>
 
 using std::string;
@@ -60,8 +60,8 @@ using boost::erase_all_copy;
 
 using namespace boost::assign;      // NOLINT
 using namespace PacBio::Consensus;  // NOLINT
-using namespace PacBio::Poa;  // NOLINT
-using namespace PacBio::Align;  // NOLINT
+using namespace PacBio::Poa;        // NOLINT
+using namespace PacBio::Align;      // NOLINT
 
 #define MAKE_ALL_PLOTS false
 

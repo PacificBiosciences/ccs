@@ -56,7 +56,7 @@
 
 using namespace std;
 using namespace PacBio::Consensus;  // NOLINT
-using namespace PacBio::Data;  // NOLINT
+using namespace PacBio::Data;       // NOLINT
 
 namespace {
 const SNR snr(10, 7, 5, 11);
@@ -136,8 +136,8 @@ TEST(LoadModelsTest, Directory)
     ASSERT_TRUE(chems.find("S/P1-C1.1::PwSnrA::FromFile") != chems.end());
     ASSERT_TRUE(chems.find("S/P1-C1.2::PwSnr::FromFile") != chems.end());
 
-    // test identity between S/P1-C1/beta and S/P1-C1/beta::Marginal (loaded)
-    //   disabled until S_P1C1Beta is fixed
+// test identity between S/P1-C1/beta and S/P1-C1/beta::Marginal (loaded)
+//   disabled until S_P1C1Beta is fixed
 #if 0
     {
         MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P1-C1/beta::Compiled");
@@ -157,14 +157,14 @@ TEST(LoadModelsTest, Directory)
     // test identity between S/P1-C1.1 and S/P1-C1.1::PwSnrA (loaded)
     {
         MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P1-C1.1::PwSnrA::Compiled");
-        EXPECT_EQ(State::VALID,
-                  ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1.1::PwSnrA::Compiled", longPws),
-                                         StrandType::FORWARD, 0, longTpl.length(), true, true)));
+        EXPECT_EQ(State::VALID, ai1.AddRead(MappedRead(
+                                    MkRead(longRead, snr, "S/P1-C1.1::PwSnrA::Compiled", longPws),
+                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
         MonoMolecularIntegrator ai2(longTpl, cfg, snr, "S/P1-C1.1::PwSnrA::FromFile");
-        EXPECT_EQ(State::VALID,
-                  ai2.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1.1::PwSnrA::FromFile", longPws),
-                                         StrandType::FORWARD, 0, longTpl.length(), true, true)));
+        EXPECT_EQ(State::VALID, ai2.AddRead(MappedRead(
+                                    MkRead(longRead, snr, "S/P1-C1.1::PwSnrA::FromFile", longPws),
+                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
         EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
     }
@@ -172,14 +172,14 @@ TEST(LoadModelsTest, Directory)
     // test identity between S/P1-C1.2 and S/P1-C1.2::PwSnr
     {
         MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P1-C1.2::PwSnr::Compiled");
-        EXPECT_EQ(State::VALID,
-                  ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1.2::PwSnr::Compiled", longPws),
-                                         StrandType::FORWARD, 0, longTpl.length(), true, true)));
+        EXPECT_EQ(State::VALID, ai1.AddRead(MappedRead(
+                                    MkRead(longRead, snr, "S/P1-C1.2::PwSnr::Compiled", longPws),
+                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
         MonoMolecularIntegrator ai2(longTpl, cfg, snr, "S/P1-C1.2::PwSnr::FromFile");
-        EXPECT_EQ(State::VALID,
-                  ai2.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1.2::PwSnr::FromFile", longPws),
-                                         StrandType::FORWARD, 0, longTpl.length(), true, true)));
+        EXPECT_EQ(State::VALID, ai2.AddRead(MappedRead(
+                                    MkRead(longRead, snr, "S/P1-C1.2::PwSnr::FromFile", longPws),
+                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
         EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
     }
