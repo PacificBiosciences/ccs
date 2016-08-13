@@ -185,41 +185,172 @@ a multinomial logistic model.
 
 
 
+Algorithm overview
+------------------
 
 
 Implementation
 --------------
 
 Draft consensus by partial-order alignment
-``````````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 
 The essence: calculating, and re-calculating, likelihood
-````````````````````````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Numerical aspects
-`````````````````
-
-Scaling vs log-domain math.
-
-The counterweights.
+- Indexing conventions and matrix display convention (tpl on top, read
+  on side)
 
 
-Setup for calling consensus: the `Integrator` classes
-`````````````````````````````````````````````````````
+
+
+Practical and numerical aspects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Scaling vs log-domain math
+``````````````````````````
+
+The naive approach to computing likelihoods in an HMM inevitably runs
+afoul of numerical underflow, as many probabilities are multiplied
+together.  The standard practical solutions are to compute all matrix
+entries (probabilities) in the log-domain, or to scale each row or
+column
+
+The choice of scaling or log-domain math has implications for the math
+required in the different calculations we need to perform.  For the
+Sum-Product recursion...
+
+
+Banding
+```````
+
+Computing the entire dynamic-programming matrices is prohibitively
+expensive in memory and CPU time, given the number and size of
+matrices we need to compute.  Rather, we use a *banded dynamic
+programming* approach where we only compute and retain a high-scoring
+band in each matrix column; these bands should capture all of the
+plausible alignment paths describing how T induces R.
+
+Banding is presently performed "on the fly", as the matrix (alpha or
+beta) itself is filled.  The column is filled, starting from the first
+filled row of the previous column, and we continue to fill it until it
+falls below the maximum score in the column by more than
+``scoreDiff``.  Finally, we scan back to identify the first row in the
+column within ``scoreDiff`` of the max.  This interval is then
+recorded as the nominally "filled"  band of the column.
+
+An important requirement of the banding is that the bands of the
+forward (alpha) and backward (beta) matrices must be concordant,
+meaning that they overlap sufficiently such that the forward-backward
+identity can still hold despite the bands.  Another way of looking at
+this is that *all* high probability paths in alpha must be calculated
+in beta, and vice versa, so that the "link" operation can find a path.
+
+In practice, we check for correct "mating" of the alpha and beta
+matrices by first
+
+check whether the
+
+
+In the future we hope to adopt a *pre-banding* approach where we
+identify the likely high-scoring bands by a preliminary SDP step.
+Ideally, this will eliminate the need for flip-flopping, simplify the
+inner loop of the recursions, and
+
+
+Counterweights
+``````````````
+
+It is interesting to consider the score of the path that proceeds
+through the alpha matrix along the top row, then finally moving down
+to the bottom-right entry when it reaches the last column.  This can
+be thought of as an "alignment" that "deletes" all the template bases,
+then "inserts" the read bases in at the end.  This is a poor alignment
+by any estimation, but it defeats our "on the fly" banding procedure.
+
+.. todo:: picture here, showing the path and its two segments
+
+In particular, note that the segment 1 describes a path through the
+Markov model that produces no emissions.  The likelihood for this
+segment then has many fewer multiplicative probability factors than
+segments that move downward.  Unless the transition probability into
+or from the delete state is sufficiently low---which is in no way
+guaranteed by the HMM or its training---then, these paths to the right
+will seem locally favorable---the penalty is not felt until the
+emissions must be made later.  The greedy "on the fly" banding
+procedure thus may
+
+This problem presents itself as excessively wide bands, spanning from
+near the diagonal to the path 1->2.
+
+Presently, we avoid this problem by artificially penalizing deletions
+(or, alternately, by encouraging emissions) using what we term a
+*counterweight*: a constant positive value added to the score of each
+matrix cell for each emission, used for purposes of band calculation
+only.
+
+If we adopt pre-banding, we can eliminate the need for using
+counterweights.
+
+
+Batching of mutations
+`````````````````````
+
+
+Coding conventions
+~~~~~~~~~~~~~~~~~~
+
+Setup for calling consensus: the ``Integrator`` classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The basic setup for computing a consensus sequence from reads (and a
+draft consensus) is to build an ``Integrator`` object.  There are two
+``Integrator`` classes: the ``MultiMolecularIntegrator`` and the
+``MonoMolecularIntegrator``, which are optimized, respectively, for
+the multimolecule and CCS use cases.  An abstract base class
+``AbstractIntegrator`` factors out some common functionality and
+simplifies life for client code.  After creating an integrator for a
+given model configuration and template DNA sequence hypothesis, client
+code then adds ``MappedRead`` objects to the integrator;
+``MappedRead`` objects represent the read data (including covariates)
+and also indicate the start/end positions where it is anchored on the
+template sequence.  Once this is done, client code then calls the
+``Polish`` function, which performs the iterative greedy search
+procedure, returning a ``PolishResult`` object recording iteration
+count and other metrics, while as a side effect updating the
+``Integrator`` object to point at the maximum likelihood consensus.
+
+``Integrator`` objects support polishing by exposing methods that
+enable testing, and commiting, mutations to the underlying template.
+This requires a good deal of bookkeeping internally, as each mutation
+applied requires potential updates to the read-to-template anchor
+mappings.
+
+
+The workhorse: the Recursor class
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The template classes
+~~~~~~~~~~~~~~~~~~~~
 
 
 Model lookup
-````````````
+~~~~~~~~~~~~
 
 
 Model parameter lookup
-``````````````````````
+~~~~~~~~~~~~~~~~~~~~~~
 
 Training
-````````
+~~~~~~~~
+
+
+
 
 Identifying (and removing) abberant reads: the "ZScore" concept
-```````````````````````````````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Basic explanation goes here.
 
@@ -235,3 +366,4 @@ Appendices: the gory details
    :maxdepth: 1
 
    ZScoreMath
+   CounterWeightMath
