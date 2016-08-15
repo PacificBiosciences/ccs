@@ -10,3 +10,7 @@
     path = third-party/seqan
     url = ssh://git@bitbucket.nanofluidics.com:7999/sat/seqan.git
     branch = master
+[submodule "third-party/pbcopper"]
+    path = third-party/pbcopper
+    url = ssh://git@bitbucket.nanofluidics.com:7999/sat/pbcopper.git
+    branch = master

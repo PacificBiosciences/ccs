@@ -50,7 +50,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
 
-#include <OptionParser.h>
+#include <pbcopper/cli/CLI.h>
 
 #include <pbbam/BamWriter.h>
 #include <pbbam/EntireFileQuery.h>
@@ -85,27 +85,10 @@ using namespace PacBio::Logging;
 using boost::none;
 using boost::numeric_cast;
 using boost::optional;
-using optparse::OptionParser;
 
 // these strings are part of the BAM header, they CANNOT contain newlines
-#define DESCRIPTION "Generate circular consensus sequences (ccs) from subreads."
-
-namespace PacBio {
-namespace CCS {
-namespace OptionNames {
-constexpr auto ForceOutput = "force";
-constexpr auto PbIndex = "pbi";
-constexpr auto Zmws = "zmws";
-constexpr auto ReportFile = "reportFile";
-constexpr auto NumThreads = "numThreads";
-constexpr auto LogFile = "logFile";
-constexpr auto LogLevel = "logLevel";
-constexpr auto RichQVs = "richQVs";
-constexpr auto ModelPath = "modelPath";
-constexpr auto ModelSpec = "modelSpec";
-}  // namespace OptionNames
-}  // namespace CCS
-}  // namespace PacBio
+const std::string DESCRIPTION = "Generate circular consensus sequences (ccs) from subreads.";
+const std::string APPNAME = "ccs";
 
 typedef ReadType<ReadId> Subread;
 typedef ChunkType<ReadId, Subread> Chunk;
@@ -251,13 +234,13 @@ Results FastqWriterThread(WorkQueue<Results>& queue, const string& fname)
     return counts;
 }
 
-BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv, const DataSet& ds)
+BamHeader PrepareHeader(const std::string& cmdLine, const DataSet& ds)
 {
     using boost::algorithm::join;
 
-    ProgramInfo program(parser.prog() + "-" + PacBio::UnanimityVersion());
-    program.Name(parser.prog())
-        .CommandLine(parser.prog() + " " + join(vector<string>(argv + 1, argv + argc), " "))
+    ProgramInfo program(APPNAME + "-" + PacBio::UnanimityVersion());
+    program.Name(APPNAME)
+        .CommandLine(APPNAME + " " + cmdLine)
         .Description(DESCRIPTION)
         .Version(PacBio::UnanimityVersion());
 
@@ -267,7 +250,7 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv, const
     for (const auto& bam : ds.BamFiles()) {
         for (const auto& rg : bam.Header().ReadGroups()) {
             if (rg.ReadType() != "SUBREAD")
-                parser.error("invalid input file, READTYPE must be SUBREAD");
+                std::cerr << "invalid input file, READTYPE must be SUBREAD" << std::endl;
 
             ReadGroupInfo readGroup(rg.MovieName(), "CCS");
             readGroup.BindingKit(rg.BindingKit())
@@ -285,15 +268,6 @@ BamHeader PrepareHeader(const OptionParser& parser, int argc, char** argv, const
     }
 
     return header;
-}
-
-size_t ThreadCount(int n)
-{
-    const int m = thread::hardware_concurrency();
-
-    if (n < 1) return max(1, m + n);
-
-    return min(m, n);
 }
 
 void WriteResultsReport(ostream& report, const Results& counts)
@@ -339,117 +313,57 @@ void WriteResultsReport(ostream& report, const Results& counts)
     counts.SubreadCounter.WriteResultsReport(report);
 }
 
-int main(int argc, char** argv)
+static int Runner(const PacBio::CLI::Results& args)
 {
     using boost::algorithm::join;
     using boost::make_optional;
 
     SetColumns();
 
-    // args and options
-    //
-    //
-    // clang-format off
-    //   clang messes with the way the arg to version() is formatted..
-    auto parser =
-        OptionParser()
-            .usage("usage: %prog [OPTIONS] INPUT OUTPUT")
-            .version("%prog " + PacBio::UnanimityVersion() + " (commit " + PacBio::UnanimityGitSha1() + ")" +
-                     "\nunanimity " + PacBio::UnanimityVersion() + " (commit " + PacBio::UnanimityGitSha1() + ")" +
-                     "\nCopyright (c) 2014-2016 Pacific Biosciences, Inc.\nLicense: 3-BSD")
-            .description(DESCRIPTION
-                         "\nAdditional documentation: http://github.com/PacificBiosciences/unanimity");
-    // clang-format on
-    //
-    const vector<string> logLevels = {"TRACE", "DEBUG", "INFO",     "NOTICE",
-                                      "WARN",  "ERROR", "CRITICAL", "FATAL"};
-    const string em = "--";
+    // Get source args
+    const std::vector<std::string> files = args.PositionalArguments();
 
-    parser.add_option(em + OptionNames::ForceOutput)
-        .action("store_true")
-        .help("Overwrite OUTPUT file if present.");
-    parser.add_option(em + OptionNames::PbIndex)
-        .action("store_true")
-        .help("Generate a .pbi file for the OUTPUT file.");
-    parser.add_option(em + OptionNames::Zmws)
-        .help(
-            "Generate CCS for the provided comma-separated holenumber ranges only. Default = all");
+    // input validation
+    if (files.size() != 2) {
+        std::cerr << "ERROR: Please provide the INPUT and OUTPUT files.\n"
+                  << "       See --help for more info about positional arguments." << std::endl;
+        return EXIT_FAILURE;
+    }
 
-    ConsensusSettings::AddOptions(&parser);
+    const string inputFile = files.front();
+    const string outputFile = files.back();
 
-    parser.add_option(em + OptionNames::RichQVs)
-        .action("store_true")
-        .help("Emit dq, iq, and sq \"rich\" quality tracks. Default = false");
-    parser.add_option(em + OptionNames::ReportFile)
-        .set_default("ccs_report.txt")
-        .help("Where to write the results report. Default = %default");
-    parser.add_option(em + OptionNames::ModelPath)
-        .help("Path to a model file or directory containing model files. Default = none");
-    parser.add_option(em + OptionNames::ModelSpec)
-        .help("Name of chemistry or model to use, overriding default selection. Default = none");
-    parser.add_option(em + OptionNames::NumThreads)
-        .type("int")
-        .set_default(0)
-        .help("Number of threads to use, 0 means autodetection. Default = %default");
-    parser.add_option(em + OptionNames::LogFile).help("Log to a file, instead of STDERR.");
-    parser.add_option(em + OptionNames::LogLevel)
-        .choices(logLevels.begin(), logLevels.end())
-        .set_default("INFO")
-        .help("Set log level. Default = %default");
-
-    const auto options = parser.parse_args(argc, argv);
-    const auto files = parser.args();
-
-    const ConsensusSettings settings(options);
-
-    const bool richQVs = options.get(OptionNames::RichQVs);
-    const bool forceOutput = options.get(OptionNames::ForceOutput);
-    const bool pbIndex = options.get(OptionNames::PbIndex);
-    const size_t nThreads = ThreadCount(options.get(OptionNames::NumThreads));
-    const size_t chunkSize = 1;
+    const ConsensusSettings settings(args);
 
     // handle --zmws
     //
     //
     optional<Whitelist> whitelist(none);
-    const string wlspec(options.get(OptionNames::Zmws));
+    const std::string& wlSpec = settings.WlSpec;
     try {
-        if (!wlspec.empty()) whitelist = Whitelist(wlspec);
+        if (!wlSpec.empty()) whitelist = Whitelist(wlSpec);
     } catch (...) {
-        parser.error("option --zmws: invalid specification: '" + wlspec + "'");
+        std::cerr << "option --zmws: invalid specification: '" + wlSpec + "'" << std::endl;
     }
 
-    // input validation
-    //
-    //
-    if (files.size() < 1)
-        parser.error("missing INPUT and OUTPUT");
-    else if (files.size() < 2)
-        parser.error("missing OUTPUT");
-    else if (files.size() > 2)
-        parser.error("too many arguments for INPUT and OUTPUT");
-
-    // pop first file off the list, is OUTPUT file
-    const string inputFile = files.front();
-    const string outputFile = files.back();
-
     // verify input file exists
-    if (!FileExists(inputFile)) parser.error("INPUT: file does not exist: '" + inputFile + "'");
+    if (!FileExists(inputFile))
+        std::cerr << "INPUT: file does not exist: '" + inputFile + "'" << std::endl;
 
     // verify output file does not already exist
-    if (FileExists(outputFile) && !forceOutput)
-        parser.error("OUTPUT: file already exists: '" + outputFile + "'");
+    if (FileExists(outputFile) && !settings.ForceOutput)
+        std::cerr << "OUTPUT: file already exists: '" + outputFile + "'" << std::endl;
 
     if (settings.ByStrand && settings.NoPolish)
-        parser.error("option --byStrand: incompatible with --noPolish");
+        std::cerr << "option --byStrand: incompatible with --noPolish" << std::endl;
 
     // logging
     //
     //
     ofstream logStream;
     {
-        string logLevel(options.get(OptionNames::LogLevel));
-        string logFile(options.get(OptionNames::LogFile));
+        const std::string& logLevel = settings.LogLevel;
+        const std::string& logFile = settings.LogFile;
 
         if (!logFile.empty()) {
             logStream.open(logFile);
@@ -464,7 +378,7 @@ int main(int argc, char** argv)
     //
     //
     {
-        string modelPath(options.get(OptionNames::ModelPath));
+        const std::string& modelPath = settings.ModelPath;
         if (!modelPath.empty()) {
             PBLOG_INFO << "Loading model parameters from: '" << modelPath << "'";
             if (!LoadModels(modelPath)) {
@@ -486,7 +400,7 @@ int main(int argc, char** argv)
     // test that all input chemistries are supported
     {
         set<string> used;
-        string modelSpec(options.get(OptionNames::ModelSpec));
+        const std::string& modelSpec = settings.ModelSpec;
         if (!modelSpec.empty()) {
             PBLOG_INFO << "Overriding model selection with: '" << modelSpec << "'";
             if (!(OverrideModel(modelSpec) && used.insert(modelSpec).second)) {
@@ -527,17 +441,17 @@ int main(int argc, char** argv)
     else
         query.reset(new PbiFilterQuery(filter, ds));
 
-    WorkQueue<Results> workQueue(nThreads);
+    WorkQueue<Results> workQueue(settings.NThreads);
     future<Results> writer;
 
     const string outputExt = FileExtension(outputFile);
     if (outputExt == "bam") {
         unique_ptr<BamWriter> ccsBam(
-            new BamWriter(outputFile, PrepareHeader(parser, argc, argv, ds)));
+            new BamWriter(outputFile, PrepareHeader(args.InputCommandLine(), ds)));
         const std::string pbiFileName = outputFile + ".pbi";
-        unique_ptr<PbiBuilder> ccsPbi(pbIndex ? new PbiBuilder(pbiFileName) : nullptr);
+        unique_ptr<PbiBuilder> ccsPbi(settings.PbIndex ? new PbiBuilder(pbiFileName) : nullptr);
         writer = async(launch::async, BamWriterThread, ref(workQueue), move(ccsBam), move(ccsPbi),
-                       richQVs);
+                       settings.RichQVs);
 
         // Prepare dataset
         const std::string desc =
@@ -548,7 +462,7 @@ int main(int argc, char** argv)
         ExternalResource resource(metatype, outputFile);
         resource.Name(name).Description(desc);
 
-        if (pbIndex) {
+        if (settings.PbIndex) {
             FileIndex pbi("PacBio.Index.PacBioIndex", pbiFileName);
             resource.FileIndices().Add(pbi);
         }
@@ -563,7 +477,7 @@ int main(int argc, char** argv)
     } else if (outputExt == "fastq" || outputExt == "fq")
         writer = async(launch::async, FastqWriterThread, ref(workQueue), ref(outputFile));
     else
-        parser.error("OUTPUT: invalid file extension: '" + outputExt + "'");
+        std::cerr << "OUTPUT: invalid file extension: '" + outputExt + "'" << std::endl;
 
     unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
     map<string, shared_ptr<string>> movieNames;
@@ -579,7 +493,7 @@ int main(int argc, char** argv)
 
         // check if we've started a new ZMW
         if (!holeNumber || *holeNumber != read.HoleNumber()) {
-            if (chunk && chunk->size() >= chunkSize) {
+            if (chunk && chunk->size() >= settings.ChunkSize) {
                 workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
                 chunk.reset(new vector<Chunk>());
             }
@@ -645,7 +559,7 @@ int main(int argc, char** argv)
     // wait for the writer thread and get the results counter
     //   then add in the snr/minPasses counts and write the report
     auto counts = writer.get();
-    const string reportFile(options.get(OptionNames::ReportFile));
+    const std::string& reportFile = settings.ReportFile;
 
     if (reportFile == "-")
         WriteResultsReport(cout, counts);
@@ -654,5 +568,14 @@ int main(int argc, char** argv)
         WriteResultsReport(stream, counts);
     }
 
-    return 0;
+    return EXIT_SUCCESS;
+}
+
+// Entry point
+int main(int argc, char* argv[])
+{
+    const auto version =
+        PacBio::UnanimityVersion() + " (commit " + PacBio::UnanimityGitSha1() + ")";
+    return PacBio::CLI::Run(argc, argv, ConsensusSettings::CreateCLI(DESCRIPTION, version),
+                            &Runner);
 }

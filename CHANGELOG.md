@@ -1,5 +1,10 @@
 # UNANIMITY - CHANGELOG
 
+## [2.0.3]
+
+### Added
+ - Switch from cpp-optparse to pbcopper, use pbcopper's CLI parsing
+
 ## [2.0.2]
 
 ### Added

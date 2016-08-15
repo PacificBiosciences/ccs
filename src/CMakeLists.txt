@@ -18,8 +18,8 @@ set(UNY_INCLUDE_DIRS
     ${ZLIB_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
     ${SEQAN_INCLUDE_DIRS}
-    ${CPPOPTPARSE_IncludeDir}
     ${PacBioBAM_INCLUDE_DIRS}
+    ${pbcopper_INCLUDE_DIRS}
     CACHE INTERNAL
     "${PROJECT_NAME}: Include Directories"
     FORCE
@@ -58,11 +58,10 @@ target_include_directories(cc2
 add_library(unanimity STATIC
     ${UNY_HEADER}
     ${UNY_HIDDEN_HEADER}
-    ${CPPOPTPARSE_CPP}
     ChainSeeds.cpp
     ChemistryMapping.cpp
     ChemistryTriple.cpp
-    Consensus.cpp
+    ConsensusSettings.cpp
     Interval.cpp
     ReadId.cpp
     SparsePoa.cpp
@@ -83,6 +82,7 @@ set(UNY_LIBRARIES
     ${ZLIB_LIBRARIES}
     ${HTSLIB_LIBRARIES}
     ${PacBioBAM_LIBRARIES}
+    ${pbcopper_LIBRARIES}
     CACHE INTERNAL
     "${PROJECT_NAME}: Libraries"
     FORCE

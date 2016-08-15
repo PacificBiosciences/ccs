@@ -4,11 +4,6 @@
 # Get static libraries
 SET(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 
-# pbcopper
-# if (NOT pbcopper)
-# 	add_subdirectory(${UNY_ThirdPartyDir}/pbcopper external/pbcopper/build)
-# endif()
-
 # Boost
 if(NOT Boost_INCLUDE_DIRS)
     find_package(Boost REQUIRED)
@@ -46,17 +41,17 @@ if (NOT PYTHON_SWIG)
         endif()
     endif()
 
-    # cpp-optparse sources
-    if (NOT CPPOPTPARSE_CPP)
-        set(CPPOPTPARSE_CPP ${UNY_ThirdPartyDir}/cpp-optparse/OptionParser.cpp CACHE INTERNAL "" FORCE)
-    endif()
-
-    if (NOT CPPOPTPARSE_IncludeDir)
-        set(CPPOPTPARSE_IncludeDir ${UNY_ThirdPartyDir}/cpp-optparse CACHE INTERNAL "" FORCE)
-    endif()
-
     # seqan headers
     if (NOT SEQAN_INCLUDE_DIRS)
         set(SEQAN_INCLUDE_DIRS ${UNY_ThirdPartyDir}/seqan/include CACHE INTERNAL "" FORCE)
+    endif()
+
+    # pbcopper
+    if (NOT pbcopper_INCLUDE_DIRS OR 
+        NOT pbcopper_LIBRARIES)
+        set(pbcopper_build_tests OFF CACHE INTERNAL "" FORCE)
+        set(pbcopper_build_docs OFF CACHE INTERNAL "" FORCE)
+        set(pbcopper_build_examples OFF CACHE INTERNAL "" FORCE)
+        add_subdirectory(${UNY_ThirdPartyDir}/pbcopper external/pbcopper/build)
     endif()
 endif()
