@@ -383,9 +383,9 @@ int main(int argc, char** argv)
     parser.add_option(em + OptionNames::ReportFile)
         .set_default("ccs_report.txt")
         .help("Where to write the results report. Default = %default");
-    parser.add_option("-M", em + OptionNames::ModelPath)
+    parser.add_option(em + OptionNames::ModelPath)
         .help("Path to a model file or directory containing model files. Default = none");
-    parser.add_option("-m", em + OptionNames::ModelSpec)
+    parser.add_option(em + OptionNames::ModelSpec)
         .help("Name of chemistry or model to use, overriding default selection. Default = none");
     parser.add_option(em + OptionNames::NumThreads)
         .type("int")
