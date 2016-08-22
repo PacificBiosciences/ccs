@@ -50,9 +50,17 @@
 namespace PacBio {
 namespace Consensus {
 
+/// The MONO-molecular integrator holds all Evaluators of a single ZMW,
+/// sharing the one Template, the CCS consensus sequence.
 class MonoMolecularIntegrator : public AbstractIntegrator
 {
 public:
+    /// \brief Initialize the MonoMolecularIntegrator.
+    ///
+    /// \param tpl    The draft template as a string
+    /// \param cfg    The configuration used to initialize the AbstractIntegrator.
+    /// \param snr    The snr
+    /// \param model  The model
     MonoMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg,
                             const PacBio::Data::SNR& snr, const std::string& model);
 
@@ -61,14 +69,19 @@ public:
 
     size_t TemplateLength() const override;
 
+    /// Returns base i of the template
     char operator[](size_t i) const override;
     operator std::string() const override;
 
+    /// Computes the LL sum of all Evaluators, given a templated mutated by mut.
     double LL(const Mutation& mut) override;
+    /// Computes the LL sum of all Evaluators, given the current template.
     inline double LL() const override { return AbstractIntegrator::LL(); }
+    /// Applies a mutation to the template of each Evaluator.
     void ApplyMutation(const Mutation& mut) override;
+    /// Applies a vector of murations to the template of each Evaluator.
     void ApplyMutations(std::vector<Mutation>* muts) override;
-
+    /// Encapsulate the read in an Evaluator and stores it.
     PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read) override;
 
 protected:

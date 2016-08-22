@@ -49,18 +49,25 @@
 namespace PacBio {
 namespace Consensus {
 
+/// The SparseMatrix is based on a vector of SparseVectors.
 class SparseMatrix : public AbstractMatrix
 {
 public:  // Constructor, destructor
+    /// Constructor with explicit dimensions.
     SparseMatrix(size_t rows, size_t cols);
+    /// Copy constructor.
     SparseMatrix(const SparseMatrix& other);
+    /// Destructor.
     virtual ~SparseMatrix();
 
 public:
+    /// Clears and resizes the internal data structures.
     virtual void Reset(size_t rows, size_t cols);
 
 public:  // Nullability
+    /// Returns a SparseMatrix representing null.
     static const SparseMatrix& Null();
+    /// Returns if the both dimensions are zero.
     bool IsNull() const;
 
 public:  // Size information
@@ -68,22 +75,36 @@ public:  // Size information
     size_t Columns() const;
 
 public:  // Information about entries filled by column
+    /// Prepared the underlying SparseVector of column j
+    /// from rows hintBegin to hintEnd.
     void StartEditingColumn(size_t j, size_t hintBegin, size_t hintEnd);
+    /// Finish editing column j and store the used rows in usedRanges_.
     void FinishEditingColumn(size_t j, size_t usedBegin, size_t usedEnd);
+    /// Retreive the row range for column j.
     std::pair<size_t, size_t> UsedRowRange(size_t j) const;
+    // Checks if no rows are set for column j.
     bool IsColumnEmpty(size_t j) const;
+    /// Computes the number of filled cells.
     size_t UsedEntries() const override;
+    /// Computes the ratio of filled cells.
     float UsedEntriesRatio() const override;
-    size_t AllocatedEntries() const override;  // an entry may be allocated but not used
+    /// Computes the number of allocated cells.
+    /// An entry may be allocated but not used.
+    size_t AllocatedEntries() const override;
 
 public:  // Accessors
+    /// Access cell at row i and column j.
+    /// If not allocated, return 0.
     const double& operator()(size_t i, size_t j) const;
+    /// Checks if cell is allocated.
     bool IsAllocated(size_t i, size_t j) const;
     double Get(size_t i, size_t j) const;
     void Set(size_t i, size_t j, double v);
+    /// Clear content of column j and reset respective row range.
     void ClearColumn(size_t j);
 
 public:
+    /// Convert sparse to full matrix.
     void ToHostMatrix(double** mat, int* rows, int* cols) const override;
 
 private:

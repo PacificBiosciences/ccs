@@ -56,8 +56,14 @@ struct PolishConfig
     PolishConfig(size_t iterations = 40, size_t separation = 10, size_t neighborhood = 20);
 };
 
+/// Given an AbstractIntegrator and a PolishConfig,
+/// iteratively polish the template,
+/// and return meta information about the procedure.
+///
+/// The template will be polished within the AbstractIntegrator.
 PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
 
+/// Struct that contains vectors for the base-wise individual and compound QVs.
 struct QualityValues
 {
     std::vector<int> Qualities;
@@ -66,10 +72,14 @@ struct QualityValues
     std::vector<int> SubstitutionQVs;
 };
 
+/// Generates phred qualities of the current template.
 std::vector<int> ConsensusQualities(AbstractIntegrator& ai);
 
+/// Generates individual and compound phred qualities of the current template.
 QualityValues ConsensusQVs(AbstractIntegrator& ai);
 
+/// Returns a list of all possible mutations that can be applied to the template
+/// of the provided integrator.
 std::vector<Mutation> Mutations(const AbstractIntegrator& ai);
 
 }  // namespace Consensus
