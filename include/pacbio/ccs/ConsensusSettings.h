@@ -33,29 +33,57 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Lance Hepler, Armin Töpfer
+#pragma once
 
-#include <limits>
+#include <algorithm>
+#include <string>
+#include <thread>
 
-#include <pacbio/ccs/Consensus.h>
+#include <pbcopper/cli/CLI.h>
+
+#include <pacbio/data/PlainOption.h>
 
 namespace PacBio {
 namespace CCS {
 
-ConsensusSettings::ConsensusSettings(const optparse::Values& options)
-    : MaxPoaCoverage{std::numeric_limits<size_t>::max()}
-    , MaxLength{options.get(OptionNames::MaxLength)}
-    , MinLength{options.get(OptionNames::MinLength)}
-    , MinPasses{options.get(OptionNames::MinPasses)}
-    , MinPredictedAccuracy{options.get(OptionNames::MinPredictedAccuracy)}
-    , MinZScore{options.get(OptionNames::MinZScore)}
-    , MaxDropFraction{options.get(OptionNames::MaxDropFraction)}
-    , ByStrand{options.get(OptionNames::ByStrand)}
-    , NoPolish{options.get(OptionNames::NoPolish)}
-    , MinReadScore{static_cast<float>(options.get(OptionNames::MinReadScore))}
-    , MinSNR{static_cast<double>(options.get(OptionNames::MinSnr))}
+/// This class contains all command-line provided arguments and additional
+/// constants. Provides a static function to create the CLI pbcopper Interface
+/// and the constructor resovlves the CLI::Results automatically.
+struct ConsensusSettings
 {
-}
+    bool ByStrand;
+    const size_t ChunkSize = 1;
+    bool ForceOutput;
+    std::string LogFile;
+    std::string LogLevel;
+    double MaxDropFraction;
+    size_t MaxLength;
+    const size_t MaxPoaCoverage = std::numeric_limits<size_t>::max();
+    size_t MinLength;
+    size_t MinPasses;
+    double MinPredictedAccuracy;
+    double MinReadScore;
+    double MinSNR;
+    double MinZScore;
+    std::string ModelPath;
+    std::string ModelSpec;
+    bool NoPolish;
+    size_t NThreads;
+    bool PbIndex;
+    std::string ReportFile;
+    bool RichQVs;
+    std::string WlSpec;
 
-}  // namespace CCS
-}  // namespace PacBio
+    /// Parses the provided CLI::Results and retrieves a defined set of options.
+    ConsensusSettings(const PacBio::CLI::Results& options);
+
+    size_t ThreadCount(int n);
+
+    /// Given the description of the tool and its version, create all
+    /// necessary CLI::Options for the ccs executable.
+    static PacBio::CLI::Interface CreateCLI(const std::string& description,
+                                            const std::string& version);
+};
+}
+}  // ::PacBio::CCS
