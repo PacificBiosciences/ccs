@@ -18,6 +18,7 @@ set(UNY_INCLUDE_DIRS
     ${ZLIB_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
     ${SEQAN_INCLUDE_DIRS}
+    ${CPPOPTPARSE_IncludeDir}
     ${PacBioBAM_INCLUDE_DIRS}
     ${pbcopper_INCLUDE_DIRS}
     CACHE INTERNAL
@@ -58,6 +59,7 @@ target_include_directories(cc2
 add_library(unanimity STATIC
     ${UNY_HEADER}
     ${UNY_HIDDEN_HEADER}
+    ${CPPOPTPARSE_CPP}
     ChainSeeds.cpp
     ChemistryMapping.cpp
     ChemistryTriple.cpp
