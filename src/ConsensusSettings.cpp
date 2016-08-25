@@ -40,7 +40,7 @@
 namespace PacBio {
 namespace CCS {
 namespace OptionNames {
-
+using PlainOption = Data::PlainOption;
 // clang-format off
 const PlainOption MaxLength{ 
     "max_length", 

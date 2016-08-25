@@ -42,7 +42,7 @@
 #include <pbcopper/cli/CLI.h>
 
 namespace PacBio {
-namespace CCS {
+namespace Data {
 struct PlainOption
 {
     std::string id;
