@@ -41,6 +41,15 @@ if (NOT PYTHON_SWIG)
         endif()
     endif()
 
+    # cpp-optparse sources
+    if (NOT CPPOPTPARSE_CPP)
+        set(CPPOPTPARSE_CPP ${UNY_ThirdPartyDir}/cpp-optparse/OptionParser.cpp CACHE INTERNAL "" FORCE)
+    endif()
+
+    if (NOT CPPOPTPARSE_IncludeDir)
+        set(CPPOPTPARSE_IncludeDir ${UNY_ThirdPartyDir}/cpp-optparse CACHE INTERNAL "" FORCE)
+    endif()
+
     # seqan headers
     if (NOT SEQAN_INCLUDE_DIRS)
         set(SEQAN_INCLUDE_DIRS ${UNY_ThirdPartyDir}/seqan/include CACHE INTERNAL "" FORCE)
