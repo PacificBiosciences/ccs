@@ -46,6 +46,8 @@
 namespace PacBio {
 namespace Consensus {
 
+/// This class inherits from SparseMatrix and extends it by having a
+/// column-wise scaling factor.
 class ScaledMatrix : public SparseMatrix
 {
 public:
@@ -56,27 +58,39 @@ public:
     };
 
 public:  // constructor/destructor
+    /// Constructor with explicit dimensions.
     ScaledMatrix(size_t rows, size_t cols, Direction dir);
+    /// Copy constructor.
     ScaledMatrix(const ScaledMatrix& other);
+    /// Destructor.
     ~ScaledMatrix(void) override = default;
 
 public:
+    /// Clears and resizes the internal data structures.
     void Reset(size_t rows, size_t cols) override;
+    /// Set direction and reset column-wise log scalars.
     Direction SetDirection(Direction dir);
 
 public:  // nullability
+    /// Returns a ScaledMatrix representing null.
     static const ScaledMatrix& Null();
 
 public:  // information about entries filled by column
+    /// Rescale column j by max_val.
+    /// If maxProvided is false, determine max_val.
     template <bool maxProvided>
     void FinishEditingColumn(size_t j, size_t usedBegin, size_t usedEnd, double max_val = 0.0);
 
 public:  // Scaling and normalization
+    /// Get the log scale for column j.
     double GetLogScale(size_t j) const;
+    /// Get the log scales from colum s to e
     double GetLogProdScales(size_t s, size_t e) const;
+    /// Get the log scale
     double GetLogProdScales() const;
 
 public:  // Convenient matrix access for SWIG
+    /// Convert sparse to full matrix.
     void ToHostMatrix(double** mat, int* rows, int* cols) const override;
 
 private:

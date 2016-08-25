@@ -51,19 +51,28 @@
 namespace PacBio {
 namespace Consensus {
 
+/// The MULTI-molecular integrator holds those Evaluators, whose MappedReads
+/// belong to the same genomic region, but do not share the same template.
 class MultiMolecularIntegrator : public AbstractIntegrator
 {
 public:
+    /// \brief Initialize the MultiMolecularIntegrator.
+    ///
+    /// \param tpl    The draft template as a string
+    /// \param cfg    The configuration used to initialize the AbstractIntegrator.
     MultiMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg);
 
     size_t TemplateLength() const override;
 
+    /// Returns base i of the template
     char operator[](size_t i) const override;
     operator std::string() const override;
 
+    /// Applies a mutation to the template of each Evaluator.
     void ApplyMutation(const Mutation& mut) override;
+    /// Applies a vector of murations to the template of each Evaluator.
     void ApplyMutations(std::vector<Mutation>* muts) override;
-
+    /// Encapsulate the read in an Evaluator and stores it.
     PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read) override;
 
 protected:
