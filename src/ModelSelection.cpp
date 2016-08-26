@@ -96,11 +96,12 @@ size_t LoadModelsFromDirectory(const std::string& dirPath)
     // iterate through .json files in directory,
     //   loading any into ModelFactory
     bool ret = true;
-    size_t nModels = 0;
+    size_t nModels = 0, dot;
     struct dirent* ep;
     while ((ep = readdir(dp)) != nullptr) {
         std::string path = dirPath + '/' + ep->d_name;
-        if (path.substr(path.find_last_of('.')) != ".json") continue;
+        if ((dot = path.find_last_of('.')) == std::string::npos || path.substr(dot) != ".json")
+            continue;
         if (!(ret &= (stat(path.c_str(), &st) == 0))) break;
         if (S_ISREG(st.st_mode)) {
             if ((ret &= LoadModelFromFile(path)))
