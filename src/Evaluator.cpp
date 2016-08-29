@@ -41,6 +41,7 @@
 #include <pacbio/exception/StateError.h>
 
 #include "EvaluatorImpl.h"
+#include "matrix/BasicDenseMatrix.h"
 
 using namespace PacBio::Data;
 using namespace PacBio::Exception;
@@ -190,6 +191,24 @@ const AbstractMatrix& Evaluator::Beta() const
         return impl_->Beta();
     } else {
         return ScaledMatrix::Null();
+    }
+}
+
+const AbstractMatrix* Evaluator::AlphaView(MatrixViewConvention c) const
+{
+    if (IsValid()) {
+        return impl_->AlphaView(c);
+    } else {
+        return nullptr;
+    }
+}
+
+const AbstractMatrix* Evaluator::BetaView(MatrixViewConvention c) const
+{
+    if (IsValid()) {
+        return impl_->BetaView(c);
+    } else {
+        return nullptr;
     }
 }
 

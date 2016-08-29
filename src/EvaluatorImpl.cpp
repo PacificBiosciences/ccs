@@ -38,6 +38,7 @@
 #include <boost/optional.hpp>
 
 #include "EvaluatorImpl.h"
+#include "matrix/BasicDenseMatrix.h"
 
 using namespace PacBio::Data;
 
@@ -241,6 +242,54 @@ bool EvaluatorImpl::ApplyMutations(std::vector<Mutation>* muts)
 const AbstractMatrix& EvaluatorImpl::Alpha() const { return alpha_; }
 
 const AbstractMatrix& EvaluatorImpl::Beta() const { return beta_; }
+
+const AbstractMatrix* EvaluatorImpl::AlphaView(MatrixViewConvention c) const
+{
+    BasicDenseMatrix* m = new BasicDenseMatrix(alpha_.Rows(), alpha_.Columns());
+
+    for (size_t i = 0; i < alpha_.Rows(); ++i) {
+        for (size_t j = 0; j < alpha_.Columns(); ++j) {
+            switch (c) {
+                case MatrixViewConvention::AS_IS:
+                    (*m)(i, j) = alpha_(i, j);
+                    break;
+                case MatrixViewConvention::LOGSPACE:
+                    (*m)(i, j) = std::log(alpha_(i, j)) + alpha_.GetLogScale(j);
+                    break;
+                case MatrixViewConvention::LOGPROBABILITY:
+                    (*m)(i, j) = std::log(alpha_(i, j)) + alpha_.GetLogScale(j) +
+                                 recursor_->UndoCounterWeights(i);
+                    break;
+            }
+        }
+    }
+
+    return m;
+}
+
+const AbstractMatrix* EvaluatorImpl::BetaView(MatrixViewConvention c) const
+{
+    BasicDenseMatrix* m = new BasicDenseMatrix(beta_.Rows(), beta_.Columns());
+
+    for (size_t i = 0; i < beta_.Rows(); ++i) {
+        for (size_t j = 0; j < beta_.Columns(); ++j) {
+            switch (c) {
+                case MatrixViewConvention::AS_IS:
+                    (*m)(i, j) = beta_(i, j);
+                    break;
+                case MatrixViewConvention::LOGSPACE:
+                    (*m)(i, j) = std::log(beta_(i, j)) + beta_.GetLogScale(j);
+                    break;
+                case MatrixViewConvention::LOGPROBABILITY:
+                    (*m)(i, j) = std::log(beta_(i, j)) + beta_.GetLogScale(j) +
+                                 recursor_->UndoCounterWeights(beta_.Rows() - 1 - i);
+                    break;
+            }
+        }
+    }
+
+    return m;
+}
 
 }  // namespace Consensus
 }  // namespace PacBio

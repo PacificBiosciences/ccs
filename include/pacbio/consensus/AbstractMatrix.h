@@ -48,8 +48,7 @@ class AbstractMatrix
 {
 public:
     /// Method SWIG clients can use to get a native matrix (e.g. Numpy)
-    /// mat must be filled as a ROW major matrix, and the understanding
-    /// is that the entries represent natural-logs of probabilities.
+    /// mat must be filled as a ROW major matrix.
     /// N.B.: Needs int, not size_t dimensions, for SWIG/numpy
     virtual void ToHostMatrix(double** mat, int* rows, int* cols) const = 0;
 

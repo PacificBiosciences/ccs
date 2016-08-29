@@ -33,70 +33,59 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Author: David Alexander
+
 #pragma once
 
-#include <memory>
-#include <utility>
-#include <vector>
-
-#include <pacbio/consensus/Evaluator.h>
-#include <pacbio/consensus/MatrixViewConvention.h>
-#include <pacbio/consensus/Template.h>
-#include <pacbio/data/Read.h>
-
-#include "Recursor.h"
-#include "matrix/ScaledMatrix.h"
+#include <cstddef>
+#include "pacbio/consensus/AbstractMatrix.h"
 
 namespace PacBio {
 namespace Consensus {
 
-class BasicDenseMatrix;
-
-class EvaluatorImpl
+//
+// BasicDenseMatrix is a *basic* dense matrix, for use as an
+// intermediate in matrix viewing operations (not in production code).
+//
+// It does not fully implement the interface that would be required to
+// drop it in as a replacement for ScaledMatrix in the production code
+// (i.e. for the recursor, etc.).  ConsensusCore did offer such a
+// matrix, "DenseMatrix", and we could consider resurrecting such a
+// class in the future.
+//
+class BasicDenseMatrix : public AbstractMatrix
 {
-public:
-    EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
-                  double scoreDiff = 12.5);
-
-    std::string ReadName() const;
-
-    double LL(const Mutation& mut);
-    double LL() const;
-
-    // TODO: Comments are nice!  Explain what this is about---ZScore calculation?
-    std::pair<double, double> NormalParameters() const;
-
-    double ZScore() const;
-
-    bool ApplyMutation(const Mutation& mut);
-    bool ApplyMutations(std::vector<Mutation>* muts);
-
-    int NumFlipFlops() const { return numFlipFlops_; }
-
-public:
-    const AbstractMatrix& Alpha() const;
-    const AbstractMatrix& Beta() const;
-
-public:
-    const AbstractMatrix* AlphaView(MatrixViewConvention c) const;
-    const AbstractMatrix* BetaView(MatrixViewConvention c) const;
-
 private:
-    void Recalculate();
+    size_t nCols_;
+    size_t nRows_;
+    double* entries_;
 
-private:
-    std::unique_ptr<AbstractRecursor>
-        recursor_;  // TODO: does this need to be a pointer?  is it always non-null?
-                    // are we making it a UP just so we can do a fwd decl and still have
-                    // RAII semantics?
-    ScaledMatrix alpha_;
-    ScaledMatrix beta_;
-    ScaledMatrix extendBuffer_;
+public:  // structors
+    BasicDenseMatrix(size_t rows, size_t cols);
+    BasicDenseMatrix(const BasicDenseMatrix& other) = delete;
+    ~BasicDenseMatrix();
 
-    int numFlipFlops_;
+public:  // Size information
+    size_t Rows() const;
+    size_t Columns() const;
 
-    friend class Evaluator;
+public:  // accessors
+    double& operator()(size_t i, size_t j) const;
+
+public:  // AbstractMatrix interface
+    void ToHostMatrix(double** mat, int* rows, int* cols) const;
+    size_t UsedEntries() const;
+    float UsedEntriesRatio() const;
+    size_t AllocatedEntries() const;
 };
 
-}  // namespace Consensus
-}  // namespace PacBio
+inline size_t BasicDenseMatrix::Rows() const { return nRows_; }
+
+inline size_t BasicDenseMatrix::Columns() const { return nCols_; }
+
+inline double& BasicDenseMatrix::operator()(size_t i, size_t j) const
+{
+    return entries_[i * Columns() + j];
+}
+}
+}
