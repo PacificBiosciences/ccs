@@ -24,6 +24,9 @@ cmake (3.2), and a c++11 compiler (>=gcc-5.3.0, clang):
   git clone https://github.com/PacificBiosciences/unanimity && \
   cd unanimity                                              && \
   git submodule update --init --remote                      && \
+  cd third-party/htslib/                                    && \
+  make                                                      && \
+  cd ../../                                                 && \
   mkdir build                                               && \
   cd build                                                  && \
   cmake -DCMAKE_INSTALL_PREFIX=~/bin ..                     && \
