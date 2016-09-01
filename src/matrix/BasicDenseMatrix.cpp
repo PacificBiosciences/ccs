@@ -33,68 +33,38 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#pragma once
+// Author: David Alexander
 
-#include <memory>
-#include <utility>
-#include <vector>
+#include "BasicDenseMatrix.h"
 
-#include <pacbio/consensus/Evaluator.h>
-#include <pacbio/consensus/MatrixViewConvention.h>
-#include <pacbio/consensus/Template.h>
-#include <pacbio/data/Read.h>
-
-#include "Recursor.h"
-#include "matrix/ScaledMatrix.h"
+#include <stdexcept>
 
 namespace PacBio {
 namespace Consensus {
 
-class EvaluatorImpl
+BasicDenseMatrix::BasicDenseMatrix(size_t rows, size_t cols)
+    : nCols_(cols), nRows_(rows), entries_(new double[nRows_ * nCols_])
 {
-public:
-    EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
-                  double scoreDiff = 12.5);
+}
 
-    std::string ReadName() const;
+BasicDenseMatrix::~BasicDenseMatrix() { delete[] entries_; }
 
-    double LL(const Mutation& mut);
-    double LL() const;
+void BasicDenseMatrix::ToHostMatrix(double **mat, int *rows, int *cols) const
+{
+    *mat = new double[Rows() * Columns()];
+    *rows = Rows();
+    *cols = Columns();
+    for (size_t i = 0; i < Rows(); i++) {
+        for (size_t j = 0; j < Columns(); j++) {
+            (*mat)[i * Columns() + j] = (*this)(i, j);
+        }
+    }
+}
 
-    // TODO: Comments are nice!  Explain what this is about---ZScore calculation?
-    std::pair<double, double> NormalParameters() const;
+size_t BasicDenseMatrix::UsedEntries() const { throw std::runtime_error("Unimplemented!"); }
 
-    double ZScore() const;
+float BasicDenseMatrix::UsedEntriesRatio() const { throw std::runtime_error("Unimplemented!"); }
 
-    bool ApplyMutation(const Mutation& mut);
-    bool ApplyMutations(std::vector<Mutation>* muts);
-
-    int NumFlipFlops() const { return numFlipFlops_; }
-
-public:
-    const AbstractMatrix& Alpha() const;
-    const AbstractMatrix& Beta() const;
-
-public:
-    const AbstractMatrix* AlphaView(MatrixViewConvention c) const;
-    const AbstractMatrix* BetaView(MatrixViewConvention c) const;
-
-private:
-    void Recalculate();
-
-private:
-    std::unique_ptr<AbstractRecursor>
-        recursor_;  // TODO: does this need to be a pointer?  is it always non-null?
-                    // are we making it a UP just so we can do a fwd decl and still have
-                    // RAII semantics?
-    ScaledMatrix alpha_;
-    ScaledMatrix beta_;
-    ScaledMatrix extendBuffer_;
-
-    int numFlipFlops_;
-
-    friend class Evaluator;
-};
-
-}  // namespace Consensus
-}  // namespace PacBio
+size_t BasicDenseMatrix::AllocatedEntries() const { throw std::runtime_error("Unimplemented!"); }
+}
+}

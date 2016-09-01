@@ -39,6 +39,7 @@
 #include <utility>
 #include <vector>
 
+#include <pacbio/consensus/MatrixViewConvention.h>
 #include <pacbio/consensus/Template.h>
 #include <pacbio/data/Read.h>
 #include <pacbio/data/State.h>
@@ -148,6 +149,9 @@ public:
 public:
     const AbstractMatrix& Alpha() const;
     const AbstractMatrix& Beta() const;
+
+    const AbstractMatrix* AlphaView(MatrixViewConvention c) const;
+    const AbstractMatrix* BetaView(MatrixViewConvention c) const;
 
 private:
     /// Checks the z-score and disables the Evaluator if does not pass

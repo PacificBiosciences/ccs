@@ -1,6 +1,7 @@
 %{
 /* Includes the header in the wrapper code */
 #include <pacbio/consensus/AbstractMatrix.h>
+#include <pacbio/consensus/MatrixViewConvention.h>
 %}
 
 #ifdef SWIGPYTHON
@@ -10,3 +11,4 @@
 #endif // SWIGPYTHON
 
 %include <pacbio/consensus/AbstractMatrix.h>
+%include <pacbio/consensus/MatrixViewConvention.h>
