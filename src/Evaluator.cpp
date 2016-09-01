@@ -41,7 +41,6 @@
 #include <pacbio/exception/StateError.h>
 
 #include "EvaluatorImpl.h"
-#include "matrix/BasicDenseMatrix.h"
 
 using namespace PacBio::Data;
 using namespace PacBio::Exception;

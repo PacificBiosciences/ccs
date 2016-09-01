@@ -50,8 +50,6 @@
 namespace PacBio {
 namespace Consensus {
 
-class BasicDenseMatrix;
-
 class EvaluatorImpl
 {
 public:
