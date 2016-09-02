@@ -111,7 +111,7 @@ const IntegratorConfig cfg(std::numeric_limits<double>::quiet_NaN());
 
 Read MkRead(const string& seq, const SNR& snr, const string& mdl, const vector<uint8_t>& pw)
 {
-    vector<uint8_t> ipd(0, seq.length());
+    vector<uint8_t> ipd(seq.length(), 0);
     return Read("NA", seq, ipd, pw, snr, mdl);
 }
 
@@ -120,7 +120,7 @@ TEST(IntegratorTest, TestLongTemplate)
 {
     // TODO: Write a test for a longer molecule
     const string mdl = P6C4;
-    vector<uint8_t> pw(longTpl.length(), 1);
+    vector<uint8_t> pw(longRead.length(), 1);
     MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
     EXPECT_EQ(State::VALID,
               ai.AddRead(MappedRead(MkRead(longRead, snr, mdl, pw), StrandType::FORWARD, 0,
@@ -130,7 +130,7 @@ TEST(IntegratorTest, TestLongTemplate)
 
 void TestTiming(const string& mdl)
 {
-    const vector<uint8_t> pws(longTpl.length(), 2);
+    const vector<uint8_t> pws(longRead.length(), 2);
     const size_t nsamp = 5000;
     MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
     const auto stime = std::chrono::high_resolution_clock::now();
@@ -331,10 +331,11 @@ TEST(IntegratorTest, TestMultiMutationEquivalenceSP1C1v2) { MultiEquivalence(SP1
 TEST(IntegratorTest, TestP6C4NoCovAgainstCSharpModel)
 {
     const string tpl = "ACGTCGT";
-    const vector<uint8_t> pw(tpl.length(), 1);
     auto mdl = P6C4;
     MultiMolecularIntegrator ai(tpl, cfg);
 
+    const string readSeq = "ACGTACGT";
+    const vector<uint8_t> pw(readSeq.length(), 1);
     EXPECT_EQ(State::VALID,
               ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, mdl, pw), StrandType::FORWARD, 0,
                                     tpl.length(), true, true)));

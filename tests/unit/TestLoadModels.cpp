@@ -91,12 +91,12 @@ const string longRead =
     "CTGCGGCATTTTGTCCGCGCCGGGCTTCGCTCACTGTTCAGGCCGGAGCCACAGACCGCCGTTGAACGGATGCT"
     "AATTACTATCTCCCGAAAGAATC";
 
-const std::vector<uint8_t> longPws(837, 2);
+const std::vector<uint8_t> longPws(longRead.size(), 2);
 const IntegratorConfig cfg(-100.0);  // disable zscore filtering
 
 Read MkRead(const string& seq, const SNR& snr, const string& mdl, const vector<uint8_t>& pw)
 {
-    vector<uint8_t> ipd(0, seq.length());
+    vector<uint8_t> ipd(seq.length(), 0);
     return Read("NA", seq, ipd, pw, snr, mdl);
 }
 }
