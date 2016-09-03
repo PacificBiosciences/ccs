@@ -447,6 +447,27 @@ void PoaGraphImpl::WriteGraphVizFile(const string& filename, int flags,
     outfile << ToGraphViz(flags, pc);
     outfile.close();
 }
+    
+void PoaGraphImpl::WriteGraphCsvFile(const string& filename) const
+{
+    std::ofstream outfile(filename.c_str());
+    
+    std::list<VD> sortedVertices(num_vertices(g_));
+    topological_sort(g_, sortedVertices.rbegin());
+
+    outfile << "Id,Base,Reads,SpanningReads,Score,ReadingScore" << std::endl;
+    for (const VD v : sortedVertices) {
+        PoaNode& vi = vertexInfoMap_[v];
+        outfile << vi.Id << ","
+                << vi.Base << ","
+                << vi.Reads << ","
+                << vi.SpanningReads << ","
+                << vi.Score << ","
+                << vi.ReachingScore << std::endl;
+    }
+    
+    outfile.close();
+}
 
 }  // namespace detail
 }  // namespace Poa

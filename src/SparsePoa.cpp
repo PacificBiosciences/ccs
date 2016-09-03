@@ -215,6 +215,11 @@ void SparsePoa::WriteGraphVizFile(const std::string& filename, int flags,
     graph_->WriteGraphVizFile(filename, flags, pc);
 }
 
+void SparsePoa::WriteGraphCsvFile(const std::string& filename) const
+{
+    graph_->WriteGraphCsvFile(filename);
+}
+
 void SparsePoa::PruneGraph(float /* minCoverageFraction */) {}
 void SparsePoa::repCheck()
 {

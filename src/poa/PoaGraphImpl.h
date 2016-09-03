@@ -256,6 +256,7 @@ public:
     size_t NumReads() const;
     string ToGraphViz(int flags, const PoaConsensus* pc) const;
     void WriteGraphVizFile(const string& filename, int flags, const PoaConsensus* pc) const;
+    void WriteGraphCsvFile(const string& filename) const;
 };
 
 // free functions, we should put these all in traversals
