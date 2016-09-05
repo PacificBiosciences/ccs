@@ -222,5 +222,5 @@ void SparsePoa::repCheck()
     assert(graph_->NumReads() == reverseComplemented_.size());
 }
 
-}  // namespace CCS
+}  // namespace Poa
 }  // namespace PacBio

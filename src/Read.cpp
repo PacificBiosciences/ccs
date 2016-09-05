@@ -102,5 +102,5 @@ std::ostream& operator<<(std::ostream& os, const MappedRead& mr)
     return os;
 }
 
-}  // namespace Consensus
+}  // namespace Data
 }  // namespace PacBio

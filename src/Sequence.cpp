@@ -94,5 +94,5 @@ std::string ReverseComplement(const std::string& input)
     return output;
 }
 
-}  // namespace Consensus
+}  // namespace Data
 }  // namespace PacBio

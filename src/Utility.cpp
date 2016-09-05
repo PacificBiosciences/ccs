@@ -133,5 +133,5 @@ bool ValidBaseFeatures(const PacBio::BAM::DataSet& ds)
     return true;
 }
 
-}  // namespace CCS
+}  // namespace IO
 }  // namespace PacBio
