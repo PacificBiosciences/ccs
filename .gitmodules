@@ -1,16 +1,16 @@
 [submodule "third-party/htslib"]
 	path = third-party/htslib
-	url = ssh://git@bitbucket.nanofluidics.com:7999/sat/htslib.git
-    branch = master
+	url = https://github.com/PacificBiosciences/htslib.git
+    branch = pb
 [submodule "third-party/pbbam"]
     path = third-party/pbbam
-    url = ssh://git@bitbucket.nanofluidics.com:7999/sat/pbbam.git
+    url = https://github.com/PacificBiosciences/pbbam.git
     branch = master
 [submodule "third-party/seqan"]
     path = third-party/seqan
-    url = ssh://git@bitbucket.nanofluidics.com:7999/sat/seqan.git
+    url = https://github.com/PacificBiosciences/seqan.git
     branch = master
 [submodule "third-party/pbcopper"]
     path = third-party/pbcopper
-    url = ssh://git@bitbucket.nanofluidics.com:7999/sat/pbcopper.git
+    url = https://github.com/PacificBiosciences/pbcopper.git
     branch = master
