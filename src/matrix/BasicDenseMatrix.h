@@ -33,57 +33,59 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Author: David Alexander
+
 #pragma once
 
-#include <cstdint>
-#include <functional>
-#include <iostream>
-#include <memory>
-#include <set>
-
-#include <pacbio/consensus/AbstractIntegrator.h>
-#include <pacbio/consensus/Evaluator.h>
-#include <pacbio/consensus/Mutation.h>
-#include <pacbio/data/Read.h>
-#include <pacbio/data/State.h>
-#include <pacbio/exception/StateError.h>
+#include <cstddef>
+#include "pacbio/consensus/AbstractMatrix.h"
 
 namespace PacBio {
 namespace Consensus {
 
-/// The MULTI-molecular integrator holds those Evaluators, whose MappedReads
-/// belong to the same genomic region, but do not share the same template.
-class MultiMolecularIntegrator : public AbstractIntegrator
+//
+// BasicDenseMatrix is a *basic* dense matrix, for use as an
+// intermediate in matrix viewing operations (not in production code).
+//
+// It does not fully implement the interface that would be required to
+// drop it in as a replacement for ScaledMatrix in the production code
+// (i.e. for the recursor, etc.).  ConsensusCore did offer such a
+// matrix, "DenseMatrix", and we could consider resurrecting such a
+// class in the future.
+//
+class BasicDenseMatrix : public AbstractMatrix
 {
-public:
-    /// \brief Initialize the MultiMolecularIntegrator.
-    ///
-    /// \param tpl    The draft template as a string
-    /// \param cfg    The configuration used to initialize the AbstractIntegrator.
-    MultiMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg);
-
-    size_t TemplateLength() const override;
-
-    /// Returns base i of the template
-    char operator[](size_t i) const override;
-    operator std::string() const override;
-
-    /// Applies a mutation to the template of each Evaluator.
-    void ApplyMutation(const Mutation& mut) override;
-    /// Applies a vector of murations to the template of each Evaluator.
-    void ApplyMutations(std::vector<Mutation>* muts) override;
-    /// Encapsulate the read in an Evaluator and stores it.
-    PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read) override;
-
-protected:
-    std::unique_ptr<AbstractTemplate> GetTemplate(const PacBio::Data::MappedRead& read);
-
-    std::string fwdTpl_;
-    std::string revTpl_;
-
 private:
-    friend struct std::hash<MultiMolecularIntegrator>;
+    size_t nCols_;
+    size_t nRows_;
+    double* entries_;
+
+public:  // structors
+    BasicDenseMatrix(size_t rows, size_t cols);
+    BasicDenseMatrix(const BasicDenseMatrix& other) = delete;
+    ~BasicDenseMatrix();
+
+public:  // Size information
+    size_t Rows() const;
+    size_t Columns() const;
+
+public:  // accessors
+    double& operator()(size_t i, size_t j) const;
+
+public:  // AbstractMatrix interface
+    void ToHostMatrix(double** mat, int* rows, int* cols) const;
+    size_t UsedEntries() const;
+    float UsedEntriesRatio() const;
+    size_t AllocatedEntries() const;
 };
 
-}  // namespace Consensus
-}  // namespace PacBio
+inline size_t BasicDenseMatrix::Rows() const { return nRows_; }
+
+inline size_t BasicDenseMatrix::Columns() const { return nCols_; }
+
+inline double& BasicDenseMatrix::operator()(size_t i, size_t j) const
+{
+    return entries_[i * Columns() + j];
+}
+}
+}

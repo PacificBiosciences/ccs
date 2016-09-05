@@ -29,7 +29,6 @@ include_directories(SYSTEM
     ${ZLIB_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
     ${UNY_ThirdPartyDir}/seqan/include
-    ${CPPOPTPARSE_IncludeDir}
     unit/
     ${PacBioBAM_INCLUDE_DIRS}
 )

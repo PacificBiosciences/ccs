@@ -64,6 +64,10 @@ Read::Read(const std::string& name, const std::string& seq, const std::vector<ui
            const std::vector<uint8_t>& pw, const SNR& snr, const std::string& model)
     : Name{name}, Seq{seq}, IPD{ipd}, PulseWidth{pw}, SignalToNoise{snr}, Model{model}
 {
+    if (ipd.size() != seq.size() || pw.size() != seq.size()) {
+        throw new std::invalid_argument("Invalid Read (name=" + name +
+                                        "): features IPD/PW/seq are of mismatched length");
+    }
 }
 
 MappedRead::MappedRead(const Read& read, StrandType strand, size_t templateStart,

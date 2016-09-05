@@ -49,9 +49,10 @@
 
 namespace PacBio {
 namespace Consensus {
-
+// Forward decl
 class AbstractMatrix;
 
+/// Contains user-provided filtering information for the Evaluators.
 struct IntegratorConfig
 {
     double MinZScore;
@@ -60,6 +61,8 @@ struct IntegratorConfig
     IntegratorConfig(double minZScore = -3.5, double scoreDiff = 12.5);
 };
 
+/// At its core, this class holds a vector of Evaluators and provides helper
+/// functions to execute certain actions on each Evaluator.
 class AbstractIntegrator
 {
 public:
@@ -83,21 +86,30 @@ public:
 
     virtual PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read) = 0;
 
-    // For debugging purposes
-    // (Note that these include results include all evaluators, even the inactive ones)
+    /// Given a Mutation of interest, returns a vector of LLs,
+    /// one LL per Evaluator, even for inactive ones.
     std::vector<double> LLs(const Mutation& mut);
+    /// Using the current template, returns a vector of LLs,
+    /// one LL per Evaluator, even for inactive ones.
     std::vector<double> LLs() const;
+    /// For each Evaluator, returns the read name.
     std::vector<std::string> ReadNames() const;
-
+    /// Returns the number of flip flop events for each Evaluator.
     std::vector<int> NumFlipFlops() const;
+    /// Returns the maximal number of flip flop events of all Evaluators.
     int MaxNumFlipFlops() const;
-
+    /// Computes the ratio of populated cells in the alpha matrix for each
+    /// Evaluator and returns the maximal ratio.
     float MaxAlphaPopulated() const;
+    /// Computes the ratio of populated cells in the beta matrix for each
+    /// Evaluator and returns the maximal ratio.
     float MaxBetaPopulated() const;
-
+    /// Returns the state of each Evaluator.
     std::vector<PacBio::Data::State> States() const;
+    /// Returns the strand of each Evaluator.
     std::vector<PacBio::Data::StrandType> StrandTypes() const;
 
+    /// Returns read-only access to Evaluator idx.
     const Evaluator& GetEvaluator(size_t idx) const;
 
 public:

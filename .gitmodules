@@ -1,12 +1,16 @@
 [submodule "third-party/htslib"]
 	path = third-party/htslib
-	url = https://github.com/PacificBiosciences/htslib
-	branch = pb
+	url = https://github.com/PacificBiosciences/htslib.git
+    branch = pb
 [submodule "third-party/pbbam"]
     path = third-party/pbbam
-    url = https://github.com/PacificBiosciences/pbbam
+    url = https://github.com/PacificBiosciences/pbbam.git
     branch = master
 [submodule "third-party/seqan"]
-	path = third-party/seqan
-	url = https://github.com/PacificBiosciences/seqan.git
+    path = third-party/seqan
+    url = https://github.com/PacificBiosciences/seqan.git
+    branch = master
+[submodule "third-party/pbcopper"]
+    path = third-party/pbcopper
+    url = https://github.com/PacificBiosciences/pbcopper.git
     branch = master

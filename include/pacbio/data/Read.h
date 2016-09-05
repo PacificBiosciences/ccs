@@ -46,6 +46,7 @@
 namespace PacBio {
 namespace Data {
 
+/// Stores nucleotide-wise signal to noise ratios.
 struct SNR
 {
     double A;
@@ -75,6 +76,7 @@ struct SNR
 
 SNR ClampSNR(const SNR& val, const SNR& min, const SNR& max);
 
+/// A Read contains the name, sequence, covariates, SNR, and associated model.
 struct Read
 {
     Read(const std::string& name, const std::string& seq, const std::vector<uint8_t>& ipd,
@@ -92,6 +94,8 @@ struct Read
     inline size_t Length() const { return Seq.length(); }
 };
 
+/// A MappedRead extends Read by the strand information and template anchoring
+/// positions.
 struct MappedRead : public Read
 {
     MappedRead(const Read& read, StrandType strand, size_t templateStart, size_t templateEnd,

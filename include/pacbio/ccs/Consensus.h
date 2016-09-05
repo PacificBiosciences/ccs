@@ -49,8 +49,7 @@
 
 #include <boost/optional.hpp>
 
-#include <OptionParser.h>
-
+#include <pacbio/ccs/ConsensusSettings.h>
 #include <pacbio/consensus/MonoMolecularIntegrator.h>
 #include <pacbio/consensus/Polish.h>
 #include <pacbio/data/State.h>
@@ -85,90 +84,6 @@ using PoaAlignmentSummary = PacBio::Poa::PoaAlignmentSummary;
 using SparsePoa = PacBio::Poa::SparsePoa;
 using AlignConfig = PacBio::Align::AlignConfig;
 using AlignMode = PacBio::Align::AlignMode;
-
-namespace OptionNames {
-// constexpr auto MaxPoaCoverage       = "maxPoaCoverage";
-constexpr auto MaxLength = "maxLength";
-constexpr auto MinLength = "minLength";
-constexpr auto MinPasses = "minPasses";
-constexpr auto MinPredictedAccuracy = "minPredictedAccuracy";
-constexpr auto MinZScore = "minZScore";
-constexpr auto MaxDropFraction = "maxDropFraction";
-constexpr auto NoPolish = "noPolish";
-constexpr auto MinReadScore = "minReadScore";
-constexpr auto MinSnr = "minSnr";
-constexpr auto ByStrand = "byStrand";
-}  // namespace OptionNames
-
-struct ConsensusSettings
-{
-    size_t MaxPoaCoverage;
-    size_t MaxLength;
-    size_t MinLength;
-    size_t MinPasses;
-    double MinPredictedAccuracy;
-    double MinZScore;
-    double MaxDropFraction;
-    bool ByStrand;
-    bool NoPolish;
-    double MinReadScore;
-    double MinSNR;
-
-    ConsensusSettings(const optparse::Values& options);
-
-    static void AddOptions(optparse::OptionParser* const parser)
-    {
-        const std::string em = "--";
-        // TODO(lhepler) implement alignment to POA
-        // parser->add_option(em +
-        // OptionNames::MaxPoaCoverage).type("int").set_default(1024).help("Maximum number of
-        // subreads to use when building POA. Default = %default");
-        parser->add_option(em + OptionNames::MaxLength)
-            .type("int")
-            .set_default(7000)
-            .help("Maximum length of subreads to use for generating CCS. Default = %default");
-        parser->add_option(em + OptionNames::MinLength)
-            .type("int")
-            .set_default(10)
-            .help("Minimum length of subreads to use for generating CCS. Default = %default");
-        parser->add_option(em + OptionNames::MinPasses)
-            .type("int")
-            .set_default(3)
-            .help("Minimum number of subreads required to generate CCS. Default = %default");
-        parser->add_option(em + OptionNames::MinPredictedAccuracy)
-            .type("float")
-            .set_default(0.90)
-            .help("Minimum predicted accuracy in [0, 1]. Default = %default");
-        parser->add_option(em + OptionNames::MinZScore)
-            .type("float")
-            .set_default(-3.5)
-            .help("Minimum z-score to use a subread. NaN disables this filter. Default = %default");
-        parser->add_option(em + OptionNames::MaxDropFraction)
-            .type("float")
-            .set_default(0.34)
-            .help(
-                "Maximum fraction of subreads that can be dropped before giving up. Default = "
-                "%default");
-        parser->add_option(em + OptionNames::MinSnr)
-            .type("float")
-            .set_default(
-                3.75)  // See https://github.com/PacificBiosciences/pbccs/issues/86 for a more
-                       // detailed discussion of this default.
-            .help("Minimum SNR of input subreads. Default = %default");
-        parser->add_option(em + OptionNames::MinReadScore)
-            .type("float")
-            .set_default(0.75)
-            .help("Minimum read score of input subreads. Default = %default");
-        parser->add_option(em + OptionNames::ByStrand)
-            .action("store_true")
-            .help("Generate a consensus for each strand. Default = false");
-        parser->add_option(em + OptionNames::NoPolish)
-            .action("store_true")
-            .help(
-                "Only output the initial template derived from the POA (faster, less accurate). "
-                "Default = false");
-    }
-};
 
 template <typename TId>
 struct ReadType

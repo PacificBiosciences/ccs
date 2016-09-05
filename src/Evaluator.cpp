@@ -193,6 +193,24 @@ const AbstractMatrix& Evaluator::Beta() const
     }
 }
 
+const AbstractMatrix* Evaluator::AlphaView(MatrixViewConvention c) const
+{
+    if (IsValid()) {
+        return impl_->AlphaView(c);
+    } else {
+        return nullptr;
+    }
+}
+
+const AbstractMatrix* Evaluator::BetaView(MatrixViewConvention c) const
+{
+    if (IsValid()) {
+        return impl_->BetaView(c);
+    } else {
+        return nullptr;
+    }
+}
+
 void Evaluator::CheckZScore(const double minZScore, const std::string& model)
 {
     // the zscore filter is disabled under the following conditions

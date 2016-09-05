@@ -33,57 +33,38 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#pragma once
+// Author: David Alexander
 
-#include <cstdint>
-#include <functional>
-#include <iostream>
-#include <memory>
-#include <set>
+#include "BasicDenseMatrix.h"
 
-#include <pacbio/consensus/AbstractIntegrator.h>
-#include <pacbio/consensus/Evaluator.h>
-#include <pacbio/consensus/Mutation.h>
-#include <pacbio/data/Read.h>
-#include <pacbio/data/State.h>
-#include <pacbio/exception/StateError.h>
+#include <stdexcept>
 
 namespace PacBio {
 namespace Consensus {
 
-/// The MULTI-molecular integrator holds those Evaluators, whose MappedReads
-/// belong to the same genomic region, but do not share the same template.
-class MultiMolecularIntegrator : public AbstractIntegrator
+BasicDenseMatrix::BasicDenseMatrix(size_t rows, size_t cols)
+    : nCols_(cols), nRows_(rows), entries_(new double[nRows_ * nCols_])
 {
-public:
-    /// \brief Initialize the MultiMolecularIntegrator.
-    ///
-    /// \param tpl    The draft template as a string
-    /// \param cfg    The configuration used to initialize the AbstractIntegrator.
-    MultiMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg);
+}
 
-    size_t TemplateLength() const override;
+BasicDenseMatrix::~BasicDenseMatrix() { delete[] entries_; }
 
-    /// Returns base i of the template
-    char operator[](size_t i) const override;
-    operator std::string() const override;
+void BasicDenseMatrix::ToHostMatrix(double **mat, int *rows, int *cols) const
+{
+    *mat = new double[Rows() * Columns()];
+    *rows = Rows();
+    *cols = Columns();
+    for (size_t i = 0; i < Rows(); i++) {
+        for (size_t j = 0; j < Columns(); j++) {
+            (*mat)[i * Columns() + j] = (*this)(i, j);
+        }
+    }
+}
 
-    /// Applies a mutation to the template of each Evaluator.
-    void ApplyMutation(const Mutation& mut) override;
-    /// Applies a vector of murations to the template of each Evaluator.
-    void ApplyMutations(std::vector<Mutation>* muts) override;
-    /// Encapsulate the read in an Evaluator and stores it.
-    PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read) override;
+size_t BasicDenseMatrix::UsedEntries() const { throw std::runtime_error("Unimplemented!"); }
 
-protected:
-    std::unique_ptr<AbstractTemplate> GetTemplate(const PacBio::Data::MappedRead& read);
+float BasicDenseMatrix::UsedEntriesRatio() const { throw std::runtime_error("Unimplemented!"); }
 
-    std::string fwdTpl_;
-    std::string revTpl_;
-
-private:
-    friend struct std::hash<MultiMolecularIntegrator>;
-};
-
-}  // namespace Consensus
-}  // namespace PacBio
+size_t BasicDenseMatrix::AllocatedEntries() const { throw std::runtime_error("Unimplemented!"); }
+}
+}

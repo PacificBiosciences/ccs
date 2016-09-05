@@ -38,6 +38,7 @@
 #include <boost/optional.hpp>
 
 #include "EvaluatorImpl.h"
+#include "matrix/BasicDenseMatrix.h"
 
 using namespace PacBio::Data;
 
@@ -45,6 +46,8 @@ namespace PacBio {
 namespace Consensus {
 namespace {  // anonymous
 
+constexpr double ALPHA_BETA_MISMATCH_TOLERANCE = 0.001;
+constexpr double EARLY_ALPHA_BETA_MISMATCH_TOLERANCE = 0.0001;
 constexpr size_t EXTEND_BUFFER_COLUMNS = 8;
 
 #if 0
@@ -92,7 +95,7 @@ EvaluatorImpl::EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const Mapp
     , beta_(mr.Length() + 1, recursor_->tpl_->Length() + 1, ScaledMatrix::REVERSE)
     , extendBuffer_(mr.Length() + 1, EXTEND_BUFFER_COLUMNS, ScaledMatrix::FORWARD)
 {
-    numFlipFlops_ = recursor_->FillAlphaBeta(alpha_, beta_);
+    numFlipFlops_ = recursor_->FillAlphaBeta(alpha_, beta_, EARLY_ALPHA_BETA_MISMATCH_TOLERANCE);
 }
 
 std::string EvaluatorImpl::ReadName() const { return recursor_->read_.Name; }
@@ -215,7 +218,7 @@ inline void EvaluatorImpl::Recalculate()
     alpha_.Reset(I, J);
     beta_.Reset(I, J);
     extendBuffer_.Reset(I, EXTEND_BUFFER_COLUMNS);
-    recursor_->FillAlphaBeta(alpha_, beta_);
+    recursor_->FillAlphaBeta(alpha_, beta_, ALPHA_BETA_MISMATCH_TOLERANCE);
 }
 
 bool EvaluatorImpl::ApplyMutation(const Mutation& mut)
@@ -239,6 +242,54 @@ bool EvaluatorImpl::ApplyMutations(std::vector<Mutation>* muts)
 const AbstractMatrix& EvaluatorImpl::Alpha() const { return alpha_; }
 
 const AbstractMatrix& EvaluatorImpl::Beta() const { return beta_; }
+
+const AbstractMatrix* EvaluatorImpl::AlphaView(MatrixViewConvention c) const
+{
+    BasicDenseMatrix* m = new BasicDenseMatrix(alpha_.Rows(), alpha_.Columns());
+
+    for (size_t i = 0; i < alpha_.Rows(); ++i) {
+        for (size_t j = 0; j < alpha_.Columns(); ++j) {
+            switch (c) {
+                case MatrixViewConvention::AS_IS:
+                    (*m)(i, j) = alpha_(i, j);
+                    break;
+                case MatrixViewConvention::LOGSPACE:
+                    (*m)(i, j) = std::log(alpha_(i, j)) + alpha_.GetLogScale(j);
+                    break;
+                case MatrixViewConvention::LOGPROBABILITY:
+                    (*m)(i, j) = std::log(alpha_(i, j)) + alpha_.GetLogScale(j) +
+                                 recursor_->UndoCounterWeights(i);
+                    break;
+            }
+        }
+    }
+
+    return m;
+}
+
+const AbstractMatrix* EvaluatorImpl::BetaView(MatrixViewConvention c) const
+{
+    BasicDenseMatrix* m = new BasicDenseMatrix(beta_.Rows(), beta_.Columns());
+
+    for (size_t i = 0; i < beta_.Rows(); ++i) {
+        for (size_t j = 0; j < beta_.Columns(); ++j) {
+            switch (c) {
+                case MatrixViewConvention::AS_IS:
+                    (*m)(i, j) = beta_(i, j);
+                    break;
+                case MatrixViewConvention::LOGSPACE:
+                    (*m)(i, j) = std::log(beta_(i, j)) + beta_.GetLogScale(j);
+                    break;
+                case MatrixViewConvention::LOGPROBABILITY:
+                    (*m)(i, j) = std::log(beta_(i, j)) + beta_.GetLogScale(j) +
+                                 recursor_->UndoCounterWeights(beta_.Rows() - 1 - i);
+                    break;
+            }
+        }
+    }
+
+    return m;
+}
 
 }  // namespace Consensus
 }  // namespace PacBio

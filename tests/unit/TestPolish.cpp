@@ -54,7 +54,7 @@ namespace {
 
 Read MkRead(const std::string& seq, const SNR& snr, const std::string& mdl)
 {
-    std::vector<uint8_t> cov(0, seq.length());
+    std::vector<uint8_t> cov(seq.length(), 0);
     return Read("NA", seq, cov, cov, snr, mdl);
 }
 

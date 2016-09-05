@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,54 +33,37 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Author: Armin Töpfer
 #pragma once
 
-#include <tuple>
+#include <string>
 #include <vector>
 
-#include <pacbio/consensus/Mutation.h>
-#include <pacbio/consensus/PolishResult.h>
+#include <pbcopper/cli/CLI.h>
 
 namespace PacBio {
-namespace Consensus {
-
-// forward declaration
-class AbstractIntegrator;
-
-struct PolishConfig
+namespace Data {
+struct PlainOption
 {
-    size_t MaximumIterations;
-    size_t MutationSeparation;
-    size_t MutationNeighborhood;
+    std::string id;
+    std::vector<std::string> cliOptions;
+    std::string name;
+    std::string description;
+    JSON::Json defaultValue;
 
-    PolishConfig(size_t iterations = 40, size_t separation = 10, size_t neighborhood = 20);
+    PlainOption(std::string id, std::vector<std::string> cliOptions, std::string name,
+                std::string description, JSON::Json defaultValue)
+        : id(id)
+        , cliOptions(cliOptions)
+        , name(name)
+        , description(description)
+        , defaultValue(defaultValue)
+    {
+    }
+
+    operator CLI::Option() const { return {id, cliOptions, description, defaultValue}; }
+    operator std::pair<std::string, std::string>() const { return std::make_pair(id, name); }
+    operator std::string() const { return id; }
 };
-
-/// Given an AbstractIntegrator and a PolishConfig,
-/// iteratively polish the template,
-/// and return meta information about the procedure.
-///
-/// The template will be polished within the AbstractIntegrator.
-PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
-
-/// Struct that contains vectors for the base-wise individual and compound QVs.
-struct QualityValues
-{
-    std::vector<int> Qualities;
-    std::vector<int> DeletionQVs;
-    std::vector<int> InsertionQVs;
-    std::vector<int> SubstitutionQVs;
-};
-
-/// Generates phred qualities of the current template.
-std::vector<int> ConsensusQualities(AbstractIntegrator& ai);
-
-/// Generates individual and compound phred qualities of the current template.
-QualityValues ConsensusQVs(AbstractIntegrator& ai);
-
-/// Returns a list of all possible mutations that can be applied to the template
-/// of the provided integrator.
-std::vector<Mutation> Mutations(const AbstractIntegrator& ai);
-
-}  // namespace Consensus
-}  // namespace PacBio
+}
+}  // :: PacBio::CLI

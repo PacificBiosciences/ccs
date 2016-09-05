@@ -54,72 +54,89 @@ namespace Consensus {
 // AbstractRecursor is in Template.h
 
 // TODO(lhepler) comment about use of CRTP
+
+/// The recursor is the heart of ConsensusCore. Via dynamic programming,
+/// it computes the log probability that the MappedRead stems from the Template.
+///
+/// In a traditional fashion the forward matrix is being computed and instead of
+/// takin the Viterbi path, the backward matrix is computed.
+/// Both combined provide the posterior probabilities that the optimal path goes
+/// through this cell.
+///
+/// The trick is, after each mutation, only the affected column itself and its
+/// neighbors need to be recomputed. This allows a rapid exploration of the
+/// likelihood surface to find the next best mutations to generate a template
+/// that is more likely to generate the observed MappedRead.
 template <typename Derived>
 class Recursor : public AbstractRecursor
 {
 public:
-    // \brief Construct a Recursor from a Template and a MappedRead,
-    // The scoreDiff here is passed in negative logScale and converted
-    // to the appropriate divisor.
+    /// \brief Construct a Recursor from a Template and a MappedRead.
+    /// The scoreDiff here is passed in negative logScale and converted
+    /// to the appropriate divisor.
     Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
              double scoreDiff = 12.5);
 
     /// \brief Fill the alpha and beta matrices.
+    ///
     /// This routine will fill the alpha and beta matrices, ensuring
     /// that the score computed from the alpha and beta recursions are
     /// identical, refilling back-and-forth if necessary.
-    size_t FillAlphaBeta(M& alpha, M& beta) const;
+    ///
+    /// Returns the number of flip flop events (refilling events).
+    size_t FillAlphaBeta(M& alpha, M& beta, double tol) const;
 
-    /**
-     Fill in the alpha matrix.  This matrix has the read run along the rows, and
-     the template run along the columns.  The first row and column do not correspond
-     to a template position.  Therefore the match represented at position (i,j)
-     corresponds to a match between template positions (i+1, j+1).
-
-     The alpha matrix is the "Forward" matrix used in the forward/backward
-     algorithm.
-     The i,j position of the matrix represents the probability of all paths up
-     to the point where the ith read position and jth template have been
-     "emitted."
-     The matrix is calculated recursively by examining all possible transitions
-     into (i,j), and calculating the probability we were in the previous state,
-     times the probability of a transition into (i,j) times the probability of
-     emitting the observation that corresponds to (i,j). All probabilities are
-     calculated and stored as LOG values.
-
-     Note that in doing this calculation, in order to work with di-nucleotide
-     contexts, we require that the first and last transition be a match.  In other words the
-     start and end of the read and template are "pinned" to each other.
-
-     //TODO: Verify memory is initialized to 0!
-
-     @param guide An object that helps inform how to select the size of "bands"
-     for the banded algorithm used.  This is typically the beta matrix if we are
-     "repopulating" the matrix.
-     @param alpha The matrix to be filled.
-     */
-
+    /// \brief Fill in the alpha matrix.
+    ///
+    /// This matrix has the read run along the rows and the template run along
+    /// the columns. The first row and column do not correspond to a template
+    /// position. Therefore the match represented at position (i,j) corresponds
+    /// to a match between template positions (i+1, j+1).
+    ///
+    /// The alpha matrix is the "Forward" matrix used in the forward/backward
+    /// algorithm.
+    ///
+    /// The (i,j) position of the matrix represents the probability of all paths
+    /// up to the point where the i-th read position and j-th template have been
+    /// "emitted."
+    ///
+    /// The matrix is calculated recursively by examining all possible
+    /// transitions into (i,j), and calculating the probability we were in the
+    /// previous state, times the probability of a transition into (i,j) times
+    /// the probability of emitting the observation that corresponds to (i,j).
+    /// All probabilities are calculated and stored as LOG values.
+    ///
+    /// Note that in doing this calculation, in order to work with di-nucleotide
+    /// contexts, we require that the first and last transition be a match.
+    /// In other words the start and end of the read and template are "pinned"
+    /// to each other.
+    ///
+    /// TODO: Verify memory is initialized to 0!
+    ///
+    /// \param guide An object that helps inform how to select the size of
+    ///              "bands" for the banded algorithm used. This is typically
+    ///              the beta matrix if we are "repopulating" the matrix.
+    /// \param alpha The matrix to be filled.
     void FillAlpha(const M& guide, M& alpha) const;
 
-    /**
-     Fill the Beta matrix, the backwards half of the forward-backward algorithm.
-     This represents the probability that starting from the (i,j) state, the
-     combined probability of transitioning out and following all paths through to the
-     end. That is, we need to calculate transition from state and emit from next
-     state for each
-
-     In combination with the Alpha matrix, this allows us to calculate all paths
-     that pass through the (i,j) element, as exp(Alpha(i,j) + Beta(i,j))
-
-     All probabilities stored in the matrix are stored as NON-LOGGED
-     probabilities.
-
-     @param e The evaluator, such as QvEvaluator
-     @param M the guide matrix for banding (this needs more documentation)
-     @param beta The Beta matrix, stored as either a DenseMatrix or a
-     SparseMatrix.
-     */
-
+    /// \brief Fill the Beta matrix.
+    /// That is the backwards half of the forward-backward algorithm.
+    /// This represents the probability that starting from the (i,j) state, the
+    /// combined probability of transitioning out and following all paths
+    /// through to the end. That is, we need to calculate transition from state
+    /// and emit from next state for each
+    ///
+    /// In combination with the Alpha matrix, this allows us to calculate all
+    /// paths that pass through the (i,j) element,
+    /// as exp(Alpha(i,j) + Beta(i,j))
+    ///
+    /// All probabilities stored in the matrix are stored as NON-LOGGED
+    /// probabilities.
+    ///
+    /// \param e    The evaluator, such as QvEvaluator
+    /// \param M    the guide matrix for banding (this needs more documentation)
+    /// \param beta The Beta matrix, stored as either a DenseMatrix or a
+    ///             SparseMatrix.
     void FillBeta(const M& guide, M& beta) const;
 
     /// \brief Calculate the recursion score by "linking" partial alpha and/or
@@ -127,8 +144,21 @@ public:
     double LinkAlphaBeta(const M& alpha, size_t alphaColumn, const M& beta, size_t betaColumn,
                          size_t absoluteColumn) const;
 
+    /// This method extends the Alpha matrix into a temporary matrix given by
+    /// ext. It extends the region [beginColumn, beginColumn + numExtColumns)
+    ///
+    /// \param alpha         The alpha matrix
+    /// \param beginColumn   The column where extension should start
+    /// \param ext           The matrix to be extended
+    /// \param numExtColumns The number of columns to be extended
     void ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t numExtColumns = 2) const;
 
+    /// This method extends the Beta matrix into a temporary matrix given by ext.
+    ///
+    /// \param beta       The beta matrix
+    /// \param endColumn  The right-hand side where extension should start
+    /// \param ext        The matrix to be extended
+    /// \param lengthDiff The length difference of the mutation
     void ExtendBeta(const M& beta, size_t endColumn, M& ext, int lengthDiff = 0) const;
 
 private:
@@ -139,7 +169,6 @@ private:
     /// of the maximum path through each and the inputs for column j.
     bool RangeGuide(size_t j, const M& guide, const M& matrix, size_t* beginRow,
                     size_t* endRow) const;
-    // The RangeGuide function determines the minimum score by dividing out scoreDiff_
 
 private:
     std::vector<uint8_t> emissions_;
@@ -152,7 +181,6 @@ typedef std::pair<size_t, size_t> Interval;
 // TODO(dalexander): put these into a RecursorConfig struct
 // TODO(anybody): Hmmm... not sure what the heck to do about these...
 constexpr int MAX_FLIP_FLOPS = 5;
-constexpr double ALPHA_BETA_MISMATCH_TOLERANCE = 0.001;
 constexpr double REBANDING_THRESHOLD = 0.04;
 
 constexpr uint8_t kDefaultBase = 0;  // corresponding to A, usually
@@ -456,19 +484,13 @@ double Recursor<Derived>::LinkAlphaBeta(const M& alpha, size_t alphaColumn, cons
             beta.GetLogProdScales(betaColumn, beta.Columns()));
 }
 
-/**
- This method extends that Alpha matrix into a temporary matrix given by
- ext.  It extends the region [beginColumn, beginColumn + numExtColumns)
-
- Note that this method is used EXCLUSIVELY for testing mutations, and so
- we don't get the actual parameters and positions from the template, but we
- get them after a "virtual" mutation has been applied.
-
- All new data is placed in the extension matrix.  The guesses for start/end
- rows in the banding are determined by evaluating neighbors of each position.
- @param <#parameter#>
- @returns <#retval#>
- */
+/// Note that this method is used EXCLUSIVELY for testing mutations, and so
+/// we don't get the actual parameters and positions from the template, but
+/// we get them after a "virtual" mutation has been applied.
+///
+/// All new data is placed in the extension matrix. The guesses for
+/// start/end rows in the banding are determined by evaluating neighbors of
+/// each position.
 template <typename Derived>
 void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
                                     size_t numExtColumns) const
@@ -564,25 +586,23 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
     }
 }
 
-// Semantic: After ExtendBeta(B, j), we have
-//    ext(:, numExtColumns-1) = B'(:,j)
-//    ext(:, numExtColumns-2) = B'(:,j-1) ...
-//
-// Note: lastColumn is the numerically largest column number that
-// will be filled, but it is filled first since beta fill is done
-// backwards.
-//
-// Accesses B(:, ..(j+2))
-
-/* Note this is a very confusing routine in order to avoid recomputing and
-   additional memory allocations.  This routine tries to stick on a beta matrix
-   to the original and back trace to the 0,0 position of this extension matrix.
-   matrix from the original.  Note that the original beta
-   matrix is indexed by the original template positions, while the template
-   bases and parameters are now indexed according the the "virtual" template
-   to which mutations have been applied.
- */
-// @param lastColumn - Where we
+/// Semantic: After ExtendBeta(B, j), we have
+///    ext(:, numExtColumns-1) = B'(:,j)
+///    ext(:, numExtColumns-2) = B'(:,j-1) ...
+///
+/// Note: lastColumn is the numerically largest column number that
+/// will be filled, but it is filled first since beta fill is done
+/// backwards.
+///
+/// Accesses B(:, ..(j+2))
+///
+/// Note this is a very confusing routine in order to avoid recomputing and
+/// additional memory allocations.  This routine tries to stick on a beta matrix
+/// to the original and back trace to the 0,0 position of this extension matrix.
+/// matrix from the original.  Note that the original beta
+/// matrix is indexed by the original template positions, while the template
+/// bases and parameters are now indexed according the the "virtual" template
+/// to which mutations have been applied.
 template <typename Derived>
 void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDiff) const
 {
@@ -697,7 +717,7 @@ Recursor<Derived>::Recursor(std::unique_ptr<AbstractTemplate>&& tpl,
 }
 
 template <typename Derived>
-size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
+size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b, const double tol) const
 {
     if (tpl_->Length() == 0) throw std::runtime_error("template length is 0, invalid state!");
 
@@ -725,7 +745,7 @@ size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
         alphaV = std::log(a(I, J)) + a.GetLogProdScales() + unweight;
         betaV = std::log(b(0, 0)) + b.GetLogProdScales() + unweight;
 
-        if (std::abs(1.0 - alphaV / betaV) <= ALPHA_BETA_MISMATCH_TOLERANCE) break;
+        if (std::abs(1.0 - alphaV / betaV) <= tol) break;
 
         if (flipflops % 2 == 0)
             FillAlpha(b, a);
@@ -735,7 +755,7 @@ size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b) const
         ++flipflops;
     }
 
-    if (std::abs(1.0 - alphaV / betaV) > ALPHA_BETA_MISMATCH_TOLERANCE || !std::isfinite(betaV))
+    if (std::abs(1.0 - alphaV / betaV) > tol || !std::isfinite(betaV))
         throw PacBio::Exception::AlphaBetaMismatch();
 
     return flipflops;
@@ -772,6 +792,7 @@ inline Interval Recursor<Derived>::RowRange(size_t j, const M& matrix) const
     return Interval(beginRow, endRow);
 }
 
+// The RangeGuide function determines the minimum score by dividing out scoreDiff_.
 template <typename Derived>
 inline bool Recursor<Derived>::RangeGuide(size_t j, const M& guide, const M& matrix,
                                           size_t* beginRow, size_t* endRow) const

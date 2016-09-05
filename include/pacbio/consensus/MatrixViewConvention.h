@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,27 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: David Alexander
 
-#include <limits>
-
-#include <pacbio/ccs/Consensus.h>
+#pragma once
 
 namespace PacBio {
-namespace CCS {
+namespace Consensus {
 
-ConsensusSettings::ConsensusSettings(const optparse::Values& options)
-    : MaxPoaCoverage{std::numeric_limits<size_t>::max()}
-    , MaxLength{options.get(OptionNames::MaxLength)}
-    , MinLength{options.get(OptionNames::MinLength)}
-    , MinPasses{options.get(OptionNames::MinPasses)}
-    , MinPredictedAccuracy{options.get(OptionNames::MinPredictedAccuracy)}
-    , MinZScore{options.get(OptionNames::MinZScore)}
-    , MaxDropFraction{options.get(OptionNames::MaxDropFraction)}
-    , ByStrand{options.get(OptionNames::ByStrand)}
-    , NoPolish{options.get(OptionNames::NoPolish)}
-    , MinReadScore{static_cast<float>(options.get(OptionNames::MinReadScore))}
-    , MinSNR{static_cast<double>(options.get(OptionNames::MinSnr))}
+enum class MatrixViewConvention
 {
-}
 
-}  // namespace CCS
-}  // namespace PacBio
+    AS_IS,  // View the matrix entries exactly as
+            // stored.
+
+    LOGSPACE,  // View matrix entries in logspace;
+               // includes column scaling factors.
+
+    LOGPROBABILITY,  // View matrix entries as log-scaled
+                     // probabilities.  This entails scaling
+                     // per-column and per-row
+                     // (counterweights...).
+
+};
+}
+}

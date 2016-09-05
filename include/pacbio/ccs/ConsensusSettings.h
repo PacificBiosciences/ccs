@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,54 +33,57 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Author: Lance Hepler, Armin Töpfer
 #pragma once
 
-#include <tuple>
-#include <vector>
+#include <algorithm>
+#include <string>
+#include <thread>
 
-#include <pacbio/consensus/Mutation.h>
-#include <pacbio/consensus/PolishResult.h>
+#include <pbcopper/cli/CLI.h>
+
+#include <pacbio/data/PlainOption.h>
 
 namespace PacBio {
-namespace Consensus {
+namespace CCS {
 
-// forward declaration
-class AbstractIntegrator;
-
-struct PolishConfig
+/// This class contains all command-line provided arguments and additional
+/// constants. Provides a static function to create the CLI pbcopper Interface
+/// and the constructor resovlves the CLI::Results automatically.
+struct ConsensusSettings
 {
-    size_t MaximumIterations;
-    size_t MutationSeparation;
-    size_t MutationNeighborhood;
+    bool ByStrand;
+    const size_t ChunkSize = 1;
+    bool ForceOutput;
+    std::string LogFile;
+    std::string LogLevel;
+    double MaxDropFraction;
+    size_t MaxLength;
+    const size_t MaxPoaCoverage = std::numeric_limits<size_t>::max();
+    size_t MinLength;
+    size_t MinPasses;
+    double MinPredictedAccuracy;
+    double MinReadScore;
+    double MinSNR;
+    double MinZScore;
+    std::string ModelPath;
+    std::string ModelSpec;
+    bool NoPolish;
+    size_t NThreads;
+    bool PbIndex;
+    std::string ReportFile;
+    bool RichQVs;
+    std::string WlSpec;
 
-    PolishConfig(size_t iterations = 40, size_t separation = 10, size_t neighborhood = 20);
+    /// Parses the provided CLI::Results and retrieves a defined set of options.
+    ConsensusSettings(const PacBio::CLI::Results& options);
+
+    size_t ThreadCount(int n);
+
+    /// Given the description of the tool and its version, create all
+    /// necessary CLI::Options for the ccs executable.
+    static PacBio::CLI::Interface CreateCLI(const std::string& description,
+                                            const std::string& version);
 };
-
-/// Given an AbstractIntegrator and a PolishConfig,
-/// iteratively polish the template,
-/// and return meta information about the procedure.
-///
-/// The template will be polished within the AbstractIntegrator.
-PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
-
-/// Struct that contains vectors for the base-wise individual and compound QVs.
-struct QualityValues
-{
-    std::vector<int> Qualities;
-    std::vector<int> DeletionQVs;
-    std::vector<int> InsertionQVs;
-    std::vector<int> SubstitutionQVs;
-};
-
-/// Generates phred qualities of the current template.
-std::vector<int> ConsensusQualities(AbstractIntegrator& ai);
-
-/// Generates individual and compound phred qualities of the current template.
-QualityValues ConsensusQVs(AbstractIntegrator& ai);
-
-/// Returns a list of all possible mutations that can be applied to the template
-/// of the provided integrator.
-std::vector<Mutation> Mutations(const AbstractIntegrator& ai);
-
-}  // namespace Consensus
-}  // namespace PacBio
+}
+}  // ::PacBio::CCS

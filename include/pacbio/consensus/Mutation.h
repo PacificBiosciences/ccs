@@ -45,6 +45,7 @@
 namespace PacBio {
 namespace Consensus {
 
+/// Enum with all possible mutation types
 enum struct MutationType : uint8_t
 {
     DELETION,
@@ -57,6 +58,8 @@ enum struct MutationType : uint8_t
 // forward decl
 class ScoredMutation;
 
+/// Encapsulates the type of the mutation, the start position, and an
+/// alternative base.
 class Mutation
 {
 public:
@@ -73,15 +76,20 @@ public:
     bool IsAnySubstitution() const;
 
     size_t Start() const;
+    /// Returns the end position of the mutation that is start + 1,
+    /// except for insertions.
     size_t End() const;
 
+    /// Returns the length difference introduced by this mutation.
     int LengthDiff() const;
 
     bool operator==(const Mutation& other) const;
     operator std::string() const;
 
+    /// Uses this and the provided score to create and return a ScoredMutation.
     ScoredMutation WithScore(double score) const;
 
+    /// Comparer to sort mutations by start/end.
     static bool SiteComparer(const Mutation& lhs, const Mutation& rhs)
     {
         // perform a lexicographic sort on End, Start, IsDeletion

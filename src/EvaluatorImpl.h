@@ -40,6 +40,7 @@
 #include <vector>
 
 #include <pacbio/consensus/Evaluator.h>
+#include <pacbio/consensus/MatrixViewConvention.h>
 #include <pacbio/consensus/Template.h>
 #include <pacbio/data/Read.h>
 
@@ -73,6 +74,10 @@ public:
 public:
     const AbstractMatrix& Alpha() const;
     const AbstractMatrix& Beta() const;
+
+public:
+    const AbstractMatrix* AlphaView(MatrixViewConvention c) const;
+    const AbstractMatrix* BetaView(MatrixViewConvention c) const;
 
 private:
     void Recalculate();
