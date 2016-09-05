@@ -36,7 +36,14 @@ cmake (3.2), and a c++11 compiler (>=gcc-5.3.0, clang):
 Invoke the different `make` targets, currently available
 
   ```sh
-  $ make pbccs
+  git clone https://github.com/PacificBiosciences/unanimity && \
+  cd unanimity                                              && \
+  git submodule update --init --remote                      && \
+  mkdir build                                               && \
+  cd build                                                  && \
+  cmake ..                                                  && \
+  make ccs                                                  && \
+  ./ccs
   ```
 
 ### Install ConsensusCore2 python library for GenomicConsensus
