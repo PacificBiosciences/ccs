@@ -17,7 +17,7 @@ automates dependency fetching/resolution:
 
 ### All tools: manually
 
-Building from scratch requires system-wide installed boost (>=1.5.8), 
+Building from scratch requires system-wide installed boost (>=1.58.0), 
 cmake (3.2), and a c++11 compiler (>=gcc-5.3.0, clang):
 
   ```sh
@@ -41,7 +41,7 @@ Invoke the different `make` targets, currently available
 
 ### Install ConsensusCore2 python library for GenomicConsensus
 
-Building from scratch requires system-wide installed boost (>=1.5.8), 
+Building from scratch requires system-wide installed boost (>=1.58.0), 
 cmake (3.2), python 2.x, and a c++11 compiler (>=gcc-5.3.0, clang):
 
   ```sh
