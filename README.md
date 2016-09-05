@@ -41,4 +41,6 @@ This tool will be able to precisely call single-nucleotide variants from consens
 
 ## Help
 
-Issues? Bugs? Please create a github issue.
+Support is only provided for official and stable
+[SMRT Analysis builds](http://www.pacb.com/products-and-services/analytical-software/)
+provided by PacBio and not for source builds.
