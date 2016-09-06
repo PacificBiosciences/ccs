@@ -91,6 +91,11 @@ void PoaGraph::WriteGraphVizFile(const string& filename, int flags, const PoaCon
     impl->WriteGraphVizFile(filename, flags, pc);
 }
 
+void PoaGraph::WriteGraphCsvFile(const string& filename) const
+{
+    impl->WriteGraphCsvFile(filename);
+}
+
 PoaGraph::PoaGraph() { impl = new detail::PoaGraphImpl(); }
 
 PoaGraph::PoaGraph(const PoaGraph& other) { impl = new detail::PoaGraphImpl(*other.impl); }

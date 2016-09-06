@@ -116,6 +116,8 @@ public:
     void WriteGraphVizFile(const std::string& filename, int flags = 0,
                            const PoaConsensus* pc = NULL) const;
 
+    void WriteGraphCsvFile(const std::string& filename) const;
+
     const PoaConsensus* FindConsensus(const PacBio::Align::AlignConfig& config,
                                       int minCoverage = -INT_MAX) const;
 

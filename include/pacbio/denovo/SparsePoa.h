@@ -140,6 +140,8 @@ public:
     void WriteGraphVizFile(const std::string& filename, int flags = 0,
                            const PacBio::Poa::PoaConsensus* pc = nullptr) const;
 
+    void WriteGraphCsvFile(const std::string& filename) const;
+
     //
     // Clean up the POA graph, pruning minority paths, to speed up
     // successive AddRead operations.
