@@ -54,5 +54,5 @@ AlignConfig AlignConfig::Default()
     return AlignConfig(AlignParams::Default(), AlignMode::GLOBAL);
 }
 
-}  // namespace Consensus
+}  // namespace Align
 }  // namespace PacBio

@@ -199,5 +199,5 @@ Mutation AbstractIntegrator::ReverseComplement(const Mutation& mut) const
     return Mutation(mut.Type, TemplateLength() - mut.End(), Complement(mut.Base));
 }
 
-}  // namespace Align
+}  // namespace Consensus
 }  // namespace PacBio

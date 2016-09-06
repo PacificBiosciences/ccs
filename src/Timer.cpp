@@ -57,5 +57,5 @@ float Timer::ElapsedSeconds() const { return ElapsedMilliseconds() / 1000; }
 
 void Timer::Restart() { tick = steady_clock::now(); }
 
-}  // namespace CCS
+}  // namespace Util
 }  // namespace PacBio
