@@ -261,6 +261,50 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
         OptionNames::LogFile,
         OptionNames::LogLevel
     });
+
+    const std::string id = "pbccs.tasks.ccs";
+    CLI::ToolContract::Task tcTask(id);   
+    tcTask.AddOption(OptionNames::MinSnr);
+    tcTask.AddOption(OptionNames::MinReadScore);
+    tcTask.AddOption(OptionNames::MaxLength);
+    tcTask.AddOption(OptionNames::MinLength);
+    tcTask.AddOption(OptionNames::MinPasses);
+    tcTask.AddOption(OptionNames::MinPredictedAccuracy);
+    tcTask.AddOption(OptionNames::MinZScore);
+    tcTask.AddOption(OptionNames::MaxDropFraction);
+    tcTask.AddOption(OptionNames::NoPolish);
+    tcTask.AddOption(OptionNames::ByStrand);
+    tcTask.AddOption(OptionNames::ModelPath);
+    tcTask.AddOption(OptionNames::ModelSpec);
+
+    tcTask.InputFileTypes({
+        { 
+            "subread_set", 
+            "SubreadSet", 
+            "Subread DataSet or .bam file", 
+            "PacBio.DataSet.SubreadSet"
+        }
+    });
+
+    tcTask.OutputFileTypes({
+        { 
+            "bam_output",
+            "ConsensusReadSet",
+            "Output DataSet XML file",
+            "PacBio.DataSet.ConsensusReadSet",
+            "ccs" 
+        },
+        { 
+            "ccs_summary_txt",
+            "CCS run summary",
+            "Text report summarizing run statistics",
+            "PacBio.FileTypes.txt",
+            "ccs_summary" 
+        }
+    });
+
+    CLI::ToolContract::Config tcConfig(tcTask);
+    i.EnableToolContract(tcConfig);
     // clang-format on
 
     return i;

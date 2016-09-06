@@ -1,5 +1,10 @@
 # UNANIMITY - CHANGELOG
 
+## [2.0.4]
+
+### Added
+ - Add pbcopper's ToolContract
+
 ## [2.0.3]
 
 ### Added
