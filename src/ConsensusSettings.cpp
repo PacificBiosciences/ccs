@@ -75,7 +75,7 @@ const PlainOption MinZScore{
     { "minZScore" },
     "Minimum Z Score",
     "Minimum z-score to use a subread. NaN disables this filter.",
-    CLI::Option::FloatType(-3.5)
+    CLI::Option::FloatType(-3.4)
 };
 const PlainOption MaxDropFraction{
     "max_drop_fraction",
