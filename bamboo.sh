@@ -1,5 +1,30 @@
 #!/bin/bash
 
+# Function definitions
+GetBBRepo () {
+    echo "## $1"
+    if [ ! -d $2/$1 ]; then
+        echo "### Clone"
+        ( cd $2 && git clone ssh://git@bitbucket.nanofluidics.com:7999/sat/$1)
+    else
+        echo "### Update"
+        ( cd $2/$1 && git pull)
+    fi
+}
+
+GetGHRepo () {
+    echo "## $1"
+    if [ ! -d $2/$1 ]; then
+        echo "### Clone"
+        ( cd $2 && git clone https://github.com/PacificBiosciences/$1)
+    else
+        echo "### Update"
+        ( cd $2/$1 && git pull)
+    fi
+}
+
+# Main script
+
 echo "#############################"
 echo "# LOAD MODULES"
 source /mnt/software/Modules/current/init/bash
@@ -12,23 +37,11 @@ if [ ! -d _deps ] ; then mkdir _deps ; fi
 echo "## Create reverse external dependency directory"
 if [ ! -d _rev_deps ] ; then mkdir _rev_deps ; fi 
 
-echo "## GenomicConsensus"
-if [ ! -d _rev_deps/GenomicConsensus ]; then
-    echo "### Clone"
-    ( cd _rev_deps && git clone ssh://git@bitbucket.nanofluidics.com:7999/sat/GenomicConsensus)
-else
-    echo "### Update"
-    ( cd _rev_deps/GenomicConsensus && git pull)
-fi
-
-echo "## ConsensusCore"
-if [ ! -d _deps/ConsensusCore ]; then
-    echo "### Clone"
-    ( cd _deps && git clone ssh://git@bitbucket.nanofluidics.com:7999/sat/ConsensusCore)
-else
-    echo "### Update"
-    ( cd _deps/ConsensusCore && git pull)
-fi
+GetBBRepo GenomicConsensus _rev_deps
+GetBBRepo ConsensusCore _deps
+GetGHRepo pbcommand _deps
+GetGHRepo pbcore _deps
+GetGHRepo PacBioTestData _deps
 
 echo "## Fetch submodules"
 git submodule update --init --remote --depth 1
@@ -41,10 +54,7 @@ echo "## Check formatting"
 echo "#############################"
 echo "# VIRTUALENV"
 echo "## Create missing virtualenv"
-if [ ! -d unyve ]
-then 
-    /mnt/software/v/virtualenv/13.0.1/virtualenv.py unyve
-fi
+if [ ! -d unyve ] ; then /mnt/software/v/virtualenv/13.0.1/virtualenv.py unyve ; fi
 
 echo "## Get into virtualenv"
 source unyve/bin/activate
@@ -52,19 +62,11 @@ source unyve/bin/activate
 echo "## Install pip modules"
 pip install --upgrade pip
 pip install numpy cython h5py pysam cram nose jsonschema avro
-pip install --no-deps git+https://github.com/PacificBiosciences/pbcommand.git
-pip install --no-deps git+https://github.com/PacificBiosciences/pbcore.git
+( cd _deps/pbcommand && pip install --no-deps . )
+( cd _deps/pbcore && pip install --no-deps . )
 
-echo "## Get PacBioTestData"
-if [ -d _deps/PacBioTestData ]
-then
-    rm -rf _deps/PacBioTestData
-fi
-( cd _deps                                                         &&\
-git clone https://github.com/PacificBiosciences/PacBioTestData.git &&\
-cd PacBioTestData                                                  &&\
-git lfs pull                                                       &&\
-make python )
+echo "## Install PacBioTestData"
+( cd _deps/PacBioTestData && git lfs pull && make python )
 
 echo "#############################"
 echo "# BUILD"
