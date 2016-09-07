@@ -1,7 +1,3 @@
-[submodule "third-party/htslib"]
-    path = third-party/htslib
-    url = ../htslib.git
-    branch = master
 [submodule "third-party/pbbam"]
     path = third-party/pbbam
     url = ../pbbam.git
@@ -14,3 +10,7 @@
     path = third-party/pbcopper
     url = ../pbcopper.git
     branch = master
+[submodule "third-party/htslib"]
+	path = third-party/htslib
+	url = ../htslib.git
+	branch = pb

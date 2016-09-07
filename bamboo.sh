@@ -44,7 +44,7 @@ GetGHRepo pbcore _deps
 GetGHRepo PacBioTestData _deps
 
 echo "## Fetch submodules"
-git submodule update --init --remote --depth 1
+git submodule update --init --remote
 
 echo "#############################"
 echo "# PRE-BUILD HOOK"
