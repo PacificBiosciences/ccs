@@ -76,19 +76,20 @@ struct PoaNode
     float Score;
     float ReachingScore;
 
-    void Init(size_t id, char base, int reads)
+    void Init(size_t id, char base, int reads, int spanning)
     {
         this->Id = id;
         this->Base = base;
         this->Reads = reads;
-        this->SpanningReads = 0;
+        this->SpanningReads = spanning;
         this->Score = 0;
         this->ReachingScore = 0;
     }
 
-    PoaNode() { Init(0, 'N', 0); }
-    PoaNode(size_t id, char base) { Init(id, base, 1); }
-    PoaNode(size_t id, char base, int reads) { Init(id, base, reads); }
+    PoaNode() { Init(0, 'N', 0, 0); }
+    PoaNode(size_t id, char base) { Init(id, base, 1, 0); }
+    PoaNode(size_t id, char base, int reads) { Init(id, base, reads, 0); }
+    PoaNode(size_t id, char base, int reads, int spanning) { Init(id, base, reads, spanning); }
 };
 
 // External-facing vertex id type
@@ -145,11 +146,11 @@ class PoaGraphImpl
 
     void repCheck() const;
 
-    VD addVertex(char base, int nReads = 1)
+    VD addVertex(char base, int nReads = 1, int spanningReads = 0)
     {
         VD vd = add_vertex(g_);
         Vertex vExt = totalVertices_++;
-        vertexInfoMap_[vd] = PoaNode(vExt, base, nReads);
+        vertexInfoMap_[vd] = PoaNode(vExt, base, nReads, spanningReads);
         vertexLookup_[vExt] = vd;
         indexMap_[vd] = liveVertices_++;
         return vd;
