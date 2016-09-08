@@ -455,7 +455,7 @@ void PoaGraphImpl::WriteGraphCsvFile(const string& filename) const
     std::list<VD> sortedVertices(num_vertices(g_));
     topological_sort(g_, sortedVertices.rbegin());
 
-    outfile << "Id,Base,Reads,SpanningReads,Score,ReadingScore" << std::endl;
+    outfile << "Id,Base,Reads,SpanningReads,Score,ReachingScore" << std::endl;
     for (const VD v : sortedVertices) {
         PoaNode& vi = vertexInfoMap_[v];
         outfile << vi.Id << "," << vi.Base << "," << vi.Reads << "," << vi.SpanningReads << ","
