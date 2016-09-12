@@ -1,7 +1,8 @@
 #!/bin/bash
 
 PLATFORM=$(uname)
-CLANGFORMAT="./tools/${PLATFORM}/clang-format -style=file"
+DIRPATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+CLANGFORMAT="${DIRPATH}/../tools/${PLATFORM}/clang-format -style=file"
 
 if [ "$1" == "--all" ]
 then
