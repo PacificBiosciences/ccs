@@ -1,2 +1,5 @@
 .DS_Store
 /build
+/_deps
+/_rev_deps
+/unyve
