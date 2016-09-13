@@ -278,6 +278,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     tcTask.AddOption(OptionNames::ByStrand);
     tcTask.AddOption(OptionNames::ModelPath);
     tcTask.AddOption(OptionNames::ModelSpec);
+    tcTask.AddOption(OptionNames::ReportFile);
 
     tcTask.InputFileTypes({
         {
@@ -289,19 +290,12 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     });
 
     tcTask.OutputFileTypes({
-        { 
+        {
             "bam_output",
             "ConsensusReadSet",
             "Output DataSet XML file",
             "PacBio.DataSet.ConsensusReadSet",
-            "ccs" 
-        },
-        { 
-            "ccs_summary_txt",
-            "CCS run summary",
-            "Text report summarizing run statistics",
-            "PacBio.FileTypes.txt",
-            "ccs_summary" 
+            "ccs"
         }
     });
 
