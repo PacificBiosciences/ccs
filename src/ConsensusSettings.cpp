@@ -229,6 +229,8 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     using Option = PacBio::CLI::Option;
     PacBio::CLI::Interface i{"ccs", description, version};
 
+    i.AlternativeToolContractName("pbccs");
+
     i.AddHelpOption();     // use built-in help output
     i.AddVersionOption();  // use built-in version output
 
