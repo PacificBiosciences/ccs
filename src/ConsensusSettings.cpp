@@ -121,13 +121,6 @@ const PlainOption ForceOutput{
     "Overwrite OUTPUT file if present.",
     CLI::Option::BoolType()
 };
-const PlainOption PbIndex{ 
-    "pbi", 
-    { "pbi" }, 
-    "Generate PBI file",
-    "Generate a .pbi file for the OUTPUT file.",
-    CLI::Option::BoolType()
-};
 const PlainOption Zmws{
     "zmws",
     { "zmws" },
@@ -207,7 +200,6 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
     , ModelSpec(std::forward<std::string>(options[OptionNames::ModelSpec]))
     , NoPolish(options[OptionNames::NoPolish])
     , NThreads(ThreadCount(options[OptionNames::NumThreads]))
-    , PbIndex(options[OptionNames::PbIndex])
     , ReportFile(std::forward<std::string>(options[OptionNames::ReportFile]))
     , RichQVs(options[OptionNames::RichQVs])
     , WlSpec(std::forward<std::string>(options[OptionNames::Zmws]))
@@ -243,7 +235,6 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     i.AddOptions(
     {
         OptionNames::ForceOutput,
-        OptionNames::PbIndex,
         OptionNames::Zmws,
         OptionNames::MaxLength,
         OptionNames::MinLength,

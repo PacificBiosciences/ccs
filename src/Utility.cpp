@@ -71,6 +71,9 @@ bool FileExists(const string& path)
 
 string FileExtension(const string& path)
 {
+    auto pathLower = path;
+    std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
+
     size_t fileStart = path.find_last_of("/");
 
     if (fileStart == string::npos) fileStart = 0;
