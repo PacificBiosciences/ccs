@@ -509,7 +509,7 @@ TEST(PoaConsensus, TestLocalStaggered)
     // coverage for CCS is (numReads-2) (beginning, end read).
     // Application has to provide a sensible minCoverage.
     const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::LOCAL, 4);
-    plotConsensus(pc, "local-staggered", true);
+    plotConsensus(pc, "local-staggered", false);
     EXPECT_EQ("ATAGTGCCGCCAATCTTCCAGTATATACAGCACGGAGTAGCATCACGTACGTACGTCTACACGTAATT", pc->Sequence);
     delete pc;
 }
