@@ -457,7 +457,7 @@ static int Runner(const PacBio::CLI::Results& args)
         unique_ptr<BamWriter> ccsBam(
             new BamWriter(outputFile, PrepareHeader(args.InputCommandLine(), ds)));
         const std::string pbiFileName = outputFile + ".pbi";
-        unique_ptr<PbiBuilder> ccsPbi(settings.PbIndex ? new PbiBuilder(pbiFileName) : nullptr);
+        unique_ptr<PbiBuilder> ccsPbi(new PbiBuilder(pbiFileName));
         writer = async(launch::async, BamWriterThread, ref(workQueue), move(ccsBam), move(ccsPbi),
                        settings.RichQVs);
 
