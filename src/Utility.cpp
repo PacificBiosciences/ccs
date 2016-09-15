@@ -71,9 +71,6 @@ bool FileExists(const string& path)
 
 string FileExtension(const string& path)
 {
-    auto pathLower = path;
-    std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
-
     size_t fileStart = path.find_last_of("/");
 
     if (fileStart == string::npos) fileStart = 0;
@@ -88,7 +85,9 @@ string FileExtension(const string& path)
     // increment beyond '.'
     ++extStart;
 
-    return path.substr(fileStart + extStart, path.length() - fileStart - extStart);
+    auto suffix = path.substr(fileStart + extStart, path.length() - fileStart - extStart);
+    std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::tolower);
+    return suffix;
 }
 
 void FlattenFofn(vector<string>& res, const string& file)
