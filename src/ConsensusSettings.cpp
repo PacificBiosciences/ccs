@@ -42,145 +42,138 @@ namespace CCS {
 namespace OptionNames {
 using PlainOption = Data::PlainOption;
 // clang-format off
-const PlainOption MaxLength{ 
-    "max_length", 
-    { "maxLength" }, 
-    "Maximum Subread Length", 
+const PlainOption MaxLength{
+    "max_length",
+    { "maxLength" },
+    "Maximum Subread Length",
     "Maximum length of subreads to use for generating CCS.",
     CLI::Option::IntType(7000)
 };
-const PlainOption MinLength{ 
-    "min_length", 
-    { "minLength" }, 
-    "Minimum Subread Length", 
+const PlainOption MinLength{
+    "min_length",
+    { "minLength" },
+    "Minimum Subread Length",
     "Minimum length of subreads to use for generating CCS.",
     CLI::Option::IntType(10)
 };
-const PlainOption MinPasses{ 
-    "min_passes", 
-    { "minPasses" }, 
-    "Minimum Number of Passes", 
+const PlainOption MinPasses{
+    "min_passes",
+    { "minPasses" },
+    "Minimum Number of Passes",
     "Minimum number of subreads required to generate CCS.",
     CLI::Option::IntType(3)
 };
-const PlainOption MinPredictedAccuracy{ 
-    "min_predicted_accuracy", 
-    { "minPredictedAccuracy" }, 
-    "Minimum Predicted Accuracy", 
+const PlainOption MinPredictedAccuracy{
+    "min_predicted_accuracy",
+    { "minPredictedAccuracy" },
+    "Minimum Predicted Accuracy",
     "Minimum predicted accuracy in [0, 1].",
     CLI::Option::FloatType(0.9)
 };
-const PlainOption MinZScore{ 
-    "min_zscore", 
-    { "minZScore" }, 
-    "Minimum Z Score", 
+const PlainOption MinZScore{
+    "min_zscore",
+    { "minZScore" },
+    "Minimum Z Score",
     "Minimum z-score to use a subread. NaN disables this filter.",
     CLI::Option::FloatType(-3.5)
 };
-const PlainOption MaxDropFraction{ 
-    "max_drop_fraction", 
-    { "maxDropFraction" }, 
-    "Maximum Dropped Fraction", 
+const PlainOption MaxDropFraction{
+    "max_drop_fraction",
+    { "maxDropFraction" },
+    "Maximum Dropped Fraction",
     "Maximum fraction of subreads that can be dropped before giving up.",
     CLI::Option::FloatType(0.34)
 };
-const PlainOption NoPolish{ 
-    "no_polish", 
-    { "noPolish" }, 
-    "No Polish CCS", 
+const PlainOption NoPolish{
+    "no_polish",
+    { "noPolish" },
+    "No Polish CCS",
     "Only output the initial template derived from the POA (faster, less accurate).",
     CLI::Option::BoolType()
 };
-const PlainOption MinReadScore{ 
-    "min_read_score", 
-    { "minReadScore" }, 
-    "Minimal Read Score", 
+const PlainOption MinReadScore{
+    "min_read_score",
+    { "minReadScore" },
+    "Minimal Read Score",
     "Minimum read score of input subreads.",
     CLI::Option::FloatType(0.75)
 };
-const PlainOption MinSnr{ 
-    "min_snr", 
-    { "minSnr" }, 
-    "Minimum SNR", 
+const PlainOption MinSnr{
+    "min_snr",
+    { "minSnr" },
+    "Minimum SNR",
     "Minimum SNR of input subreads.",
-    CLI::Option::FloatType(3.75)  
+    CLI::Option::FloatType(3.75)
     // See https://github.com/PacificBiosciences/pbccs/issues/86 for a more
     // detailed discussion of this default.)
 };
-const PlainOption ByStrand{ 
-    "by_strand", 
-    { "byStrand" }, 
-    "By Strand CCS", 
+const PlainOption ByStrand{
+    "by_strand",
+    { "byStrand" },
+    "By Strand CCS",
     "Generate a consensus for each strand.",
     CLI::Option::BoolType()
 };
-const PlainOption ForceOutput{ 
-    "force", 
-    { "force" }, 
+const PlainOption ForceOutput{
+    "force",
+    { "force" },
     "Force overwrite output",
     "Overwrite OUTPUT file if present.",
     CLI::Option::BoolType()
 };
-const PlainOption PbIndex{ 
-    "pbi", 
-    { "pbi" }, 
-    "Generate PBI file",
-    "Generate a .pbi file for the OUTPUT file.",
-    CLI::Option::BoolType()
-};
-const PlainOption Zmws{ 
-    "zmws", 
-    { "zmws" }, 
-    "Whitelist ZMWs", 
+const PlainOption Zmws{
+    "zmws",
+    { "zmws" },
+    "Whitelist ZMWs",
     "Generate CCS for the provided comma-separated holenumber ranges only. Default = all",
     CLI::Option::StringType("")
 };
-const PlainOption ReportFile{ 
-    "report_file", 
-    { "reportFile" }, 
-    "Report File Output", 
+const PlainOption ReportFile{
+    "report_file",
+    { "reportFile" },
+    "Report File Output",
     "Where to write the results report.",
     CLI::Option::StringType("ccs_report.txt")
 };
-const PlainOption NumThreads{ 
-    "num_threads", 
-    { "numThreads" }, 
-    "Number of Threads", 
+const PlainOption NumThreads{
+    "num_threads",
+    { "numThreads" },
+    "Number of Threads",
     "Number of threads to use, 0 means autodetection.",
     CLI::Option::IntType(0)
 };
-const PlainOption LogFile{ 
-    "log_file", 
-    { "logFile" }, 
-    "Log to a File", 
+const PlainOption LogFile{
+    "log_file",
+    { "logFile" },
+    "Log to a File",
     "Log to a file, instead of STDERR.",
     CLI::Option::StringType("")
 };
-const PlainOption LogLevel{ 
-    "log_level", 
-    { "logLevel" }, 
-    "Set Log Level", 
+const PlainOption LogLevel{
+    "log_level",
+    { "logLevel" },
+    "Set Log Level",
     "Set log level.",
     CLI::Option::StringType("INFO")
 };
-const PlainOption RichQVs{ 
-    "rich_qvs", 
-    { "richQVs" }, 
-    "Emit individual QVs", 
+const PlainOption RichQVs{
+    "rich_qvs",
+    { "richQVs" },
+    "Emit individual QVs",
     "Emit dq, iq, and sq \"rich\" quality tracks.",
     CLI::Option::BoolType()
 };
-const PlainOption ModelPath{ 
-    "model_path", 
-    { "modelPath" }, 
-    "Model(s) Path", 
+const PlainOption ModelPath{
+    "model_path",
+    { "modelPath" },
+    "Model(s) Path",
     "Path to a model file or directory containing model files.",
     CLI::Option::StringType("")
 };
-const PlainOption ModelSpec{ 
-    "model_spec", 
-    { "modelSpec" }, 
-    "Model Override", 
+const PlainOption ModelSpec{
+    "model_spec",
+    { "modelSpec" },
+    "Model Override",
     "Name of chemistry or model to use, overriding default selection.",
     CLI::Option::StringType("")
 };
@@ -207,7 +200,6 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
     , ModelSpec(std::forward<std::string>(options[OptionNames::ModelSpec]))
     , NoPolish(options[OptionNames::NoPolish])
     , NThreads(ThreadCount(options[OptionNames::NumThreads]))
-    , PbIndex(options[OptionNames::PbIndex])
     , ReportFile(std::forward<std::string>(options[OptionNames::ReportFile]))
     , RichQVs(options[OptionNames::RichQVs])
     , WlSpec(std::forward<std::string>(options[OptionNames::Zmws]))
@@ -229,6 +221,8 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     using Option = PacBio::CLI::Option;
     PacBio::CLI::Interface i{"ccs", description, version};
 
+    i.AlternativeToolContractName("pbccs");
+
     i.AddHelpOption();     // use built-in help output
     i.AddVersionOption();  // use built-in version output
 
@@ -241,7 +235,6 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     i.AddOptions(
     {
         OptionNames::ForceOutput,
-        OptionNames::PbIndex,
         OptionNames::Zmws,
         OptionNames::MaxLength,
         OptionNames::MinLength,
@@ -261,6 +254,44 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
         OptionNames::LogFile,
         OptionNames::LogLevel
     });
+
+    const std::string id = "pbccs.tasks.ccs";
+    CLI::ToolContract::Task tcTask(id);
+    tcTask.AddOption(OptionNames::MinSnr);
+    tcTask.AddOption(OptionNames::MinReadScore);
+    tcTask.AddOption(OptionNames::MaxLength);
+    tcTask.AddOption(OptionNames::MinLength);
+    tcTask.AddOption(OptionNames::MinPasses);
+    tcTask.AddOption(OptionNames::MinPredictedAccuracy);
+    tcTask.AddOption(OptionNames::MinZScore);
+    tcTask.AddOption(OptionNames::MaxDropFraction);
+    tcTask.AddOption(OptionNames::NoPolish);
+    tcTask.AddOption(OptionNames::ByStrand);
+    tcTask.AddOption(OptionNames::ModelPath);
+    tcTask.AddOption(OptionNames::ModelSpec);
+    tcTask.AddOption(OptionNames::ReportFile);
+
+    tcTask.InputFileTypes({
+        {
+            "subread_set",
+            "SubreadSet",
+            "Subread DataSet or .bam file",
+            "PacBio.DataSet.SubreadSet"
+        }
+    });
+
+    tcTask.OutputFileTypes({
+        {
+            "bam_output",
+            "ConsensusReadSet",
+            "Output DataSet XML file",
+            "PacBio.DataSet.ConsensusReadSet",
+            "ccs"
+        }
+    });
+
+    CLI::ToolContract::Config tcConfig(tcTask);
+    i.EnableToolContract(tcConfig);
     // clang-format on
 
     return i;

@@ -1,5 +1,12 @@
 # UNANIMITY - CHANGELOG
 
+## [2.0.4]
+
+### Added
+ - Add pbcopper's ToolContract, summary is no longer a second output file
+ - Differentiate between .xml and .bam output type
+ - Enforce .pbi generation
+
 ## [2.0.3]
 
 ### Added
