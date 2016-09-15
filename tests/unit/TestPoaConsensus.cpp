@@ -480,7 +480,7 @@ TEST(PoaConsensus, TestVerboseGraphVizOutput)
         " label=\"{ { 3 | G } | { 2 | 2 } | { 2.00 | 4.00 } }\"];"
         "4[shape=Mrecord, style=\"filled\", fillcolor=\"lightblue\" ,"
         " label=\"{ { 4 | G } | { 2 | 2 } | { 2.00 | 6.00 } }\"];"
-        "5[shape=Mrecord, label=\"{ { 5 | T } | { 1 | 1 } | { -0.00 | -0.00 } "
+        "5[shape=Mrecord, label=\"{ { 5 | T } | { 1 | 2 } | { -0.00 | -0.00 } "
         "}\"];"
         "0->2 ;"
         "2->3 ;"
@@ -530,6 +530,47 @@ TEST(PoaConsensus, TestLongInsert)
         "TTTACAGGATAGTGCCGCCAATCTTCCAGTGATACCCCGTGCCGCCAATCTTCCAGTATATACAGCACGA"
         "GTAGC",
         pc->Sequence);
+    delete pc;
+}
+
+TEST(PoaConsensus, TestSpanningReads)
+{
+    string read1 = "GAAAG";
+    string read2 = "GATAG";
+    vector<string> reads{read1, read1, read1, read2, read2, read2};
+    const PoaConsensus* pc = PoaConsensus::FindConsensus(reads, AlignMode::LOCAL);
+    plotConsensus(pc, "spanning-reads");
+
+    string dot = pc->Graph.ToGraphViz(PoaGraph::VERBOSE_NODES | PoaGraph::COLOR_NODES, pc);
+    // We expect to get spanning reads of 6 for the middle A/T nodes,
+    // but each only has 3 reads passing through.
+    // The PoaGraph doesn't really expose an API, we can only check it
+    // by looking at the GraphViz output.
+
+    // clang-format off
+    string expectedDot =
+        "digraph G {"
+        "rankdir=\"LR\";"
+        "0[shape=Mrecord, label=\"{ { 0 | ^ } | { 0 | 0 } | { 0.00 | 0.00 } }\"];"
+        "1[shape=Mrecord, label=\"{ { 1 | $ } | { 0 | 0 } | { 0.00 | 0.00 } }\"];"
+        "2[shape=Mrecord, style=\"filled\", fillcolor=\"lightblue\" , label=\"{ { 2 | G } | { 6 | 6 } | { 6.00 | 6.00 } }\"];"
+        "3[shape=Mrecord, style=\"filled\", fillcolor=\"lightblue\" , label=\"{ { 3 | A } | { 6 | 6 } | { 6.00 | 12.00 } }\"];"
+        "4[shape=Mrecord, style=\"filled\", fillcolor=\"lightblue\" , label=\"{ { 4 | A } | { 3 | 6 } | { -0.00 | 12.00 } }\"];"
+        "5[shape=Mrecord, style=\"filled\", fillcolor=\"lightblue\" , label=\"{ { 5 | A } | { 6 | 6 } | { 6.00 | 18.00 } }\"];"
+        "6[shape=Mrecord, style=\"filled\", fillcolor=\"lightblue\" , label=\"{ { 6 | G } | { 6 | 6 } | { 6.00 | 24.00 } }\"];"
+        "7[shape=Mrecord, label=\"{ { 7 | T } | { 3 | 6 } | { -0.00 | 12.00 } }\"];"
+        "0->2 ;"
+        "2->3 ;"
+        "3->4 ;"
+        "4->5 ;"
+        "5->6 ;"
+        "6->1 ;"
+        "7->5 ;"
+        "3->7 ;"
+        "}";
+    // clang-format on
+
+    EXPECT_EQ(expectedDot, erase_all_copy(dot, "\n"));
     delete pc;
 }
 

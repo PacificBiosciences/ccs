@@ -227,6 +227,7 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
     const AlignmentColumn* curCol;
     VD v = null_vertex, forkVertex = null_vertex;
     VD u = exitVertex_;
+    int span = 0;
     VD startSpanVertex;
     VD endSpanVertex = alignmentColumnForVertex.at(exitVertex_)->PreviousVertex[I];
 
@@ -265,7 +266,7 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
             // In local model thread read bases, adjusting i (should stop at 0)
             while (i > 0) {
                 assert(alignMode == AlignMode::LOCAL);
-                VD newForkVertex = addVertex(sequence[READPOS]);
+                VD newForkVertex = addVertex(sequence[READPOS], 1, span);
                 add_edge(newForkVertex, forkVertex, g_);
                 VERTEX_ON_PATH(READPOS, newForkVertex);
                 forkVertex = newForkVertex;
@@ -284,7 +285,7 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
                 int prevRow = ArgMax(prevCol->Score);
 
                 while (i > static_cast<int>(prevRow)) {
-                    VD newForkVertex = addVertex(sequence[READPOS]);
+                    VD newForkVertex = addVertex(sequence[READPOS], 1, span);
                     add_edge(newForkVertex, forkVertex, g_);
                     VERTEX_ON_PATH(READPOS, newForkVertex);
                     forkVertex = newForkVertex;
@@ -307,7 +308,7 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
             }
         } else if (reachingMove == ExtraMove || reachingMove == MismatchMove) {
             // begin a new arc with this read base
-            VD newForkVertex = addVertex(sequence[READPOS]);
+            VD newForkVertex = addVertex(sequence[READPOS], 1, span);
             if (forkVertex == null_vertex) {
                 forkVertex = v;
             }
@@ -321,6 +322,7 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
 
         v = u;
         u = prevVertex;
+        span = curNodeInfo.SpanningReads;
     }
     startSpanVertex = v;
 
