@@ -398,11 +398,11 @@ static int Runner(const PacBio::CLI::Results& args)
     PBLOG_DEBUG << "Found consensus models for: (" << join(avail, ", ") << ')';
 
     DataSet ds(inputFile);
+    const std::string& modelSpec = settings.ModelSpec;
 
     // test that all input chemistries are supported
     {
         set<string> used;
-        const std::string& modelSpec = settings.ModelSpec;
         if (!modelSpec.empty()) {
             PBLOG_INFO << "Overriding model selection with: '" << modelSpec << "'";
             if (!(OverrideModel(modelSpec) && used.insert(modelSpec).second)) {
@@ -525,9 +525,10 @@ static int Runner(const PacBio::CLI::Results& args)
                 skipZmw = true;
             else {
                 skipZmw = false;
+                string chem(modelSpec.empty() ? read.ReadGroup().SequencingChemistry() : modelSpec);
                 chunk->emplace_back(Chunk{ReadId(movieNames[movieName], *holeNumber),
                                           vector<Subread>(), SNR(snr[0], snr[1], snr[2], snr[3]),
-                                          read.ReadGroup().SequencingChemistry(), barcodes});
+                                          move(chem), barcodes});
             }
         }
 
