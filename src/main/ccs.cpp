@@ -68,7 +68,6 @@
 #include <pacbio/io/Utility.h>
 #include <pacbio/log/Logging.h>
 #include <pacbio/parallel/WorkQueue.h>
-#include <pacbio/util/ExecUtils.h>
 
 #include <pacbio/Version.h>
 
@@ -319,8 +318,6 @@ static int Runner(const PacBio::CLI::Results& args)
 {
     using boost::algorithm::join;
     using boost::make_optional;
-
-    SetColumns();
 
     // Get source args
     const vector<string> files = args.PositionalArguments();
