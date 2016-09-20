@@ -315,6 +315,18 @@ void WriteResultsReport(ostream& report, const Results& counts)
     counts.SubreadCounter.WriteResultsReport(report);
 }
 
+static std::vector<ExternalResource> BarcodeSets(const ExternalResources& ext)
+{
+    std::vector<ExternalResource> output;
+    for (const auto& resource : ext) {
+        const auto bcs = BarcodeSets(resource.ExternalResources());
+        output.insert(output.end(), bcs.begin(), bcs.end());
+
+        if (resource.MetaType() == "PacBio.DataSet.BarcodeSet") output.push_back(resource);
+    }
+    return output;
+}
+
 static int Runner(const PacBio::CLI::Results& args)
 {
     using boost::algorithm::join;
@@ -475,6 +487,9 @@ static int Runner(const PacBio::CLI::Results& args)
             resource.Name(name).Description(desc);
 
             resource.FileIndices().Add(pbi);
+
+            for (const auto& barcodeSet : BarcodeSets(ds.ExternalResources()))
+                resource.ExternalResources().Add(barcodeSet);
 
             ccsSet.ExternalResources().Add(resource);
 
