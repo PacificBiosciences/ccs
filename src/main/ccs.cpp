@@ -89,8 +89,8 @@ using boost::numeric_cast;
 using boost::optional;
 
 // these strings are part of the BAM header, they CANNOT contain newlines
-const std::string DESCRIPTION = "Generate circular consensus sequences (ccs) from subreads.";
-const std::string APPNAME = "ccs";
+const string DESCRIPTION = "Generate circular consensus sequences (ccs) from subreads.";
+const string APPNAME = "ccs";
 
 typedef ReadType<ReadId> Subread;
 typedef ChunkType<ReadId, Subread> Chunk;
@@ -98,13 +98,13 @@ typedef ResultType<ConsensusType> Results;
 
 const auto CircularConsensus = &PacBio::CCS::Consensus<Chunk>;
 
-inline std::string QVsToASCII(const std::vector<int>& qvs)
+inline string QVsToASCII(const vector<int>& qvs)
 {
-    std::string result;
+    string result;
     result.reserve(qvs.size());
 
     for (const int qv : qvs) {
-        result.push_back(static_cast<char>(std::min(std::max(0, qv), 93) + 33));
+        result.push_back(static_cast<char>(min(max(0, qv), 93) + 33));
     }
 
     return result;
@@ -236,7 +236,7 @@ Results FastqWriterThread(WorkQueue<Results>& queue, const string& fname)
     return counts;
 }
 
-BamHeader PrepareHeader(const std::string& cmdLine, const DataSet& ds)
+BamHeader PrepareHeader(const string& cmdLine, const DataSet& ds)
 {
     using boost::algorithm::join;
 
@@ -252,7 +252,7 @@ BamHeader PrepareHeader(const std::string& cmdLine, const DataSet& ds)
     for (const auto& bam : ds.BamFiles()) {
         for (const auto& rg : bam.Header().ReadGroups()) {
             if (rg.ReadType() != "SUBREAD")
-                std::cerr << "invalid input file, READTYPE must be SUBREAD" << std::endl;
+                cerr << "invalid input file, READTYPE must be SUBREAD" << endl;
 
             ReadGroupInfo readGroup(rg.MovieName(), "CCS");
             readGroup.BindingKit(rg.BindingKit())
@@ -323,12 +323,12 @@ static int Runner(const PacBio::CLI::Results& args)
     SetColumns();
 
     // Get source args
-    const std::vector<std::string> files = args.PositionalArguments();
+    const vector<string> files = args.PositionalArguments();
 
     // input validation
     if (files.size() != 2) {
-        std::cerr << "ERROR: Please provide the INPUT and OUTPUT files.\n"
-                  << "       See --help for more info about positional arguments." << std::endl;
+        cerr << "ERROR: Please provide the INPUT and OUTPUT files.\n"
+             << "       See --help for more info about positional arguments." << endl;
         return EXIT_FAILURE;
     }
 
@@ -341,31 +341,30 @@ static int Runner(const PacBio::CLI::Results& args)
     //
     //
     optional<Whitelist> whitelist(none);
-    const std::string& wlSpec = settings.WlSpec;
+    const string& wlSpec = settings.WlSpec;
     try {
         if (!wlSpec.empty()) whitelist = Whitelist(wlSpec);
     } catch (...) {
-        std::cerr << "option --zmws: invalid specification: '" + wlSpec + "'" << std::endl;
+        cerr << "option --zmws: invalid specification: '" + wlSpec + "'" << endl;
     }
 
     // verify input file exists
-    if (!FileExists(inputFile))
-        std::cerr << "INPUT: file does not exist: '" + inputFile + "'" << std::endl;
+    if (!FileExists(inputFile)) cerr << "INPUT: file does not exist: '" + inputFile + "'" << endl;
 
     // verify output file does not already exist
     if (FileExists(outputFile) && !settings.ForceOutput)
-        std::cerr << "OUTPUT: file already exists: '" + outputFile + "'" << std::endl;
+        cerr << "OUTPUT: file already exists: '" + outputFile + "'" << endl;
 
     if (settings.ByStrand && settings.NoPolish)
-        std::cerr << "option --byStrand: incompatible with --noPolish" << std::endl;
+        cerr << "option --byStrand: incompatible with --noPolish" << endl;
 
     // logging
     //
     //
     ofstream logStream;
     {
-        const std::string& logLevel = settings.LogLevel;
-        const std::string& logFile = settings.LogFile;
+        const string& logLevel = settings.LogLevel;
+        const string& logFile = settings.LogFile;
 
         if (!logFile.empty()) {
             logStream.open(logFile);
@@ -380,7 +379,7 @@ static int Runner(const PacBio::CLI::Results& args)
     //
     //
     {
-        const std::string& modelPath = settings.ModelPath;
+        const string& modelPath = settings.ModelPath;
         if (!modelPath.empty()) {
             PBLOG_INFO << "Loading model parameters from: '" << modelPath << "'";
             if (!LoadModels(modelPath)) {
@@ -398,7 +397,7 @@ static int Runner(const PacBio::CLI::Results& args)
     PBLOG_DEBUG << "Found consensus models for: (" << join(avail, ", ") << ')';
 
     DataSet ds(inputFile);
-    const std::string& modelSpec = settings.ModelSpec;
+    const string& modelSpec = settings.ModelSpec;
 
     // test that all input chemistries are supported
     {
@@ -456,7 +455,7 @@ static int Runner(const PacBio::CLI::Results& args)
     if (isBam) {
         unique_ptr<BamWriter> ccsBam(
             new BamWriter(outputFile, PrepareHeader(args.InputCommandLine(), ds)));
-        const std::string pbiFileName = outputFile + ".pbi";
+        const string pbiFileName = outputFile + ".pbi";
         unique_ptr<PbiBuilder> ccsPbi(new PbiBuilder(pbiFileName));
         writer = async(launch::async, BamWriterThread, ref(workQueue), move(ccsBam), move(ccsPbi),
                        settings.RichQVs);
@@ -466,10 +465,10 @@ static int Runner(const PacBio::CLI::Results& args)
 
         if (isXml) {
             // Prepare dataset
-            const std::string desc =
+            const string desc =
                 "Points to the ccs bam file generated by pbccs " + PacBio::UnanimityVersion();
-            const std::string name = "ccs bam";
-            const std::string metatype = "PacBio.ConsensusReadFile.ConsensusReadBamFile";
+            const string name = "ccs bam";
+            const string metatype = "PacBio.ConsensusReadFile.ConsensusReadBamFile";
             DataSet ccsSet(DataSet::TypeEnum::CONSENSUS_READ);
             ExternalResource resource(metatype, outputFile);
             resource.Name(name).Description(desc);
@@ -481,13 +480,13 @@ static int Runner(const PacBio::CLI::Results& args)
             // File path without .bam suffix
             const auto outputPrefix = outputFile.substr(0, outputFile.size() - 4);
             // Save dataset
-            std::ofstream ccsOut(outputPrefix + ".consensusreadset.xml");
+            ofstream ccsOut(outputPrefix + ".consensusreadset.xml");
             ccsSet.SaveToStream(ccsOut);
         }
     } else if (outputExt == "fastq" || outputExt == "fq") {
         writer = async(launch::async, FastqWriterThread, ref(workQueue), ref(outputFile));
     } else {
-        std::cerr << "OUTPUT: invalid file extension: '" + outputExt + "'" << std::endl;
+        cerr << "OUTPUT: invalid file extension: '" + outputExt + "'" << endl;
     }
 
     unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
@@ -555,11 +554,10 @@ static int Runner(const PacBio::CLI::Results& args)
         else
             pw = vector<uint8_t>(read.Sequence().length(), 0);
 
-        chunk->back().Reads.emplace_back(
-            Subread{ReadId(movieNames[movieName], *holeNumber,
-                           Interval(read.QueryStart(), read.QueryEnd())),
-                    read.Sequence(), std::move(ipd), std::move(pw), read.LocalContextFlags(),
-                    read.ReadAccuracy()});
+        chunk->back().Reads.emplace_back(Subread{
+            ReadId(movieNames[movieName], *holeNumber,
+                   Interval(read.QueryStart(), read.QueryEnd())),
+            read.Sequence(), move(ipd), move(pw), read.LocalContextFlags(), read.ReadAccuracy()});
     }
 
     // run the remaining tasks
@@ -571,7 +569,7 @@ static int Runner(const PacBio::CLI::Results& args)
     // wait for the writer thread and get the results counter
     //   then add in the snr/minPasses counts and write the report
     auto counts = writer.get();
-    const std::string& reportFile = settings.ReportFile;
+    const string& reportFile = settings.ReportFile;
 
     if (reportFile == "-")
         WriteResultsReport(cout, counts);
