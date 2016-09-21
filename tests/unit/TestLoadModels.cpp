@@ -103,7 +103,8 @@ Read MkRead(const string& seq, const SNR& snr, const string& mdl, const vector<u
 
 TEST(LoadModelsTest, SupportedChemistries)
 {
-    const std::set<std::string> chem = {"P6-C4", "S/P1-C1/beta", "S/P1-C1.1", "S/P1-C1.2"};
+    const std::set<std::string> chem = {"P6-C4", "S/P1-C1/beta", "S/P1-C1.1", "S/P1-C1.2",
+                                        "S/P1-C1.3"};
     const std::set<std::string> supp = SupportedChemistries();
     std::set<std::string> diff;
     std::set_difference(chem.begin(), chem.end(), supp.begin(), supp.end(),
