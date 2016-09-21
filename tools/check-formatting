@@ -12,7 +12,7 @@ then
     grepCode=$?
 elif [ "$1" == "--staged" ]
 then
-    git diff --cached --name-only --diff-filter=ACMRT | grep -e '.*\.h' -e '.*\.cpp' \
+    git diff --cached --name-only --diff-filter=ACMRT | grep -e '.*\.h$' -e '.*\.cpp' \
     | xargs -n1 ${CLANGFORMAT} -output-replacements-xml \
     | grep -c "<replacement " >/dev/null
     grepCode=$?
