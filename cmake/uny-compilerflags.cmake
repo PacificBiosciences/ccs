@@ -5,9 +5,9 @@ include(CheckCXXCompilerFlag)
 set(UNY_FLAGS "-std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable")
 
 # gperftools support
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND APPLE)
     set(UNY_LINKER_FLAGS "${UNY_LINKER_FLAGS} -Wl,-no_pie")
-endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+endif(CMAKE_BUILD_TYPE STREQUAL "Debug" AND APPLE)
 
 # static linking
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
