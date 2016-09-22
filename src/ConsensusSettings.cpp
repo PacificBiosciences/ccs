@@ -149,13 +149,6 @@ const PlainOption LogFile{
     "Log to a file, instead of STDERR.",
     CLI::Option::StringType("")
 };
-const PlainOption LogLevel{
-    "log_level",
-    { "logLevel" },
-    "Set Log Level",
-    "Set log level.",
-    CLI::Option::StringType("INFO")
-};
 const PlainOption RichQVs{
     "rich_qvs",
     { "richQVs" },
@@ -184,7 +177,7 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
     : ByStrand(options[OptionNames::ByStrand])
     , ForceOutput(options[OptionNames::ForceOutput])
     , LogFile(std::forward<std::string>(options[OptionNames::LogFile]))
-    , LogLevel(std::forward<std::string>(options[OptionNames::LogLevel]))
+    , LogLevel(options.LogLevel())
     , MaxDropFraction(options[OptionNames::MaxDropFraction])
     , MaxLength(options[OptionNames::MaxLength])
     , MinLength(options[OptionNames::MinLength])
@@ -223,8 +216,9 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
 
     i.AlternativeToolContractName("pbccs");
 
-    i.AddHelpOption();     // use built-in help output
-    i.AddVersionOption();  // use built-in version output
+    i.AddHelpOption();      // use built-in help output
+    i.AddLogLevelOption();  // use built-in logLevel option
+    i.AddVersionOption();   // use built-in version output
 
     // clang-format off
     i.AddPositionalArguments({
@@ -251,8 +245,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
         OptionNames::ModelPath,
         OptionNames::ModelSpec,
         OptionNames::NumThreads,
-        OptionNames::LogFile,
-        OptionNames::LogLevel
+        OptionNames::LogFile
     });
 
     const std::string id = "pbccs.tasks.ccs";

@@ -62,8 +62,8 @@
 #include <pacbio/data/ReadId.h>
 #include <pacbio/data/SubreadResultCounter.h>
 #include <pacbio/denovo/SparsePoa.h>
-#include <pacbio/log/Logging.h>
 #include <pacbio/util/Timer.h>
+#include <pbcopper/logging/Logging.h>
 
 namespace PacBio {
 namespace CCS {
