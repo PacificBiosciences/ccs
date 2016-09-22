@@ -41,6 +41,7 @@
 #include <thread>
 
 #include <pbcopper/cli/CLI.h>
+#include <pbcopper/logging/Logging.h>
 
 #include <pacbio/data/PlainOption.h>
 
@@ -56,7 +57,7 @@ struct ConsensusSettings
     const size_t ChunkSize = 1;
     bool ForceOutput;
     std::string LogFile;
-    std::string LogLevel;
+    Logging::LogLevel LogLevel;
     double MaxDropFraction;
     size_t MaxLength;
     const size_t MaxPoaCoverage = std::numeric_limits<size_t>::max();

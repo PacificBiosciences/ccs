@@ -66,8 +66,8 @@
 #include <pacbio/data/Interval.h>
 #include <pacbio/data/ReadId.h>
 #include <pacbio/io/Utility.h>
-#include <pacbio/log/Logging.h>
 #include <pacbio/parallel/WorkQueue.h>
+#include <pbcopper/logging/Logging.h>
 
 #include <pacbio/Version.h>
 
@@ -372,7 +372,7 @@ static int Runner(const PacBio::CLI::Results& args)
     //
     ofstream logStream;
     {
-        const string& logLevel = settings.LogLevel;
+        const auto& logLevel = settings.LogLevel;
         const string& logFile = settings.LogFile;
 
         if (!logFile.empty()) {

@@ -47,7 +47,7 @@
 
 #include <pacbio/ccs/SparseAlignment.h>
 #include <pacbio/denovo/SparsePoa.h>
-#include <pacbio/log/Logging.h>
+#include <pbcopper/logging/Logging.h>
 
 using PacBio::Poa::detail::SdpAnchorVector;
 using PacBio::Align::AlignConfig;
