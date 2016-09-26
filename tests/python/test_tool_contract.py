@@ -32,7 +32,7 @@ class TestCCSApp(pbcommand.testkit.PbTestApp):
         "pbccs.task_options.min_passes": 3,
         "pbccs.task_options.min_zscore": -5,
         "pbccs.task_options.max_drop_frac": 0.33,
-        "pbccs.task_options.no_polish": True,
+        "pbccs.task_options.polish": False
     }
 
     def setUp(self):

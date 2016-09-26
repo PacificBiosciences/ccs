@@ -89,7 +89,14 @@ const PlainOption NoPolish{
     { "noPolish" },
     "No Polish CCS",
     "Only output the initial template derived from the POA (faster, less accurate).",
-    CLI::Option::BoolType()
+    CLI::Option::BoolType(false)
+};
+const PlainOption Polish{
+    "polish",
+    { "polish" },
+    "Polish CCS",
+    "Emit high-accuracy CCS sequences polished using the Arrow algorithm",
+    CLI::Option::BoolType(true)
 };
 const PlainOption MinReadScore{
     "min_read_score",
@@ -191,12 +198,15 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
                     : static_cast<float>(options[OptionNames::MinZScore]))
     , ModelPath(std::forward<std::string>(options[OptionNames::ModelPath]))
     , ModelSpec(std::forward<std::string>(options[OptionNames::ModelSpec]))
-    , NoPolish(options[OptionNames::NoPolish])
     , NThreads(ThreadCount(options[OptionNames::NumThreads]))
     , ReportFile(std::forward<std::string>(options[OptionNames::ReportFile]))
     , RichQVs(options[OptionNames::RichQVs])
     , WlSpec(std::forward<std::string>(options[OptionNames::Zmws]))
 {
+    // N.B. If the user somehow specifies both polish and noPolish, noPolish wins.
+    // Unfortunately there's no sensible way to check for this condition and error out.
+    // This could be improved upon in the pbcopper API, perhaps.
+    NoPolish = options[OptionNames::NoPolish] || !options[OptionNames::Polish];
 }
 
 size_t ConsensusSettings::ThreadCount(int n)
@@ -240,6 +250,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
         OptionNames::MinReadScore,
         OptionNames::ByStrand,
         OptionNames::NoPolish,
+        OptionNames::Polish,
         OptionNames::RichQVs,
         OptionNames::ReportFile,
         OptionNames::ModelPath,
@@ -258,7 +269,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     tcTask.AddOption(OptionNames::MinPredictedAccuracy);
     tcTask.AddOption(OptionNames::MinZScore);
     tcTask.AddOption(OptionNames::MaxDropFraction);
-    tcTask.AddOption(OptionNames::NoPolish);
+    tcTask.AddOption(OptionNames::Polish);
     tcTask.AddOption(OptionNames::ByStrand);
     tcTask.AddOption(OptionNames::ModelPath);
     tcTask.AddOption(OptionNames::ModelSpec);
