@@ -198,7 +198,6 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
                     : static_cast<float>(options[OptionNames::MinZScore]))
     , ModelPath(std::forward<std::string>(options[OptionNames::ModelPath]))
     , ModelSpec(std::forward<std::string>(options[OptionNames::ModelSpec]))
-    , NThreads(ThreadCount(options[OptionNames::NumThreads]))
     , ReportFile(std::forward<std::string>(options[OptionNames::ReportFile]))
     , RichQVs(options[OptionNames::RichQVs])
     , WlSpec(std::forward<std::string>(options[OptionNames::Zmws]))
@@ -207,6 +206,17 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
     // Unfortunately there's no sensible way to check for this condition and error out.
     // This could be improved upon in the pbcopper API, perhaps.
     NoPolish = options[OptionNames::NoPolish] || !options[OptionNames::Polish];
+
+    // N.B. This is the trick to resolved nthreads from either our
+    // option or the "nproc" which has meaning in tool contracts.
+    // Derek says he may streamline the API in the future.
+    int requestedNThreads;
+    if (options.IsFromRTC()) {
+        requestedNThreads = options.NumProcessors();
+    } else {
+        requestedNThreads = options[OptionNames::NumThreads];
+    }
+    NThreads = ThreadCount(requestedNThreads);
 }
 
 size_t ConsensusSettings::ThreadCount(int n)
