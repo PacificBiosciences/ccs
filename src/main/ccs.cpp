@@ -250,8 +250,10 @@ BamHeader PrepareHeader(const string& cmdLine, const DataSet& ds)
 
     for (const auto& bam : ds.BamFiles()) {
         for (const auto& rg : bam.Header().ReadGroups()) {
-            if (rg.ReadType() != "SUBREAD")
+            if (rg.ReadType() != "SUBREAD") {
                 cerr << "invalid input file, READTYPE must be SUBREAD" << endl;
+                exit(EXIT_FAILURE);
+            }
 
             ReadGroupInfo readGroup(rg.MovieName(), "CCS");
             readGroup.BindingKit(rg.BindingKit())
@@ -355,17 +357,22 @@ static int Runner(const PacBio::CLI::Results& args)
         if (!wlSpec.empty()) whitelist = Whitelist(wlSpec);
     } catch (...) {
         cerr << "option --zmws: invalid specification: '" + wlSpec + "'" << endl;
+        return EXIT_FAILURE;
     }
 
     // verify input file exists
     if (!FileExists(inputFile)) cerr << "INPUT: file does not exist: '" + inputFile + "'" << endl;
 
     // verify output file does not already exist
-    if (FileExists(outputFile) && !settings.ForceOutput)
+    if (FileExists(outputFile) && !settings.ForceOutput) {
         cerr << "OUTPUT: file already exists: '" + outputFile + "'" << endl;
+        return EXIT_FAILURE;
+    }
 
-    if (settings.ByStrand && settings.NoPolish)
+    if (settings.ByStrand && settings.NoPolish) {
         cerr << "option --byStrand: incompatible with --noPolish" << endl;
+        return EXIT_FAILURE;
+    }
 
     // logging
     //
@@ -499,6 +506,7 @@ static int Runner(const PacBio::CLI::Results& args)
         writer = async(launch::async, FastqWriterThread, ref(workQueue), ref(outputFile));
     } else {
         cerr << "OUTPUT: invalid file extension: '" + outputExt + "'" << endl;
+        return EXIT_FAILURE;
     }
 
     unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
