@@ -186,31 +186,33 @@ std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i)
     const double p_d = params.Deletion, l_d = std::log(p_d), l2_d = l_d * l_d;
     const double p_b = params.Branch, l_b = std::log(p_b), l2_b = l_b * l_b;
     const double p_s = params.Stick, l_s = std::log(p_s), l2_s = l_s * l_s;
+    const double p_n = p_m + p_d;  // next
+    const double p_e = p_b + p_s;  // extra
 
-    // First moment expectations (zero terms used for clarity)
+    // first moment expectations (zero terms used for clarity)
     const double E_M = ExpectedLLForEmission(MoveType::MATCH, prev, curr, MomentType::FIRST);
     const double E_D = 0.0;
     const double E_B = ExpectedLLForEmission(MoveType::BRANCH, prev, curr, MomentType::FIRST);
     const double E_S = ExpectedLLForEmission(MoveType::STICK, prev, curr, MomentType::FIRST);
+    const double E_N = (l_m + E_M) * p_m / p_n + (l_d + E_D) * p_d / p_n;
+    const double E_E = (l_b + E_B) * p_b / p_e + (l_s + E_S) * p_s / p_e;
 
-    // Calculate first moment
-    const double E_MD = (l_m + E_M) * p_m / (p_m + p_d) + (l_d + E_D) * p_d / (p_m + p_d);
-    const double E_I = (l_b + E_B) * p_b / (p_b + p_s) + (l_s + E_S) * p_s / (p_b + p_s);
-    const double E_BS = E_I * (p_s + p_b) / (p_m + p_d);
-    const double mean = E_MD + E_BS;
+    // calculate first moment
+    const double mean = E_N + p_e * E_E / p_n;
 
-    // Calculate second momment
-    // Key expansion used repeatedly here: (A + B)^2 = A^2 + 2AB + B^2
+    // second moment expectations
     const double E2_M = ExpectedLLForEmission(MoveType::MATCH, prev, curr, MomentType::SECOND);
+    const double E2_D = 0.0;
     const double E2_S = ExpectedLLForEmission(MoveType::STICK, prev, curr, MomentType::SECOND);
     const double E2_B = ExpectedLLForEmission(MoveType::BRANCH, prev, curr, MomentType::SECOND);
-    const double E2_MD =
-        (l2_m + 2 * l_m * E_M + E2_M) * p_m / (p_m + p_d) + l2_d * p_d / (p_m + p_d);
-    const double E2_I = (l2_b + 2 * E_B * l_b + E2_B) * p_b / (p_b + p_s) +
-                        (l2_s + 2 * E_S * l_s + E2_S) * p_s / (p_b + p_s);
-    const double E2_BS = E2_I * (p_s + p_b) / (p_m + p_d);
-    const double moment2 = E2_BS + 2 * E_BS * E_MD + E2_MD;
-    const double var = moment2 - mean * mean;
+    const double E2_N = (l2_m + 2 * l_m * E_M + E2_M) * p_m / p_n + l2_d * p_d / p_n;
+    const double E2_E =
+        (l2_b + 2 * E_B * l_b + E2_B) * p_b / p_e + (l2_s + 2 * E_S * l_s + E2_S) * p_s / p_e;
+
+    // calculate second moment
+    const double E2_LL = E2_N + 2 * p_e * E_N * E_E / p_n + p_e * (1 + p_e) * E2_E / (p_n * p_n);
+    const double var = E2_LL - (mean * mean);
+
     return std::make_pair(mean, var);
 }
 

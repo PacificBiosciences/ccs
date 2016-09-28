@@ -58,7 +58,7 @@ struct IntegratorConfig
     double MinZScore;
     double ScoreDiff;
 
-    IntegratorConfig(double minZScore = -3.5, double scoreDiff = 12.5);
+    IntegratorConfig(double minZScore = -3.4, double scoreDiff = 12.5);
 };
 
 /// At its core, this class holds a vector of Evaluators and provides helper

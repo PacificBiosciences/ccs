@@ -332,7 +332,7 @@ TEST(TemplateTest, P6SiteNormalParameters)
     auto results = tester.NormalParameters();
 
     EXPECT_EQ(-9.3915588824261888, results.first);
-    EXPECT_EQ(26.883352639390957, results.second);
+    EXPECT_EQ(30.392545575324248, results.second);
 }
 
 }  // namespace anonymous
