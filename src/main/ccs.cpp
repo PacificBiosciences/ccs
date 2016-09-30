@@ -251,7 +251,7 @@ BamHeader PrepareHeader(const string& cmdLine, const DataSet& ds)
     for (const auto& bam : ds.BamFiles()) {
         for (const auto& rg : bam.Header().ReadGroups()) {
             if (rg.ReadType() != "SUBREAD") {
-                cerr << "invalid input file, READTYPE must be SUBREAD" << endl;
+                PBLOG_FATAL << "invalid input file, READTYPE must be SUBREAD";
                 exit(EXIT_FAILURE);
             }
 
@@ -330,6 +330,25 @@ static std::vector<ExternalResource> BarcodeSets(const ExternalResources& ext)
 
 static int Runner(const PacBio::CLI::Results& args)
 {
+    // logging
+    //
+    // Initialize logging as the very first step. This allows us to redirect
+    // incorrect CLI usage to a log file.
+    ofstream logStream;
+    {
+        const auto logLevel = args.LogLevel();
+        const std::string logFile = args["log_file"];
+
+        Logger* logger;
+        if (!logFile.empty()) {
+            logStream.open(logFile);
+            logger = &Logger::Default(new Logger(logStream, logLevel));
+        } else {
+            logger = &Logger::Default(new Logger(cerr, logLevel));
+        }
+        InstallSignalHandlers(*logger);
+    }
+
     using boost::algorithm::join;
     using boost::make_optional;
 
@@ -338,9 +357,9 @@ static int Runner(const PacBio::CLI::Results& args)
 
     // input validation
     if (files.size() != 2) {
-        cerr << "ERROR: Please provide the INPUT and OUTPUT files.\n"
-             << "       See --help for more info about positional arguments." << endl;
-        return EXIT_FAILURE;
+        PBLOG_FATAL << "ERROR: Please provide the INPUT and OUTPUT files. See --help for more info "
+                       "about positional arguments.";
+        exit(EXIT_FAILURE);
     }
 
     const string inputFile = files.front();
@@ -356,39 +375,22 @@ static int Runner(const PacBio::CLI::Results& args)
     try {
         if (!wlSpec.empty()) whitelist = Whitelist(wlSpec);
     } catch (...) {
-        cerr << "option --zmws: invalid specification: '" + wlSpec + "'" << endl;
-        return EXIT_FAILURE;
+        PBLOG_FATAL << "option --zmws: invalid specification: '" + wlSpec + "'";
+        exit(EXIT_FAILURE);
     }
 
     // verify input file exists
-    if (!FileExists(inputFile)) cerr << "INPUT: file does not exist: '" + inputFile + "'" << endl;
+    if (!FileExists(inputFile)) PBLOG_FATAL << "INPUT: file does not exist: '" + inputFile + "'";
 
     // verify output file does not already exist
     if (FileExists(outputFile) && !settings.ForceOutput) {
-        cerr << "OUTPUT: file already exists: '" + outputFile + "'" << endl;
-        return EXIT_FAILURE;
+        PBLOG_FATAL << "OUTPUT: file already exists: '" + outputFile + "'";
+        exit(EXIT_FAILURE);
     }
 
     if (settings.ByStrand && settings.NoPolish) {
-        cerr << "option --byStrand: incompatible with --noPolish" << endl;
-        return EXIT_FAILURE;
-    }
-
-    // logging
-    //
-    //
-    ofstream logStream;
-    {
-        const auto& logLevel = settings.LogLevel;
-        const string& logFile = settings.LogFile;
-
-        if (!logFile.empty()) {
-            logStream.open(logFile);
-            Logger::Default(new Logger(logStream, logLevel));
-        } else {
-            Logger::Default(new Logger(cerr, logLevel));
-        }
-        InstallSignalHandlers();
+        PBLOG_FATAL << "option --byStrand: incompatible with --noPolish";
+        exit(EXIT_FAILURE);
     }
 
     // load models from file or directory
@@ -400,7 +402,7 @@ static int Runner(const PacBio::CLI::Results& args)
             PBLOG_INFO << "Loading model parameters from: '" << modelPath << "'";
             if (!LoadModels(modelPath)) {
                 PBLOG_FATAL << "Failed to load models from: " << modelPath;
-                exit(-1);
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -422,14 +424,14 @@ static int Runner(const PacBio::CLI::Results& args)
             PBLOG_INFO << "Overriding model selection with: '" << modelSpec << "'";
             if (!(OverrideModel(modelSpec) && used.insert(modelSpec).second)) {
                 PBLOG_FATAL << "Failed to find specified model: " << modelSpec;
-                exit(-1);
+                exit(EXIT_FAILURE);
             }
         } else {
             try {
                 used = ds.SequencingChemistries();
             } catch (InvalidSequencingChemistryException& e) {
                 PBLOG_FATAL << e.what();
-                exit(-1);
+                exit(EXIT_FAILURE);
             }
 
             vector<string> unavail;
@@ -440,7 +442,7 @@ static int Runner(const PacBio::CLI::Results& args)
             if (!unavail.empty()) {
                 PBLOG_FATAL << "Unsupported chemistries found: (" << join(unavail, ", ") << "), "
                             << "supported chemistries are: (" << join(avail, ", ") << ")";
-                exit(-1);
+                exit(EXIT_FAILURE);
             }
         }
         PBLOG_DEBUG << "Using consensus models for: (" << join(used, ", ") << ')';
@@ -448,7 +450,7 @@ static int Runner(const PacBio::CLI::Results& args)
 
     if (!ValidBaseFeatures(ds)) {
         PBLOG_FATAL << "Missing base features: IPD or PulseWidth";
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
 
     const auto filter = PbiFilter::FromDataSet(ds);
@@ -505,8 +507,8 @@ static int Runner(const PacBio::CLI::Results& args)
     } else if (outputExt == "fastq" || outputExt == "fq") {
         writer = async(launch::async, FastqWriterThread, ref(workQueue), ref(outputFile));
     } else {
-        cerr << "OUTPUT: invalid file extension: '" + outputExt + "'" << endl;
-        return EXIT_FAILURE;
+        PBLOG_FATAL << "OUTPUT: invalid file extension: '" + outputExt + "'";
+        exit(EXIT_FAILURE);
     }
 
     unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
@@ -559,7 +561,7 @@ static int Runner(const PacBio::CLI::Results& args)
                          read.BarcodeReverse() != get<1>(*barcodes) ||
                          read.BarcodeQuality() != get<2>(*barcodes))) {
             PBLOG_FATAL << "invalid data: \"bc\" or \"bq\" tag did not agree between subreads!";
-            exit(-1);
+            exit(EXIT_FAILURE);
         }
 
         vector<uint8_t> ipd;
