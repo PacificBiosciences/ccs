@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,57 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Armin Töpfer
 
-#pragma once
+#include <numeric>
+#include <vector>
 
-#include <chrono>
-#include <string>
+#include <pacbio/data/ArrayRead.h>
+#include <pacbio/data/MSAColumn.h>
+
+#include <pacbio/data/MSA.h>
 
 namespace PacBio {
-namespace Util {
-
-class Timer
+namespace Data {
+MSA::MSA(const std::vector<Data::ArrayRead>& reads)
 {
-public:
-    Timer();
+    // Determine left- and right-most positions
+    for (const auto& r : reads) {
+        beginPos = std::min(beginPos, r.ReferenceStart());
+        endPos = std::max(endPos, r.ReferenceEnd());
+    }
+    // Fill counts
+    FillCounts(reads);
+}
 
-    float ElapsedMilliseconds() const;
-    float ElapsedSeconds() const;
-    std::string ElapsedTime() const;
-    void Restart();
+void MSA::FillCounts(const std::vector<ArrayRead>& reads)
+{
+    // Prepare 2D array for counts
+    counts.resize(endPos - beginPos);
 
-private:
-    std::chrono::time_point<std::chrono::steady_clock> tick;
-};
-
-}  // namespace Util
+    // Fill in counts
+    for (const auto& r : reads) {
+        int pos = r.ReferenceStart() - beginPos;
+        assert(pos >= 0);
+        for (const auto& b : r.Bases) {
+            switch (b.Cigar) {
+                case 'X':
+                case '=':
+                    counts[pos][b.Nucleotide]++;
+                    ++pos;
+                    break;
+                case 'D':
+                    counts[pos]['N']++;
+                    ++pos;
+                case 'I':
+                    break;
+                case 'P':
+                    break;
+                default:
+                    throw std::runtime_error("Unexpected cigar " + std::to_string(b.Cigar));
+            }
+        }
+    }
+}
+}  // namespace Data
 }  // namespace PacBio

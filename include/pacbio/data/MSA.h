@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,52 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Armin Töpfer
 
 #pragma once
 
-#include <chrono>
-#include <string>
+#include <vector>
+
+#include <pacbio/data/ArrayRead.h>
+#include <pacbio/data/MSAColumn.h>
 
 namespace PacBio {
-namespace Util {
-
-class Timer
+namespace Data {
+/// Multiple sequence alignment containing counts
+struct MSA
 {
-public:
-    Timer();
+private:
+    using MsaVec = std::vector<MSAColumn>;
 
-    float ElapsedMilliseconds() const;
-    float ElapsedSeconds() const;
-    std::string ElapsedTime() const;
-    void Restart();
+public:
+    using MsaIt = MsaVec::iterator;
+    using MsaItConst = MsaVec::const_iterator;
+
+public:
+    MSA(const std::vector<Data::ArrayRead>& reads);
+
+public:
+    /// Parameter is an index in ABSOLUTE reference space
+    MSAColumn operator[](int i) const { return counts[i - beginPos]; }
+    /// Parameter is an index in ABSOLUTE reference space
+    MSAColumn& operator[](int i) { return counts[i - beginPos]; }
+
+    // clang-format off
+    MsaIt      begin()        { return counts.begin();  }
+    MsaIt      end()          { return counts.end();    }
+    MsaItConst begin() const  { return counts.begin();  }
+    MsaItConst end() const    { return counts.end();    }
+    MsaItConst cbegin() const { return counts.cbegin(); }
+    MsaItConst cend() const   { return counts.cend();   }
+    // clang-format on
+
+public:
+    MsaVec counts;
+    int beginPos = std::numeric_limits<int>::max();
+    int endPos = 0;
 
 private:
-    std::chrono::time_point<std::chrono::steady_clock> tick;
+    void FillCounts(const std::vector<ArrayRead>& reads);
 };
-
-}  // namespace Util
+}  // namespace Data
 }  // namespace PacBio

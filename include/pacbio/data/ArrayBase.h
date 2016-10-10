@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,41 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Armin Töpfer
 
 #pragma once
 
-#include <chrono>
-#include <string>
-
 namespace PacBio {
-namespace Util {
+namespace Data {
 
-class Timer
+/// A single base in an ArrayRead with its associated qvs and cigar
+struct ArrayBase
 {
-public:
-    Timer();
-
-    float ElapsedMilliseconds() const;
-    float ElapsedSeconds() const;
-    std::string ElapsedTime() const;
-    void Restart();
-
-private:
-    std::chrono::time_point<std::chrono::steady_clock> tick;
+    ArrayBase(char cigar, char nucleotide, uint8_t qualQV, uint8_t subQV, uint8_t delQV,
+              uint8_t insQV)
+        : Cigar(cigar)
+        , Nucleotide(nucleotide)
+        , QualQV(qualQV)
+        , ProbTrue(1 - pow(10, -1.0 * qualQV / 10.0))
+        , ProbCorrectBase(1 - pow(10, -1.0 * subQV / 10.0))
+        , ProbNoDeletion(1 - pow(10, -1.0 * delQV / 10.0))
+        , ProbNoInsertion(1 - pow(10, -1.0 * insQV / 10.0))
+    {
+    }
+    ArrayBase(char cigar, char nucleotide, uint8_t qualQV)
+        : Cigar(cigar)
+        , Nucleotide(nucleotide)
+        , QualQV(qualQV)
+        , ProbTrue(1 - pow(10, -1.0 * qualQV / 10.0))
+    {
+    }
+    char Cigar;
+    char Nucleotide;
+    uint8_t QualQV;
+    double ProbTrue;
+    double ProbCorrectBase = 0;
+    double ProbNoDeletion = 0;
+    double ProbNoInsertion = 0;
 };
-
-}  // namespace Util
+}  // namespace Data
 }  // namespace PacBio

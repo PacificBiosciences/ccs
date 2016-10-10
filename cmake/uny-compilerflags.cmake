@@ -2,7 +2,7 @@
 include(CheckCXXCompilerFlag)
 
 # shared CXX flags for all source code & tests
-set(UNY_FLAGS "-std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable")
+set(UNY_FLAGS "-std=c++14 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable")
 
 # gperftools support
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND APPLE)
@@ -35,7 +35,7 @@ if (SANITIZE)
     # AddressSanitizer is a fast memory error detector
     set(UNY_SANITY_FLAGS "${UNY_SANITY_FLAGS} -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls")
 
-    # Clang Thread Safety Analysis is a C++ language extension which warns about 
+    # Clang Thread Safety Analysis is a C++ language extension which warns about
     # potential race conditions in code.
     set(UNY_SANITY_FLAGS "${UNY_SANITY_FLAGS} -Wthread-safety")
 

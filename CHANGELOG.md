@@ -1,5 +1,12 @@
 # UNANIMITY - CHANGELOG
 
+## [2.1.0]
+
+### Added
+ - Add juliet, a minimal minor variant caller
+ - Add Fisher's exact test
+ - Juliet JSON, HTMl, and pretty print output
+
 ## [2.0.4]
 
 ### Added

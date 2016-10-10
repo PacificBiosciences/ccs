@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,26 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Armin Töpfer
 
 #pragma once
 
-#include <chrono>
-#include <string>
+#include <fstream>
+
+#include <pacbio/juliet/JulietSettings.h>
 
 namespace PacBio {
-namespace Util {
+namespace Juliet {
 
-class Timer
+/// Provides a method to execute the complete Juliet workflow
+class JulietWorkflow
 {
 public:
-    Timer();
-
-    float ElapsedMilliseconds() const;
-    float ElapsedSeconds() const;
-    std::string ElapsedTime() const;
-    void Restart();
+    /// Execute the complete Juliet workflow
+    void Run(const JulietSettings& settings);
 
 private:
-    std::chrono::time_point<std::chrono::steady_clock> tick;
+    std::ostream& LogCI(const std::string& prefix);
 };
-
-}  // namespace Util
-}  // namespace PacBio
+}
+}  // ::PacBio::Juliet

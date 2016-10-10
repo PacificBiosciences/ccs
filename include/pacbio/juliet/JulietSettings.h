@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,40 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Armin Töpfer
 
 #pragma once
 
-#include <chrono>
 #include <string>
+#include <utility>
+
+#include <pbcopper/cli/CLI.h>
 
 namespace PacBio {
-namespace Util {
+namespace Juliet {
 
-class Timer
+/// Contains user provided CLI configuration for Juliet
+struct JulietSettings
 {
-public:
-    Timer();
+    std::string InputFile;
+    std::string OutputPrefix;
+    const float PValueThreshold;
+    int RegionStart = 0;
+    int RegionEnd = std::numeric_limits<int>::max();
+    bool Details;
+    bool DRMOnly;
 
-    float ElapsedMilliseconds() const;
-    float ElapsedSeconds() const;
-    std::string ElapsedTime() const;
-    void Restart();
+    /// Parses the provided CLI::Results and retrieves a defined set of options.
+    JulietSettings(const PacBio::CLI::Results& options);
 
-private:
-    std::chrono::time_point<std::chrono::steady_clock> tick;
+    size_t ThreadCount(int n);
+
+    /// Given the description of the tool and its version, create all
+    /// necessary CLI::Options for the ccs executable.
+    static PacBio::CLI::Interface CreateCLI();
+
+    /// Splits region into ReconstructionStart and ReconstructionEnd.
+    static void SplitRegion(const std::string& region, int* start, int* end);
 };
-
-}  // namespace Util
-}  // namespace PacBio
+}
+}  // ::PacBio::Juliet

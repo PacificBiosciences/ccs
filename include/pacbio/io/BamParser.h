@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,38 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Armin Töpfer
 
 #pragma once
 
-#include <chrono>
+#include <functional>
 #include <string>
+#include <vector>
+
+#include <pbbam/BamFile.h>
+#include <pbbam/BamRecord.h>
+#include <pbbam/EntireFileQuery.h>
+
+#include <pacbio/data/ArrayRead.h>
 
 namespace PacBio {
-namespace Util {
+namespace IO {
 
-class Timer
+/// \brief Wrapper around pbbam to ease BAM parsing and region extraction
+static std::vector<Data::ArrayRead> ParseBam(const std::string& filePath, const int regionStart = 0,
+                                             const int regionEnd = std::numeric_limits<int>::max())
 {
-public:
-    Timer();
+    std::vector<Data::ArrayRead> returnList;
 
-    float ElapsedMilliseconds() const;
-    float ElapsedSeconds() const;
-    std::string ElapsedTime() const;
-    void Restart();
-
-private:
-    std::chrono::time_point<std::chrono::steady_clock> tick;
-};
-
-}  // namespace Util
-}  // namespace PacBio
+    int idx = 0;
+    // Iterate over all records and convert online
+    for (auto& record : BAM::EntireFileQuery(filePath)) {
+        if (record.ReferenceStart() < regionEnd && record.ReferenceEnd() > regionStart) {
+            record.Clip(BAM::ClipType::CLIP_TO_REFERENCE, regionStart, regionEnd);
+            returnList.emplace_back(record, idx++);
+        }
+    }
+    return returnList;
+}
+}
+}  // ::PacBio::IO

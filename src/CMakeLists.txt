@@ -60,12 +60,19 @@ add_library(unanimity STATIC
     ${UNY_HEADER}
     ${UNY_HIDDEN_HEADER}
     ${CPPOPTPARSE_CPP}
+    ArrayRead.cpp
     ChainSeeds.cpp
     ChemistryMapping.cpp
     ChemistryTriple.cpp
     ConsensusSettings.cpp
+    Fisher.cpp
     Interval.cpp
+    JulietSettings.cpp
+    JulietWorkflow.cpp
+    MSA.cpp
+    MSAColumn.cpp
     ReadId.cpp
+    ResistanceCaller.cpp
     SparsePoa.cpp
     SubreadResultCounter.cpp
     Timer.cpp
@@ -92,6 +99,7 @@ set(UNY_LIBRARIES
 
 # add executables
 if (UNY_build_bin)
+    ## CCS
     add_executable(ccs ${UNY_SourceDir}/main/ccs.cpp)
 
     set_target_properties(ccs PROPERTIES
@@ -108,9 +116,38 @@ if (UNY_build_bin)
         ${CMAKE_DL_LIBS}
     )
 
-    if (TARGET pbbam)
-        add_dependencies(ccs pbbam)
+    if (TARGET htslib)
+        add_dependencies(ccs htslib)
     endif()
 
-    install(TARGETS ccs RUNTIME DESTINATION bin)
+    ## Juliet
+    add_executable(juliet ${UNY_SourceDir}/main/juliet.cpp)
+
+    set_target_properties(juliet PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+
+    target_include_directories(juliet
+        PUBLIC ${UNY_INCLUDE_DIRS}
+        PUBLIC ${JUNCTION_ALL_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(juliet
+        ${UNY_LIBRARIES}
+        ${JUNCTION_ALL_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${CMAKE_DL_LIBS}
+    )
+
+    if (TARGET htslib)
+        add_dependencies(ccs htslib)
+        add_dependencies(juliet htslib)
+    endif()
+
+    if (TARGET pbbam)
+        add_dependencies(ccs pbbam)
+        add_dependencies(juliet pbbam)
+    endif()
+
+    install(TARGETS ccs juliet RUNTIME DESTINATION bin)
 endif()

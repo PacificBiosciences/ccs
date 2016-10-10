@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,40 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Armin Töpfer
 
-#pragma once
-
-#include <chrono>
+#include <exception>
+#include <iostream>
 #include <string>
+#include <vector>
 
-namespace PacBio {
-namespace Util {
+#include <pbcopper/cli/CLI.h>
 
-class Timer
+#include <pacbio/juliet/JulietSettings.h>
+#include <pacbio/juliet/JulietWorkflow.h>
+
+namespace {
+using namespace PacBio::Juliet;
+
+static int Runner(const PacBio::CLI::Results& options)
 {
-public:
-    Timer();
+    // Check args size, as pbcopper does not enforce the correct number
+    if (options.PositionalArguments().size() != 2) {
+        std::cerr << "ERROR: Please provide BAM input and output prefix, see --help" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-    float ElapsedMilliseconds() const;
-    float ElapsedSeconds() const;
-    std::string ElapsedTime() const;
-    void Restart();
+    // Parse options
+    JulietSettings settings(options);
+    JulietWorkflow workflow;
+    workflow.Run(settings);
 
-private:
-    std::chrono::time_point<std::chrono::steady_clock> tick;
+    return EXIT_SUCCESS;
+}
 };
 
-}  // namespace Util
-}  // namespace PacBio
+// Entry point
+int main(int argc, char* argv[])
+{
+    return PacBio::CLI::Run(argc, argv, JulietSettings::CreateCLI(), &Runner);
+}

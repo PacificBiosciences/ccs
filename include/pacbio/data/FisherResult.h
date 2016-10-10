@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,18 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Armin Töpfer
 
 #pragma once
 
-#include <chrono>
-#include <string>
-
 namespace PacBio {
-namespace Util {
-
-class Timer
+namespace Data {
+struct FisherResult
 {
-public:
-    Timer();
-
-    float ElapsedMilliseconds() const;
-    float ElapsedSeconds() const;
-    std::string ElapsedTime() const;
-    void Restart();
-
-private:
-    std::chrono::time_point<std::chrono::steady_clock> tick;
+    std::array<double, 5> pValues = {{0, 0, 0, 0, 0}};
+    std::array<double, 5> mask = {{0, 0, 0, 0, 0}};
+    bool hit = false;
+    int argMax = 0;
 };
-
-}  // namespace Util
-}  // namespace PacBio
+}
+}  // ::PacBio::Statistics

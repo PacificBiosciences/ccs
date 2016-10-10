@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,55 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Armin Töpfer
 
 #pragma once
 
-#include <chrono>
-#include <string>
+#include <algorithm>
+#include <array>
+#include <vector>
+
+#include <pacbio/data/ArrayRead.h>
+#include <pacbio/data/FisherResult.h>
 
 namespace PacBio {
-namespace Util {
-
-class Timer
+namespace Data {
+class MSAColumn
 {
 public:
-    Timer();
+    // Relative per nucleotide abundance
+    double Frequency(int i) const { return (*this)[i] / static_cast<double>(Coverage()); }
+    double Frequency(char c) const { return (*this)[c] / static_cast<double>(Coverage()); }
 
-    float ElapsedMilliseconds() const;
-    float ElapsedSeconds() const;
-    std::string ElapsedTime() const;
-    void Restart();
+    // Nucleotide counts
+    int operator[](int i) const { return counts[i]; }
+    int& operator[](int i) { return counts[i]; }
+    int operator[](char c) const { return counts[NucleotideToTag(c)]; }
+    int& operator[](char c) { return counts[NucleotideToTag(c)]; }
 
-private:
-    std::chrono::time_point<std::chrono::steady_clock> tick;
+    operator std::array<int, 5>() { return counts; }
+    explicit operator int() { return Coverage(); }
+
+public:
+    int Coverage() const;
+
+public:
+    void AddFisherResult(const FisherResult& f);
+
+public:
+    std::array<int, 5> counts{{0, 0, 0, 0, 0}};
+    std::array<double, 5> pValues{{0, 0, 0, 0, 0}};
+    std::array<double, 5> mask{{0, 0, 0, 0, 0}};
+    bool hit = false;
+    int argMax = 0;
+
+public:
+    friend std::ostream& operator<<(std::ostream& stream, const MSAColumn& r)
+    {
+        for (int j = 0; j < 5; ++j)
+            stream << r.counts.at(j) << "\t" << r.pValues.at(j) << "\t";
+        return stream;
+    }
 };
-
-}  // namespace Util
+}  // namespace Data
 }  // namespace PacBio

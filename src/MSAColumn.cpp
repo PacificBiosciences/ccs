@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,29 +33,25 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+// Author: Armin Töpfer
 
-#pragma once
+#include <array>
+#include <numeric>
 
-#include <chrono>
-#include <string>
+#include <pacbio/data/FisherResult.h>
+
+#include <pacbio/data/MSAColumn.h>
 
 namespace PacBio {
-namespace Util {
+namespace Data {
+int MSAColumn::Coverage() const { return std::accumulate(counts.cbegin(), counts.cend(), 0); }
 
-class Timer
+void MSAColumn::AddFisherResult(const FisherResult& f)
 {
-public:
-    Timer();
-
-    float ElapsedMilliseconds() const;
-    float ElapsedSeconds() const;
-    std::string ElapsedTime() const;
-    void Restart();
-
-private:
-    std::chrono::time_point<std::chrono::steady_clock> tick;
-};
-
-}  // namespace Util
+    pValues = f.pValues;
+    mask = f.mask;
+    hit = f.hit;
+    argMax = f.argMax;
+}
+}  // namespace Data
 }  // namespace PacBio
