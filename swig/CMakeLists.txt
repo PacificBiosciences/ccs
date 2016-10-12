@@ -38,13 +38,15 @@ add_library(_ConsensusCore2 MODULE
 
 target_include_directories(_ConsensusCore2
     PUBLIC ${UNY_IncludeDir}
-    PUBLIC ${CMAKE_BINARY_DIR}/generated
+    ${CMAKE_BINARY_DIR}/generated
+    ${pbcopper_INCLUDE_DIRS}
 )
 
 set(CC2_LIBRARIES
     ${PRE_LINK}
     cc2
     ${POST_LINK}
+    ${pbcopper_LIBRARIES}
     CACHE INTERNAL "" FORCE)
 
 target_link_libraries(_ConsensusCore2

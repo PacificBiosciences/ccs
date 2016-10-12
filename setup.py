@@ -144,6 +144,7 @@ class MyBuildExt(build_ext):
             cmake(thisDir, self.build_temp, targets)
         for fname in ("_ConsensusCore2.so", "__init__.py"):
             copy2(os.path.join(self.build_temp, "swig", "lib", fname), destDir)
+        copy2(os.path.join(self.build_temp, "..", "..", "third-party", "pbcopper", "lib", "libpbcopper.so"), destDir)
 
 setup(
     name="ConsensusCore2",

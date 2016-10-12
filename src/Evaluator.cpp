@@ -39,6 +39,7 @@
 
 #include <pacbio/consensus/Evaluator.h>
 #include <pacbio/exception/StateError.h>
+#include <pbcopper/logging/Logging.h>
 
 #include "EvaluatorImpl.h"
 
@@ -168,7 +169,7 @@ void Evaluator::Status(State nextState)
     if (curState_ == State::VALID)
         curState_ = nextState;
     else
-        std::cerr << "Log this behaviour and return" << std::endl;
+        PBLOG_ERROR << "Log this behaviour and return";
 
     if (curState_ != State::VALID) impl_.reset(nullptr);
 }
