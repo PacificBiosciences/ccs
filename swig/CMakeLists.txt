@@ -26,10 +26,8 @@ set(SWIG_COMMAND swig CACHE PATH "swig PATH")
 add_custom_command(OUTPUT ConsensusCore2_wrap.cxx
     COMMAND ${SWIG_COMMAND} -Wextra -c++ -python -builtin -module ConsensusCore2
         -I${UNY_IncludeDir} -I${CMAKE_BINARY_DIR}/generated
-        -o ${CMAKE_BINARY_DIR}/swig/ConsensusCore2_wrap.cxx -outdir ${CMAKE_BINARY_DIR}/swig
+        -o ${CMAKE_BINARY_DIR}/swig/ConsensusCore2_wrap.cxx -outdir ${CMAKE_BINARY_DIR}/swig/lib
         ${UNY_SwigDir}/ConsensusCore2.i
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/swig/ConsensusCore2.py
-        ${CMAKE_BINARY_DIR}/swig/lib/__init__.py
 )
 
 # _ConsensusCore2.so

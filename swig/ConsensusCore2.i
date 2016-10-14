@@ -1,4 +1,4 @@
-%module ConsensusCore2
+%module(package="ConsensusCore2") ConsensusCore2
 
 // for the 309 warning about boost::noncoypable, try to figure out %ignore
 #pragma SWIG nowarn=309

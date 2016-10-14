@@ -142,7 +142,7 @@ class MyBuildExt(build_ext):
             rmtree(self.build_temp)
             os.makedirs(self.build_temp)
             cmake(thisDir, self.build_temp, targets)
-        for fname in ("_ConsensusCore2.so", "__init__.py"):
+        for fname in ["_ConsensusCore2.so", "ConsensusCore2.py"]:
             copy2(os.path.join(self.build_temp, "swig", "lib", fname), destDir)
 
 setup(
@@ -155,6 +155,8 @@ setup(
     license="BSD",
     ext_package="ConsensusCore2",
     ext_modules=[Extension("_ConsensusCore2", [])],
+    package_dir={"": "swig"},
+    py_modules=["ConsensusCore2.ConsensusCore2"],
     install_requires=["numpy >= 1.6.0"],
     setup_requires=["numpy >= 1.6.0"],
     cmdclass={"build_ext": MyBuildExt}
