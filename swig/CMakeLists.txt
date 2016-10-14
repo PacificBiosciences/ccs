@@ -17,6 +17,7 @@ include_directories(SYSTEM
 # We could use python -c "print(sysconfig.get_config_var('CCSHARED'))",
 # but it's honestly unnecessary and requires providing PYTHON_EXECUTABLE
 target_compile_options(cc2 PUBLIC -fPIC)
+target_compile_options(pbcopper PUBLIC -fPIC)
 add_compile_options(-fPIC)
 
 # ConsensusCore2_wrap.cxx
@@ -46,11 +47,11 @@ set(CC2_LIBRARIES
     ${PRE_LINK}
     cc2
     ${POST_LINK}
-    ${pbcopper_LIBRARIES}
     CACHE INTERNAL "" FORCE)
 
 target_link_libraries(_ConsensusCore2
     ${CC2_LIBRARIES}
+    ${pbcopper_LIBRARIES}
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
