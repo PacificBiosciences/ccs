@@ -55,6 +55,13 @@ const PlainOption Region{
     "Genomic region of interest, reads will be clipped to that region, empty means all reads.",
     CLI::Option::StringType("2253-5096")
 };
+const PlainOption Output{
+    "output",
+    { "output", "o"},
+    "Output Prefix",
+    "Output prefix for generated files [Default: Input file prefix].",
+    CLI::Option::StringType("")
+};
 const PlainOption PValueThreshold{
     "p_value_threshold",
     { "p-value-threshold", "p" },
@@ -73,8 +80,8 @@ const PlainOption DRMOnly{
 }  // namespace OptionNames
 
 JulietSettings::JulietSettings(const PacBio::CLI::Results& options)
-    : InputFile(options.PositionalArguments().at(0))
-    , OutputPrefix(options.PositionalArguments().at(1))
+    : InputFiles(options.PositionalArguments())
+    , OutputPrefix(std::forward<std::string>(options[OptionNames::Output]))
     , PValueThreshold(options[OptionNames::PValueThreshold])
     , DRMOnly(options[OptionNames::DRMOnly])
 {
@@ -126,6 +133,7 @@ PacBio::CLI::Interface JulietSettings::CreateCLI()
 
     i.AddOptions(
     {
+        OptionNames::Output,
         OptionNames::Region,
         OptionNames::PValueThreshold,
         OptionNames::DRMOnly

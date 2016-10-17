@@ -48,6 +48,7 @@
 #include <pacbio/data/ArrayRead.h>
 #include <pacbio/data/MSA.h>
 #include <pacbio/io/BamParser.h>
+#include <pacbio/io/Utility.h>
 #include <pacbio/juliet/JulietSettings.h>
 #include <pacbio/juliet/ResistanceCaller.h>
 #include <pacbio/statistics/Fisher.h>
@@ -68,41 +69,51 @@ std::ostream& JulietWorkflow::LogCI(const std::string& prefix)
 
 void JulietWorkflow::Run(const JulietSettings& settings)
 {
-    // Convert BamRecords to unrolled ArrayReads
-    std::vector<Data::ArrayRead> reads;
-    reads = IO::ParseBam(settings.InputFile, settings.RegionStart, settings.RegionEnd);
+    std::unordered_map<std::string, JSON::Json> jsonResults;
+    auto globalOutputPrefix = settings.OutputPrefix;
+    globalOutputPrefix += globalOutputPrefix.empty() ? "" : "/";
+    for (const auto& inputFile : settings.InputFiles) {
+        const auto outputPrefix = globalOutputPrefix + IO::FilePrefix(inputFile);
 
-    Data::MSA msa(reads);
+        // Convert BamRecords to unrolled ArrayReads
+        std::vector<Data::ArrayRead> reads;
+        reads = IO::ParseBam(inputFile, settings.RegionStart, settings.RegionEnd);
 
-    // Compute fisher's exact test for each position
-    const Statistics::Tests tests;
-    for (auto& column : msa)
-        column.AddFisherResult(tests.FisherCCS(column, settings.PValueThreshold));
+        Data::MSA msa(reads);
 
-    // Store fisher p-values
-    {
-        std::ofstream fisherStream("msa_counts.tsv");
-        fisherStream << "pos A Fa C Fc G Fg T Ft N Fn M" << std::endl;
-        int pos = msa.beginPos;
+        // Compute fisher's exact test for each position
+        const Statistics::Tests tests;
         for (auto& column : msa)
-            fisherStream << pos++ << " " << column << std::endl;
-        fisherStream.close();
+            column.AddFisherResult(tests.FisherCCS(column, settings.PValueThreshold));
+
+        // Store fisher p-values
+        {
+            std::ofstream fisherStream("msa_counts.tsv");
+            fisherStream << "pos A Fa C Fc G Fg T Ft N Fn M" << std::endl;
+            int pos = msa.beginPos;
+            for (auto& column : msa)
+                fisherStream << pos++ << " " << column << std::endl;
+            fisherStream.close();
+        }
+
+        ResistanceCaller resiCaller(msa);
+
+        const auto json = resiCaller.JSON();
+        jsonResults.insert({IO::FilePrefix(inputFile), json});
+        std::ofstream jsonStream(outputPrefix + ".json");
+        jsonStream << json.dump(2) << std::endl;
+
+        std::ofstream txtStream(outputPrefix + ".txt");
+        ResistanceCaller::Print(txtStream, json, settings.DRMOnly, settings.Details);
+
+        std::ofstream htmlStream(outputPrefix + ".html");
+        ResistanceCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
     }
-
-    ResistanceCaller resiCaller(msa);
-
-    const auto json = resiCaller.JSON();
-    std::ofstream jsonStream(settings.OutputPrefix + ".json");
-    jsonStream << json.dump(2) << std::endl;
-    jsonStream.close();
-
-    std::ofstream txtStream(settings.OutputPrefix + ".txt");
-    resiCaller.Print(txtStream, json, settings.DRMOnly, settings.Details);
-    txtStream.close();
-
-    std::ofstream htmlStream(settings.OutputPrefix + ".html");
-    resiCaller.HTML(htmlStream, json, settings.DRMOnly, settings.Details);
-    htmlStream.close();
+    if (settings.InputFiles.size() > 1)
+    {
+        std::ofstream summaryStream(globalOutputPrefix + "summary");
+        ResistanceCaller::PrintSummary(summaryStream, jsonResults, settings.DRMOnly, settings.Details);
+    }
 }
 }
 }  // ::PacBio::Juliet

@@ -86,11 +86,16 @@ public:
     /// Generate JSON output of variant amino acids
     JSON::Json JSON();
 
+public:
+    static void PrintSummary(std::ostream& out,
+                             const std::unordered_map<std::string, JSON::Json>& results,
+                             bool onlyKnownDRMs, bool details);
+
     /// Generate pretty print output of variant amino acids
-    void Print(std::ostream& out, const JSON::Json& j, bool onlyKnownDRMs, bool details);
+    static void Print(std::ostream& out, const JSON::Json& j, bool onlyKnownDRMs, bool details);
 
     /// Generate HTML output of variant amino acids
-    void HTML(std::ostream& out, const JSON::Json& j, bool onlyKnownDRMs, bool details);
+    static void HTML(std::ostream& out, const JSON::Json& j, bool onlyKnownDRMs, bool details);
 
 private:
     double MaxFrequency(std::vector<VariantNucleotide> codon);

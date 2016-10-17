@@ -51,8 +51,8 @@ using namespace PacBio::Juliet;
 static int Runner(const PacBio::CLI::Results& options)
 {
     // Check args size, as pbcopper does not enforce the correct number
-    if (options.PositionalArguments().size() != 2) {
-        std::cerr << "ERROR: Please provide BAM input and output prefix, see --help" << std::endl;
+    if (options.PositionalArguments().empty()) {
+        std::cerr << "ERROR: Please provide BAM input, see --help" << std::endl;
         return EXIT_FAILURE;
     }
 

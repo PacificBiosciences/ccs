@@ -90,6 +90,24 @@ string FileExtension(const string& path)
     return suffix;
 }
 
+string FilePrefix(const string& path)
+{
+    size_t fileStart = path.find_last_of("/");
+
+    if (fileStart == string::npos) fileStart = 0;
+
+    // increment beyond the '/'
+    ++fileStart;
+
+    size_t extStart = path.substr(fileStart, path.length() - fileStart).find_first_of(".");
+
+    if (extStart == string::npos) return "";
+
+    auto suffix = path.substr(fileStart, extStart);
+    std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::tolower);
+    return suffix;
+}
+
 void FlattenFofn(vector<string>& res, const string& file)
 {
     using boost::algorithm::iends_with;

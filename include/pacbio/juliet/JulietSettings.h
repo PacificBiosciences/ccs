@@ -39,6 +39,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <pbcopper/cli/CLI.h>
 
@@ -48,7 +49,7 @@ namespace Juliet {
 /// Contains user provided CLI configuration for Juliet
 struct JulietSettings
 {
-    std::string InputFile;
+    std::vector<std::string> InputFiles;
     std::string OutputPrefix;
     const float PValueThreshold;
     int RegionStart = 0;

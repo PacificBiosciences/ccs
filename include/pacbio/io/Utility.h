@@ -52,6 +52,8 @@ bool FileExists(const std::string& path);
 
 std::string FileExtension(const std::string& path);
 
+std::string FilePrefix(const std::string& path);
+
 struct SnrInfo
 {
     const float A;

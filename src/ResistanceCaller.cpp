@@ -43,8 +43,10 @@
 #include <iostream>
 #include <limits>
 #include <list>
+#include <map>
 #include <memory>
 #include <numeric>
+#include <set>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -88,6 +90,60 @@ ResistanceCaller::ResistanceCaller(const Data::MSA& msa)
         AddPosition(std::move(nucs));
 
         ++pos;
+    }
+}
+
+void ResistanceCaller::PrintSummary(std::ostream& out,
+                                    const std::unordered_map<std::string, JSON::Json>& results,
+                                    bool onlyKnownDRMs, bool details)
+{
+    auto strip = [](const std::string& input) -> std::string {
+        std::string s = input;
+        s.erase(std::remove(s.begin(), s.end(), '\"'), s.end());
+        return s;
+    };
+    std::unordered_map<std::string, std::set<int>> genesToPosSet;
+    for (const auto& kv : results) {
+        auto j = kv.second;
+        for (const auto& gene : j["genes"]) {
+            auto& pos = genesToPosSet[strip(gene["name"])];
+            for (auto& variantPosition : gene["variant_positions"]) {
+                pos.emplace(variantPosition["ref_position"]);
+            }
+        }
+    }
+
+    std::unordered_map<std::string, std::vector<int>> genesToPosVec;
+    for (auto& kv : genesToPosSet)
+    {
+        std::vector<int> tmp(kv.second.begin(), kv.second.end());
+        std::sort(tmp.begin(), tmp.end());
+        genesToPosVec[kv.first] = std::move(tmp);
+    }
+
+    auto GetVarPos = [](auto& gene, int pos)
+    {
+        for (auto& variantPosition : gene["variant_positions"]) {
+            if (static_cast<int>(variantPosition["ref_position"]) == pos)
+                return variantPosition;
+        }
+        return JSON::Json();
+    };
+
+    for (const auto& kv : results)
+    {
+        out << std::setw(20) << std::left << kv.first << ": ";
+        for (const auto& gene : kv.second["genes"]) {
+            const auto name = strip(gene["name"]);
+
+            for (const auto& pos : genesToPosVec[name])
+            {
+                bool no = GetVarPos(gene, pos).empty();
+                out << (no ? "o " : "x ");
+            }
+            out << "\t";
+        }
+        out << std::endl;
     }
 }
 
