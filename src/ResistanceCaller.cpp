@@ -105,6 +105,7 @@ void ResistanceCaller::PrintSummary(std::ostream& out,
     std::unordered_map<std::string, std::set<int>> genesToPosSet;
     for (const auto& kv : results) {
         auto j = kv.second;
+        if (j.find("genes") == j.cend() || j["genes"].is_null()) return;
         for (const auto& gene : j["genes"]) {
             auto& pos = genesToPosSet[strip(gene["name"])];
             for (auto& variantPosition : gene["variant_positions"]) {
@@ -251,8 +252,10 @@ JSON::Json ResistanceCaller::JSON()
             variantPosition["insertions"] = insertions;
         if (hit) curGene["variant_positions"].push_back(variantPosition);
     }
-    genes.push_back(std::move(curGene));
-    j["genes"] = genes;
+    if (!gene.empty())
+        genes.push_back(std::move(curGene));
+    if (!genes.empty())
+        j["genes"] = genes;
     return j;
 }
 
@@ -264,6 +267,7 @@ void ResistanceCaller::Print(std::ostream& out, const JSON::Json& j, bool onlyKn
         s.erase(std::remove(s.begin(), s.end(), '\"'), s.end());
         return s;
     };
+    if (j.find("genes") == j.cend() || j["genes"].is_null()) return;
     for (const auto& gene : j["genes"]) {
         // Header
         const auto name = strip(gene["name"]);
@@ -386,6 +390,7 @@ tr:not(.msa):hover td { background-color: #ff5e5e; }
     out << "</head>" << std::endl;
     out << "<body>" << std::endl;
 
+    if (j.find("genes") == j.cend() || j["genes"].is_null()) return;
     for (const auto& gene : j["genes"]) {
         out << "<table class=\"top\">" << std::endl;
         out << R"(
