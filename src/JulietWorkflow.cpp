@@ -112,10 +112,10 @@ void JulietWorkflow::Run(const JulietSettings& settings)
         std::ofstream htmlStream(outputPrefix + ".html");
         ResistanceCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
     }
-    if (settings.InputFiles.size() > 1)
-    {
+    if (settings.InputFiles.size() > 1) {
         std::ofstream summaryStream(globalOutputPrefix + "summary");
-        ResistanceCaller::PrintSummary(summaryStream, jsonResults, settings.DRMOnly, settings.Details);
+        ResistanceCaller::PrintSummary(summaryStream, jsonResults, settings.DRMOnly,
+                                       settings.Details);
     }
 }
 }
