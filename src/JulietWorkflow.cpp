@@ -92,7 +92,7 @@ void JulietWorkflow::Run(const JulietSettings& settings)
         // Store fisher p-values
         {
             std::ofstream fisherStream(outputPrefix + ".msa");
-            fisherStream << "pos A Fa C Fc G Fg T Ft N Fn M" << std::endl;
+            fisherStream << "pos A Fa C Fc G Fg T Ft N Fn" << std::endl;
             int pos = msa.beginPos;
             for (auto& column : msa)
                 fisherStream << pos++ << " " << column << std::endl;
