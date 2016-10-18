@@ -153,10 +153,9 @@ setup(
     url="http://www.github.com/PacificBiosciences/ConsensusCore2",
     description="A library for generating consensus sequences for PacBio data",
     license="BSD",
-    ext_package="ConsensusCore2",
     ext_modules=[Extension("_ConsensusCore2", [])],
     package_dir={"": "swig"},
-    py_modules=["ConsensusCore2.ConsensusCore2"],
+    py_modules=["ConsensusCore2"],
     install_requires=["numpy >= 1.6.0"],
     setup_requires=["numpy >= 1.6.0"],
     cmdclass={"build_ext": MyBuildExt}
