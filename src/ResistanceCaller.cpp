@@ -114,30 +114,25 @@ void ResistanceCaller::PrintSummary(std::ostream& out,
     }
 
     std::unordered_map<std::string, std::vector<int>> genesToPosVec;
-    for (auto& kv : genesToPosSet)
-    {
+    for (auto& kv : genesToPosSet) {
         std::vector<int> tmp(kv.second.begin(), kv.second.end());
         std::sort(tmp.begin(), tmp.end());
         genesToPosVec[kv.first] = std::move(tmp);
     }
 
-    auto GetVarPos = [](auto& gene, int pos)
-    {
+    auto GetVarPos = [](auto& gene, int pos) {
         for (auto& variantPosition : gene["variant_positions"]) {
-            if (static_cast<int>(variantPosition["ref_position"]) == pos)
-                return variantPosition;
+            if (static_cast<int>(variantPosition["ref_position"]) == pos) return variantPosition;
         }
         return JSON::Json();
     };
 
-    for (const auto& kv : results)
-    {
+    for (const auto& kv : results) {
         out << std::setw(20) << std::left << kv.first << ": ";
         for (const auto& gene : kv.second["genes"]) {
             const auto name = strip(gene["name"]);
 
-            for (const auto& pos : genesToPosVec[name])
-            {
+            for (const auto& pos : genesToPosVec[name]) {
                 bool no = GetVarPos(gene, pos).empty();
                 out << (no ? "o " : "x ");
             }
@@ -159,6 +154,7 @@ JSON::Json ResistanceCaller::JSON()
     for (int i = begin_; i < end_; ++i) {
         if (i % 3 != 0) continue;
         if (i + 2 >= end_) break;
+        if (!(msa_[i].hit || msa_[i+1].hit || msa_[i+2].hit)) continue;
 
         const auto codons = CreateCodons(i);
         if (codons.empty()) continue;
@@ -235,6 +231,24 @@ JSON::Json ResistanceCaller::JSON()
             }
             variantPosition["variants"] = variants;
         }
+        std::vector<Json> insertions;
+        for (const auto& kv : msa_[i].insertionsPValues)
+        {
+            if (kv.first.size() % 3 == 0)
+            {
+                Json insertion;
+                insertion["nucleotides"] = kv.first;
+                insertion["p-values"] = kv.second;
+                insertion["abundance"] = msa_[i].insertions[kv.first];
+                std::string aa;
+                for (int i = 0; i < kv.first.size(); i+=3)
+                    aa += codonToAmino_.at(kv.first.substr(i,3));
+                insertion["amino_acid"] = aa;
+                insertions.push_back(insertion);
+            }
+        }
+        if (!insertions.empty())
+            variantPosition["insertions"] = insertions;
         if (hit) curGene["variant_positions"].push_back(variantPosition);
     }
     genes.push_back(std::move(curGene));
@@ -424,6 +438,19 @@ tr:not(.msa):hover td { background-color: #ff5e5e; }
             std::string prefix = line.str();
             line.str("");
             bool first = true;
+            if (variantPosition.find("insertions") != variantPosition.cend())
+                for (auto& insertion : variantPosition["insertions"]) {
+                    out << "<tr style=\"\">\n"
+                     << "<td colspan=\"2\" style=\"background-color: orange\">Insertion</td>\n"
+                     << "<td style=\"background-color: white; font-weight: bold\">" << variantPosition["ref_position"] << "</td>"
+                     << "<td colspan=\"1\" style=\"background-color: orange; font-weight: normal\">"
+                     << strip(insertion["amino_acid"])
+                     << "</td>"
+                     << "<td colspan=\"3\" style=\"background-color: orange; font-weight: normal\">"
+                     << strip(insertion["nucleotides"])
+                     << "</td>"
+                     << "</tr>";
+                }
             for (auto& variant : variantPosition["variants"]) {
                 bool isKnown = !strip(variant["known_drm"]).empty();
                 if ((onlyKnownDRMs && isKnown) || !onlyKnownDRMs) {

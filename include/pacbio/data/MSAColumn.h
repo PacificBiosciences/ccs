@@ -39,6 +39,7 @@
 
 #include <algorithm>
 #include <array>
+#include <map>
 #include <vector>
 
 #include <pacbio/data/ArrayRead.h>
@@ -67,10 +68,13 @@ public:
 
 public:
     void AddFisherResult(const FisherResult& f);
+    void AddFisherResult(const std::map<std::string, double>& f);
 
 public:
     std::array<int, 5> counts{{0, 0, 0, 0, 0}};
-    std::array<double, 5> pValues{{0, 0, 0, 0, 0}};
+    std::map<std::string, int> insertions;
+    std::map<std::string, double> insertionsPValues;
+    std::array<double, 5> pValues{{1, 1, 1, 1, 1}};
     std::array<double, 5> mask{{0, 0, 0, 0, 0}};
     bool hit = false;
     int argMax = 0;

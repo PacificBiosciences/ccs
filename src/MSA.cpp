@@ -65,19 +65,30 @@ void MSA::FillCounts(const std::vector<ArrayRead>& reads)
     for (const auto& r : reads) {
         int pos = r.ReferenceStart() - beginPos;
         assert(pos >= 0);
+        std::string insertion;
+        auto CheckInsertion = [&insertion, this, &pos]() {
+            if (insertion.empty()) return;
+            counts[pos].insertions[insertion]++;
+            insertion = "";
+        };
         for (const auto& b : r.Bases) {
             switch (b.Cigar) {
                 case 'X':
                 case '=':
+                    CheckInsertion();
                     counts[pos][b.Nucleotide]++;
                     ++pos;
                     break;
                 case 'D':
+                    CheckInsertion();
                     counts[pos]['N']++;
                     ++pos;
+                    break;
                 case 'I':
+                    insertion += b.Nucleotide;
                     break;
                 case 'P':
+                    CheckInsertion();
                     break;
                 default:
                     throw std::runtime_error("Unexpected cigar " + std::to_string(b.Cigar));

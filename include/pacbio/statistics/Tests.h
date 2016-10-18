@@ -47,6 +47,24 @@ class Tests
 {
 public:
     /// Compute Fisher's exact test for CCS substitutions and deletions
+    static std::map<std::string, double> FisherCCS(const std::array<int, 5>& observed, const std::map<std::string, int> insertions, const double threshold)
+    {
+        int argMax = 0;
+        double sum = 0;
+        const auto pml = CalculatePml(observed, &argMax, &sum);
+
+        std::map<std::string, double> results;
+        for (const auto& kv : insertions)
+        {
+            const double p = Fisher::fisher_exact_tiss(kv.second + 1, sum, 0.0084 / 4.0 * sum, sum);
+            if (p < threshold)
+                results.insert({kv.first, p});
+        }
+
+        return results;
+    }
+
+    /// Compute Fisher's exact test for CCS substitutions and deletions
     static Data::FisherResult FisherCCS(const std::array<int, 5>& observed, const double threshold)
     {
         int argMax = 0;
@@ -63,7 +81,7 @@ public:
         for (int i = 0; i < 5; ++i) {
             if (fr.pValues.at(i) < threshold && observed.at(i) > 1) {
                 if (i != argMax) fr.hit = true;
-                fr.mask[i] = 1 - fr.pValues[i];
+                fr.mask[i] = 1;
             }
             // else if (i == argMax)
             //     fr.mask[i] = 1;

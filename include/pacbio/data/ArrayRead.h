@@ -105,6 +105,18 @@ public:  // non-mod methods
     int ReferenceStart() const { return Record.ReferenceStart(); }
     int ReferenceEnd() const { return Record.ReferenceEnd(); }
 
+public:
+    friend std::ostream& operator<<(std::ostream& stream, const ArrayRead& r)
+    {
+        stream << r.ReferenceStart() << std::endl;
+        for (const auto& b : r.Bases)
+            stream << b.Cigar;
+        stream << std::endl;
+        for (const auto& b : r.Bases)
+            stream << b.Nucleotide;
+        return stream;
+    }
+
 public:  // data
     std::vector<ArrayBase> Bases;
     const BAM::BamRecord Record;

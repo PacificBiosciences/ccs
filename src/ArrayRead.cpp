@@ -84,16 +84,5 @@ ArrayRead::ArrayRead(const BAM::BamRecord& record, int idx)
         for (size_t i = 0; i < cigar.length(); ++i)
             Bases.emplace_back(cigar.at(i), seq.at(i), qual.at(i));
 }
-
-std::ostream& operator<<(std::ostream& stream, const ArrayRead& r)
-{
-    stream << r.ReferenceStart() << std::endl;
-    for (const auto& b : r.Bases)
-        stream << b.Cigar;
-    stream << std::endl;
-    for (const auto& b : r.Bases)
-        stream << b.Nucleotide;
-    return stream;
-}
 }  // namespace Data
 }  // namespace PacBio
