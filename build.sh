@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Function definitions
 GetBBRepo () {
@@ -33,9 +34,9 @@ module load git gcc/5.3.0 python/2.7.9 cmake cram swig ccache virtualenv zlib/1.
 echo "#############################"
 echo "# EXTERNAL DEPENDENCIES"
 echo "## Create external dependency directory"
-if [ ! -d _deps ] ; then mkdir _deps ; fi 
+if [ ! -d _deps ] ; then mkdir _deps ; fi
 echo "## Create reverse external dependency directory"
-if [ ! -d _rev_deps ] ; then mkdir _rev_deps ; fi 
+if [ ! -d _rev_deps ] ; then mkdir _rev_deps ; fi
 
 GetBBRepo GenomicConsensus _rev_deps
 GetBBRepo ConsensusCore _deps
@@ -57,7 +58,9 @@ echo "## Create missing virtualenv"
 if [ ! -d unyve ] ; then /mnt/software/v/virtualenv/13.0.1/virtualenv.py unyve ; fi
 
 echo "## Get into virtualenv"
+set +u
 source unyve/bin/activate
+set -u
 
 echo "## Install pip modules"
 pip install --upgrade pip
@@ -100,4 +103,6 @@ python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
 echo "## Test CC2 via GC"
 ( cd _rev_deps/GenomicConsensus && make check )
 
+set +u
 deactivate
+set -u
