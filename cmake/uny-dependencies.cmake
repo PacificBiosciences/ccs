@@ -9,6 +9,18 @@ if(NOT Boost_INCLUDE_DIRS)
     find_package(Boost REQUIRED)
 endif()
 
+# pbcopper
+if (NOT pbcopper_INCLUDE_DIRS OR
+    NOT pbcopper_LIBRARIES)
+    if (PYTHON_SWIG)
+        set(pbcopper_build_shared OFF CACHE INTERNAL "" FORCE)
+    endif()
+    set(pbcopper_build_tests OFF CACHE INTERNAL "" FORCE)
+    set(pbcopper_build_docs OFF CACHE INTERNAL "" FORCE)
+    set(pbcopper_build_examples OFF CACHE INTERNAL "" FORCE)
+    add_subdirectory(${UNY_ThirdPartyDir}/pbcopper external/pbcopper/build)
+endif()
+
 # only require if NOT called from pip install
 if (NOT PYTHON_SWIG)
     # Threads
@@ -53,14 +65,5 @@ if (NOT PYTHON_SWIG)
     # seqan headers
     if (NOT SEQAN_INCLUDE_DIRS)
         set(SEQAN_INCLUDE_DIRS ${UNY_ThirdPartyDir}/seqan/include CACHE INTERNAL "" FORCE)
-    endif()
-
-    # pbcopper
-    if (NOT pbcopper_INCLUDE_DIRS OR 
-        NOT pbcopper_LIBRARIES)
-        set(pbcopper_build_tests OFF CACHE INTERNAL "" FORCE)
-        set(pbcopper_build_docs OFF CACHE INTERNAL "" FORCE)
-        set(pbcopper_build_examples OFF CACHE INTERNAL "" FORCE)
-        add_subdirectory(${UNY_ThirdPartyDir}/pbcopper external/pbcopper/build)
     endif()
 endif()
