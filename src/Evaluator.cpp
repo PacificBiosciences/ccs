@@ -38,6 +38,7 @@
 #include <string>
 
 #include <pacbio/consensus/Evaluator.h>
+#include <pacbio/exception/InvalidEvaluatorException.h>
 #include <pacbio/exception/StateError.h>
 #include <pbcopper/logging/Logging.h>
 
@@ -108,7 +109,19 @@ std::string Evaluator::ReadName() const
 
 double Evaluator::LL(const Mutation& mut)
 {
-    if (IsValid()) return impl_->LL(mut);
+    if (IsValid()) {
+        double ll = impl_->LL(mut);
+
+        // If the mutation of interest caused a corner-case failure,
+        // release this Evaluator and report this issue via an exception.
+        if (std::isinf(ll)) {
+            const std::string name = ReadName();
+            Invalidate();
+            throw InvalidEvaluatorException("-INF in mutation testing: " + name);
+        }
+
+        return ll;
+    }
     return NEG_DBL_INF;
 }
 
@@ -175,6 +188,8 @@ void Evaluator::Status(State nextState)
 }
 
 void Evaluator::Release() { Status(State::MANUALLY_RELEASED); }
+
+void Evaluator::Invalidate() { Status(State::INVALID); }
 
 const AbstractMatrix& Evaluator::Alpha() const
 {

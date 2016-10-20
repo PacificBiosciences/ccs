@@ -111,6 +111,10 @@ public:
 
     /// Returns the LL of the Read, given the mutated template.
     /// Returns -INF if deactivated.
+    ///
+    /// Throws an exception if the mutation caused a corner-cause failure.
+    /// In this case, the Evaluator gets deactivated. You MUST recompute the
+    /// LLs for all your mutations of interest, as this Evaluator will be invalid.
     double LL(const Mutation& mut);
 
     /// Returns the LL of the Read, given the current template.
@@ -143,8 +147,13 @@ public:
     /// Returns -INF if deactivated.
     int NumFlipFlops() const;
 
-    /// Invalides this Evaluator and releases its implementation.
+    /// Manually releases this Evaluator from its implementation.
+    /// Cannot be used afterwards.
     void Release();
+
+    /// For internal purposes:
+    /// Invalidates this Evaluator and releases its implementation.
+    void Invalidate();
 
 public:
     const AbstractMatrix& Alpha() const;

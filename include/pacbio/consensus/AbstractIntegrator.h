@@ -73,6 +73,10 @@ public:
     virtual char operator[](size_t i) const = 0;
     virtual operator std::string() const = 0;
 
+    /// This method throws InvalidEvaluatorException, every time the likelihood
+    /// can't be computed for one Evaluator; the respective Evaluator will be invalidated.
+    /// You MUST recompute the LLs for all your mutations of interest, as the
+    /// number of active Evaluators changed.
     virtual double LL(const Mutation& mut);
     virtual double LL() const;
 
@@ -87,11 +91,13 @@ public:
     virtual PacBio::Data::State AddRead(const PacBio::Data::MappedRead& read) = 0;
 
     /// Given a Mutation of interest, returns a vector of LLs,
-    /// one LL per Evaluator, even for inactive ones.
+    /// one LL per active Evaluator; invalid Evaluators are omitted.
+    ///
+    /// This method throws InvalidEvaluatorException, every time the likelihood
+    /// can't be computed for one Evaluator; the respective Evaluator will be invalidated.
+    /// You MUST recompute the LLs for all your mutations of interest, as the
+    /// number of active Evaluators changed.
     std::vector<double> LLs(const Mutation& mut);
-    /// Using the current template, returns a vector of LLs,
-    /// one LL per Evaluator, even for inactive ones.
-    std::vector<double> LLs() const;
     /// For each Evaluator, returns the read name.
     std::vector<std::string> ReadNames() const;
     /// Returns the number of flip flop events for each Evaluator.
@@ -153,13 +159,6 @@ private:
         return vec;
     }
 };
-
-/// Accumulate all non inf or -inf doubles.
-inline double AccumulateNoInf(std::vector<double> input)
-{
-    const auto AddNoInf = [](double a, double b) { return a + (std::isinf(b) ? 0.0 : b); };
-    return std::accumulate(input.cbegin(), input.cend(), 0.0, AddNoInf);
-}
 
 /// Helper function to get maximal number from a vector.
 template <typename T>
