@@ -73,7 +73,9 @@ public:
         const auto pMatch = CalculatePriors(argMax);
 
         auto fisherCCS = [&observed, &pMatch, &pml, &sum](int i) {
-            return Fisher::fisher_exact_tiss((pml[i] * sum), (sum), (pMatch[i] * sum), (sum));
+            constexpr double bonferroni = 3200 * 4;
+            return Fisher::fisher_exact_tiss((pml[i] * sum), (sum), (pMatch[i] * sum), (sum)) *
+                   bonferroni;
         };
 
         Data::FisherResult fr;

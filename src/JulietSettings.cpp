@@ -67,7 +67,7 @@ const PlainOption PValueThreshold{
     { "p-value-threshold", "p" },
     "P-Value Threshold",
     "P-value threshold to call SNV.",
-    CLI::Option::FloatType(1e-7)
+    CLI::Option::FloatType(0.01)
 };
 const PlainOption DRMOnly{
     "only_known_drms",
