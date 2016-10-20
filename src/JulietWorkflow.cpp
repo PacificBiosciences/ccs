@@ -83,10 +83,10 @@ void JulietWorkflow::Run(const JulietSettings& settings)
 
         // Compute fisher's exact test for each position
         const Statistics::Tests tests;
-        for (auto& column : msa)
-        {
+        for (auto& column : msa) {
             column.AddFisherResult(tests.FisherCCS(column, settings.PValueThreshold));
-            column.AddFisherResult(tests.FisherCCS(column, column.insertions, settings.PValueThreshold));
+            column.AddFisherResult(
+                tests.FisherCCS(column, column.insertions, settings.PValueThreshold));
         }
 
         // Store fisher p-values

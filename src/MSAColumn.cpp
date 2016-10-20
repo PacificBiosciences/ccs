@@ -54,10 +54,7 @@ void MSAColumn::AddFisherResult(const FisherResult& f)
     argMax = f.argMax;
 }
 
-void MSAColumn::AddFisherResult(const std::map<std::string, double>& f)
-{
-    insertionsPValues = f;
-}
+void MSAColumn::AddFisherResult(const std::map<std::string, double>& f) { insertionsPValues = f; }
 
 }  // namespace Data
 }  // namespace PacBio

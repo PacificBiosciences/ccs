@@ -155,7 +155,7 @@ JSON::Json ResistanceCaller::JSON()
     for (int i = begin_; i < end_; ++i) {
         if (i % 3 != 0) continue;
         if (i + 2 >= end_) break;
-        if (!(msa_[i].hit || msa_[i+1].hit || msa_[i+2].hit)) continue;
+        if (!(msa_[i].hit || msa_[i + 1].hit || msa_[i + 2].hit)) continue;
 
         const auto codons = CreateCodons(i);
         if (codons.empty()) continue;
@@ -233,29 +233,24 @@ JSON::Json ResistanceCaller::JSON()
             variantPosition["variants"] = variants;
         }
         std::vector<Json> insertions;
-        for (const auto& kv : msa_[i].insertionsPValues)
-        {
-            if (kv.first.size() % 3 == 0)
-            {
+        for (const auto& kv : msa_[i].insertionsPValues) {
+            if (kv.first.size() % 3 == 0) {
                 Json insertion;
                 insertion["nucleotides"] = kv.first;
                 insertion["p-values"] = kv.second;
                 insertion["abundance"] = msa_[i].insertions[kv.first];
                 std::string aa;
-                for (int i = 0; i < kv.first.size(); i+=3)
-                    aa += codonToAmino_.at(kv.first.substr(i,3));
+                for (int i = 0; i < kv.first.size(); i += 3)
+                    aa += codonToAmino_.at(kv.first.substr(i, 3));
                 insertion["amino_acid"] = aa;
                 insertions.push_back(insertion);
             }
         }
-        if (!insertions.empty())
-            variantPosition["insertions"] = insertions;
+        if (!insertions.empty()) variantPosition["insertions"] = insertions;
         if (hit) curGene["variant_positions"].push_back(variantPosition);
     }
-    if (!gene.empty())
-        genes.push_back(std::move(curGene));
-    if (!genes.empty())
-        j["genes"] = genes;
+    if (!gene.empty()) genes.push_back(std::move(curGene));
+    if (!genes.empty()) j["genes"] = genes;
     return j;
 }
 
@@ -446,15 +441,16 @@ tr:not(.msa):hover td { background-color: #ff5e5e; }
             if (variantPosition.find("insertions") != variantPosition.cend())
                 for (auto& insertion : variantPosition["insertions"]) {
                     out << "<tr style=\"\">\n"
-                     << "<td colspan=\"2\" style=\"background-color: orange\">Insertion</td>\n"
-                     << "<td style=\"background-color: white; font-weight: bold\">" << variantPosition["ref_position"] << "</td>"
-                     << "<td colspan=\"1\" style=\"background-color: orange; font-weight: normal\">"
-                     << strip(insertion["amino_acid"])
-                     << "</td>"
-                     << "<td colspan=\"3\" style=\"background-color: orange; font-weight: normal\">"
-                     << strip(insertion["nucleotides"])
-                     << "</td>"
-                     << "</tr>";
+                        << "<td colspan=\"2\" style=\"background-color: orange\">Insertion</td>\n"
+                        << "<td style=\"background-color: white; font-weight: bold\">"
+                        << variantPosition["ref_position"] << "</td>"
+                        << "<td colspan=\"1\" style=\"background-color: orange; font-weight: "
+                           "normal\">"
+                        << strip(insertion["amino_acid"]) << "</td>"
+                        << "<td colspan=\"3\" style=\"background-color: orange; font-weight: "
+                           "normal\">"
+                        << strip(insertion["nucleotides"]) << "</td>"
+                        << "</tr>";
                 }
             for (auto& variant : variantPosition["variants"]) {
                 bool isKnown = !strip(variant["known_drm"]).empty();

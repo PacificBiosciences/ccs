@@ -47,18 +47,18 @@ class Tests
 {
 public:
     /// Compute Fisher's exact test for CCS substitutions and deletions
-    static std::map<std::string, double> FisherCCS(const std::array<int, 5>& observed, const std::map<std::string, int> insertions, const double threshold)
+    static std::map<std::string, double> FisherCCS(const std::array<int, 5>& observed,
+                                                   const std::map<std::string, int> insertions,
+                                                   const double threshold)
     {
         int argMax = 0;
         double sum = 0;
         const auto pml = CalculatePml(observed, &argMax, &sum);
 
         std::map<std::string, double> results;
-        for (const auto& kv : insertions)
-        {
+        for (const auto& kv : insertions) {
             const double p = Fisher::fisher_exact_tiss(kv.second + 1, sum, 0.0084 / 4.0 * sum, sum);
-            if (p < threshold)
-                results.insert({kv.first, p});
+            if (p < threshold) results.insert({kv.first, p});
         }
 
         return results;
