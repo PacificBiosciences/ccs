@@ -39,7 +39,6 @@
 
 #include <pacbio/data/FisherResult.h>
 #include <pacbio/statistics/Fisher.h>
-#include <algorithm>
 
 namespace PacBio {
 namespace Statistics {
@@ -49,82 +48,16 @@ public:
     /// Compute Fisher's exact test for CCS substitutions and deletions
     static std::map<std::string, double> FisherCCS(const std::array<int, 5>& observed,
                                                    const std::map<std::string, int> insertions,
-                                                   const double threshold)
-    {
-        int argMax = 0;
-        double sum = 0;
-        const auto pml = CalculatePml(observed, &argMax, &sum);
-
-        std::map<std::string, double> results;
-        for (const auto& kv : insertions) {
-            const double p = Fisher::fisher_exact_tiss(kv.second + 1, sum, 0.0084 / 4.0 * sum, sum);
-            if (p < threshold) results.insert({kv.first, p});
-        }
-
-        return results;
-    }
+                                                   const double threshold);
 
     /// Compute Fisher's exact test for CCS substitutions and deletions
-    static Data::FisherResult FisherCCS(const std::array<int, 5>& observed, const double threshold)
-    {
-        int argMax = 0;
-        double sum = 0;
-        const auto pml = CalculatePml(observed, &argMax, &sum);
-        const auto pMatch = CalculatePriors(argMax);
-
-        auto fisherCCS = [&observed, &pMatch, &pml, &sum](int i) {
-            constexpr double bonferroni = 3200 * 4;
-            return Fisher::fisher_exact_tiss((pml[i] * sum), (sum), (pMatch[i] * sum), (sum)) *
-                   bonferroni;
-        };
-
-        Data::FisherResult fr;
-        fr.pValues = {{fisherCCS(0), fisherCCS(1), fisherCCS(2), fisherCCS(3), fisherCCS(4)}};
-        for (int i = 0; i < 5; ++i) {
-            if (fr.pValues.at(i) < threshold && observed.at(i) > 1) {
-                if (i != argMax) fr.hit = true;
-                fr.mask[i] = 1;
-            }
-            // else if (i == argMax)
-            //     fr.mask[i] = 1;
-            else
-                fr.mask[i] = 0;
-        }
-        fr.argMax = argMax;
-        return fr;
-    }
+    static Data::FisherResult FisherCCS(const std::array<int, 5>& observed, const double threshold);
 
 private:
     static std::array<double, 5> CalculatePml(const std::array<int, 5>& observed, int* argMax,
-                                              double* sum)
-    {
-        std::array<double, 5> pml;
-        std::copy_n(std::cbegin(observed), 5, std::begin(pml));
+                                              double* sum);
 
-        // +1 each entry
-        std::for_each(std::begin(pml), std::end(pml), [](double& p) { ++p; });
-
-        *argMax =
-            std::distance(std::cbegin(pml), std::max_element(std::cbegin(pml), std::cend(pml)));
-        *sum = std::accumulate(std::cbegin(pml), std::cend(pml), 0.0);
-
-        // normalize
-        std::for_each(std::begin(pml), std::end(pml), [&sum](double& p) { p /= (*sum); });
-        return pml;
-    }
-
-    static std::array<double, 5> CalculatePriors(const int argMax)
-    {
-        assert(argMax >= 0 && argMax <= 5);
-
-        std::array<double, 5> pMatch{{0.0005, 0.0005, 0.0005, 0.0005, 0.0029}};
-        pMatch[argMax] = 0.9872;
-        double pMatchSum = pMatch[0] + pMatch[1] + pMatch[2] + pMatch[3] + pMatch[4];
-        for (auto& p : pMatch)
-            p /= pMatchSum;
-
-        return pMatch;
-    }
+    static std::array<double, 5> CalculatePriors(const int argMax);
 };
 }
 }  // ::PacBio::Statistics

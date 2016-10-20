@@ -75,6 +75,7 @@ add_library(unanimity STATIC
     ResistanceCaller.cpp
     SparsePoa.cpp
     SubreadResultCounter.cpp
+    Tests.cpp
     Timer.cpp
     Utility.cpp
 )
