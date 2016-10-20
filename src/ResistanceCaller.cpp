@@ -240,7 +240,7 @@ JSON::Json ResistanceCaller::JSON()
                 insertion["p-values"] = kv.second;
                 insertion["abundance"] = msa_[i].insertions[kv.first];
                 std::string aa;
-                for (int i = 0; i < kv.first.size(); i += 3)
+                for (size_t i = 0; i < kv.first.size(); i += 3)
                     aa += codonToAmino_.at(kv.first.substr(i, 3));
                 insertion["amino_acid"] = aa;
                 insertions.push_back(insertion);
