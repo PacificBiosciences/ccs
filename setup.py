@@ -133,10 +133,10 @@ class MyBuildExt(build_ext):
         cmake.add_definition_from_env("SWIG_COMMAND")
         cmake.add_definition_from_env("UNY_use_ccache")
         cmake.add_definition_from_env("CMAKE_BUILD_TYPE", "RelWithDebInfo")
+        cmake.add_definition_from_env("PYTHON_EXECUTABLE", sys.executable)
         cmake.add_definition("PYTHON_SWIG", "1")
         cmake.add_definition("UNY_build_tests", "0")
         cmake.add_definition("UNY_build_bin", "0")
-        cmake.add_definition("PYTHON_EXECUTABLE", sys.executable)
         cmake.set_generator("Ninja" if which("ninja", env) else "Default")
         targets = ["_ConsensusCore2"]
         try:
