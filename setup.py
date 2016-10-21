@@ -9,7 +9,6 @@ import sys
 from copy import copy
 from distutils.command.build_ext import build_ext
 from distutils.util import strtobool
-from multiprocessing import cpu_count
 from setuptools import setup, Extension
 from shutil import copy2, rmtree
 from subprocess import Popen
@@ -85,7 +84,7 @@ class CMake(object):
             raise ValueError("valid generators must be in (default, ninja)")
         if gen == "Default":
             gen = None
-            self.build = ["make", "-j{0:d}".format(cpu_count())]
+            self.build = ["make"]
             if self.verbose:
                 self.build.append("VERBOSE=1")
         elif gen == "Ninja":
