@@ -232,6 +232,8 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
                                                     const std::string& version)
 {
     using Option = PacBio::CLI::Option;
+    using Task = PacBio::CLI::ToolContract::Task;
+
     PacBio::CLI::Interface i{"ccs", description, version};
 
     i.AlternativeToolContractName("pbccs");
@@ -270,7 +272,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     });
 
     const std::string id = "pbccs.tasks.ccs";
-    CLI::ToolContract::Task tcTask(id);
+    Task tcTask(id);
     tcTask.AddOption(OptionNames::MinSnr);
     tcTask.AddOption(OptionNames::MinReadScore);
     tcTask.AddOption(OptionNames::MaxLength);
@@ -284,6 +286,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     tcTask.AddOption(OptionNames::ModelPath);
     tcTask.AddOption(OptionNames::ModelSpec);
     tcTask.AddOption(OptionNames::ReportFile);
+    tcTask.NumProcessors(Task::MAX_NPROC);
 
     tcTask.InputFileTypes({
         {
