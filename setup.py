@@ -82,7 +82,7 @@ class CMake(object):
 
     def set_generator(self, gen):
         if gen not in set(["Default", "Ninja"]):
-            raise ValueError("valid generators must be in (default, ninja)")
+            raise ValueError("valid generators must be in (Default, Ninja)")
         if gen == "Default":
             gen = None
             self.build = ["make", "-j{0:d}".format(cpu_count())]
@@ -138,7 +138,9 @@ class MyBuildExt(build_ext):
         cmake.add_definition("PYTHON_SWIG", "1")
         cmake.add_definition("UNY_build_tests", "0")
         cmake.add_definition("UNY_build_bin", "0")
-        cmake.set_generator("Ninja" if which("ninja", env) else "Default")
+        availableGenerator = "Ninja" if which("ninja", env) else "Default"
+        desiredGenerator = cmake.env.get("CMAKE_GENERATOR", availableGenerator)
+        cmake.set_generator(desiredGenerator)
         targets = ["_ConsensusCore2"]
         try:
             cmake(thisDir, self.build_temp, targets)
