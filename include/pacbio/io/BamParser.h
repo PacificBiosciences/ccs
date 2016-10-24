@@ -59,6 +59,7 @@ static std::vector<Data::ArrayRead> ParseBam(const std::string& filePath, const 
     int idx = 0;
     // Iterate over all records and convert online
     for (auto& record : BAM::EntireFileQuery(filePath)) {
+        if (record.Impl().IsSupplementaryAlignment()) continue;
         if (record.ReferenceStart() < regionEnd && record.ReferenceEnd() > regionStart) {
             record.Clip(BAM::ClipType::CLIP_TO_REFERENCE, regionStart, regionEnd);
             returnList.emplace_back(record, idx++);
