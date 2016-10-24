@@ -153,7 +153,7 @@ JSON::Json ResistanceCaller::JSON()
     std::string gene;
     int geneOffset;
     for (int i = begin_; i < end_; ++i) {
-        if (i % 3 != 0) continue;
+        if ((i + 1) % 3 != 0) continue;
         if (i + 2 >= end_) break;
         if (!(msa_[i].hit || msa_[i + 1].hit || msa_[i + 2].hit)) continue;
 
@@ -192,14 +192,14 @@ JSON::Json ResistanceCaller::JSON()
         Json variantPosition;
         variantPosition["ref_codon"] = refCodon;
         variantPosition["ref_amino_acid"] = std::string(1, aminoRef);
-        variantPosition["ref_position"] = (i - geneOffset) / 3;
+        variantPosition["ref_position"] = 1 + (i + 1 - geneOffset) / 3;
         std::vector<Json> variants;
         bool first = true;
         bool hit = false;
         for (const auto& c : codons) {
             const auto cc = CodonString(c);
             const auto a = codonToAmino_.at(cc);
-            bool isKnown = resistentCodon_.find(i) != resistentCodon_.cend();
+            bool isKnown = resistentCodon_.find(i+4) != resistentCodon_.cend();
             if (a != aminoRef) {
                 hit = true;
                 Json variant;
@@ -213,7 +213,7 @@ JSON::Json ResistanceCaller::JSON()
                                        c[2].major ? 0 : c[2].pValue};
                 variant["coverage"] = {msa_[i + 0].Coverage(), msa_[i + 1].Coverage(),
                                        msa_[i + 2].Coverage()};
-                variant["known_drm"] = isKnown ? resistentCodon_.at(i) : "";
+                variant["known_drm"] = isKnown ? resistentCodon_.at(i+4) : "";
 
                 for (int j = -3; j < 6; ++j) {
                     if (i + j >= begin_ && i + j < end_) {
@@ -240,8 +240,8 @@ JSON::Json ResistanceCaller::JSON()
                 insertion["p-values"] = kv.second;
                 insertion["abundance"] = msa_[i].insertions[kv.first];
                 std::string aa;
-                for (size_t i = 0; i < kv.first.size(); i += 3)
-                    aa += codonToAmino_.at(kv.first.substr(i, 3));
+                for (size_t ii = 0; ii < kv.first.size(); ii += 3)
+                    aa += codonToAmino_.at(kv.first.substr(ii, 3));
                 insertion["amino_acid"] = aa;
                 insertions.push_back(insertion);
             }
@@ -572,14 +572,14 @@ void ResistanceCaller::AddPosition(std::vector<VariantNucleotide>&& nucs)
 
 std::string ResistanceCaller::CodonRef(int hxb2Position) const
 {
-    if (hxb2Position % 3 != 0) throw std::runtime_error("Position is not a multiple of three");
+    // if (hxb2Position % 3 != 0) throw std::runtime_error("Position is not a multiple of three");
     if (hxb2Position + 2 >= end_) throw std::runtime_error("Position is out of window");
     return ref_.substr(hxb2Position, 3);
 }
 
 char ResistanceCaller::AminoacidRef(int hxb2Position) const
 {
-    if (hxb2Position % 3 != 0) throw std::runtime_error("Position is not a multiple of three");
+    // if (hxb2Position % 3 != 0) throw std::runtime_error("Position is not a multiple of three");
     if (hxb2Position + 2 >= end_) throw std::runtime_error("Position is out of window");
     return codonToAmino_.at(ref_.substr(hxb2Position, 3));
 }
