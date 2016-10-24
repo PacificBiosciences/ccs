@@ -225,6 +225,7 @@ JSON::Json ResistanceCaller::JSON()
                         msaCounts["G"] = msa_[i + j][2];
                         msaCounts["T"] = msa_[i + j][3];
                         msaCounts["-"] = msa_[i + j][4];
+                        msaCounts["wt"] = std::string(1,ref_[i + j]);
                         variant["msa_counts"].push_back(msaCounts);
                     }
                 }
@@ -528,13 +529,15 @@ tr:not(.msa):hover td { background-color: #ff5e5e; }
                         int relPos = column["rel_pos"];
                         out << "<tr><td>" << relPos << "</td>" << std::endl;
                         for (int j = 0; j < 5; ++j) {
-
-                            out << "<td";
-                            if (relPos >= 0 && relPos < 3 &&
-                                j ==
-                                    Data::NucleotideToTag(strip(variant["nucleotides"][relPos])[0]))
-                                out << " style=\"color:red\"";
-                            out << ">" << column[std::string(1, Data::TagToNucleotide(j))]
+                            out << "<td style=\"";
+                            if (relPos >= 0 && relPos < 3)
+                            {
+                                if (j == Data::NucleotideToTag(strip(variant["nucleotides"][relPos])[0]))
+                                    out << "color:red;";
+                            }
+                            if (j == Data::NucleotideToTag(strip(column["wt"])[0]))
+                                out << "font-weight:bold;";
+                            out << "\">" << column[std::string(1, Data::TagToNucleotide(j))]
                                 << "</td>" << std::endl;
                             /* code */
                         }
