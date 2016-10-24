@@ -170,18 +170,18 @@ JSON::Json ResistanceCaller::JSON()
         } else if (i > 2550 && i < 3870 && gene != "RT") {
             gene = "RT";
             geneOffset = 2550;
-            genes.push_back(std::move(curGene));
+            if (!curGene.empty()) genes.push_back(std::move(curGene));
             curGene = Json();
             curGene["name"] = "Reverse Transcriptase";
         } else if (i > 3870 && i < 4230 && gene != "RN") {
             gene = "RN";
-            genes.push_back(std::move(curGene));
+            if (!curGene.empty()) genes.push_back(std::move(curGene));
             curGene = Json();
             curGene["name"] = "RNase";
             geneOffset = 3870;
         } else if (i > 4230 && i < 5096 && gene != "IN") {
             gene = "IN";
-            genes.push_back(std::move(curGene));
+            if (!curGene.empty()) genes.push_back(std::move(curGene));
             curGene = Json();
             curGene["name"] = "Integrase";
             geneOffset = 4230;
