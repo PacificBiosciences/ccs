@@ -199,7 +199,7 @@ JSON::Json ResistanceCaller::JSON()
         for (const auto& c : codons) {
             const auto cc = CodonString(c);
             const auto a = codonToAmino_.at(cc);
-            bool isKnown = resistentCodon_.find(i+4) != resistentCodon_.cend();
+            bool isKnown = resistentCodon_.find(i + 4) != resistentCodon_.cend();
             if (a != aminoRef) {
                 hit = true;
                 Json variant;
@@ -213,7 +213,7 @@ JSON::Json ResistanceCaller::JSON()
                                        c[2].major ? 0 : c[2].pValue};
                 variant["coverage"] = {msa_[i + 0].Coverage(), msa_[i + 1].Coverage(),
                                        msa_[i + 2].Coverage()};
-                variant["known_drm"] = isKnown ? resistentCodon_.at(i+4) : "";
+                variant["known_drm"] = isKnown ? resistentCodon_.at(i + 4) : "";
 
                 for (int j = -3; j < 6; ++j) {
                     if (i + j >= begin_ && i + j < end_) {
@@ -225,7 +225,7 @@ JSON::Json ResistanceCaller::JSON()
                         msaCounts["G"] = msa_[i + j][2];
                         msaCounts["T"] = msa_[i + j][3];
                         msaCounts["-"] = msa_[i + j][4];
-                        msaCounts["wt"] = std::string(1,ref_[i + j]);
+                        msaCounts["wt"] = std::string(1, ref_[i + j]);
                         variant["msa_counts"].push_back(msaCounts);
                     }
                 }
@@ -530,9 +530,9 @@ tr:not(.msa):hover td { background-color: #ff5e5e; }
                         out << "<tr><td>" << relPos << "</td>" << std::endl;
                         for (int j = 0; j < 5; ++j) {
                             out << "<td style=\"";
-                            if (relPos >= 0 && relPos < 3)
-                            {
-                                if (j == Data::NucleotideToTag(strip(variant["nucleotides"][relPos])[0]))
+                            if (relPos >= 0 && relPos < 3) {
+                                if (j ==
+                                    Data::NucleotideToTag(strip(variant["nucleotides"][relPos])[0]))
                                     out << "color:red;";
                             }
                             if (j == Data::NucleotideToTag(strip(column["wt"])[0]))
