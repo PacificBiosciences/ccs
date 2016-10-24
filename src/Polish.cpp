@@ -333,7 +333,7 @@ vector<int> ConsensusQualities(AbstractIntegrator& ai)
             }
             assert(score <= 0.0);
 
-            scoreSum += exp(score);
+            if (score < 0) scoreSum += exp(score);
         }
         quals.emplace_back(ScoreSumToQV(scoreSum));
     }
