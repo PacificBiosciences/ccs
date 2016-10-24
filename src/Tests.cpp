@@ -71,8 +71,11 @@ Data::FisherResult Tests::FisherCCS(const std::array<int, 5>& observed, const do
 
     auto fisherCCS = [&observed, &pMatch, &pml, &sum](int i) {
         constexpr double bonferroni = 3200 * 4;
-        return Fisher::fisher_exact_tiss((pml[i] * sum), (sum), (pMatch[i] * sum), (sum)) *
+        double result = Fisher::fisher_exact_tiss((pml[i] * sum), (sum), (pMatch[i] * sum), (sum)) *
                bonferroni;
+        if (result > 1)
+            return 1.0;
+        return result;
     };
 
     Data::FisherResult fr;
