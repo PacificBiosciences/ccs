@@ -331,7 +331,7 @@ vector<int> ConsensusQualities(AbstractIntegrator& ai)
                 PBLOG_ERROR << error;
                 continue;
             }
-            assert(score < 0.0);
+            assert(score <= 0.0);
 
             scoreSum += exp(score);
         }
