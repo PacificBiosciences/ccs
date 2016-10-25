@@ -35,31 +35,17 @@
 
 #pragma once
 
-#include <iostream>
+#include <stdexcept>
+#include <string>
 
 namespace PacBio {
-namespace Data {
+namespace Exception {
 
-enum struct State : uint8_t
+class InvalidEvaluatorException : public std::runtime_error
 {
-    VALID = 0,
-    ALPHA_BETA_MISMATCH,
-    POOR_ZSCORE,
-    TEMPLATE_TOO_SMALL,
-    MANUALLY_RELEASED,
-    INVALID,
-
-    SIZE
+public:
+    InvalidEvaluatorException(const std::string& msg) : std::runtime_error(msg) {}
 };
 
-static const char* StateName[] = {
-    "VALID",  "ALPHA/BETA MISMATCH", "POOR Z-SCORE", "TEMPLATE TOO SMALL", "MANUALLY RELEASED",
-    "INVALID"};
-
-inline std::ostream& operator<<(std::ostream& os, State result)
-{
-    os << PacBio::Data::StateName[static_cast<size_t>(result)];
-    return os;
-}
-}
-}  //::PacBio::Data
+}  // namespace Exception
+}  // namespace PacBio

@@ -74,6 +74,11 @@ public:
     operator std::string() const override;
 
     /// Computes the LL sum of all Evaluators, given a templated mutated by mut.
+    ///
+    /// This method throws InvalidEvaluatorException, every time the likelihood
+    /// can't be computed for one Evaluator; the respective Evaluator will be invalidated.
+    /// You MUST recompute the LLs for all your mutations of interest, as the
+    /// number of active Evaluators changed.
     double LL(const Mutation& mut) override;
     /// Computes the LL sum of all Evaluators, given the current template.
     inline double LL() const override { return AbstractIntegrator::LL(); }

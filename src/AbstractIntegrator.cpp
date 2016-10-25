@@ -42,6 +42,7 @@
 
 #include <pacbio/consensus/AbstractIntegrator.h>
 #include <pacbio/consensus/AbstractMatrix.h>
+#include <pacbio/exception/InvalidEvaluatorException.h>
 
 #include <pacbio/data/Sequence.h>
 
@@ -51,6 +52,7 @@ namespace PacBio {
 namespace Consensus {
 
 using namespace PacBio::Data;
+using namespace PacBio::Exception;
 
 namespace {
 
@@ -91,34 +93,50 @@ Data::State AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
     return evals_.back().Status();
 }
 
-double AbstractIntegrator::LL(const Mutation& fwdMut) { return AccumulateNoInf(LLs(fwdMut)); }
+double AbstractIntegrator::LL(const Mutation& fwdMut)
+{
+    const auto lls = LLs(fwdMut);
+    return std::accumulate(lls.cbegin(), lls.cend(), 0.0);
+}
 
-double AbstractIntegrator::LL() const { return AccumulateNoInf(LLs()); }
+double AbstractIntegrator::LL() const
+{
+    const auto functor = [](const Evaluator& eval) { return eval.IsValid() ? eval.LL() : 0; };
+    const auto lls = TransformEvaluators<double>(functor);
+    return std::accumulate(lls.cbegin(), lls.cend(), 0.0);
+}
 
 std::vector<double> AbstractIntegrator::LLs(const Mutation& fwdMut)
 {
     const Mutation revMut(ReverseComplement(fwdMut));
 
-    const auto functor = [&fwdMut, &revMut](Evaluator& eval) {
-        switch (eval.Strand()) {
+    // Compute individual LLs of each Evaluator
+    std::vector<double> lls;
+    lls.reserve(evals_.size());
+    for (auto& e : evals_) {
+        // Ignore invalid Evaluators
+        if (!e.IsValid()) continue;
+
+        double ll;
+
+        switch (e.Strand()) {
             case StrandType::FORWARD:
-                return eval.LL(fwdMut);
+                ll = e.LL(fwdMut);
+                break;
             case StrandType::REVERSE:
-                return eval.LL(revMut);
+                ll = e.LL(revMut);
+                break;
             case StrandType::UNMAPPED:
-                return NEG_DBL_INF;
+                // unmapped Evaluators should not be used
+                throw InvalidEvaluatorException("Unmapped read in mutation testing");
             default:
                 throw std::runtime_error("Unknown StrandType");
         }
-    };
 
-    return TransformEvaluators<double>(functor);
-}
+        lls.emplace_back(ll);
+    }
 
-std::vector<double> AbstractIntegrator::LLs() const
-{
-    const auto functor = [](const Evaluator& eval) { return eval.LL(); };
-    return TransformEvaluators<double>(functor);
+    return lls;
 }
 
 std::vector<std::string> AbstractIntegrator::ReadNames() const
