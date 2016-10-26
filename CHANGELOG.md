@@ -5,7 +5,7 @@
 ### Added
  - Add juliet, a minimal minor variant caller
  - Add Fisher's exact test
- - Juliet JSON, HTMl, and pretty print output
+ - Juliet JSON and HTMl output for HIV-1 gag and pol region
 
 ## [2.0.4]
 
