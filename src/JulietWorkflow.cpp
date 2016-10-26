@@ -106,9 +106,6 @@ void JulietWorkflow::Run(const JulietSettings& settings)
         std::ofstream jsonStream(outputPrefix + ".json");
         jsonStream << json.dump(2) << std::endl;
 
-        std::ofstream txtStream(outputPrefix + ".txt");
-        ResistanceCaller::Print(txtStream, json, settings.DRMOnly, settings.Details);
-
         std::ofstream htmlStream(outputPrefix + ".html");
         ResistanceCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
     }

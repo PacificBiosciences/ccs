@@ -255,66 +255,6 @@ JSON::Json ResistanceCaller::JSON()
     return j;
 }
 
-void ResistanceCaller::Print(std::ostream& out, const JSON::Json& j, bool onlyKnownDRMs,
-                             bool details)
-{
-    auto strip = [](const std::string& input) -> std::string {
-        std::string s = input;
-        s.erase(std::remove(s.begin(), s.end(), '\"'), s.end());
-        return s;
-    };
-    if (j.find("genes") == j.cend() || j["genes"].is_null()) return;
-    for (const auto& gene : j["genes"]) {
-        // Header
-        const auto name = strip(gene["name"]);
-        out << name << std::endl;
-        for (size_t i = 0; i < name.size(); ++i)
-            out << "#";
-        out << std::endl;
-
-        for (auto& variantPosition : gene["variant_positions"]) {
-            std::stringstream line;
-            line << std::setw(4) << std::right << variantPosition["ref_position"] << " "
-                 << strip(variantPosition["ref_codon"]) << "("
-                 << strip(variantPosition["ref_amino_acid"]) << ") => ";
-            std::string prefix = line.str();
-            line.str("");
-            bool first = true;
-            for (auto& variant : variantPosition["variants"]) {
-                bool isKnown = !strip(variant["known_drm"]).empty();
-                if ((onlyKnownDRMs && isKnown) || !onlyKnownDRMs) {
-                    line << strip(variant["amino_acid"]);
-                    line << "[";
-                    for (int j = 0; j < 3; ++j) {
-                        line << "(";
-                        line << strip(variant["nucleotides"][j]);
-                        line << " ";
-                        line << variant["frequencies"][j];
-                        line << " ";
-                        if (static_cast<double>(variant["p-values"][j]) == 0)
-                            line << "M";
-                        else
-                            line << static_cast<double>(variant["p-values"][j]);
-                        line << " ";
-                        line << variant["coverage"][j];
-                        line << ")";
-                    }
-                    line << "]";
-                    if (isKnown) line << " <+> " << strip(variant["known_drm"]);
-                    if (first) {
-                        out << prefix << line.str() << std::endl;
-                        first = false;
-                    } else {
-                        out << "            " << line.str() << std::endl;
-                    }
-                    line.str("");
-                }
-            }
-        }
-        out << std::endl;
-    }
-}
-
 void ResistanceCaller::HTML(std::ostream& out, const JSON::Json& j, bool onlyKnownDRMs,
                             bool details)
 {
