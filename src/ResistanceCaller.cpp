@@ -64,31 +64,17 @@ ResistanceCaller::ResistanceCaller(const Data::MSA& msa)
 {
     int pos = begin_;
     for (const auto& column : msa) {
-        bool hasVariantNotRef = false;
-        for (int j = 0; j < 4; ++j) {
-            if (column.mask.at(j) != 0)
-                if (Ref(pos) != Data::TagToNucleotide(j)) hasVariantNotRef = true;
-        }
-
-        const bool argMaxNotRef = Ref(pos) != column.argMax;
-
         std::vector<VariantNucleotide> nucs;
         for (int j = 0; j < 4; ++j) {
             char curNuc = Data::TagToNucleotide(j);
             if (column.argMax == j) {
                 nucs.emplace_back(curNuc);
-                // std::cerr << pos << ": " << Ref(pos) << "=>" << curNuc << " \tMajor"
-                // << std::endl;
             } else if (column.mask.at(j) != 0) {
-                // std::cerr << pos << ": " << Ref(pos) << "=>" << curNuc << "\t";
                 nucs.emplace_back(curNuc, std::round(column.Frequency(j) * 10000) / 10000.0,
                                   column.pValues.at(j));
-                // std::cerr << std::round(column.Frequency(j) * 10000) / 10000.0 << "\t"
-                //           << column.pValues.at(j) << std::endl;
             }
         }
         AddPosition(std::move(nucs));
-
         ++pos;
     }
 }
@@ -212,7 +198,6 @@ JSON::Json ResistanceCaller::JSON()
             if (a != aminoRef) {
                 hit = true;
                 Json variant;
-                bool mutated[]{refCodon[0] != cc[0], refCodon[1] != cc[1], refCodon[2] != cc[2]};
 
                 variant["amino_acid"] = std::string(1, a);
                 variant["nucleotides"] = {std::string(1, cc[0]), std::string(1, cc[1]),
