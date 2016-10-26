@@ -139,6 +139,12 @@ std::vector<double> AbstractIntegrator::LLs(const Mutation& fwdMut)
     return lls;
 }
 
+std::vector<double> AbstractIntegrator::LLs() const
+{
+    const auto functor = [](const Evaluator& eval) { return eval.LL(); };
+    return TransformEvaluators<double>(functor);
+}
+
 std::vector<std::string> AbstractIntegrator::ReadNames() const
 {
     return TransformEvaluators<std::string>([](const Evaluator& eval) { return eval.ReadName(); });

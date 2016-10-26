@@ -98,6 +98,9 @@ public:
     /// You MUST recompute the LLs for all your mutations of interest, as the
     /// number of active Evaluators changed.
     std::vector<double> LLs(const Mutation& mut);
+    /// Return the LL for each Evaluator, even invalid ones.
+    /// DO NOT use this in production code, only for debugging purposes.
+    std::vector<double> LLs() const;
     /// For each Evaluator, returns the read name.
     std::vector<std::string> ReadNames() const;
     /// Returns the number of flip flop events for each Evaluator.
