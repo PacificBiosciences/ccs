@@ -94,7 +94,7 @@ string FilePrefix(const string& path)
 {
     size_t fileStart = path.find_last_of("/");
 
-    if (fileStart == string::npos) fileStart = 0;
+    if (fileStart == string::npos) fileStart = -1;
 
     // increment beyond the '/'
     ++fileStart;
