@@ -162,29 +162,38 @@ JSON::Json ResistanceCaller::JSON()
 
         const auto aminoRef = AminoacidRef(i);
 
-        if (i > 2253 && i < 2550 && gene != "PI") {
-            gene = "PI";
-            curGene = Json();
-            curGene["name"] = "Protease";
-            geneOffset = 2253;
-        } else if (i > 2550 && i < 3870 && gene != "RT") {
-            gene = "RT";
+        auto SetNewGene = [&gene, &genes, &curGene, &geneOffset](const std::string& name, int begin)
+        {
+            gene = name;
             if (curGene.find("gene") != curGene.cend()) genes.push_back(std::move(curGene));
             curGene = Json();
-            curGene["name"] = "Reverse Transcriptase";
-            geneOffset = 2550;
-        } else if (i > 3870 && i < 4230 && gene != "RN") {
-            gene = "RN";
-            if (curGene.find("gene") != curGene.cend()) genes.push_back(std::move(curGene));
-            curGene = Json();
-            curGene["name"] = "RNase";
-            geneOffset = 3870;
-        } else if (i > 4230 && i < 5096 && gene != "IN") {
-            gene = "IN";
-            if (curGene.find("gene") != curGene.cend()) genes.push_back(std::move(curGene));
-            curGene = Json();
-            curGene["name"] = "Integrase";
-            geneOffset = 4230;
+            curGene["name"] = name;
+            geneOffset = begin;
+        };
+        // Corrected index for 1-based reference
+        const int ci = i + 1;
+        if (ci > 1 && ci < 634 && gene != "5'LTR") {
+            SetNewGene("5'LTR", 1);
+        } else if (ci > 790 && ci < 1186 && gene != "p17") {
+            SetNewGene("p17", 790);
+        } else if (ci > 1186 && ci < 1879 && gene != "p24") {
+            SetNewGene("p24", 1186);
+        } else if (ci > 1879 && ci < 1921 && gene != "p2") {
+            SetNewGene("p2", 1879);
+        } else if (ci > 1921 && ci < 2086 && gene != "p7") {
+            SetNewGene("p7", 1921);
+        } else if (ci > 2086 && ci < 2134 && gene != "p1") {
+            SetNewGene("p1", 2086);
+        } else if (ci > 2134 && ci < 2292 && gene != "p6") {
+            SetNewGene("p6", 2134);
+        } else if (ci > 2253 && ci < 2550 && gene != "Protease") {
+            SetNewGene("Protease", 2253);
+        } else if (ci > 2550 && ci < 3870 && gene != "Reverse Transcriptase") {
+            SetNewGene("Reverse Transcriptase", 2550);
+        } else if (ci > 3870 && ci < 4230 && gene != "RNase") {
+            SetNewGene("RNase", 3870);
+        } else if (ci > 4230 && ci < 5096 && gene != "Integrase") {
+            SetNewGene("Integrase", 4230);
         }
 
         const auto refCodon = CodonRef(i);
@@ -192,7 +201,7 @@ JSON::Json ResistanceCaller::JSON()
         Json variantPosition;
         variantPosition["ref_codon"] = refCodon;
         variantPosition["ref_amino_acid"] = std::string(1, aminoRef);
-        variantPosition["ref_position"] = 1 + (i + 1 - geneOffset) / 3;
+        variantPosition["ref_position"] = 1 + (ci + 1 - geneOffset) / 3;
         std::vector<Json> variants;
         bool first = true;
         bool hit = false;
