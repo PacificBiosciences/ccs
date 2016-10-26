@@ -325,13 +325,17 @@ bool ReadAccuracyDescending(const std::pair<size_t, const TRead*>& a,
 
 }  // namespace anonymous
 
+/// \returns a std::pair containing a std::string for the consensus, and a size_t
+//           describing the number of adapter-to-adapter reads successfully added
 template <typename TRead>
-std::string PoaConsensus(const std::vector<const TRead*>& reads,
-                         std::vector<SparsePoa::ReadKey>* readKeys,
-                         std::vector<PoaAlignmentSummary>* summaries, const size_t maxPoaCov)
+std::pair<std::string, size_t> PoaConsensus(const std::vector<const TRead*>& reads,
+                                            std::vector<SparsePoa::ReadKey>* readKeys,
+                                            std::vector<PoaAlignmentSummary>* summaries,
+                                            const size_t maxPoaCov)
 {
     SparsePoa poa;
     size_t cov = 0;
+    size_t nPasses = 0;
 
 #if 0
     // create a vector of indices into the original reads vector,
@@ -353,13 +357,16 @@ std::string PoaConsensus(const std::vector<const TRead*>& reads,
         // SparsePoa::ReadKey key = poa.OrientAndAddRead(read.second->Seq);
         // readKeys->at(read.first) = key;
         readKeys->emplace_back(key);
-        if (key >= 0 && (++cov) >= maxPoaCov) break;
+        if (key >= 0) {
+            if (read->Flags & BAM::ADAPTER_BEFORE && read->Flags & BAM::ADAPTER_AFTER) ++nPasses;
+            if ((++cov) >= maxPoaCov) break;
+        }
     }
 
     // at least 50% of the reads should cover
     // TODO(lhepler) revisit this minimum coverage equation
     const size_t minCov = (cov < 5) ? 1 : (cov + 1) / 2 - 1;
-    return poa.FindConsensus(minCov, &(*summaries))->Sequence;
+    return std::make_pair(poa.FindConsensus(minCov, &(*summaries))->Sequence, nPasses);
 }
 
 // pass unique_ptr by reference to satisfy finickyness wrt move semantics in <future>
@@ -424,7 +431,9 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
 
         std::vector<SparsePoa::ReadKey> readKeys;
         std::vector<PoaAlignmentSummary> summaries;
-        std::string poaConsensus =
+        std::string poaConsensus;
+        size_t nPasses = 0;
+        std::tie(poaConsensus, nPasses) =
             PoaConsensus(reads, &readKeys, &summaries, settings.MaxPoaCoverage);
 
         if (poaConsensus.length() < settings.MinLength) {
@@ -447,7 +456,7 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                 result.Success += 1;
                 result.SubreadCounter.Success += activeReads;
                 result.emplace_back(ConsensusType{
-                    PolishResult(), chunk.Id, boost::none, poaConsensus, qvs, possiblePasses, 0, 0,
+                    PolishResult(), chunk.Id, boost::none, poaConsensus, qvs, nPasses, 0, 0,
                     std::vector<double>(1), result.SubreadCounter.ReturnCountsAsArray(),
                     chunk.SignalToNoise, timer.ElapsedMilliseconds(), chunk.Barcodes});
             } else {
