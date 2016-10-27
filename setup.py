@@ -13,6 +13,11 @@ from setuptools import setup, Extension
 from shutil import copy2, rmtree
 from subprocess import Popen
 
+def iteritems(d):
+    if sys.version_info >= (3, 0):
+        return d.items()
+    return d.iteritems()
+
 def ParseVersion():
     thisDir = os.path.dirname(os.path.realpath(__file__))
     cmakeLists = os.path.join(thisDir, "CMakeLists.txt")
@@ -101,7 +106,7 @@ class CMake(object):
         configure = copy(self.configure)
         if self.generator:
             configure.append("-G{0}".format(self.generator))
-        for k, v in self.definitions.iteritems():
+        for k, v in iteritems(self.definitions):
             configure.append("-D{0}={1}".format(k, v))
         configure.append(sourceDir)
         print("Configuring with command `{0}`".format(" ".join(configure)), file=sys.stderr)
