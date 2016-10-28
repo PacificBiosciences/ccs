@@ -9,7 +9,7 @@ for example.
 Run CCS:
 
   $ mkdir results
-  $ ${__CCS_EXE} --zmws 1-187412 --force $DATADIR/ds.subreadset.xml $DATADIR/lastrun/out.bam
+  $ ${__PBTEST_CCS_EXE} --zmws 1-187412 --force $DATADIR/ds.subreadset.xml $DATADIR/lastrun/out.bam
 
 Run ccscheck, check output:
 

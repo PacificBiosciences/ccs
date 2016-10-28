@@ -13,7 +13,7 @@ set -u
 echo "# TEST"
 echo "## Running internal tests"
 export
-_CCS_EXE="$(pwd -P)/build/ccs" cram -v --xunit-file=uny-internal-cram.xml tests/cram/internal/*.t
+__PBTEST_CCS_EXE="$(pwd -P)/build/ccs" cram -v --xunit-file=uny-internal-cram.xml tests/cram/internal/*.t
 
 set +u
 deactivate
