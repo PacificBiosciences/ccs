@@ -307,7 +307,8 @@ Red colored are nucleotides of the codon and in bold the wild type.<br/>
 Deletions and insertions are being ignored in this version.<br/>
 <br/>
 This software is for research only and has not been clinically validated!</p>
-</details>)" << std::endl;
+</details>)"
+        << std::endl;
 
     if (j.find("genes") == j.cend() || j["genes"].is_null()) return;
     for (const auto& gene : j["genes"]) {
