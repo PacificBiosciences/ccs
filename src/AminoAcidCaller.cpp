@@ -276,8 +276,9 @@ table td:nth-child(5) { background-color: #ddd; border-right: 1px dashed #bbb; }
 table td:nth-child(6) { background-color: #ccc; border-right: 1px dashed #aaa; }
 table td:nth-child(7) { background-color: #bbb;}
 table td:nth-child(8) { background-color: #aaa; color: #fff600}
-tr:not(.msa):hover td { background-color: #42bff4; }
-.msa table tr:hover td { background-color: #42bff4; }
+tr:not(.msa):hover td { background-color: white; }
+tr:not(.msa):hover td:nth-child(8) { color: purple; }
+.msa table tr:hover td { background-color: gray; color:white; }
 .top table { background-color:white; border:0; }
 .top table td { background-color:white; border:0; border-bottom: 1px solid gray; font-weight: normal}
 .top table tr { border:0; }
@@ -286,7 +287,27 @@ tr:not(.msa):hover td { background-color: #42bff4; }
 )" << std::endl;
     out << "</style>" << std::endl;
     out << "</head>" << std::endl;
-    out << "<body>" << std::endl;
+    out << R"(<body>
+<details style="margin-bottom: 20px">
+<summary>Legend</summary>
+<p>Every table represents a gene in the Pol polyprotein.<br/>
+Each row stands for a mutated amino acid. Positions are relative to the current gene.<br/>
+Positions with no or synonymous mutation are not being shown.<br/>
+The used reference is HXB2 and all coordinates are in reference space.<br/>
+The mutated nucleotide is highlighted in the codon.<br/>
+Frequency is per codon.<br/>
+Coverage includes deletions.<br/>
+Known drug-resistance mutations positions are annotated in the last column,<br/>
+whereas 'S' stands for surveillance. Annotations from the <a href="https://hivdb.stanford.edu" target="_new">Stanford DB</a>.<br/>
+<br/>
+Clicking on a row unfolds the counts of the multiple sequence alignment of the<br/>
+codon position and up to +-3 surrounding positions.<br/>
+Red colored are nucleotides of the codon and in bold the wild type.<br/>
+<br/>
+Deletions and insertions are being ignored in this version.<br/>
+<br/>
+This software is for research only and has not been clinically validated!</p>
+</details>)" << std::endl;
 
     if (j.find("genes") == j.cend() || j["genes"].is_null()) return;
     for (const auto& gene : j["genes"]) {
