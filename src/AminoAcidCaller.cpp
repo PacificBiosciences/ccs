@@ -205,7 +205,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                      codon_counts.second, coverage,
                      coverage * CodonProbability(curVariantPosition.refCodon, codon_counts.first),
                      coverage) *
-                 3200 * 4);
+                 3200 * 64);
             if (p < 0.01) {
                 VariantGene::VariantPosition::VariantCodon curVariantCodon;
                 curVariantCodon.codon = codon_counts.first;
