@@ -11,7 +11,9 @@ if [ ! -d venv ]
 then
     /mnt/software/v/virtualenv/13.0.1/virtualenv.py venv
 fi
+set +u
 source venv/bin/activate
+set -u
 
 echo "## Install pip modules"
 pip install --upgrade pip
