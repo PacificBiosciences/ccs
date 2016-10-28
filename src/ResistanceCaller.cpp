@@ -148,8 +148,8 @@ JSON::Json ResistanceCaller::JSON()
 
         const auto aminoRef = AminoacidRef(i);
 
-        auto SetNewGene = [&gene, &genes, &curGene, &geneOffset](const std::string& name, int begin)
-        {
+        auto SetNewGene = [&gene, &genes, &curGene, &geneOffset](const std::string& name,
+                                                                 int begin) {
             gene = name;
             if (curGene.find("gene") != curGene.cend()) genes.push_back(std::move(curGene));
             curGene = Json();

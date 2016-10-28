@@ -35,6 +35,8 @@
 
 // Author: Armin Töpfer
 
+// #define CALL_NUCLEOTIDES
+
 #include <array>
 #include <cmath>
 #include <exception>
@@ -49,6 +51,7 @@
 #include <pacbio/data/MSA.h>
 #include <pacbio/io/BamParser.h>
 #include <pacbio/io/Utility.h>
+#include <pacbio/juliet/AminoAcidCaller.h>
 #include <pacbio/juliet/JulietSettings.h>
 #include <pacbio/juliet/ResistanceCaller.h>
 #include <pacbio/statistics/Fisher.h>
@@ -69,7 +72,9 @@ std::ostream& JulietWorkflow::LogCI(const std::string& prefix)
 
 void JulietWorkflow::Run(const JulietSettings& settings)
 {
+#ifdef CALL_NUCLEOTIDES
     std::unordered_map<std::string, JSON::Json> jsonResults;
+#endif
     auto globalOutputPrefix = settings.OutputPrefix;
     globalOutputPrefix += globalOutputPrefix.empty() ? "" : "/";
     for (const auto& inputFile : settings.InputFiles) {
@@ -79,6 +84,7 @@ void JulietWorkflow::Run(const JulietSettings& settings)
         std::vector<Data::ArrayRead> reads;
         reads = IO::ParseBam(inputFile, settings.RegionStart, settings.RegionEnd);
 
+#ifdef CALL_NUCLEOTIDES
         Data::MSA msa(reads);
 
         // Compute fisher's exact test for each position
@@ -114,6 +120,18 @@ void JulietWorkflow::Run(const JulietSettings& settings)
         ResistanceCaller::PrintSummary(summaryStream, jsonResults, settings.DRMOnly,
                                        settings.Details);
     }
+#else
+        // Call variants
+        AminoAcidCaller aac(reads);
+        const auto json = aac.JSON();
+
+        std::ofstream jsonStream(outputPrefix + ".json");
+        jsonStream << json.dump(2) << std::endl;
+
+        std::ofstream htmlStream(outputPrefix + ".html");
+        AminoAcidCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
+    }
+#endif
 }
 }
 }  // ::PacBio::Juliet

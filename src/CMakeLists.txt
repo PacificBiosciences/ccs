@@ -60,6 +60,7 @@ add_library(unanimity STATIC
     ${UNY_HEADER}
     ${UNY_HIDDEN_HEADER}
     ${CPPOPTPARSE_CPP}
+    AminoAcidCaller.cpp
     ArrayRead.cpp
     ChainSeeds.cpp
     ChemistryMapping.cpp
