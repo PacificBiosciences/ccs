@@ -403,114 +403,11 @@ tr:not(.msa):hover td { background-color: #42bff4; }
                                 out << "font-weight:bold;";
                             out << "\">" << column[std::string(1, Data::TagToNucleotide(j))]
                                 << "</td>" << std::endl;
-                            /* code */
                         }
-                        // out << "<td>" << column["A"] << "</td>" << std::endl;
-                        // out << "<td>" << column["C"] << "</td>" << std::endl;
-                        // out << "<td>" << column["G"] << "</td>" << std::endl;
-                        // out << "<td>" << column["T"] << "</td>" << std::endl;
-                        // out << "<td>" << column["-"] << "</td>" << std::endl;
                         out << "</tr>" << std::endl;
                     }
                     out << "</table></tr>" << std::endl;
                 }
-
-                // bool isKnown = !strip(variant["known_drm"]).empty();
-                // if ((onlyKnownDRMs && isKnown) || !onlyKnownDRMs) {
-                //     line << "<td>" << strip(variant["amino_acid"]) << "</td>\n";
-                //     // line << "[";
-                //     bool mutated[]{refCodon[0] != strip(variant["nucleotides"][0])[0],
-                //                    refCodon[1] != strip(variant["nucleotides"][1])[0],
-                //                    refCodon[2] != strip(variant["nucleotides"][2])[0]};
-                //     for (int j = 0; j < 3; ++j) {
-                //         line << "<td";
-                //         if (mutated[j]) line << " id=\"hitC" + std::to_string(j) + "\" ";
-                //         line << ">";
-                //         line << strip(variant["nucleotides"][j]);
-                //         line << "</td>\n";
-                //     }
-                //     for (int j = 0; j < 3; ++j) {
-                //         line << "<td";
-                //         if (mutated[j]) line << " id=\"hitF" + std::to_string(j) + "\" ";
-                //         line << ">";
-                //         line << variant["frequencies"][j];
-                //         line << "</td>\n";
-                //     }
-                //     for (int j = 0; j < 3; ++j) {
-                //         line << "<td";
-                //         if (mutated[j]) line << " id=\"hitP" + std::to_string(j) + "\" ";
-                //         line << ">";
-                //         if (static_cast<double>(variant["p-values"][j]) == 0)
-                //             line << "M";
-                //         else
-                //             line << static_cast<double>(variant["p-values"][j]);
-                //         line << "</td>\n";
-                //     }
-                //     for (int j = 0; j < 3; ++j) {
-                //         line << "<td";
-                //         if (mutated[j]) line << " id=\"hitP" + std::to_string(j) + "\" ";
-                //         line << ">";
-                //         line << variant["coverage"][j];
-                //         line << "</td>\n";
-                //     }
-                //     line << "<td>";
-                //     if (isKnown) line << strip(variant["known_drm"]);
-                //     line << "</td>\n";
-                //     if (first) {
-                //         out << prefix << line.str() << "</tr>" << std::endl;
-                //         first = false;
-                //     } else {
-                //         out << "<tr class=\"var\"><td></td><td></td><td></td>" << line.str()
-                //             << "</tr>" << std::endl;
-                //     }
-                //     line.str("");
-
-                //     // out << R"(
-                //     // <tr class="msa">
-                //     // <td colspan=3 style="background-color: white"></td>
-                //     // <td colspan=14 style="padding:0; margin:0">
-                //     // <table style="padding:0; margin:0">
-                //     // <col width="80px" />
-                //     // <col width="80px" />
-                //     // <col width="80px" />
-                //     // <col width="80px" />
-                //     // <col width="80px" />
-                //     // <col width="80px" />
-                //     // <tr style="padding:0">
-                //     // <th style="padding:2px 0 0px 0">Pos</th>
-                //     // <th style="padding:2px 0 0px 0">A</th>
-                //     // <th style="padding:2px 0 0px 0">C</th>
-                //     // <th style="padding:2px 0 0px 0">G</th>
-                //     // <th style="padding:2px 0 0px 0">T</th>
-                //     // <th style="padding:2px 0 0px 0">-</th>
-                //     // </tr>
-                //     // )";
-
-                //     // for (auto& column : variant["msa_counts"]) {
-                //     //     int relPos = column["rel_pos"];
-                //     //     out << "<tr><td>" << relPos << "</td>" << std::endl;
-                //     //     for (int j = 0; j < 5; ++j) {
-                //     //         out << "<td style=\"";
-                //     //         if (relPos >= 0 && relPos < 3) {
-                //     //             if (j ==
-                //     //                 Data::NucleotideToTag(strip(variant["nucleotides"][relPos])[0]))
-                //     //                 out << "color:red;";
-                //     //         }
-                //     //         if (j == Data::NucleotideToTag(strip(column["wt"])[0]))
-                //     //             out << "font-weight:bold;";
-                //     //         out << "\">" << column[std::string(1, Data::TagToNucleotide(j))]
-                //     //             << "</td>" << std::endl;
-                //     //         /* code */
-                //     //     }
-                //     //     // out << "<td>" << column["A"] << "</td>" << std::endl;
-                //     //     // out << "<td>" << column["C"] << "</td>" << std::endl;
-                //     //     // out << "<td>" << column["G"] << "</td>" << std::endl;
-                //     //     // out << "<td>" << column["T"] << "</td>" << std::endl;
-                //     //     // out << "<td>" << column["-"] << "</td>" << std::endl;
-                //     //     out << "</tr>" << std::endl;
-                //     // }
-                //     // out << "</table></tr>" << std::endl;
-                // }
             }
         }
     }
