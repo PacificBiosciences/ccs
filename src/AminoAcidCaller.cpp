@@ -145,7 +145,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                 drm += "NRTI S";
             }
         } else if (geneName == "Integrase") {
-            if (std::find(ini.cbegin(), ini.cend(), position) != ini.cend()) drm = "INI";
+            if (std::find(ini.cbegin(), ini.cend(), position) != ini.cend()) drm = "INSTI";
         }
         return drm;
     };
