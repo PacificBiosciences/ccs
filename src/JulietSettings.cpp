@@ -64,7 +64,7 @@ const PlainOption Output{
 };
 const PlainOption PValueThreshold{
     "p_value_threshold",
-    { "p-value-threshold", "p" },
+    { "p-value-threshold", "d" },
     "P-Value Threshold",
     "P-value threshold to call SNV.",
     CLI::Option::FloatType(0.01)
@@ -76,6 +76,13 @@ const PlainOption DRMOnly{
     "Only report known DRM positions.",
     CLI::Option::BoolType()
 };
+const PlainOption Mode{
+    "Variant calling mode",
+    { "mode", "m" },
+    "Calling mode",
+    "Variant calling mode: amino, base, or phasing",
+    CLI::Option::StringType("amino")
+};
 // clang-format on
 }  // namespace OptionNames
 
@@ -84,14 +91,9 @@ JulietSettings::JulietSettings(const PacBio::CLI::Results& options)
     , OutputPrefix(std::forward<std::string>(options[OptionNames::Output]))
     , PValueThreshold(options[OptionNames::PValueThreshold])
     , DRMOnly(options[OptionNames::DRMOnly])
+    , Mode(AnalysisModeFromString(options[OptionNames::Mode]))
 {
     SplitRegion(options[OptionNames::Region], &RegionStart, &RegionEnd);
-    // std::cerr << "InputFile        : " << InputFile << std::endl
-    //           << "OutputPrefix     : " << OutputFile << std::endl
-    //           << "PValueThreshold  : " << PValueThreshold << std::endl
-    //           << "DRMOnly          : " << DRMOnly << std::endl
-    //           << "RegionStart      : " << RegionStart << std::endl
-    //           << "RegionEnd        ; " << RegionEnd << std::endl;
 }
 
 size_t JulietSettings::ThreadCount(int n)
@@ -112,6 +114,20 @@ void JulietSettings::SplitRegion(const std::string& region, int* start, int* end
         *end = stoi(splitVec[1]) - 1;
         if (*start < 0 || *end < 0) throw std::runtime_error("Indexing is 1-based");
     }
+}
+
+AnalysisMode JulietSettings::AnalysisModeFromString(const std::string& input)
+{
+    std::string s;
+    std::transform(input.begin(), input.end(), s.begin(), ::tolower);
+    if (s.find("amino") || s.find("acid"))
+        return AnalysisMode::AMINO;
+    else if (s.find("base") || s.find("nuc"))
+        return AnalysisMode::BASE;
+    else if (s.find("phas") || s.find("hap"))
+        return AnalysisMode::PHASING;
+    else
+        throw std::runtime_error("Unknown mode " + s);
 }
 
 PacBio::CLI::Interface JulietSettings::CreateCLI()
@@ -135,6 +151,7 @@ PacBio::CLI::Interface JulietSettings::CreateCLI()
     i.AddOptions(
     {
         OptionNames::Output,
+        OptionNames::Mode,
         OptionNames::Region,
         OptionNames::PValueThreshold,
         OptionNames::DRMOnly

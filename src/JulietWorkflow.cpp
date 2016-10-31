@@ -35,8 +35,6 @@
 
 // Author: Armin Töpfer
 
-// #define CALL_NUCLEOTIDES
-
 #include <array>
 #include <cmath>
 #include <exception>
@@ -72,66 +70,71 @@ std::ostream& JulietWorkflow::LogCI(const std::string& prefix)
 
 void JulietWorkflow::Run(const JulietSettings& settings)
 {
-#ifdef CALL_NUCLEOTIDES
-    std::unordered_map<std::string, JSON::Json> jsonResults;
-#endif
     auto globalOutputPrefix = settings.OutputPrefix;
     globalOutputPrefix += globalOutputPrefix.empty() ? "" : "/";
-    for (const auto& inputFile : settings.InputFiles) {
-        const auto outputPrefix = globalOutputPrefix + IO::FilePrefix(inputFile);
+    if (settings.Mode == AnalysisMode::BASE) {
+        std::unordered_map<std::string, JSON::Json> jsonResults;
+        for (const auto& inputFile : settings.InputFiles) {
+            const auto outputPrefix = globalOutputPrefix + IO::FilePrefix(inputFile);
 
-        // Convert BamRecords to unrolled ArrayReads
-        std::vector<Data::ArrayRead> reads;
-        reads = IO::ParseBam(inputFile, settings.RegionStart, settings.RegionEnd);
+            // Convert BamRecords to unrolled ArrayReads
+            std::vector<Data::ArrayRead> reads;
+            reads = IO::ParseBam(inputFile, settings.RegionStart, settings.RegionEnd);
 
-#ifdef CALL_NUCLEOTIDES
-        Data::MSA msa(reads);
+            Data::MSA msa(reads);
 
-        // Compute fisher's exact test for each position
-        const Statistics::Tests tests;
-        for (auto& column : msa) {
-            column.AddFisherResult(tests.FisherCCS(column, settings.PValueThreshold));
-            column.AddFisherResult(
-                tests.FisherCCS(column, column.insertions, settings.PValueThreshold));
+            // Compute fisher's exact test for each position
+            const Statistics::Tests tests;
+            for (auto& column : msa) {
+                column.AddFisherResult(tests.FisherCCS(column, settings.PValueThreshold));
+                column.AddFisherResult(
+                    tests.FisherCCS(column, column.insertions, settings.PValueThreshold));
+            }
+
+            // Store fisher p-values
+            {
+                std::ofstream fisherStream(outputPrefix + ".msa");
+                fisherStream << "pos A Fa C Fc G Fg T Ft N Fn" << std::endl;
+                int pos = msa.beginPos;
+                for (auto& column : msa)
+                    fisherStream << pos++ << " " << column << std::endl;
+                fisherStream.close();
+            }
+
+            ResistanceCaller resiCaller(msa);
+
+            const auto json = resiCaller.JSON();
+            jsonResults.insert({IO::FilePrefix(inputFile), json});
+            std::ofstream jsonStream(outputPrefix + ".json");
+            jsonStream << json.dump(2) << std::endl;
+
+            std::ofstream htmlStream(outputPrefix + ".html");
+            ResistanceCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
         }
-
-        // Store fisher p-values
-        {
-            std::ofstream fisherStream(outputPrefix + ".msa");
-            fisherStream << "pos A Fa C Fc G Fg T Ft N Fn" << std::endl;
-            int pos = msa.beginPos;
-            for (auto& column : msa)
-                fisherStream << pos++ << " " << column << std::endl;
-            fisherStream.close();
+        if (settings.InputFiles.size() > 1) {
+            std::ofstream summaryStream(globalOutputPrefix + "summary");
+            ResistanceCaller::PrintSummary(summaryStream, jsonResults, settings.DRMOnly,
+                                           settings.Details);
         }
+    } else if (settings.Mode == AnalysisMode::AMINO) {
+        for (const auto& inputFile : settings.InputFiles) {
+            const auto outputPrefix = globalOutputPrefix + IO::FilePrefix(inputFile);
 
-        ResistanceCaller resiCaller(msa);
+            // Convert BamRecords to unrolled ArrayReads
+            std::vector<Data::ArrayRead> reads;
+            reads = IO::ParseBam(inputFile, settings.RegionStart, settings.RegionEnd);
 
-        const auto json = resiCaller.JSON();
-        jsonResults.insert({IO::FilePrefix(inputFile), json});
-        std::ofstream jsonStream(outputPrefix + ".json");
-        jsonStream << json.dump(2) << std::endl;
+            // Call variants
+            AminoAcidCaller aac(reads);
+            const auto json = aac.JSON();
 
-        std::ofstream htmlStream(outputPrefix + ".html");
-        ResistanceCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
+            std::ofstream jsonStream(outputPrefix + ".json");
+            jsonStream << json.dump(2) << std::endl;
+
+            std::ofstream htmlStream(outputPrefix + ".html");
+            AminoAcidCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
+        }
     }
-    if (settings.InputFiles.size() > 1) {
-        std::ofstream summaryStream(globalOutputPrefix + "summary");
-        ResistanceCaller::PrintSummary(summaryStream, jsonResults, settings.DRMOnly,
-                                       settings.Details);
-    }
-#else
-        // Call variants
-        AminoAcidCaller aac(reads);
-        const auto json = aac.JSON();
-
-        std::ofstream jsonStream(outputPrefix + ".json");
-        jsonStream << json.dump(2) << std::endl;
-
-        std::ofstream htmlStream(outputPrefix + ".html");
-        AminoAcidCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
-    }
-#endif
 }
 }
 }  // ::PacBio::Juliet

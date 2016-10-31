@@ -37,42 +37,18 @@
 
 #pragma once
 
+#include <algorithm>
+#include <exception>
 #include <string>
-#include <utility>
-#include <vector>
-
-#include <pacbio/juliet/AnalysisMode.h>
-#include <pbcopper/cli/CLI.h>
 
 namespace PacBio {
 namespace Juliet {
 
-/// Contains user provided CLI configuration for Juliet
-struct JulietSettings
+enum class AnalysisMode : uint8_t
 {
-    std::vector<std::string> InputFiles;
-    std::string OutputPrefix;
-    const float PValueThreshold;
-    int RegionStart = 0;
-    int RegionEnd = std::numeric_limits<int>::max();
-    bool Details;
-    bool DRMOnly;
-
-    AnalysisMode Mode;
-
-    /// Parses the provided CLI::Results and retrieves a defined set of options.
-    JulietSettings(const PacBio::CLI::Results& options);
-
-    size_t ThreadCount(int n);
-
-    /// Given the description of the tool and its version, create all
-    /// necessary CLI::Options for the ccs executable.
-    static PacBio::CLI::Interface CreateCLI();
-
-    /// Splits region into ReconstructionStart and ReconstructionEnd.
-    static void SplitRegion(const std::string& region, int* start, int* end);
-
-    static AnalysisMode AnalysisModeFromString(const std::string& input);
+    AMINO = 0,
+    BASE,
+    PHASING
 };
 }
-}  // ::PacBio::Juliet
+}  //::PacBio::Juliet
