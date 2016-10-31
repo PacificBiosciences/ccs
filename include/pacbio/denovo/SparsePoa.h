@@ -146,7 +146,7 @@ public:
     // Clean up the POA graph, pruning minority paths, to speed up
     // successive AddRead operations.
     //
-    void PruneGraph(float minCoverageFraction);
+    void PruneGraph(int minCoverage);
 
 private:
     void repCheck();

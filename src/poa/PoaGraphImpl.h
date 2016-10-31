@@ -253,6 +253,7 @@ public:
 
     PoaConsensus* FindConsensus(const PacBio::Align::AlignConfig& config,
                                 int minCoverage = -INT_MAX);
+    void PruneGraph(const int minCoverage);
 
     size_t NumReads() const;
     string ToGraphViz(int flags, const PoaConsensus* pc) const;
