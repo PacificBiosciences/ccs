@@ -117,7 +117,7 @@ double Evaluator::LL(const Mutation& mut)
         if (std::isinf(ll)) {
             const std::string name = ReadName();
             Invalidate();
-            throw InvalidEvaluatorException("-INF in mutation testing: " + name);
+            throw InvalidEvaluatorException("negative inf in mutation testing: '" + name + "'");
         }
 
         return ll;
