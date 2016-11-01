@@ -226,7 +226,7 @@ PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
                 } catch (const Exception::InvalidEvaluatorException& e) {
                     // If an Evaluator exception occured,
                     // retry without problematic Evaluator
-                    PBLOG_ERROR << e.what();
+                    PBLOG_INFO << e.what();
                     hasNewInvalidEvaluator = true;
                     scoredMuts.clear();
                     mutationsTested = 0;
