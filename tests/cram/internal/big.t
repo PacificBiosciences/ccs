@@ -4,15 +4,17 @@ For now we just watch that the results don't change; in the future we
 might like to replace that with some bulk checks on alignment identity,
 for example.
 
-  $ DATADIR=/pbi/dept/consensus/testdata/unanimity-nightly
-
 Run CCS:
 
+  $ DATADIR=/pbi/dept/consensus/testdata/unanimity-nightly
+
   $ mkdir results
-  $ ${__PBTEST_CCS_EXE} --zmws 1-187412 --force $DATADIR/ds.subreadset.xml $DATADIR/lastrun/out.bam
+  $ ${__PBTEST_CCS_EXE} --zmws 1-187412 $DATADIR/ds.subreadset.xml out.bam
 
 Run ccscheck, check output:
 
-  $ /pbi/dept/consensus/ccscheck/bin/ccscheck $DATADIR/lastrun/out.bam stats /pbi/dept/consensus/references/lambdaNEB.fasta
-  $ sort -t, -n -k1,1 -k2,2 stats/zmws.csv > $DATADIR/lastrun/zmws.sorted.csv
-  $ diff -NrU1 $DATADIR/lastrun/zmws.sorted.csv /pbi/dept/consensus/testdata/unanimity-nightly/zmws.sorted.to187412.csv
+  $ /pbi/dept/consensus/ccscheck/bin/ccscheck out.bam stats /pbi/dept/consensus/references/lambdaNEB.fasta
+  $ sort -t, -n -k1,1 -k2,2 stats/zmws.csv > zmws.sorted.csv
+  $ diff -NrU1 zmws.sorted.csv /pbi/dept/consensus/testdata/unanimity-nightly/zmws.sorted.to187412.csv
+
+TODO: copy back to the "lastrun" dir
