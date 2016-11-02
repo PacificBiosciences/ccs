@@ -118,13 +118,13 @@ void JulietSettings::SplitRegion(const std::string& region, int* start, int* end
 
 AnalysisMode JulietSettings::AnalysisModeFromString(const std::string& input)
 {
-    std::string s;
-    std::transform(input.begin(), input.end(), s.begin(), ::tolower);
-    if (s.find("amino") || s.find("acid"))
+    std::string s = input;
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    if (s.find("amino") != std::string::npos || s.find("acid") != std::string::npos)
         return AnalysisMode::AMINO;
-    else if (s.find("base") || s.find("nuc"))
+    else if (s.find("base") != std::string::npos || s.find("nuc") != std::string::npos)
         return AnalysisMode::BASE;
-    else if (s.find("phas") || s.find("hap"))
+    else if (s.find("phas") != std::string::npos || s.find("hap") != std::string::npos)
         return AnalysisMode::PHASING;
     else
         throw std::runtime_error("Unknown mode " + s);
