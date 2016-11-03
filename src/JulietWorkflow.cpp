@@ -97,7 +97,7 @@ void JulietWorkflow::Run(const JulietSettings& settings)
                 fisherStream << "pos A Fa C Fc G Fg T Ft N Fn" << std::endl;
                 int pos = msa.beginPos;
                 for (auto& column : msa)
-                    fisherStream << pos++ << " " << column << std::endl;
+                    fisherStream << ++pos << " " << column << std::endl;
                 fisherStream.close();
             }
 
