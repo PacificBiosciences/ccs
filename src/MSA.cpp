@@ -47,19 +47,33 @@ namespace PacBio {
 namespace Data {
 MSA::MSA(const std::vector<Data::ArrayRead>& reads)
 {
+    BeginEnd(reads);
+    // Fill counts
+    FillCounts(reads);
+}
+MSA::MSA(const std::vector<Data::ArrayRead>& reads, const MSA& prior)
+{
+    BeginEnd(reads);
+    // Fill counts
+    FillCounts(reads, prior);
+}
+
+void MSA::BeginEnd(const std::vector<Data::ArrayRead>& reads)
+{
     // Determine left- and right-most positions
     for (const auto& r : reads) {
         beginPos = std::min(beginPos, r.ReferenceStart());
         endPos = std::max(endPos, r.ReferenceEnd());
     }
-    // Fill counts
-    FillCounts(reads);
 }
 
 void MSA::FillCounts(const std::vector<ArrayRead>& reads)
 {
     // Prepare 2D array for counts
     counts.resize(endPos - beginPos);
+    int pos = beginPos;
+    for (auto& c : counts)
+        c.refPos = ++pos;  // output is 1-based, input is 0-based
 
     // Fill in counts
     for (const auto& r : reads) {
@@ -95,6 +109,156 @@ void MSA::FillCounts(const std::vector<ArrayRead>& reads)
             }
         }
     }
+}
+
+void MSA::FillCounts(const std::vector<ArrayRead>& reads, const MSA& prior)
+{
+    // Prepare 2D array for counts
+    counts.resize(endPos - beginPos);
+    {
+        int pos = beginPos;
+        for (auto& c : counts)
+            c.refPos = pos++;
+    }
+
+    struct InDel
+    {
+        InDel(const MSAColumn& c)
+            : refPos(c.refPos), deletion(c.mask.at(4)), insertions(c.SignificantInsertions())
+        {
+        }
+
+        bool Hit() { return deletion || !insertions.empty(); }
+        int refPos = -1;
+        bool deletion = false;
+        std::vector<std::string> insertions;
+    };
+    std::vector<InDel> indels;
+    for (auto& column : prior)
+        indels.emplace_back(column);
+
+    for (const auto& id : indels)
+        if (id.deletion) std::cerr << id.refPos << " " << id.deletion << std::endl;
+
+    std::map<int, int> offsets;
+    std::map<int, int> delMap;
+    // Fill in counts
+    for (const auto& r : reads) {
+        int pos = r.ReferenceStart() - beginPos;
+        assert(pos >= 0);
+
+        int indelOffset = 0;
+        std::string insertion;
+        int deletion = 0;
+
+        auto CheckInsertion = [&insertion, &indels, &indelOffset, this, &pos]() {
+            if (insertion.empty()) return;
+            if (pos < indels.size()) {
+                const auto& insertions = indels.at(pos).insertions;
+                if (std::find(insertions.cbegin(), insertions.cend(), insertion) !=
+                    insertions.cend()) {
+                    if (insertion.size() % 3 != 0) indelOffset += insertion.size();
+                    std::cerr << "Found insertion " << insertion << " at positition " << pos
+                              << std::endl;
+                }
+            } else
+                std::cerr << pos << " is outside of " << indels.size() << " for insertion "
+                          << insertion << std::endl;
+            insertion = "";
+        };
+
+        auto CheckDeletion = [&deletion, &indelOffset]() {
+            if (deletion != 0) {
+                if (deletion % 3 != 0) indelOffset -= deletion;
+                deletion = 0;
+            }
+        };
+
+        for (size_t i = 0; i < r.Bases.size(); ++i) {
+            const auto& b = r.Bases.at(i);
+            bool hasFullCodonFollowing = (i + 2) < r.Bases.size();
+            switch (b.Cigar) {
+                case 'X':
+                case '=':
+                    // Check for HP deletion
+                    if ((deletion != 0) && (i + 1) < r.Bases.size() &&
+                        b.Nucleotide == r.Bases.at(i + 1).Nucleotide) {
+                        deletion = 0;
+                    } else {  // deletion is not in an HP
+                        CheckDeletion();
+                    }
+                    if (!insertion.empty()) {
+                        bool hp = true;
+                        for (size_t j = 0; j < insertion.size(); ++j) {
+                            if (insertion[j] != b.Nucleotide) {
+                                hp = false;
+                                break;
+                            }
+                        }
+                        if (!hp) CheckInsertion();
+                    }
+                    ++pos;
+                    break;
+                case 'D':
+                    if (indels.at(pos).deletion) {
+                        delMap[beginPos + pos + 1]++;
+                        ++deletion;
+                    }
+                    CheckInsertion();
+                    ++pos;
+                    break;
+                case 'I':
+                    insertion += b.Nucleotide;
+                    CheckDeletion();
+                    break;
+                case 'P':
+                    CheckDeletion();
+                    CheckInsertion();
+                    break;
+                default:
+                    throw std::runtime_error("Unexpected cigar " + std::to_string(b.Cigar));
+            }
+        }
+        offsets[indelOffset]++;
+
+        // int pos = r.ReferenceStart() - beginPos;
+        // assert(pos >= 0);
+        // std::string insertion;
+        // auto CheckInsertion = [&insertion, this, &pos]() {
+        //     if (insertion.empty()) return;
+        //     counts[pos].insertions[insertion]++;
+        //     insertion = "";
+        // };
+        // for (const auto& b : r.Bases) {
+        //     switch (b.Cigar) {
+        //         case 'X':
+        //         case '=':
+        //             CheckInsertion();
+        //             counts[pos][b.Nucleotide]++;
+        //             ++pos;
+        //             break;
+        //         case 'D':
+        //             CheckInsertion();
+        //             counts[pos]['N']++;
+        //             ++pos;
+        //             break;
+        //         case 'I':
+        //             insertion += b.Nucleotide;
+        //             break;
+        //         case 'P':
+        //             CheckInsertion();
+        //             break;
+        //         default:
+        //             throw std::runtime_error("Unexpected cigar " + std::to_string(b.Cigar));
+        //     }
+        // }
+    }
+    std::cerr << "del" << std::endl;
+    for (const auto& pos_count : delMap)
+        std::cerr << pos_count.first << " - " << pos_count.second << std::endl;
+    std::cerr << "offsets" << std::endl;
+    for (const auto& offset_count : offsets)
+        std::cerr << offset_count.first << " - " << offset_count.second << std::endl;
 }
 }  // namespace Data
 }  // namespace PacBio

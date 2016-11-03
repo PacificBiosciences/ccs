@@ -58,6 +58,7 @@ public:
 
 public:
     MSA(const std::vector<Data::ArrayRead>& reads);
+    MSA(const std::vector<Data::ArrayRead>& reads, const MSA& prior);
 
 public:
     /// Parameter is an index in ABSOLUTE reference space
@@ -80,7 +81,9 @@ public:
     int endPos = 0;
 
 private:
+    void BeginEnd(const std::vector<Data::ArrayRead>& reads);
     void FillCounts(const std::vector<ArrayRead>& reads);
+    void FillCounts(const std::vector<ArrayRead>& reads, const MSA& prior);
 };
 }  // namespace Data
 }  // namespace PacBio

@@ -134,6 +134,26 @@ void JulietWorkflow::Run(const JulietSettings& settings)
             std::ofstream htmlStream(outputPrefix + ".html");
             AminoAcidCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
         }
+    } else if (settings.Mode == AnalysisMode::PHASING) {
+        for (const auto& inputFile : settings.InputFiles) {
+            const auto outputPrefix = globalOutputPrefix + IO::FilePrefix(inputFile);
+
+            // Convert BamRecords to unrolled ArrayReads
+            std::vector<Data::ArrayRead> reads;
+            reads = IO::ParseBam(inputFile, settings.RegionStart, settings.RegionEnd);
+
+            Data::MSA msa(reads);
+
+            // Compute fisher's exact test for each position
+            const Statistics::Tests tests;
+            for (auto& column : msa) {
+                column.AddFisherResult(tests.FisherCCS(column, settings.PValueThreshold));
+                column.AddFisherResult(
+                    tests.FisherCCS(column, column.insertions, settings.PValueThreshold));
+            }
+
+            Data::MSA msaWithPrior(reads, msa);
+        }
     }
 }
 }

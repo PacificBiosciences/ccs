@@ -70,7 +70,28 @@ public:
     void AddFisherResult(const FisherResult& f);
     void AddFisherResult(const std::map<std::string, double>& f);
 
+    std::ostream& InDels(std::ostream& stream)
+    {
+        stream << refPos << "\t";
+        if (mask.at(4) == 1) stream << "(-," << counts.at(4) << "," << pValues.at(4) << ")\t";
+        for (const auto& bases_pvalue : insertionsPValues)
+            if (bases_pvalue.second < 0.01)
+                stream << "(" << bases_pvalue.first << "," << insertions.at(bases_pvalue.first)
+                       << "," << bases_pvalue.second << ")\t";
+        stream << std::endl;
+        return stream;
+    }
+
+    std::vector<std::string> SignificantInsertions() const
+    {
+        std::vector<std::string> results;
+        for (const auto& bases_pvalue : insertionsPValues)
+            if (bases_pvalue.second < 0.01) results.push_back(bases_pvalue.first);
+        return results;
+    }
+
 public:
+    int refPos = -1;
     std::array<int, 5> counts{{0, 0, 0, 0, 0}};
     std::map<std::string, int> insertions;
     std::map<std::string, double> insertionsPValues;
