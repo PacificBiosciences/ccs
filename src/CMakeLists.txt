@@ -118,10 +118,6 @@ if (UNY_build_bin)
         ${CMAKE_DL_LIBS}
     )
 
-    if (TARGET htslib)
-        add_dependencies(ccs htslib)
-    endif()
-
     ## Juliet
     add_executable(juliet ${UNY_SourceDir}/main/juliet.cpp)
 
@@ -140,11 +136,6 @@ if (UNY_build_bin)
         ${CMAKE_THREAD_LIBS_INIT}
         ${CMAKE_DL_LIBS}
     )
-
-    if (TARGET htslib)
-        add_dependencies(ccs htslib)
-        add_dependencies(juliet htslib)
-    endif()
 
     if (TARGET pbbam)
         add_dependencies(ccs pbbam)
