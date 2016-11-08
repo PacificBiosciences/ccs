@@ -33,14 +33,6 @@ if (NOT PYTHON_SWIG)
         find_package(ZLIB REQUIRED)
     endif()
 
-    # htslib
-    if(NOT HTSLIB_INCLUDE_DIRS OR
-       NOT HTSLIB_LIBRARIES)
-        find_package(htslib
-                     PATHS ${UNY_ThirdPartyDir}/htslib
-                     REQUIRED)
-    endif()
-
     # pbbam
     if (NOT PacBioBAM_INCLUDE_DIRS OR
         NOT PacBioBAM_LIBRARIES)
@@ -48,9 +40,6 @@ if (NOT PYTHON_SWIG)
         set(PacBioBAM_build_tests   OFF CACHE INTERNAL "" FORCE)
         set(PacBioBAM_build_tools   OFF CACHE INTERNAL "" FORCE)
         add_subdirectory(${UNY_ThirdPartyDir}/pbbam external/pbbam/build)
-        if (TARGET htslib)
-            add_dependencies(pbbam htslib)
-        endif()
     endif()
 
     # cpp-optparse sources
