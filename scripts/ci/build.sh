@@ -80,7 +80,6 @@ echo "## Build source"
 ( cd build &&\
   rm -rf * &&\
   CMAKE_BUILD_TYPE=ReleaseWithAssert cmake -DZLIB_INCLUDE_DIR=/mnt/software/z/zlib/1.2.5/include -DZLIB_LIBRARY=/mnt/software/z/zlib/1.2.5/lib/libz.so -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++" -GNinja .. )
-( cd build && ninja htslibSrc )
 ( cd build && ninja )
 
 echo "## pip install CC2"

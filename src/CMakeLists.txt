@@ -108,10 +108,6 @@ if (UNY_build_bin)
         ${CMAKE_DL_LIBS}
     )
 
-    if (TARGET htslib)
-        add_dependencies(ccs htslib)
-    endif()
-
     if (TARGET pbbam)
         add_dependencies(ccs pbbam)
     endif()
