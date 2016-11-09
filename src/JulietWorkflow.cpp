@@ -84,22 +84,20 @@ void JulietWorkflow::Run(const JulietSettings& settings)
             Data::MSA msa(reads);
 
             // Compute fisher's exact test for each position
-            const Statistics::Tests tests;
             for (auto& column : msa) {
-                column.AddFisherResult(tests.FisherCCS(column, settings.PValueThreshold));
                 column.AddFisherResult(
-                    tests.FisherCCS(column, column.insertions, settings.PValueThreshold));
+                    Statistics::Tests::FisherCCS(column, settings.PValueThreshold));
+                column.AddFisherResult(Statistics::Tests::FisherCCS(column, column.insertions,
+                                                                    settings.PValueThreshold));
             }
 
-            // Store fisher p-values
-            {
-                std::ofstream fisherStream(outputPrefix + ".msa");
-                fisherStream << "pos A Fa C Fc G Fg T Ft N Fn" << std::endl;
-                int pos = msa.beginPos;
-                for (auto& column : msa)
-                    fisherStream << ++pos << " " << column << std::endl;
-                fisherStream.close();
-            }
+            // Store msa + p-values
+            std::ofstream msaStream(outputPrefix + ".msa");
+            msaStream << "pos A Fa C Fc G Fg T Ft N Fn" << std::endl;
+            int pos = msa.beginPos;
+            for (auto& column : msa)
+                msaStream << ++pos << " " << column << std::endl;
+            msaStream.close();
 
             ResistanceCaller resiCaller(msa);
 
@@ -133,6 +131,14 @@ void JulietWorkflow::Run(const JulietSettings& settings)
 
             std::ofstream htmlStream(outputPrefix + ".html");
             AminoAcidCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
+
+            // Store msa + p-values
+            std::ofstream msaStream(outputPrefix + ".msa");
+            msaStream << "pos A Fa C Fc G Fg T Ft N Fn" << std::endl;
+            int pos = aac.msa_->beginPos;
+            for (auto& column : *aac.msa_)
+                msaStream << ++pos << " " << column << std::endl;
+            msaStream.close();
         }
     } else if (settings.Mode == AnalysisMode::PHASING) {
         for (const auto& inputFile : settings.InputFiles) {
@@ -145,11 +151,11 @@ void JulietWorkflow::Run(const JulietSettings& settings)
             Data::MSA msa(reads);
 
             // Compute fisher's exact test for each position
-            const Statistics::Tests tests;
             for (auto& column : msa) {
-                column.AddFisherResult(tests.FisherCCS(column, settings.PValueThreshold));
                 column.AddFisherResult(
-                    tests.FisherCCS(column, column.insertions, settings.PValueThreshold));
+                    Statistics::Tests::FisherCCS(column, settings.PValueThreshold));
+                column.AddFisherResult(Statistics::Tests::FisherCCS(column, column.insertions,
+                                                                    settings.PValueThreshold));
             }
 
             Data::MSA msaWithPrior(reads, msa);

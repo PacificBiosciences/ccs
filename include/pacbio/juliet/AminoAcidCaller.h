@@ -138,6 +138,9 @@ public:
     /// Generate HTML output of variant amino acids
     static void HTML(std::ostream& out, const JSON::Json& j, bool onlyKnownDRMs, bool details);
 
+public:
+    std::unique_ptr<Data::MSA> msa_;
+
 private:
     void GenerateMSA(const std::vector<Data::ArrayRead>& reads);
     void CallVariants(const std::vector<Data::ArrayRead>& reads);

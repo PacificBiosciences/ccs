@@ -64,6 +64,8 @@ AminoAcidCaller::AminoAcidCaller(const std::vector<Data::ArrayRead>& reads)
         beginPos_ = std::min(beginPos_, r.ReferenceStart());
         endPos_ = std::max(endPos_, r.ReferenceEnd());
     }
+    msa_ = std::make_unique<Data::MSA>(reads);
+
     GenerateMSA(reads);
     CallVariants(reads);
 }
@@ -149,7 +151,6 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         }
         return drm;
     };
-    Data::MSA msa(reads);
     for (int i = beginPos_; i < endPos_ - 2; ++i) {
         // Corrected index for 1-based reference
         const int ci = i + 1;
@@ -224,11 +225,11 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                     JSON::Json msaCounts;
                     msaCounts["rel_pos"] = j;
                     msaCounts["abs_pos"] = i + j;
-                    msaCounts["A"] = msa[i + j][0];
-                    msaCounts["C"] = msa[i + j][1];
-                    msaCounts["G"] = msa[i + j][2];
-                    msaCounts["T"] = msa[i + j][3];
-                    msaCounts["-"] = msa[i + j][4];
+                    msaCounts["A"] = (*msa_)[i + j][0];
+                    msaCounts["C"] = (*msa_)[i + j][1];
+                    msaCounts["G"] = (*msa_)[i + j][2];
+                    msaCounts["T"] = (*msa_)[i + j][3];
+                    msaCounts["-"] = (*msa_)[i + j][4];
                     msaCounts["wt"] = std::string(1, ref_[i + j]);
                     curVariantPosition.msa.push_back(msaCounts);
                 }
