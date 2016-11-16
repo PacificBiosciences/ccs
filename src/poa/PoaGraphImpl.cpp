@@ -427,6 +427,28 @@ void PoaGraphImpl::CommitAdd(PoaAlignmentMatrix* mat_, std::vector<Vertex>* read
     repCheck();
 }
 
+void PoaGraphImpl::PruneGraph(const int minCoverage)
+{
+    // We have to use an iterator since we're modifying the graph as we go
+    graph_traits<BoostGraph>::vertex_iterator vi, vi_end, next;
+    tie(vi, vi_end) = vertices(g_);
+    for (next = vi; vi != vi_end; vi = next) {
+        ++next;
+        if (vertexInfoMap_[*vi].Reads < minCoverage) {
+            clear_vertex(*vi, g_);
+            remove_vertex(*vi, g_);
+        }
+    }
+
+    // Re-index all vertices to the range [0, num_vertices(g_)]
+    graph_traits<BoostGraph>::vertices_size_type current_index = 0;
+    index_map_t index_map = get(vertex_index, g_);
+    // clang-format off
+    BGL_FORALL_VERTICES(v, g_, BoostGraph)
+        index_map[v] = current_index++;
+    // clang-format on
+}
+
 size_t PoaGraphImpl::NumReads() const { return numReads_; }
 
 string PoaGraphImpl::ToGraphViz(int flags, const PoaConsensus* pc) const

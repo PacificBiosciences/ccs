@@ -220,7 +220,8 @@ void SparsePoa::WriteGraphCsvFile(const std::string& filename) const
     graph_->WriteGraphCsvFile(filename);
 }
 
-void SparsePoa::PruneGraph(float /* minCoverageFraction */) {}
+void SparsePoa::PruneGraph(const int minCoverage) { graph_->PruneGraph(minCoverage); }
+
 void SparsePoa::repCheck()
 {
     assert(graph_->NumReads() == readPaths_.size());
