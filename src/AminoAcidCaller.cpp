@@ -151,6 +151,45 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         }
         return drm;
     };
+    int numberOfTests = 0;
+    for (int i = beginPos_; i < endPos_ - 2; ++i) {
+        // Corrected index for 1-based reference
+        const int ci = i + 1;
+        // Relative to gene begin
+        int ri = ci - geneOffset;
+        // Only work on beginnings of a codon
+        if (ri % 3 != 0) continue;
+        // Relative to window begin
+        int bi = i - beginPos_;
+
+        int codonPos = (1 + ri / 3);
+        auto& curVariantPosition = curVariantGene.relPositionToVariant[codonPos];
+
+        curVariantPosition.refCodon = ref_.substr(ci - 1, 3);
+        if (codonToAmino_.find(curVariantPosition.refCodon) == codonToAmino_.cend()) {
+            continue;
+        }
+
+        std::map<std::string, int> codons;
+        int coverage = 0;
+        for (const auto& row : matrix_) {
+            // Read does not cover codon
+            if (row.at(bi + 0) == ' ' || row.at(bi + 1) == ' ' || row.at(bi + 2) == ' ') continue;
+            ++coverage;
+
+            // Read has a deletion
+            if (row.at(bi + 0) == '-' || row.at(bi + 1) == '-' || row.at(bi + 2) == '-') continue;
+
+            std::string codon = std::string() + row.at(bi) + row.at(bi + 1) + row.at(bi + 2);
+
+            // Codon is bogus
+            if (codonToAmino_.find(codon) == codonToAmino_.cend()) continue;
+
+            codons[codon]++;
+        }
+        numberOfTests += codons.size();
+    }
+
     for (int i = beginPos_; i < endPos_ - 2; ++i) {
         // Corrected index for 1-based reference
         const int ci = i + 1;
@@ -206,7 +245,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                      codon_counts.second, coverage,
                      coverage * CodonProbability(curVariantPosition.refCodon, codon_counts.first),
                      coverage) *
-                 3200 * 64);
+                 numberOfTests);
             if (p < 0.01) {
                 VariantGene::VariantPosition::VariantCodon curVariantCodon;
                 curVariantCodon.codon = codon_counts.first;
