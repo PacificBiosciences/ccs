@@ -115,11 +115,11 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         double p = 1;
         for (int i = 0; i < 3; ++i) {
             if (a[i] == '-' || b[i] == '-')
-                p *= 0.0029;
+                p *= 0.006179274;  // 0.003515625 + 3*0.0008878829
             else if (a[i] != b[i])
-                p *= 0.0015 / 3.0;
+                p *= 0.0007421148 / 3.0;  // 0.0006101725 + 3*4.398076e-05
             else
-                p *= 0.9872;
+                p *= 0.9930786;
         }
         return p;
     };
