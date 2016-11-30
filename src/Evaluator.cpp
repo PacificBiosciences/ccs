@@ -230,9 +230,8 @@ const AbstractMatrix* Evaluator::BetaView(MatrixViewConvention c) const
 void Evaluator::CheckZScore(const double minZScore, const std::string& model)
 {
     // the zscore filter is disabled under the following conditions
-    // - unsupported model
-    for (const auto& m : {"S/P1-C1", "S/P2-C2/prospective-compatible"})
-        if (model.find(m) != std::string::npos) return;
+    // - unsupported model (anything not P6-C4)
+    if (model.find("P6-C4") == std::string::npos) return;
 
     // - threshold undefined or too low
     if (std::isnan(minZScore) || minZScore <= -100.0) return;
