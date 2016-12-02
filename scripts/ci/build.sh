@@ -3,25 +3,13 @@ set -euo pipefail
 
 # Function definitions
 GetBBRepo () {
-    echo "## $1"
-    if [ ! -d $2/$1 ]; then
-        echo "### Clone"
-        ( cd $2 && git clone ssh://git@bitbucket.nanofluidics.com:7999/sat/$1)
-    else
-        echo "### Update"
-        ( cd $2/$1 && git pull)
-    fi
+    echo "## Clone $1"
+    ( cd $2 && git clone ssh://git@bitbucket.nanofluidics.com:7999/sat/$1)
 }
 
 GetGHRepo () {
-    echo "## $1"
-    if [ ! -d $2/$1 ]; then
-        echo "### Clone"
-        ( cd $2 && git clone https://github.com/PacificBiosciences/$1)
-    else
-        echo "### Update"
-        ( cd $2/$1 && git pull)
-    fi
+    echo "## Clone $1"
+    ( cd $2 && git clone https://github.com/PacificBiosciences/$1)
 }
 
 # Main script
@@ -34,9 +22,11 @@ module load git gcc/5.3.0 python/2.7.9 cmake cram swig ccache virtualenv zlib/1.
 echo "#############################"
 echo "# EXTERNAL DEPENDENCIES"
 echo "## Create external dependency directory"
-if [ ! -d _deps ] ; then mkdir _deps ; fi
+if [ -d _deps ] ; then rm -rf _deps ; fi
+mkdir _deps
 echo "## Create reverse external dependency directory"
-if [ ! -d _rev_deps ] ; then mkdir _rev_deps ; fi
+if [ -d _rev_deps ] ; then rm -rf _rev_deps ; fi
+mkdir _rev_deps
 
 GetBBRepo GenomicConsensus _rev_deps
 GetBBRepo ConsensusCore _deps
