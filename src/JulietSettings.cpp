@@ -77,11 +77,18 @@ const PlainOption DRMOnly{
     CLI::Option::BoolType()
 };
 const PlainOption Mode{
-    "Variant calling mode",
+    "Execution mode",
     { "mode", "m" },
-    "Calling mode",
-    "Variant calling mode: amino, base, or phasing",
+    "Execution mode",
+    "Execution mode: amino, base, phasing, or error",
     CLI::Option::StringType("amino")
+};
+const PlainOption ErrorModel{
+    "Error model",
+    { "error", "e" },
+    "Error model",
+    "Error model: FLEA_RQ95 or FLEA_RQ99",
+    CLI::Option::StringType("FLEA_RQ99")
 };
 // clang-format on
 }  // namespace OptionNames
@@ -92,6 +99,7 @@ JulietSettings::JulietSettings(const PacBio::CLI::Results& options)
     , PValueThreshold(options[OptionNames::PValueThreshold])
     , DRMOnly(options[OptionNames::DRMOnly])
     , Mode(AnalysisModeFromString(options[OptionNames::Mode]))
+    , SelectedErrorModel(ErrorModelFromString(options[OptionNames::ErrorModel]))
 {
     SplitRegion(options[OptionNames::Region], &RegionStart, &RegionEnd);
 }
@@ -126,6 +134,8 @@ AnalysisMode JulietSettings::AnalysisModeFromString(const std::string& input)
         return AnalysisMode::BASE;
     else if (s.find("phas") != std::string::npos || s.find("hap") != std::string::npos)
         return AnalysisMode::PHASING;
+    else if (s.find("error") != std::string::npos)
+        return AnalysisMode::ERROR;
     else
         throw std::runtime_error("Unknown mode " + s);
 }
@@ -152,6 +162,7 @@ PacBio::CLI::Interface JulietSettings::CreateCLI()
     {
         OptionNames::Output,
         OptionNames::Mode,
+        OptionNames::ErrorModel,
         OptionNames::Region,
         OptionNames::PValueThreshold,
         OptionNames::DRMOnly

@@ -65,6 +65,8 @@ public:
 
 public:
     int Coverage() const;
+    int MaxElement() const;
+    int Max() const;
 
 public:
     void AddFisherResult(const FisherResult& f);

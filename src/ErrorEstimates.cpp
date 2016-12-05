@@ -35,46 +35,33 @@
 
 // Author: Armin Töpfer
 
-#pragma once
-
-#include <string>
-#include <utility>
-#include <vector>
-
-#include <pacbio/juliet/AnalysisMode.h>
 #include <pacbio/juliet/ErrorEstimates.h>
-#include <pbcopper/cli/CLI.h>
 
 namespace PacBio {
 namespace Juliet {
 
-/// Contains user provided CLI configuration for Juliet
-struct JulietSettings
+ErrorEstimates::ErrorEstimates(const std::string& s) { SetFromModel(ErrorModelFromString(s)); }
+
+ErrorEstimates::ErrorEstimates(const ErrorModel& e) { SetFromModel(e); }
+
+void ErrorEstimates::SetFromModel(const ErrorModel& e)
 {
-    std::vector<std::string> InputFiles;
-    std::string OutputPrefix;
-    const float PValueThreshold;
-    int RegionStart = 0;
-    int RegionEnd = std::numeric_limits<int>::max();
-    bool Details;
-    bool DRMOnly;
-
-    AnalysisMode Mode;
-    ErrorModel SelectedErrorModel;
-
-    /// Parses the provided CLI::Results and retrieves a defined set of options.
-    JulietSettings(const PacBio::CLI::Results& options);
-
-    size_t ThreadCount(int n);
-
-    /// Given the description of the tool and its version, create all
-    /// necessary CLI::Options for the ccs executable.
-    static PacBio::CLI::Interface CreateCLI();
-
-    /// Splits region into ReconstructionStart and ReconstructionEnd.
-    static void SplitRegion(const std::string& region, int* start, int* end);
-
-    static AnalysisMode AnalysisModeFromString(const std::string& input);
-};
+    switch (e) {
+        case ErrorModel::FLEA_RQ99:
+            match = 0.9930786;
+            substitution = 0.0007421148 / 3.0;  // 0.0006101725 + 3*4.398076e-05
+            deletion = 0.006179274;             // 0.003515625 + 3*0.0008878829
+            insertion = 0;
+            break;
+        case ErrorModel::FLEA_RQ95:
+            match = 0.9877258;
+            substitution = 0.00216356 / 3.0;  // 0.001664215 + 3*0.0001664483
+            deletion = 0.01011063;            // 0.00646245 + 3*0.001216059
+            insertion = 0;
+            break;
+        default:
+            throw std::runtime_error("Unknown error model");
+    }
 }
-}  // ::PacBio::Juliet
+}
+}

@@ -58,7 +58,9 @@
 
 namespace PacBio {
 namespace Juliet {
-AminoAcidCaller::AminoAcidCaller(const std::vector<Data::ArrayRead>& reads)
+AminoAcidCaller::AminoAcidCaller(const std::vector<Data::ArrayRead>& reads,
+                                 const ErrorModel& errorModel)
+    : errorModel_(errorModel)
 {
     for (const auto& r : reads) {
         beginPos_ = std::min(beginPos_, r.ReferenceStart());
@@ -99,6 +101,7 @@ void AminoAcidCaller::GenerateMSA(const std::vector<Data::ArrayRead>& reads)
 
 void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
 {
+    ErrorEstimates error(errorModel_);
     VariantGene curVariantGene;
     std::string geneName;
     int geneOffset;
@@ -111,15 +114,15 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         curVariantGene.geneName = name;
         geneOffset = begin;
     };
-    auto CodonProbability = [](const std::string& a, const std::string& b) {
+    auto CodonProbability = [&error](const std::string& a, const std::string& b) {
         double p = 1;
         for (int i = 0; i < 3; ++i) {
             if (a[i] == '-' || b[i] == '-')
-                p *= 0.006179274;  // 0.003515625 + 3*0.0008878829
+                p *= error.deletion;
             else if (a[i] != b[i])
-                p *= 0.0007421148 / 3.0;  // 0.0006101725 + 3*4.398076e-05
+                p *= error.substitution;
             else
-                p *= 0.9930786;
+                p *= error.match;
         }
         return p;
     };

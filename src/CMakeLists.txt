@@ -66,6 +66,7 @@ add_library(unanimity STATIC
     ChemistryMapping.cpp
     ChemistryTriple.cpp
     ConsensusSettings.cpp
+    ErrorEstimates.cpp
     Fisher.cpp
     Interval.cpp
     JulietSettings.cpp

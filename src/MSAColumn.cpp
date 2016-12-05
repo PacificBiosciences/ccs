@@ -45,6 +45,11 @@
 namespace PacBio {
 namespace Data {
 int MSAColumn::Coverage() const { return std::accumulate(counts.cbegin(), counts.cend(), 0); }
+int MSAColumn::MaxElement() const
+{
+    return std::distance(counts.begin(), std::max_element(counts.begin(), counts.end()));
+}
+int MSAColumn::Max() const { return counts.at(MaxElement()); }
 
 void MSAColumn::AddFisherResult(const FisherResult& f)
 {

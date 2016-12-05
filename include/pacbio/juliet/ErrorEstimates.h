@@ -37,44 +37,48 @@
 
 #pragma once
 
+#include <algorithm>
+#include <exception>
+#include <locale>
 #include <string>
-#include <utility>
-#include <vector>
-
-#include <pacbio/juliet/AnalysisMode.h>
-#include <pacbio/juliet/ErrorEstimates.h>
-#include <pbcopper/cli/CLI.h>
 
 namespace PacBio {
 namespace Juliet {
 
-/// Contains user provided CLI configuration for Juliet
-struct JulietSettings
+enum class ErrorModel : uint8_t
 {
-    std::vector<std::string> InputFiles;
-    std::string OutputPrefix;
-    const float PValueThreshold;
-    int RegionStart = 0;
-    int RegionEnd = std::numeric_limits<int>::max();
-    bool Details;
-    bool DRMOnly;
+    FLEA_RQ95 = 0,
+    FLEA_RQ99
+};
 
-    AnalysisMode Mode;
-    ErrorModel SelectedErrorModel;
+inline ErrorModel ErrorModelFromString(const std::string& input)
+{
+    ErrorModel e;
+    std::string s = input;
+    std::transform(s.begin(), s.end(), s.begin(), ::toupper);
+    if (s == "FLEA_RQ95")
+        e = ErrorModel::FLEA_RQ95;
+    else if (s == "FLEA_RQ99")
+        e = ErrorModel::FLEA_RQ99;
+    else
+        throw std::runtime_error("Unknown error model string");
+    return e;
+}
 
-    /// Parses the provided CLI::Results and retrieves a defined set of options.
-    JulietSettings(const PacBio::CLI::Results& options);
+/// Contains CCS error estimates
+class ErrorEstimates
+{
+public:
+    ErrorEstimates(const std::string& s);
+    ErrorEstimates(const ErrorModel& e);
 
-    size_t ThreadCount(int n);
+    double match;
+    double substitution;
+    double deletion;
+    double insertion;
 
-    /// Given the description of the tool and its version, create all
-    /// necessary CLI::Options for the ccs executable.
-    static PacBio::CLI::Interface CreateCLI();
-
-    /// Splits region into ReconstructionStart and ReconstructionEnd.
-    static void SplitRegion(const std::string& region, int* start, int* end);
-
-    static AnalysisMode AnalysisModeFromString(const std::string& input);
+private:
+    void SetFromModel(const ErrorModel& e);
 };
 }
 }  // ::PacBio::Juliet

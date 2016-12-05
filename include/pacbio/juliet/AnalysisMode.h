@@ -48,7 +48,8 @@ enum class AnalysisMode : uint8_t
 {
     AMINO = 0,
     BASE,
-    PHASING
+    PHASING,
+    ERROR
 };
 }
 }  //::PacBio::Juliet

@@ -123,7 +123,7 @@ void JulietWorkflow::Run(const JulietSettings& settings)
             reads = IO::ParseBam(inputFile, settings.RegionStart, settings.RegionEnd);
 
             // Call variants
-            AminoAcidCaller aac(reads);
+            AminoAcidCaller aac(reads, settings.SelectedErrorModel);
             const auto json = aac.JSON();
 
             std::ofstream jsonStream(outputPrefix + ".json");
@@ -159,6 +159,21 @@ void JulietWorkflow::Run(const JulietSettings& settings)
             }
 
             Data::MSA msaWithPrior(reads, msa);
+        }
+    } else if (settings.Mode == AnalysisMode::ERROR) {
+        for (const auto& inputFile : settings.InputFiles) {
+            std::vector<Data::ArrayRead> reads;
+            reads = IO::ParseBam(inputFile, settings.RegionStart, settings.RegionEnd);
+            Data::MSA msa(reads);
+            double sub = 0;
+            double del = 0;
+            for (const auto& column : msa) {
+                del += column.Frequency(4);
+                sub += 1.0 - column.Frequency(4) - column.Frequency(column.MaxElement());
+            }
+            std::cout << inputFile << std::endl;
+            std::cout << "sub: " << (sub / msa.counts.size()) << std::endl;
+            std::cout << "del: " << (del / msa.counts.size()) << std::endl;
         }
     }
 }
