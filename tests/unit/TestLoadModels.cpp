@@ -60,8 +60,6 @@ using namespace PacBio::Data;       // NOLINT
 
 namespace {
 const SNR snr(10, 7, 5, 11);
-const string SP1C1 = "S/P1-C1.1";
-const string SP1C1v2 = "S/P1-C1.2";
 
 const string longTpl =
     "GGGCGGCGACCTCGCGGGTTTTCGCTATTTATGAAAATTTTCCGGTTTAAGGCGTTTCCGTTCTTCTTCGTCAT"
@@ -103,8 +101,8 @@ Read MkRead(const string& seq, const SNR& snr, const string& mdl, const vector<u
 
 TEST(LoadModelsTest, SupportedChemistries)
 {
-    const std::set<std::string> chem = {"P6-C4", "S/P1-C1/beta", "S/P1-C1.1", "S/P1-C1.2",
-                                        "S/P1-C1.3"};
+    const std::set<std::string> chem = {"P6-C4",     "S/P1-C1/beta", "S/P1-C1.1",
+                                        "S/P1-C1.2", "S/P1-C1.3",    "S/P2-C2"};
     const std::set<std::string> supp = SupportedChemistries();
     std::set<std::string> diff;
     std::set_difference(chem.begin(), chem.end(), supp.begin(), supp.end(),
@@ -136,6 +134,7 @@ TEST(LoadModelsTest, Directory)
     ASSERT_TRUE(chems.find("S/P1-C1/beta::Marginal::FromFile") != chems.end());
     ASSERT_TRUE(chems.find("S/P1-C1.1::PwSnrA::FromFile") != chems.end());
     ASSERT_TRUE(chems.find("S/P1-C1.2::PwSnr::FromFile") != chems.end());
+    ASSERT_TRUE(chems.find("S/P2-C2::PwSnr::FromFile") != chems.end());
 
 // test identity between S/P1-C1/beta and S/P1-C1/beta::Marginal (loaded)
 //   disabled until S_P1C1Beta is fixed
@@ -184,6 +183,21 @@ TEST(LoadModelsTest, Directory)
 
         EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
     }
+
+    // test identity between S/P1-C1.2 and S/P1-C1.2::PwSnr
+    {
+        MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P2-C2::PwSnr::Compiled");
+        EXPECT_EQ(State::VALID,
+                  ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P2-C2::PwSnr::Compiled", longPws),
+                                         StrandType::FORWARD, 0, longTpl.length(), true, true)));
+
+        MonoMolecularIntegrator ai2(longTpl, cfg, snr, "S/P2-C2::PwSnr::FromFile");
+        EXPECT_EQ(State::VALID,
+                  ai2.AddRead(MappedRead(MkRead(longRead, snr, "S/P2-C2::PwSnr::FromFile", longPws),
+                                         StrandType::FORWARD, 0, longTpl.length(), true, true)));
+
+        EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
+    }
 }
 
 #if EXTENSIVE_TESTING
@@ -197,9 +211,9 @@ TEST(LoadModelsTest, ModelTiming)
     LoadModels(tests::DataDir + "/params");
 
     const size_t nsamp = 100;
-    const std::vector<std::string> mdls = {"S/P1-C1/beta::Marginal::FromFile",
-                                           "S/P1-C1.1::PwSnrA::FromFile",
-                                           "S/P1-C1.2::PwSnr::FromFile"};
+    const std::vector<std::string> mdls = {
+        "S/P1-C1/beta::Marginal::FromFile", "S/P1-C1.1::PwSnrA::FromFile",
+        "S/P1-C1.2::PwSnr::FromFile", "S/P2-C2::PwSnr::FromFile"};
     for (const auto mdl : mdls) {
         MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
         const auto stime = std::chrono::high_resolution_clock::now();
