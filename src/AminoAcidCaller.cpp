@@ -259,6 +259,8 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                     ++trueNegative;
             }
         }
+
+        return !ignored;
     };
 #endif
 
@@ -322,10 +324,12 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
             if (p > 1) p = 1;
 
 #ifdef PERFORMANCE
-            MeasurePerformance(codon_counts, codonPos, i, p);
-#endif
+            bool variableSite = MeasurePerformance(codon_counts, codonPos, i, p);
 
+            if (variableSite && p < 0.01) {
+#else
             if (p < 0.01) {
+#endif
                 VariantGene::VariantPosition::VariantCodon curVariantCodon;
                 curVariantCodon.codon = codon_counts.first;
                 curVariantCodon.frequency = codon_counts.second / static_cast<double>(coverage);
