@@ -104,7 +104,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
     ErrorEstimates error(errorModel_);
     VariantGene curVariantGene;
     std::string geneName;
-    int geneOffset;
+    int geneOffset = 0;
     auto SetNewGene = [this, &geneName, &curVariantGene, &geneOffset](const int begin,
                                                                       const std::string& name) {
         geneName = name;
@@ -158,6 +158,18 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
     for (int i = beginPos_; i < endPos_ - 2; ++i) {
         // Corrected index for 1-based reference
         const int ci = i + 1;
+        if (ci >= 2253 && ci < 2550 && geneName != "Protease") {
+            geneOffset = 2253;
+        } else if (ci >= 2550 && ci < 3870 && geneName != "Reverse Transcriptase") {
+            geneOffset = 2550;
+        } else if (ci >= 3870 && ci < 4230 && geneName != "RNase") {
+            geneOffset = 3870;
+        } else if (ci >= 4230 && ci < 5096 && geneName != "Integrase") {
+            geneOffset = 4230;
+        } else if (ci >= 5096) {
+            geneOffset = 5096;
+        }
+
         // Relative to gene begin
         int ri = ci - geneOffset;
         // Only work on beginnings of a codon
@@ -192,6 +204,8 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         }
         numberOfTests += codons.size();
     }
+
+    geneOffset = 0;
 
 #ifdef PERFORMANCE
     double truePositives = 0;
