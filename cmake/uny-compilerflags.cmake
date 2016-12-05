@@ -62,3 +62,7 @@ elseif(UNIX)
     SET(PRE_LINK -Wl,-whole-archive)
     SET(POST_LINK -Wl,-no-whole-archive)
 endif()
+
+if (PERFORMANCE)
+    add_definitions(-DPERFORMANCE)
+endif()

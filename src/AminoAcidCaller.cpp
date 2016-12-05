@@ -193,6 +193,61 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         numberOfTests += codons.size();
     }
 
+#ifdef PERFORMANCE
+    double truePositives = 0;
+    double falsePositives = 0;
+    double falseNegative = 0;
+    double trueNegative = 0;
+    auto MeasurePerformance = [&truePositives, &falsePositives, &falseNegative, &trueNegative, this,
+                               &geneName](const auto& codon_counts, const auto& codonPos,
+                                          const auto& i, const auto& p) {
+        const auto curCodon = codonToAmino_.at(codon_counts.first);
+        bool predictor = (i == 3191 && curCodon == 'Y' && "TAC" == codon_counts.first) ||
+                         (i == 2741 && curCodon == 'R' && "AGA" == codon_counts.first) ||
+                         (i == 2669 && curCodon == 'L' && "TTG" == codon_counts.first);
+        bool ignored =
+            (geneName == "Protease" && codonPos == 3 && curCodon == 'I') ||
+            (geneName == "Protease" && codonPos == 37 && curCodon == 'N') ||
+            (geneName == "Reverse Transcriptase" && codonPos == 102 && curCodon == 'Q') ||
+            (geneName == "Reverse Transcriptase" && codonPos == 122 && curCodon == 'K') ||
+            (geneName == "Reverse Transcriptase" && codonPos == 162 && curCodon == 'C') ||
+            (geneName == "Reverse Transcriptase" && codonPos == 214 && curCodon == 'F') ||
+            (geneName == "Reverse Transcriptase" && codonPos == 272 && curCodon == 'A') ||
+            (geneName == "Reverse Transcriptase" && codonPos == 293 && curCodon == 'V') ||
+            (geneName == "Reverse Transcriptase" && codonPos == 358 && curCodon == 'K') ||
+            (geneName == "Reverse Transcriptase" && codonPos == 376 && curCodon == 'A') ||
+            (geneName == "Reverse Transcriptase" && codonPos == 400 && curCodon == 'A') ||
+            (geneName == "Reverse Transcriptase" && codonPos == 435 && curCodon == 'I') ||
+            (geneName == "RNase" && codonPos == 20 && curCodon == 'D') ||
+            (geneName == "RNase" && codonPos == 28 && curCodon == 'P') ||
+            (geneName == "RNase" && codonPos == 43 && curCodon == 'H') ||
+            (geneName == "RNase" && codonPos == 72 && curCodon == 'K') ||
+            (geneName == "RNase" && codonPos == 79 && curCodon == 'S') ||
+            (geneName == "Integrase" && codonPos == 10 && curCodon == 'E') ||
+            (geneName == "Integrase" && codonPos == 113 && curCodon == 'V') ||
+            (geneName == "Integrase" && codonPos == 123 && curCodon == 'S') ||
+            (geneName == "Integrase" && codonPos == 124 && curCodon == 'T') ||
+            (geneName == "Integrase" && codonPos == 127 && curCodon == 'K') ||
+            (geneName == "Integrase" && codonPos == 151 && curCodon == 'I') ||
+            (geneName == "Integrase" && codonPos == 232 && curCodon == 'D') ||
+            (geneName == "Integrase" && codonPos == 234 && curCodon == 'V');
+
+        if (!ignored) {
+            if (p < 0.01) {
+                if (predictor)
+                    ++truePositives;
+                else
+                    ++falsePositives;
+            } else {
+                if (predictor)
+                    ++falseNegative;
+                else
+                    ++trueNegative;
+            }
+        }
+    };
+#endif
+
     for (int i = beginPos_; i < endPos_ - 2; ++i) {
         // Corrected index for 1-based reference
         const int ci = i + 1;
@@ -249,6 +304,13 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                      coverage * CodonProbability(curVariantPosition.refCodon, codon_counts.first),
                      coverage) *
                  numberOfTests);
+
+            if (p > 1) p = 1;
+
+#ifdef PERFORMANCE
+            MeasurePerformance(codon_counts, codonPos, i, p);
+#endif
+
             if (p < 0.01) {
                 VariantGene::VariantPosition::VariantCodon curVariantCodon;
                 curVariantCodon.codon = codon_counts.first;
@@ -278,6 +340,14 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
             }
         }
     }
+#ifdef PERFORMANCE
+    std::cerr << (truePositives / 3.0);
+    std::cerr << " " << (falsePositives / (numberOfTests - 3));
+    std::cerr << " " << numberOfTests;
+    std::cerr << " " << ((truePositives + trueNegative) /
+                         (truePositives + falsePositives + falseNegative + trueNegative))
+              << std::endl;
+#endif
     if (!curVariantGene.relPositionToVariant.empty())
         variantGenes_.push_back(std::move(curVariantGene));
 }
