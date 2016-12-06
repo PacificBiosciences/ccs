@@ -58,7 +58,7 @@ inline T clip(const T val, const T range[2])
     return std::max(range[0], std::min(val, range[1]));
 }
 
-constexpr double kCounterWeight = 20.0;
+constexpr double kCounterWeight = 3.0;
 constexpr size_t nOutcomes = 12;
 constexpr size_t nContexts = 16;
 
