@@ -159,7 +159,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         }
         return p;
     };
-    auto FindDRMs = [this, &geneName, &genes](int position) {
+    auto FindDRMs = [this, &geneName, &genes](const int position) {
         std::string drmSummary;
         for (const auto& gene : genes) {
             if (geneName == gene.name) {
@@ -265,7 +265,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
             (geneName == "Integrase" && codonPos == 234 && curCodon == 'V');
 
         if (!ignored) {
-            if (p < 0.01) {
+            if (p < alpha) {
                 if (predictor)
                     ++truePositives;
                 else
@@ -344,9 +344,9 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
 #ifdef PERFORMANCE
             bool variableSite = MeasurePerformance(codon_counts, codonPos, i, p);
 
-            if (variableSite && p < 0.01) {
+            if (variableSite && p < alpha) {
 #else
-            if (p < 0.01) {
+            if (p < alpha) {
 #endif
                 VariantGene::VariantPosition::VariantCodon curVariantCodon;
                 curVariantCodon.codon = codon_counts.first;

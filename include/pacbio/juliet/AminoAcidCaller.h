@@ -143,6 +143,7 @@ public:
     std::unique_ptr<Data::MSA> msa_;
 
 private:
+    static constexpr float alpha = 0.01;
     void GenerateMSA(const std::vector<Data::ArrayRead>& reads);
     void CallVariants(const std::vector<Data::ArrayRead>& reads);
 
