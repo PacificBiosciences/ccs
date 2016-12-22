@@ -99,8 +99,22 @@ void AminoAcidCaller::GenerateMSA(const std::vector<Data::ArrayRead>& reads)
     }
 }
 
+struct Gene
+{
+    int begin;
+    int end;
+    std::string name;
+};
+
 void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
 {
+    std::vector<Gene> genes{
+        {2253, 2550, "Protease"},
+        {2550, 3870, "Reverse Transcriptase"},
+        {3870, 4230, "RNase"},
+        {4230, 5096, "Integrase"}
+    };
+
     ErrorEstimates error(errorModel_);
     VariantGene curVariantGene;
     std::string geneName;
@@ -158,17 +172,16 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
     for (int i = beginPos_; i < endPos_ - 2; ++i) {
         // Corrected index for 1-based reference
         const int ci = i + 1;
-        if (ci >= 2253 && ci < 2550 && geneName != "Protease") {
-            geneOffset = 2253;
-        } else if (ci >= 2550 && ci < 3870 && geneName != "Reverse Transcriptase") {
-            geneOffset = 2550;
-        } else if (ci >= 3870 && ci < 4230 && geneName != "RNase") {
-            geneOffset = 3870;
-        } else if (ci >= 4230 && ci < 5096 && geneName != "Integrase") {
-            geneOffset = 4230;
-        } else if (ci >= 5096) {
-            geneOffset = 5096;
+        bool missing = true;
+        for (const auto& gene : genes)
+        {
+            if (ci >= gene.begin && ci < gene.end)
+            {
+                geneOffset = gene.begin;
+                break;
+            }
         }
+        if (ci >= genes.back().end) geneOffset = genes.back().end;
 
         // Relative to gene begin
         int ri = ci - geneOffset;
@@ -267,16 +280,18 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
     for (int i = beginPos_; i < endPos_ - 2; ++i) {
         // Corrected index for 1-based reference
         const int ci = i + 1;
-        if (ci >= 2253 && ci < 2550 && geneName != "Protease") {
-            SetNewGene(2253, "Protease");
-        } else if (ci >= 2550 && ci < 3870 && geneName != "Reverse Transcriptase") {
-            SetNewGene(2550, "Reverse Transcriptase");
-        } else if (ci >= 3870 && ci < 4230 && geneName != "RNase") {
-            SetNewGene(3870, "RNase");
-        } else if (ci >= 4230 && ci < 5096 && geneName != "Integrase") {
-            SetNewGene(4230, "Integrase");
-        } else if (ci >= 5096) {
-            SetNewGene(5096, "ENV");
+
+        bool missing = true;
+        for (const auto& gene : genes)
+        {
+            if (ci >= gene.begin && ci < gene.end && geneName != gene.name)
+            {
+                SetNewGene(gene.begin, gene.name);
+                break;
+            }
+        }
+        if (ci >= genes.back().end) {
+            SetNewGene(genes.back().end, genes.back().name);
         }
 
         // Relative to gene begin
