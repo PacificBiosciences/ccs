@@ -427,6 +427,21 @@ void PoaGraphImpl::CommitAdd(PoaAlignmentMatrix* mat_, std::vector<Vertex>* read
     repCheck();
 }
 
+struct VertexComparator
+{
+    VertexComparator(const BoostGraph& g) : g_(g) {}
+    // Use exsiting indices to provide a stable memory-agnostic ordering
+    bool operator()(VD v1, VD v2) const
+    {
+        const int vi1 = get(vertex_index, g_, v1);
+        const int vi2 = get(vertex_index, g_, v2);
+        return (vi1 < vi2);
+    }
+
+private:
+    const BoostGraph& g_;
+};
+
 void PoaGraphImpl::PruneGraph(const int minCoverage)
 {
     // We have to use an iterator since we're modifying the graph as we go
@@ -440,13 +455,24 @@ void PoaGraphImpl::PruneGraph(const int minCoverage)
         }
     }
 
-    // Re-index all vertices to the range [0, num_vertices(g_)]
+    // This is a workaround for the non-deterministic order of iteration
+    // from BGL's vertices, which like edges also appear to be ordered
+    // by memory address (see: http://stackoverflow.com/questions/30968690/)
+
+    // We can't use topological sort here, since having a vertex index greater
+    // than num_vertices(g_) causes a crash. Instead we sort the vertices by
+    // their existing index.  This should still be very fast, as the underlying
+    // collection should be mostly sorted already.
+    vector<VD> sortedVertices;
+    BGL_FORALL_VERTICES(v, g_, BoostGraph) sortedVertices.push_back(v);
+    std::sort(sortedVertices.begin(), sortedVertices.end(), VertexComparator(g_));
+
+    // Finally, re-index all vertices to the range [0, num_vertices(g_)]
     graph_traits<BoostGraph>::vertices_size_type current_index = 0;
     index_map_t index_map = get(vertex_index, g_);
-    // clang-format off
-    BGL_FORALL_VERTICES(v, g_, BoostGraph)
+    for (const VD& v : sortedVertices) {
         index_map[v] = current_index++;
-    // clang-format on
+    }
 }
 
 size_t PoaGraphImpl::NumReads() const { return numReads_; }
