@@ -2121,7 +2121,7 @@
                 {
                   "codon": "GAA",
                   "frequency": 0.0289555325749741,
-                  "known_drm": "NNRTI + NRTI S",
+                  "known_drm": "NNRTI + NRTI",
                   "pValue": 3.0705353119705e-05
                 }
               ]

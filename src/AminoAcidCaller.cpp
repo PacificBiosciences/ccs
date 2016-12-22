@@ -101,19 +101,38 @@ void AminoAcidCaller::GenerateMSA(const std::vector<Data::ArrayRead>& reads)
 
 struct Gene
 {
+    struct DRM
+    {
+        std::string name;
+        std::vector<int> positions;
+    };
     int begin;
     int end;
     std::string name;
+
+    std::vector<DRM> drms;
 };
 
 void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
 {
+    // clang-format off
     std::vector<Gene> genes{
-        {2253, 2550, "Protease"},
-        {2550, 3870, "Reverse Transcriptase"},
-        {3870, 4230, "RNase"},
-        {4230, 5096, "Integrase"}
+        {2253, 2550, "Protease", {
+            {"PI", {24, 32, 46, 47, 50, 54, 76, 82, 84, 88, 90}},
+            {"PI S", {23, 24, 30, 32, 46, 47, 48, 50, 53, 54, 73, 76, 82, 83, 84, 85, 88, 90}}}
+        },
+        {2550, 3870, "Reverse Transcriptase", {
+            {"NNRTI", {100, 101, 103, 106, 138, 179, 181, 190, 190, 227, 230}},
+            {"NNRTI S", {65, 67, 69, 70, 74, 75, 77, 115, 116, 141, 151, 184, 210, 215, 219}},
+            {"NRTI", {100, 101, 103, 106, 179, 181, 188, 190, 225, 230}},
+            {"NRTI S", {41, 65, 67, 69, 70, 70, 74, 115, 151, 184, 210, 215, 219}}}
+        },
+        {3870, 4230, "RNase", {}},
+        {4230, 5096, "Integrase", {
+            {"INSTI", {66, 92, 138, 140, 143, 147, 148, 155}}}
+        }
     };
+    // clang-format on
 
     ErrorEstimates error(errorModel_);
     VariantGene curVariantGene;
@@ -140,43 +159,29 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         }
         return p;
     };
-    auto FindDRMs = [this, &geneName](int position) {
-        std::string drm;
-        if (geneName == "Protease") {
-            if (std::find(pi.cbegin(), pi.cend(), position) != pi.cend())
-                drm = "PI";
-            else if (std::find(piSurveillance.cbegin(), piSurveillance.cend(), position) !=
-                     piSurveillance.cend())
-                drm = "PI S";
-        } else if (geneName == "Reverse Transcriptase") {
-            if (std::find(nnrti.cbegin(), nnrti.cend(), position) != nnrti.cend())
-                drm = "NNRTI";
-            else if (std::find(nnrtiSurveillance.cbegin(), nnrtiSurveillance.cend(), position) !=
-                     nnrtiSurveillance.cend())
-                drm = "NNRTI S";
-
-            if (std::find(nrti.cbegin(), nrti.cend(), position) != nrti.cend()) {
-                if (!drm.empty()) drm += " + ";
-                drm += "NRTI";
-            } else if (std::find(nrtiSurveillance.cbegin(), nrtiSurveillance.cend(), position) !=
-                       nrtiSurveillance.cend()) {
-                if (!drm.empty()) drm += " + ";
-                drm += "NRTI S";
+    auto FindDRMs = [this, &geneName, &genes](int position) {
+        std::string drmSummary;
+        for (const auto& gene : genes) {
+            if (geneName == gene.name) {
+                for (const auto& drms : gene.drms) {
+                    if (std::find(drms.positions.cbegin(), drms.positions.cend(), position) !=
+                        drms.positions.cend()) {
+                        if (!drmSummary.empty()) drmSummary += " + ";
+                        drmSummary += drms.name;
+                    }
+                }
+                break;
             }
-        } else if (geneName == "Integrase") {
-            if (std::find(ini.cbegin(), ini.cend(), position) != ini.cend()) drm = "INSTI";
         }
-        return drm;
+        return drmSummary;
     };
     int numberOfTests = 0;
     for (int i = beginPos_; i < endPos_ - 2; ++i) {
         // Corrected index for 1-based reference
         const int ci = i + 1;
         bool missing = true;
-        for (const auto& gene : genes)
-        {
-            if (ci >= gene.begin && ci < gene.end)
-            {
+        for (const auto& gene : genes) {
+            if (ci >= gene.begin && ci < gene.end) {
                 geneOffset = gene.begin;
                 break;
             }
@@ -282,10 +287,8 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         const int ci = i + 1;
 
         bool missing = true;
-        for (const auto& gene : genes)
-        {
-            if (ci >= gene.begin && ci < gene.end && geneName != gene.name)
-            {
+        for (const auto& gene : genes) {
+            if (ci >= gene.begin && ci < gene.end && geneName != gene.name) {
                 SetNewGene(gene.begin, gene.name);
                 break;
             }
@@ -727,18 +730,5 @@ const std::string AminoAcidCaller::ref_ =
     "CTGGTTAGACCAGATCTGAGCCTGGGAGCTCTCTGGCTAACTAGGGAACCCACTGCTTAAGCCTCAATAAAGCTTGCCTTGAGTGC"
     "TTCAAGTAGTGTGTGCCCGTCTGTTGTGTGACTCTGGTAACTAGAGATCCCTCAGACCCTTTTAGTCAGTGTGGAAAATCTCTAGC"
     "A";
-
-const std::vector<int> AminoAcidCaller::nnrti = {100, 101, 103, 106, 138, 179,
-                                                 181, 190, 190, 227, 230};
-const std::vector<int> AminoAcidCaller::nnrtiSurveillance = {41,  65,  67,  69,  70,  74,  75, 77,
-                                                             115, 116, 151, 184, 210, 215, 219};
-const std::vector<int> AminoAcidCaller::nrtiSurveillance = {100, 101, 103, 106, 179,
-                                                            181, 188, 190, 225, 230};
-const std::vector<int> AminoAcidCaller::nrti = {184, 65,  70,  74,  115, 41, 67,
-                                                70,  210, 215, 219, 69,  151};
-const std::vector<int> AminoAcidCaller::pi = {24, 32, 46, 47, 50, 54, 76, 82, 84, 88, 90};
-const std::vector<int> AminoAcidCaller::piSurveillance = {23, 24, 30, 32, 46, 47, 48, 50, 53,
-                                                          54, 73, 76, 82, 83, 84, 85, 88, 90};
-const std::vector<int> AminoAcidCaller::ini = {66, 92, 138, 140, 143, 147, 148, 155};
 }
 }  // ::PacBio::Juliet
