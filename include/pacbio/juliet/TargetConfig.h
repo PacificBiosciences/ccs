@@ -37,46 +37,53 @@
 
 #pragma once
 
+#include <pbcopper/json/JSON.h>
 #include <string>
-#include <utility>
+#include <unordered_map>
 #include <vector>
-
-#include <pacbio/juliet/AnalysisMode.h>
-#include <pacbio/juliet/ErrorEstimates.h>
-#include <pacbio/juliet/TargetConfig.h>
-#include <pbcopper/cli/CLI.h>
 
 namespace PacBio {
 namespace Juliet {
-
-/// Contains user provided CLI configuration for Juliet
-struct JulietSettings
+class DRM
 {
-    std::vector<std::string> InputFiles;
-    std::string OutputPrefix;
-    TargetConfig TargetConfigUser;
-    const float PValueThreshold;
-    int RegionStart = 0;
-    int RegionEnd = std::numeric_limits<int>::max();
-    bool Details;
-    bool DRMOnly;
+public:
+    std::string name;
+    std::vector<int> positions;
 
-    AnalysisMode Mode;
-    ErrorModel SelectedErrorModel;
+public:
+    JSON::Json ToJson() const;
+};
 
-    /// Parses the provided CLI::Results and retrieves a defined set of options.
-    JulietSettings(const PacBio::CLI::Results& options);
+class TargetGene
+{
+public:
+    int begin;
+    int end;
+    std::string name;
+    std::vector<DRM> drms;
 
-    size_t ThreadCount(int n);
+public:
+    JSON::Json ToJson() const;
+    static JSON::Json ToJson(const std::vector<TargetGene>& genes);
+};
 
-    /// Given the description of the tool and its version, create all
-    /// necessary CLI::Options for the ccs executable.
-    static PacBio::CLI::Interface CreateCLI();
+class TargetConfig
+{
+public:
+    TargetConfig() = default;
+    TargetConfig(const std::string& input);
 
-    /// Splits region into ReconstructionStart and ReconstructionEnd.
-    static void SplitRegion(const std::string& region, int* start, int* end);
+public:
+    std::vector<TargetGene> targetGenes;
+    std::string referenceSequence;
 
-    static AnalysisMode AnalysisModeFromString(const std::string& input);
+private:
+    static std::string DetermineConfigInput(const std::string& input);
+    static std::string ReferenceSequenceFromJson(const JSON::Json& root);
+    static std::vector<TargetGene> TargetGenesFromJson(const JSON::Json& root);
+
+private:
+    static std::unordered_map<std::string, std::string> predefinedConfigs_;
 };
 }
-}  // ::PacBio::Juliet
+}  //::PacBio::Juliet

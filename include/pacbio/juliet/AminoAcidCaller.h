@@ -53,6 +53,7 @@
 
 #include <pacbio/data/MSA.h>
 #include <pacbio/juliet/ErrorEstimates.h>
+#include <pacbio/juliet/TargetConfig.h>
 #include <pbcopper/json/JSON.h>
 
 namespace PacBio {
@@ -129,7 +130,8 @@ struct VariantGene
 class AminoAcidCaller
 {
 public:
-    AminoAcidCaller(const std::vector<Data::ArrayRead>& reads, const ErrorModel& errorModel);
+    AminoAcidCaller(const std::vector<Data::ArrayRead>& reads, const ErrorModel& errorModel,
+                    const TargetConfig& targetConfig);
 
 public:
     /// Generate JSON output of variant amino acids
@@ -153,9 +155,9 @@ private:
     std::vector<std::vector<char>> matrix_;
     std::vector<VariantGene> variantGenes_;
     const ErrorModel errorModel_;
+    const TargetConfig targetConfig_;
 
     static const std::unordered_map<std::string, char> codonToAmino_;
-    static const std::string ref_;
     static const std::unordered_map<int, std::string> resistentCodon_;
 
     static const std::vector<int> nnrti;

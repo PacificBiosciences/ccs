@@ -42,6 +42,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <pacbio/juliet/JulietSettings.h>
+#include <pacbio/juliet/TargetConfig.h>
 
 namespace PacBio {
 namespace Juliet {
@@ -90,12 +91,20 @@ const PlainOption ErrorModel{
     "Error model: FLEA_RQ95 or FLEA_RQ99",
     CLI::Option::StringType("FLEA_RQ99")
 };
+const PlainOption TargetConfig{
+    "Target config",
+    { "config", "c" },
+    "Target config",
+    "Path to the JSON target config, containing regions of interest, the JSON string itself, or a predefined config tag like <HIV>",
+    CLI::Option::StringType("<HIV>")
+};
 // clang-format on
 }  // namespace OptionNames
 
 JulietSettings::JulietSettings(const PacBio::CLI::Results& options)
     : InputFiles(options.PositionalArguments())
     , OutputPrefix(std::forward<std::string>(options[OptionNames::Output]))
+    , TargetConfigUser(std::forward<std::string>(options[OptionNames::TargetConfig]))
     , PValueThreshold(options[OptionNames::PValueThreshold])
     , DRMOnly(options[OptionNames::DRMOnly])
     , Mode(AnalysisModeFromString(options[OptionNames::Mode]))
@@ -154,8 +163,7 @@ PacBio::CLI::Interface JulietSettings::CreateCLI()
 
     // clang-format off
     i.AddPositionalArguments({
-        {"source", "Source BAM or DataSet XML file.", "FILE"},
-        {"dest", "Destination file prefix.", "FILE"}
+        {"source", "Source BAM or DataSet XML file.", "FILE"}
     });
 
     i.AddOptions(
@@ -165,7 +173,8 @@ PacBio::CLI::Interface JulietSettings::CreateCLI()
         OptionNames::ErrorModel,
         OptionNames::Region,
         OptionNames::PValueThreshold,
-        OptionNames::DRMOnly
+        OptionNames::DRMOnly,
+        OptionNames::TargetConfig
     });
     // clang-format on
 

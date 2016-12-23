@@ -123,7 +123,7 @@ void JulietWorkflow::Run(const JulietSettings& settings)
             reads = IO::ParseBam(inputFile, settings.RegionStart, settings.RegionEnd);
 
             // Call variants
-            AminoAcidCaller aac(reads, settings.SelectedErrorModel);
+            AminoAcidCaller aac(reads, settings.SelectedErrorModel, settings.TargetConfigUser);
             const auto json = aac.JSON();
 
             std::ofstream jsonStream(outputPrefix + ".json");

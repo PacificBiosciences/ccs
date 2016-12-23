@@ -59,8 +59,8 @@
 namespace PacBio {
 namespace Juliet {
 AminoAcidCaller::AminoAcidCaller(const std::vector<Data::ArrayRead>& reads,
-                                 const ErrorModel& errorModel)
-    : errorModel_(errorModel)
+                                 const ErrorModel& errorModel, const TargetConfig& targetConfig)
+    : errorModel_(errorModel), targetConfig_(targetConfig)
 {
     for (const auto& r : reads) {
         beginPos_ = std::min(beginPos_, r.ReferenceStart());
@@ -99,40 +99,9 @@ void AminoAcidCaller::GenerateMSA(const std::vector<Data::ArrayRead>& reads)
     }
 }
 
-struct Gene
-{
-    struct DRM
-    {
-        std::string name;
-        std::vector<int> positions;
-    };
-    int begin;
-    int end;
-    std::string name;
-
-    std::vector<DRM> drms;
-};
-
 void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
 {
-    // clang-format off
-    std::vector<Gene> genes{
-        {2253, 2550, "Protease", {
-            {"PI", {24, 32, 46, 47, 50, 54, 76, 82, 84, 88, 90}},
-            {"PI S", {23, 24, 30, 32, 46, 47, 48, 50, 53, 54, 73, 76, 82, 83, 84, 85, 88, 90}}}
-        },
-        {2550, 3870, "Reverse Transcriptase", {
-            {"NNRTI", {100, 101, 103, 106, 138, 179, 181, 190, 190, 227, 230}},
-            {"NNRTI S", {65, 67, 69, 70, 74, 75, 77, 115, 116, 141, 151, 184, 210, 215, 219}},
-            {"NRTI", {100, 101, 103, 106, 179, 181, 188, 190, 225, 230}},
-            {"NRTI S", {41, 65, 67, 69, 70, 70, 74, 115, 151, 184, 210, 215, 219}}}
-        },
-        {3870, 4230, "RNase", {}},
-        {4230, 5096, "Integrase", {
-            {"INSTI", {66, 92, 138, 140, 143, 147, 148, 155}}}
-        }
-    };
-    // clang-format on
+    const auto& genes = targetConfig_.targetGenes;
 
     ErrorEstimates error(errorModel_);
     VariantGene curVariantGene;
@@ -176,51 +145,48 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         return drmSummary;
     };
     int numberOfTests = 0;
-    for (int i = beginPos_; i < endPos_ - 2; ++i) {
-        // Corrected index for 1-based reference
-        const int ci = i + 1;
-        bool missing = true;
-        for (const auto& gene : genes) {
-            if (ci >= gene.begin && ci < gene.end) {
-                geneOffset = gene.begin;
-                break;
+    for (const auto& gene : genes) {
+        geneOffset = gene.begin;
+        for (int i = gene.begin; i < gene.end - 2; ++i) {
+            // Corrected index for 1-based reference
+            const int ci = i + 1;
+            // Relative to gene begin
+            int ri = ci - geneOffset;
+            // Only work on beginnings of a codon
+            if (ri % 3 != 0) continue;
+            // Relative to window begin
+            int bi = i - beginPos_;
+
+            int codonPos = (1 + ri / 3);
+            auto& curVariantPosition = curVariantGene.relPositionToVariant[codonPos];
+
+            curVariantPosition.refCodon = targetConfig_.referenceSequence.substr(ci - 1, 3);
+            if (codonToAmino_.find(curVariantPosition.refCodon) == codonToAmino_.cend()) {
+                continue;
             }
+
+            std::map<std::string, int> codons;
+            int coverage = 0;
+            for (const auto& row : matrix_) {
+                // Read does not cover codon
+                if (bi + 2 >= static_cast<int>(row.size()) || bi < 0) continue;
+                if (row.at(bi + 0) == ' ' || row.at(bi + 1) == ' ' || row.at(bi + 2) == ' ')
+                    continue;
+                ++coverage;
+
+                // Read has a deletion
+                if (row.at(bi + 0) == '-' || row.at(bi + 1) == '-' || row.at(bi + 2) == '-')
+                    continue;
+
+                std::string codon = std::string() + row.at(bi) + row.at(bi + 1) + row.at(bi + 2);
+
+                // Codon is bogus
+                if (codonToAmino_.find(codon) == codonToAmino_.cend()) continue;
+
+                codons[codon]++;
+            }
+            numberOfTests += codons.size();
         }
-        if (ci >= genes.back().end) geneOffset = genes.back().end;
-
-        // Relative to gene begin
-        int ri = ci - geneOffset;
-        // Only work on beginnings of a codon
-        if (ri % 3 != 0) continue;
-        // Relative to window begin
-        int bi = i - beginPos_;
-
-        int codonPos = (1 + ri / 3);
-        auto& curVariantPosition = curVariantGene.relPositionToVariant[codonPos];
-
-        curVariantPosition.refCodon = ref_.substr(ci - 1, 3);
-        if (codonToAmino_.find(curVariantPosition.refCodon) == codonToAmino_.cend()) {
-            continue;
-        }
-
-        std::map<std::string, int> codons;
-        int coverage = 0;
-        for (const auto& row : matrix_) {
-            // Read does not cover codon
-            if (row.at(bi + 0) == ' ' || row.at(bi + 1) == ' ' || row.at(bi + 2) == ' ') continue;
-            ++coverage;
-
-            // Read has a deletion
-            if (row.at(bi + 0) == '-' || row.at(bi + 1) == '-' || row.at(bi + 2) == '-') continue;
-
-            std::string codon = std::string() + row.at(bi) + row.at(bi + 1) + row.at(bi + 2);
-
-            // Codon is bogus
-            if (codonToAmino_.find(codon) == codonToAmino_.cend()) continue;
-
-            codons[codon]++;
-        }
-        numberOfTests += codons.size();
     }
 
     geneOffset = 0;
@@ -282,96 +248,93 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
     };
 #endif
 
-    for (int i = beginPos_; i < endPos_ - 2; ++i) {
-        // Corrected index for 1-based reference
-        const int ci = i + 1;
+    for (const auto& gene : genes) {
+        SetNewGene(gene.begin, gene.name);
+        for (int i = gene.begin; i < gene.end - 2; ++i) {
 
-        bool missing = true;
-        for (const auto& gene : genes) {
-            if (ci >= gene.begin && ci < gene.end && geneName != gene.name) {
-                SetNewGene(gene.begin, gene.name);
-                break;
+            // for (int i = beginPos_; i < endPos_ - 2; ++i) {
+            // Corrected index for 1-based reference
+            const int ci = i + 1;
+            // Relative to gene begin
+            int ri = ci - geneOffset;
+            // Only work on beginnings of a codon
+            if (ri % 3 != 0) continue;
+            // Relative to window begin
+            int bi = i - beginPos_;
+
+            int codonPos = (1 + ri / 3);
+            auto& curVariantPosition = curVariantGene.relPositionToVariant[codonPos];
+
+            curVariantPosition.refCodon = targetConfig_.referenceSequence.substr(ci - 1, 3);
+            if (codonToAmino_.find(curVariantPosition.refCodon) == codonToAmino_.cend()) {
+                continue;
             }
-        }
-        if (ci >= genes.back().end) {
-            SetNewGene(genes.back().end, genes.back().name);
-        }
+            curVariantPosition.refAminoAcid = codonToAmino_.at(curVariantPosition.refCodon);
 
-        // Relative to gene begin
-        int ri = ci - geneOffset;
-        // Only work on beginnings of a codon
-        if (ri % 3 != 0) continue;
-        // Relative to window begin
-        int bi = i - beginPos_;
+            std::map<std::string, int> codons;
+            int coverage = 0;
+            for (const auto& row : matrix_) {
+                // Read does not cover codon
+                if (bi + 2 >= static_cast<int>(row.size()) || bi < 0) continue;
+                if (row.at(bi + 0) == ' ' || row.at(bi + 1) == ' ' || row.at(bi + 2) == ' ')
+                    continue;
+                ++coverage;
 
-        int codonPos = (1 + ri / 3);
-        auto& curVariantPosition = curVariantGene.relPositionToVariant[codonPos];
+                // Read has a deletion
+                if (row.at(bi + 0) == '-' || row.at(bi + 1) == '-' || row.at(bi + 2) == '-')
+                    continue;
 
-        curVariantPosition.refCodon = ref_.substr(ci - 1, 3);
-        if (codonToAmino_.find(curVariantPosition.refCodon) == codonToAmino_.cend()) {
-            continue;
-        }
-        curVariantPosition.refAminoAcid = codonToAmino_.at(curVariantPosition.refCodon);
+                std::string codon = std::string() + row.at(bi) + row.at(bi + 1) + row.at(bi + 2);
 
-        std::map<std::string, int> codons;
-        int coverage = 0;
-        for (const auto& row : matrix_) {
-            // Read does not cover codon
-            if (row.at(bi + 0) == ' ' || row.at(bi + 1) == ' ' || row.at(bi + 2) == ' ') continue;
-            ++coverage;
+                // Codon is bogus
+                if (codonToAmino_.find(codon) == codonToAmino_.cend()) continue;
 
-            // Read has a deletion
-            if (row.at(bi + 0) == '-' || row.at(bi + 1) == '-' || row.at(bi + 2) == '-') continue;
+                codons[codon]++;
+            }
+            for (const auto& codon_counts : codons) {
+                if (codonToAmino_.at(codon_counts.first) == curVariantPosition.refAminoAcid)
+                    continue;
+                double p = (Statistics::Fisher::fisher_exact_tiss(
+                                codon_counts.second, coverage,
+                                coverage * CodonProbability(curVariantPosition.refCodon,
+                                                            codon_counts.first),
+                                coverage) *
+                            numberOfTests);
 
-            std::string codon = std::string() + row.at(bi) + row.at(bi + 1) + row.at(bi + 2);
-
-            // Codon is bogus
-            if (codonToAmino_.find(codon) == codonToAmino_.cend()) continue;
-
-            codons[codon]++;
-        }
-        for (const auto& codon_counts : codons) {
-            if (codonToAmino_.at(codon_counts.first) == curVariantPosition.refAminoAcid) continue;
-            double p =
-                (Statistics::Fisher::fisher_exact_tiss(
-                     codon_counts.second, coverage,
-                     coverage * CodonProbability(curVariantPosition.refCodon, codon_counts.first),
-                     coverage) *
-                 numberOfTests);
-
-            if (p > 1) p = 1;
+                if (p > 1) p = 1;
 
 #ifdef PERFORMANCE
-            bool variableSite = MeasurePerformance(codon_counts, codonPos, i, p);
+                bool variableSite = MeasurePerformance(codon_counts, codonPos, i, p);
 
-            if (variableSite && p < alpha) {
+                if (variableSite && p < alpha) {
 #else
-            if (p < alpha) {
+                if (p < alpha) {
 #endif
-                VariantGene::VariantPosition::VariantCodon curVariantCodon;
-                curVariantCodon.codon = codon_counts.first;
-                curVariantCodon.frequency = codon_counts.second / static_cast<double>(coverage);
-                curVariantCodon.pValue = p;
-                curVariantCodon.knownDRM = FindDRMs(codonPos);
+                    VariantGene::VariantPosition::VariantCodon curVariantCodon;
+                    curVariantCodon.codon = codon_counts.first;
+                    curVariantCodon.frequency = codon_counts.second / static_cast<double>(coverage);
+                    curVariantCodon.pValue = p;
+                    curVariantCodon.knownDRM = FindDRMs(codonPos);
 
-                curVariantPosition.aminoAcidToCodons[codonToAmino_.at(codon_counts.first)]
-                    .push_back(curVariantCodon);
+                    curVariantPosition.aminoAcidToCodons[codonToAmino_.at(codon_counts.first)]
+                        .push_back(curVariantCodon);
+                }
             }
-        }
-        if (!curVariantPosition.aminoAcidToCodons.empty()) {
-            curVariantPosition.coverage = coverage;
-            for (int j = -3; j < 6; ++j) {
-                if (i + j >= beginPos_ && i + j < endPos_) {
-                    JSON::Json msaCounts;
-                    msaCounts["rel_pos"] = j;
-                    msaCounts["abs_pos"] = i + j;
-                    msaCounts["A"] = (*msa_)[i + j][0];
-                    msaCounts["C"] = (*msa_)[i + j][1];
-                    msaCounts["G"] = (*msa_)[i + j][2];
-                    msaCounts["T"] = (*msa_)[i + j][3];
-                    msaCounts["-"] = (*msa_)[i + j][4];
-                    msaCounts["wt"] = std::string(1, ref_[i + j]);
-                    curVariantPosition.msa.push_back(msaCounts);
+            if (!curVariantPosition.aminoAcidToCodons.empty()) {
+                curVariantPosition.coverage = coverage;
+                for (int j = -3; j < 6; ++j) {
+                    if (i + j >= beginPos_ && i + j < endPos_) {
+                        JSON::Json msaCounts;
+                        msaCounts["rel_pos"] = j;
+                        msaCounts["abs_pos"] = i + j;
+                        msaCounts["A"] = (*msa_)[i + j][0];
+                        msaCounts["C"] = (*msa_)[i + j][1];
+                        msaCounts["G"] = (*msa_)[i + j][2];
+                        msaCounts["T"] = (*msa_)[i + j][3];
+                        msaCounts["-"] = (*msa_)[i + j][4];
+                        msaCounts["wt"] = std::string(1, targetConfig_.referenceSequence.at(i + j));
+                        curVariantPosition.msa.push_back(msaCounts);
+                    }
                 }
             }
         }
@@ -614,121 +577,5 @@ const std::unordered_map<std::string, char> AminoAcidCaller::codonToAmino_ = {
     {"CAC", 'H'}, {"GAA", 'E'}, {"GAG", 'E'}, {"GAT", 'D'}, {"GAC", 'D'}, {"AAA", 'K'},
     {"AAG", 'K'}, {"CGT", 'R'}, {"CGC", 'R'}, {"CGA", 'R'}, {"CGG", 'R'}, {"AGA", 'R'},
     {"AGG", 'R'}, {"TAA", 'X'}, {"TAG", 'X'}, {"TGA", 'X'}};
-
-const std::string AminoAcidCaller::ref_ =
-    "TGGAAGGGCTAATTCACTCCCAACGAAGACAAGATATCCTTGATCTGTGGATCTACCACACACAAGGCTACTTCCCTGATTAGCAG"
-    "AACTACACACCAGGGCCAGGGATCAGATATCCACTGACCTTTGGATGGTGCTACAAGCTAGTACCAGTTGAGCCAGAGAAGTTAGA"
-    "AGAAGCCAACAAAGGAGAGAACACCAGCTTGTTACACCCTGTGAGCCTGCATGGAATGGATGACCCGGAGAGAGAAGTGTTAGAGT"
-    "GGAGGTTTGACAGCCGCCTAGCATTTCATCACATGGCCCGAGAGCTGCATCCGGAGTACTTCAAGAACTGCTGACATCGAGCTTGC"
-    "TACAAGGGACTTTCCGCTGGGGACTTTCCAGGGAGGCGTGGCCTGGGCGGGACTGGGGAGTGGCGAGCCCTCAGATCCTGCATATA"
-    "AGCAGCTGCTTTTTGCCTGTACTGGGTCTCTCTGGTTAGACCAGATCTGAGCCTGGGAGCTCTCTGGCTAACTAGGGAACCCACTG"
-    "CTTAAGCCTCAATAAAGCTTGCCTTGAGTGCTTCAAGTAGTGTGTGCCCGTCTGTTGTGTGACTCTGGTAACTAGAGATCCCTCAG"
-    "ACCCTTTTAGTCAGTGTGGAAAATCTCTAGCAGTGGCGCCCGAACAGGGACCTGAAAGCGAAAGGGAAACCAGAGGAGCTCTCTCG"
-    "ACGCAGGACTCGGCTTGCTGAAGCGCGCACGGCAAGAGGCGAGGGGCGGCGACTGGTGAGTACGCCAAAAATTTTGACTAGCGGAG"
-    "GCTAGAAGGAGAGAGATGGGTGCGAGAGCGTCAGTATTAAGCGGGGGAGAATTAGATCGATGGGAAAAAATTCGGTTAAGGCCAGG"
-    "GGGAAAGAAAAAATATAAATTAAAACATATAGTATGGGCAAGCAGGGAGCTAGAACGATTCGCAGTTAATCCTGGCCTGTTAGAAA"
-    "CATCAGAAGGCTGTAGACAAATACTGGGACAGCTACAACCATCCCTTCAGACAGGATCAGAAGAACTTAGATCATTATATAATACA"
-    "GTAGCAACCCTCTATTGTGTGCATCAAAGGATAGAGATAAAAGACACCAAGGAAGCTTTAGACAAGATAGAGGAAGAGCAAAACAA"
-    "AAGTAAGAAAAAAGCACAGCAAGCAGCAGCTGACACAGGACACAGCAATCAGGTCAGCCAAAATTACCCTATAGTGCAGAACATCC"
-    "AGGGGCAAATGGTACATCAGGCCATATCACCTAGAACTTTAAATGCATGGGTAAAAGTAGTAGAAGAGAAGGCTTTCAGCCCAGAA"
-    "GTGATACCCATGTTTTCAGCATTATCAGAAGGAGCCACCCCACAAGATTTAAACACCATGCTAAACACAGTGGGGGGACATCAAGC"
-    "AGCCATGCAAATGTTAAAAGAGACCATCAATGAGGAAGCTGCAGAATGGGATAGAGTGCATCCAGTGCATGCAGGGCCTATTGCAC"
-    "CAGGCCAGATGAGAGAACCAAGGGGAAGTGACATAGCAGGAACTACTAGTACCCTTCAGGAACAAATAGGATGGATGACAAATAAT"
-    "CCACCTATCCCAGTAGGAGAAATTTATAAAAGATGGATAATCCTGGGATTAAATAAAATAGTAAGAATGTATAGCCCTACCAGCAT"
-    "TCTGGACATAAGACAAGGACCAAAGGAACCCTTTAGAGACTATGTAGACCGGTTCTATAAAACTCTAAGAGCCGAGCAAGCTTCAC"
-    "AGGAGGTAAAAAATTGGATGACAGAAACCTTGTTGGTCCAAAATGCGAACCCAGATTGTAAGACTATTTTAAAAGCATTGGGACCA"
-    "GCGGCTACACTAGAAGAAATGATGACAGCATGTCAGGGAGTAGGAGGACCCGGCCATAAGGCAAGAGTTTTGGCTGAAGCAATGAG"
-    "CCAAGTAACAAATTCAGCTACCATAATGATGCAGAGAGGCAATTTTAGGAACCAAAGAAAGATTGTTAAGTGTTTCAATTGTGGCA"
-    "AAGAAGGGCACACAGCCAGAAATTGCAGGGCCCCTAGGAAAAAGGGCTGTTGGAAATGTGGAAAGGAAGGACACCAAATGAAAGAT"
-    "TGTACTGAGAGACAGGCTAATTTTTTAGGGAAGATCTGGCCTTCCTACAAGGGAAGGCCAGGGAATTTTCTTCAGAGCAGACCAGA"
-    "GCCAACAGCCCCACCAGAAGAGAGCTTCAGGTCTGGGGTAGAGACAACAACTCCCCCTCAGAAGCAGGAGCCGATAGACAAGGAAC"
-    "TGTATCCTTTAACTTCCCTCAGGTCACTCTTTGGCAACGACCCCTCGTCACAATAAAGATAGGGGGGCAACTAAAGGAAGCTCTAT"
-    "TAGATACAGGAGCAGATGATACAGTATTAGAAGAAATGAGTTTGCCAGGAAGATGGAAACCAAAAATGATAGGGGGAATTGGAGGT"
-    "TTTATCAAAGTAAGACAGTATGATCAGATACTCATAGAAATCTGTGGACATAAAGCTATAGGTACAGTATTAGTAGGACCTACACC"
-    "TGTCAACATAATTGGAAGAAATCTGTTGACTCAGATTGGTTGCACTTTAAATTTTCCCATTAGCCCTATTGAGACTGTACCAGTAA"
-    "AATTAAAGCCAGGAATGGATGGCCCAAAAGTTAAACAATGGCCATTGACAGAAGAAAAAATAAAAGCATTAGTAGAAATTTGTACA"
-    "GAGATGGAAAAGGAAGGGAAAATTTCAAAAATTGGGCCTGAAAATCCATACAATACTCCAGTATTTGCCATAAAGAAAAAAGACAG"
-    "TACTAAATGGAGAAAATTAGTAGATTTCAGAGAACTTAATAAGAGAACTCAAGACTTCTGGGAAGTTCAATTAGGAATACCACATC"
-    "CCGCAGGGTTAAAAAAGAAAAAATCAGTAACAGTACTGGATGTGGGTGATGCATATTTTTCAGTTCCCTTAGATGAAGACTTCAGG"
-    "AAGTATACTGCATTTACCATACCTAGTATAAACAATGAGACACCAGGGATTAGATATCAGTACAATGTGCTTCCACAGGGATGGAA"
-    "AGGATCACCAGCAATATTCCAAAGTAGCATGACAAAAATCTTAGAGCCTTTTAGAAAACAAAATCCAGACATAGTTATCTATCAAT"
-    "ACATGGATGATTTGTATGTAGGATCTGACTTAGAAATAGGGCAGCATAGAACAAAAATAGAGGAGCTGAGACAACATCTGTTGAGG"
-    "TGGGGACTTACCACACCAGACAAAAAACATCAGAAAGAACCTCCATTCCTTTGGATGGGTTATGAACTCCATCCTGATAAATGGAC"
-    "AGTACAGCCTATAGTGCTGCCAGAAAAAGACAGCTGGACTGTCAATGACATACAGAAGTTAGTGGGGAAATTGAATTGGGCAAGTC"
-    "AGATTTACCCAGGGATTAAAGTAAGGCAATTATGTAAACTCCTTAGAGGAACCAAAGCACTAACAGAAGTAATACCACTAACAGAA"
-    "GAAGCAGAGCTAGAACTGGCAGAAAACAGAGAGATTCTAAAAGAACCAGTACATGGAGTGTATTATGACCCATCAAAAGACTTAAT"
-    "AGCAGAAATACAGAAGCAGGGGCAAGGCCAATGGACATATCAAATTTATCAAGAGCCATTTAAAAATCTGAAAACAGGAAAATATG"
-    "CAAGAATGAGGGGTGCCCACACTAATGATGTAAAACAATTAACAGAGGCAGTGCAAAAAATAACCACAGAAAGCATAGTAATATGG"
-    "GGAAAGACTCCTAAATTTAAACTGCCCATACAAAAGGAAACATGGGAAACATGGTGGACAGAGTATTGGCAAGCCACCTGGATTCC"
-    "TGAGTGGGAGTTTGTTAATACCCCTCCCTTAGTGAAATTATGGTACCAGTTAGAGAAAGAACCCATAGTAGGAGCAGAAACCTTCT"
-    "ATGTAGATGGGGCAGCTAACAGGGAGACTAAATTAGGAAAAGCAGGATATGTTACTAATAGAGGAAGACAAAAAGTTGTCACCCTA"
-    "ACTGACACAACAAATCAGAAGACTGAGTTACAAGCAATTTATCTAGCTTTGCAGGATTCGGGATTAGAAGTAAACATAGTAACAGA"
-    "CTCACAATATGCATTAGGAATCATTCAAGCACAACCAGATCAAAGTGAATCAGAGTTAGTCAATCAAATAATAGAGCAGTTAATAA"
-    "AAAAGGAAAAGGTCTATCTGGCATGGGTACCAGCACACAAAGGAATTGGAGGAAATGAACAAGTAGATAAATTAGTCAGTGCTGGA"
-    "ATCAGGAAAGTACTATTTTTAGATGGAATAGATAAGGCCCAAGATGAACATGAGAAATATCACAGTAATTGGAGAGCAATGGCTAG"
-    "TGATTTTAACCTGCCACCTGTAGTAGCAAAAGAAATAGTAGCCAGCTGTGATAAATGTCAGCTAAAAGGAGAAGCCATGCATGGAC"
-    "AAGTAGACTGTAGTCCAGGAATATGGCAACTAGATTGTACACATTTAGAAGGAAAAGTTATCCTGGTAGCAGTTCATGTAGCCAGT"
-    "GGATATATAGAAGCAGAAGTTATTCCAGCAGAAACAGGGCAGGAAACAGCATATTTTCTTTTAAAATTAGCAGGAAGATGGCCAGT"
-    "AAAAACAATACATACTGACAATGGCAGCAATTTCACCGGTGCTACGGTTAGGGCCGCCTGTTGGTGGGCGGGAATCAAGCAGGAAT"
-    "TTGGAATTCCCTACAATCCCCAAAGTCAAGGAGTAGTAGAATCTATGAATAAAGAATTAAAGAAAATTATAGGACAGGTAAGAGAT"
-    "CAGGCTGAACATCTTAAGACAGCAGTACAAATGGCAGTATTCATCCACAATTTTAAAAGAAAAGGGGGGATTGGGGGGTACAGTGC"
-    "AGGGGAAAGAATAGTAGACATAATAGCAACAGACATACAAACTAAAGAATTACAAAAACAAATTACAAAAATTCAAAATTTTCGGG"
-    "TTTATTACAGGGACAGCAGAAATCCACTTTGGAAAGGACCAGCAAAGCTCCTCTGGAAAGGTGAAGGGGCAGTAGTAATACAAGAT"
-    "AATAGTGACATAAAAGTAGTGCCAAGAAGAAAAGCAAAGATCATTAGGGATTATGGAAAACAGATGGCAGGTGATGATTGTGTGGC"
-    "AAGTAGACAGGATGAGGATTAGAACATGGAAAAGTTTAGTAAAACACCATATGTATGTTTCAGGGAAAGCTAGGGGATGGTTTTAT"
-    "AGACATCACTATGAAAGCCCTCATCCAAGAATAAGTTCAGAAGTACACATCCCACTAGGGGATGCTAGATTGGTAATAACAACATA"
-    "TTGGGGTCTGCATACAGGAGAAAGAGACTGGCATTTGGGTCAGGGAGTCTCCATAGAATGGAGGAAAAAGAGATATAGCACACAAG"
-    "TAGACCCTGAACTAGCAGACCAACTAATTCATCTGTATTACTTTGACTGTTTTTCAGACTCTGCTATAAGAAAGGCCTTATTAGGA"
-    "CACATAGTTAGCCCTAGGTGTGAATATCAAGCAGGACATAACAAGGTAGGATCTCTACAATACTTGGCACTAGCAGCATTAATAAC"
-    "ACCAAAAAAGATAAAGCCACCTTTGCCTAGTGTTACGAAACTGACAGAGGATAGATGGAACAAGCCCCAGAAGACCAAGGGCCACA"
-    "GAGGGAGCCACACAATGAATGGACACTAGAGCTTTTAGAGGAGCTTAAGAATGAAGCTGTTAGACATTTTCCTAGGATTTGGCTCC"
-    "ATGGCTTAGGGCAACATATCTATGAAACTTATGGGGATACTTGGGCAGGAGTGGAAGCCATAATAAGAATTCTGCAACAACTGCTG"
-    "TTTATCCATTTTCAGAATTGGGTGTCGACATAGCAGAATAGGCGTTACTCGACAGAGGAGAGCAAGAAATGGAGCCAGTAGATCCT"
-    "AGACTAGAGCCCTGGAAGCATCCAGGAAGTCAGCCTAAAACTGCTTGTACCAATTGCTATTGTAAAAAGTGTTGCTTTCATTGCCA"
-    "AGTTTGTTTCATAACAAAAGCCTTAGGCATCTCCTATGGCAGGAAGAAGCGGAGACAGCGACGAAGAGCTCATCAGAACAGTCAGA"
-    "CTCATCAAGCTTCTCTATCAAAGCAGTAAGTAGTACATGTAACGCAACCTATACCAATAGTAGCAATAGTAGCATTAGTAGTAGCA"
-    "ATAATAATAGCAATAGTTGTGTGGTCCATAGTAATCATAGAATATAGGAAAATATTAAGACAAAGAAAAATAGACAGGTTAATTGA"
-    "TAGACTAATAGAAAGAGCAGAAGACAGTGGCAATGAGAGTGAAGGAGAAATATCAGCACTTGTGGAGATGGGGGTGGAGATGGGGC"
-    "ACCATGCTCCTTGGGATGTTGATGATCTGTAGTGCTACAGAAAAATTGTGGGTCACAGTCTATTATGGGGTACCTGTGTGGAAGGA"
-    "AGCAACCACCACTCTATTTTGTGCATCAGATGCTAAAGCATATGATACAGAGGTACATAATGTTTGGGCCACACATGCCTGTGTAC"
-    "CCACAGACCCCAACCCACAAGAAGTAGTATTGGTAAATGTGACAGAAAATTTTAACATGTGGAAAAATGACATGGTAGAACAGATG"
-    "CATGAGGATATAATCAGTTTATGGGATCAAAGCCTAAAGCCATGTGTAAAATTAACCCCACTCTGTGTTAGTTTAAAGTGCACTGA"
-    "TTTGAAGAATGATACTAATACCAATAGTAGTAGCGGGAGAATGATAATGGAGAAAGGAGAGATAAAAAACTGCTCTTTCAATATCA"
-    "GCACAAGCATAAGAGGTAAGGTGCAGAAAGAATATGCATTTTTTTATAAACTTGATATAATACCAATAGATAATGATACTACCAGC"
-    "TATAAGTTGACAAGTTGTAACACCTCAGTCATTACACAGGCCTGTCCAAAGGTATCCTTTGAGCCAATTCCCATACATTATTGTGC"
-    "CCCGGCTGGTTTTGCGATTCTAAAATGTAATAATAAGACGTTCAATGGAACAGGACCATGTACAAATGTCAGCACAGTACAATGTA"
-    "CACATGGAATTAGGCCAGTAGTATCAACTCAACTGCTGTTAAATGGCAGTCTAGCAGAAGAAGAGGTAGTAATTAGATCTGTCAAT"
-    "TTCACGGACAATGCTAAAACCATAATAGTACAGCTGAACACATCTGTAGAAATTAATTGTACAAGACCCAACAACAATACAAGAAA"
-    "AAGAATCCGTATCCAGAGAGGACCAGGGAGAGCATTTGTTACAATAGGAAAAATAGGAAATATGAGACAAGCACATTGTAACATTA"
-    "GTAGAGCAAAATGGAATAACACTTTAAAACAGATAGCTAGCAAATTAAGAGAACAATTTGGAAATAATAAAACAATAATCTTTAAG"
-    "CAATCCTCAGGAGGGGACCCAGAAATTGTAACGCACAGTTTTAATTGTGGAGGGGAATTTTTCTACTGTAATTCAACACAACTGTT"
-    "TAATAGTACTTGGTTTAATAGTACTTGGAGTACTGAAGGGTCAAATAACACTGAAGGAAGTGACACAATCACCCTCCCATGCAGAA"
-    "TAAAACAAATTATAAACATGTGGCAGAAAGTAGGAAAAGCAATGTATGCCCCTCCCATCAGTGGACAAATTAGATGTTCATCAAAT"
-    "ATTACAGGGCTGCTATTAACAAGAGATGGTGGTAATAGCAACAATGAGTCCGAGATCTTCAGACCTGGAGGAGGAGATATGAGGGA"
-    "CAATTGGAGAAGTGAATTATATAAATATAAAGTAGTAAAAATTGAACCATTAGGAGTAGCACCCACCAAGGCAAAGAGAAGAGTGG"
-    "TGCAGAGAGAAAAAAGAGCAGTGGGAATAGGAGCTTTGTTCCTTGGGTTCTTGGGAGCAGCAGGAAGCACTATGGGCGCAGCCTCA"
-    "ATGACGCTGACGGTACAGGCCAGACAATTATTGTCTGGTATAGTGCAGCAGCAGAACAATTTGCTGAGGGCTATTGAGGCGCAACA"
-    "GCATCTGTTGCAACTCACAGTCTGGGGCATCAAGCAGCTCCAGGCAAGAATCCTGGCTGTGGAAAGATACCTAAAGGATCAACAGC"
-    "TCCTGGGGATTTGGGGTTGCTCTGGAAAACTCATTTGCACCACTGCTGTGCCTTGGAATGCTAGTTGGAGTAATAAATCTCTGGAA"
-    "CAGATTTGGAATCACACGACCTGGATGGAGTGGGACAGAGAAATTAACAATTACACAAGCTTAATACACTCCTTAATTGAAGAATC"
-    "GCAAAACCAGCAAGAAAAGAATGAACAAGAATTATTGGAATTAGATAAATGGGCAAGTTTGTGGAATTGGTTTAACATAACAAATT"
-    "GGCTGTGGTATATAAAATTATTCATAATGATAGTAGGAGGCTTGGTAGGTTTAAGAATAGTTTTTGCTGTACTTTCTATAGTGAAT"
-    "AGAGTTAGGCAGGGATATTCACCATTATCGTTTCAGACCCACCTCCCAACCCCGAGGGGACCCGACAGGCCCGAAGGAATAGAAGA"
-    "AGAAGGTGGAGAGAGAGACAGAGACAGATCCATTCGATTAGTGAACGGATCCTTGGCACTTATCTGGGACGATCTGCGGAGCCTGT"
-    "GCCTCTTCAGCTACCACCGCTTGAGAGACTTACTCTTGATTGTAACGAGGATTGTGGAACTTCTGGGACGCAGGGGGTGGGAAGCC"
-    "CTCAAATATTGGTGGAATCTCCTACAGTATTGGAGTCAGGAACTAAAGAATAGTGCTGTTAGCTTGCTCAATGCCACAGCCATAGC"
-    "AGTAGCTGAGGGGACAGATAGGGTTATAGAAGTAGTACAAGGAGCTTGTAGAGCTATTCGCCACATACCTAGAAGAATAAGACAGG"
-    "GCTTGGAAAGGATTTTGCTATAAGATGGGTGGCAAGTGGTCAAAAAGTAGTGTGATTGGATGGCCTACTGTAAGGGAAAGAATGAG"
-    "ACGAGCTGAGCCAGCAGCAGATAGGGTGGGAGCAGCATCTCGAGACCTGGAAAAACATGGAGCAATCACAAGTAGCAATACAGCAG"
-    "CTACCAATGCTGCTTGTGCCTGGCTAGAAGCACAAGAGGAGGAGGAGGTGGGTTTTCCAGTCACACCTCAGGTACCTTTAAGACCA"
-    "ATGACTTACAAGGCAGCTGTAGATCTTAGCCACTTTTTAAAAGAAAAGGGGGGACTGGAAGGGCTAATTCACTCCCAAAGAAGACA"
-    "AGATATCCTTGATCTGTGGATCTACCACACACAAGGCTACTTCCCTGATTAGCAGAACTACACACCAGGGCCAGGGGTCAGATATC"
-    "CACTGACCTTTGGATGGTGCTACAAGCTAGTACCAGTTGAGCCAGATAAGATAGAAGAGGCCAATAAAGGAGAGAACACCAGCTTG"
-    "TTACACCCTGTGAGCCTGCATGGGATGGATGACCCGGAGAGAGAAGTGTTAGAGTGGAGGTTTGACAGCCGCCTAGCATTTCATCA"
-    "CGTGGCCCGAGAGCTGCATCCGGAGTACTTCAAGAACTGCTGACATCGAGCTTGCTACAAGGGACTTTCCGCTGGGGACTTTCCAG"
-    "GGAGGCGTGGCCTGGGCGGGACTGGGGAGTGGCGAGCCCTCAGATCCTGCATATAAGCAGCTGCTTTTTGCCTGTACTGGGTCTCT"
-    "CTGGTTAGACCAGATCTGAGCCTGGGAGCTCTCTGGCTAACTAGGGAACCCACTGCTTAAGCCTCAATAAAGCTTGCCTTGAGTGC"
-    "TTCAAGTAGTGTGTGCCCGTCTGTTGTGTGACTCTGGTAACTAGAGATCCCTCAGACCCTTTTAGTCAGTGTGGAAAATCTCTAGC"
-    "A";
 }
 }  // ::PacBio::Juliet
