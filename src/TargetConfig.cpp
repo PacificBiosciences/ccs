@@ -54,6 +54,12 @@ JSON::Json DRM::ToJson() const
     return root;
 }
 
+TargetGene::TargetGene(const int begin, const int end, const std::string& name,
+                       const std::vector<DRM>& drms)
+    : begin(begin), end(end), name(name), drms(drms)
+{
+}
+
 JSON::Json TargetGene::ToJson() const
 {
     JSON::Json root;
@@ -79,14 +85,17 @@ JSON::Json TargetGene::ToJson(const std::vector<TargetGene>& genes)
 
 TargetConfig::TargetConfig(const std::string& input)
 {
-    const auto inputJson = JSON::Json::parse(DetermineConfigInput(input));
-    this->targetGenes = TargetConfig::TargetGenesFromJson(inputJson);
-    this->referenceSequence = TargetConfig::ReferenceSequenceFromJson(inputJson);
+    const auto inputString = DetermineConfigInput(input);
+    if (!inputString.empty()) {
+        const auto inputJson = JSON::Json::parse(inputString);
+        this->targetGenes = TargetConfig::TargetGenesFromJson(inputJson);
+        this->referenceSequence = TargetConfig::ReferenceSequenceFromJson(inputJson);
+    }
 }
 
 std::string TargetConfig::DetermineConfigInput(const std::string& input)
 {
-    if (input.size() == 0) throw std::runtime_error("Target Config is empty.");
+    if (input.size() == 0) return "";
 
     std::string output;
     if (input.at(0) == '<' && input.at(input.size() - 1) == '>') {
@@ -102,9 +111,10 @@ std::string TargetConfig::DetermineConfigInput(const std::string& input)
     }
 
     if (output.empty())
-        throw std::runtime_error("Misspecified Target Config.");
-    else
-        return output;
+        std::cerr
+            << "Warning: Empty target config -c, specified region will be treated as coding region"
+            << std::endl;
+    return output;
 }
 
 std::string TargetConfig::ReferenceSequenceFromJson(const JSON::Json& root)

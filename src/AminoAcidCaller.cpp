@@ -101,7 +101,13 @@ void AminoAcidCaller::GenerateMSA(const std::vector<Data::ArrayRead>& reads)
 
 void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
 {
-    const auto& genes = targetConfig_.targetGenes;
+    auto genes = targetConfig_.targetGenes;
+    bool hasReference = !targetConfig_.referenceSequence.empty();
+    // If no user config has been provided, use complete input region
+    if (genes.empty()) {
+        TargetGene tg(beginPos_, endPos_, "unknown", {});
+        genes.emplace_back(tg);
+    }
 
     ErrorEstimates error(errorModel_);
     VariantGene curVariantGene;
@@ -159,11 +165,6 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
 
             int codonPos = (1 + ri / 3);
             auto& curVariantPosition = curVariantGene.relPositionToVariant[codonPos];
-
-            curVariantPosition.refCodon = targetConfig_.referenceSequence.substr(ci - 1, 3);
-            if (codonToAmino_.find(curVariantPosition.refCodon) == codonToAmino_.cend()) {
-                continue;
-            }
 
             std::map<std::string, int> codons;
             int coverage = 0;
@@ -265,12 +266,6 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
             int codonPos = (1 + ri / 3);
             auto& curVariantPosition = curVariantGene.relPositionToVariant[codonPos];
 
-            curVariantPosition.refCodon = targetConfig_.referenceSequence.substr(ci - 1, 3);
-            if (codonToAmino_.find(curVariantPosition.refCodon) == codonToAmino_.cend()) {
-                continue;
-            }
-            curVariantPosition.refAminoAcid = codonToAmino_.at(curVariantPosition.refCodon);
-
             std::map<std::string, int> codons;
             int coverage = 0;
             for (const auto& row : matrix_) {
@@ -291,6 +286,29 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
 
                 codons[codon]++;
             }
+
+            if (hasReference) {
+                curVariantPosition.refCodon = targetConfig_.referenceSequence.substr(ci - 1, 3);
+                if (codonToAmino_.find(curVariantPosition.refCodon) == codonToAmino_.cend()) {
+                    continue;
+                }
+                curVariantPosition.refAminoAcid = codonToAmino_.at(curVariantPosition.refCodon);
+            } else {
+                int max = -1;
+                std::string argmax;
+                for (const auto& codon_counts : codons) {
+                    if (codon_counts.second > max) {
+                        max = codon_counts.second;
+                        argmax = codon_counts.first;
+                    }
+                }
+                curVariantPosition.refCodon = argmax;
+                if (codonToAmino_.find(curVariantPosition.refCodon) == codonToAmino_.cend()) {
+                    continue;
+                }
+                curVariantPosition.refAminoAcid = codonToAmino_.at(curVariantPosition.refCodon);
+            }
+
             for (const auto& codon_counts : codons) {
                 if (codonToAmino_.at(codon_counts.first) == curVariantPosition.refAminoAcid)
                     continue;
@@ -332,7 +350,12 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                         msaCounts["G"] = (*msa_)[i + j][2];
                         msaCounts["T"] = (*msa_)[i + j][3];
                         msaCounts["-"] = (*msa_)[i + j][4];
-                        msaCounts["wt"] = std::string(1, targetConfig_.referenceSequence.at(i + j));
+                        if (hasReference)
+                            msaCounts["wt"] =
+                                std::string(1, targetConfig_.referenceSequence.at(i + j));
+                        else
+                            msaCounts["wt"] =
+                                std::string(1, Data::TagToNucleotide((*msa_)[i + j].MaxElement()));
                         curVariantPosition.msa.push_back(msaCounts);
                     }
                 }
@@ -359,100 +382,101 @@ void AminoAcidCaller::HTML(std::ostream& out, const JSON::Json& j, bool onlyKnow
         s.erase(std::remove(s.begin(), s.end(), '\"'), s.end());
         return s;
     };
-    out << "<html>" << std::endl;
-    out << "<head>" << std::endl;
-    out << R"(
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-<script type="text/javascript">
-$(document).ready(function() {
-    $(".var").bind( "click", function( event ) {
-        $(this).next().slideToggle(0);
-});
-});
-</script>)"
-        << std::endl;
-    out << "<style>" << std::endl;
-    out << R"(
-body { font-family: helvetica-light }
-table { border-collapse: collapse; margin-bottom: 20px; }
-tr:nth-child(1) { background-color: #3d3d3d; color: white; }
-tr:nth-child(3) th { padding: 5px 5px 5px 5px; text-align: center; border-bottom: 1px solid #2d2d2d; }
-tr:nth-child(2) th:nth-child(2) { border-left: 1px dashed black; }
-tr:nth-child(3) th:nth-child(3) { border-right: 1px dashed black; }
-td { padding: 15px 5px 15px 5px; text-align: center; border-bottom: 1px solid white; }
-table td:nth-child(1) { background-color:#ddd; border-right: 1px solid #eee; }
-table td:nth-child(2) { background-color:#eee; border-right: 1px solid #ddd; }
-table td:nth-child(3) { background-color:#fff; border-right: 1px solid #ddd; font-weight: bold;}
-table td:nth-child(4) { background-color:#eee; border-right: 1px dashed #ccc;  }
-table td:nth-child(5) { background-color: #ddd; border-right: 1px dashed #bbb; }
-table td:nth-child(6) { background-color: #ccc; border-right: 1px dashed #aaa; }
-table td:nth-child(7) { background-color: #bbb;}
-table td:nth-child(8) { background-color: #aaa; color: #fff600}
-tr:not(.msa):hover td { background-color: white; }
-tr:not(.msa):hover td:nth-child(8) { color: purple; }
-.msa table tr:hover td { background-color: gray; color:white; }
-.top table { background-color:white; border:0; }
-.top table td { background-color:white; border:0; border-bottom: 1px solid gray; font-weight: normal}
-.top table tr { border:0; }
-.top table th { border:0; }
-.msa { display:none; }
-)" << std::endl;
-    out << "</style>" << std::endl;
-    out << "</head>" << std::endl;
-    out << R"(<body>
-<details style="margin-bottom: 20px">
-<summary>Legend</summary>
-<p>Every table represents a gene in the Pol polyprotein.<br/>
-Each row stands for a mutated amino acid. Positions are relative to the current gene.<br/>
-Positions with no or synonymous mutation are not being shown.<br/>
-The used reference is HXB2 and all coordinates are in reference space.<br/>
-The mutated nucleotide is highlighted in the codon.<br/>
-Frequency is per codon.<br/>
-Coverage includes deletions.<br/>
-Known drug-resistance mutations positions are annotated in the last column,<br/>
-whereas 'S' stands for surveillance. Annotations from the <a href="https://hivdb.stanford.edu" target="_new">Stanford DB</a>.<br/>
-<br/>
-Clicking on a row unfolds the counts of the multiple sequence alignment of the<br/>
-codon position and up to +-3 surrounding positions.<br/>
-Red colored are nucleotides of the codon and in bold the wild type.<br/>
-<br/>
-Deletions and insertions are being ignored in this version.<br/>
-<br/>
-This software is for research only and has not been clinically validated!</p>
-</details>)"
+    out << "<html>" << std::endl
+        << "<head>" << std::endl
+        << R"(
+            <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+            <script type="text/javascript">
+            $(document).ready(function() {
+                $(".var").bind( "click", function( event ) {
+                    $(this).next().slideToggle(0);
+            });
+            });
+            </script>)"
+        << std::endl
+        << "<style>" << std::endl
+        << R"(
+            body { font-family: helvetica-light }
+            table { border-collapse: collapse; margin-bottom: 20px; }
+            tr:nth-child(1) { background-color: #3d3d3d; color: white; }
+            tr:nth-child(3) th { padding: 5px 5px 5px 5px; text-align: center; border-bottom: 1px solid #2d2d2d; }
+            tr:nth-child(2) th:nth-child(2) { border-left: 1px dashed black; }
+            tr:nth-child(3) th:nth-child(3) { border-right: 1px dashed black; }
+            td { padding: 15px 5px 15px 5px; text-align: center; border-bottom: 1px solid white; }
+            table td:nth-child(1) { background-color:#ddd; border-right: 1px solid #eee; }
+            table td:nth-child(2) { background-color:#eee; border-right: 1px solid #ddd; }
+            table td:nth-child(3) { background-color:#fff; border-right: 1px solid #ddd; font-weight: bold;}
+            table td:nth-child(4) { background-color:#eee; border-right: 1px dashed #ccc;  }
+            table td:nth-child(5) { background-color: #ddd; border-right: 1px dashed #bbb; }
+            table td:nth-child(6) { background-color: #ccc; border-right: 1px dashed #aaa; }
+            table td:nth-child(7) { background-color: #bbb;}
+            table td:nth-child(8) { background-color: #aaa; color: #fff600}
+            tr:not(.msa):hover td { background-color: white; }
+            tr:not(.msa):hover td:nth-child(8) { color: purple; }
+            .msa table tr:hover td { background-color: gray; color:white; }
+            .top table { background-color:white; border:0; }
+            .top table td { background-color:white; border:0; border-bottom: 1px solid gray; font-weight: normal}
+            .top table tr { border:0; }
+            .top table th { border:0; }
+            .msa { display:none; }
+            )"
+        << std::endl
+        << "</style>" << std::endl
+        << "</head>" << std::endl
+        << R"(<body>
+            <details style="margin-bottom: 20px">
+            <summary>Legend</summary>
+            <p>Every table represents a gene in the Pol polyprotein.<br/>
+            Each row stands for a mutated amino acid. Positions are relative to the current gene.<br/>
+            Positions with no or synonymous mutation are not being shown.<br/>
+            The used reference is HXB2 and all coordinates are in reference space.<br/>
+            The mutated nucleotide is highlighted in the codon.<br/>
+            Frequency is per codon.<br/>
+            Coverage includes deletions.<br/>
+            Known drug-resistance mutations positions are annotated in the last column,<br/>
+            whereas 'S' stands for surveillance. Annotations from the <a href="https://hivdb.stanford.edu" target="_new">Stanford DB</a>.<br/>
+            <br/>
+            Clicking on a row unfolds the counts of the multiple sequence alignment of the<br/>
+            codon position and up to +-3 surrounding positions.<br/>
+            Red colored are nucleotides of the codon and in bold the wild type.<br/>
+            <br/>
+            Deletions and insertions are being ignored in this version.<br/>
+            <br/>
+            This software is for research only and has not been clinically validated!</p>
+            </details>)"
         << std::endl;
 
     if (j.find("genes") == j.cend() || j["genes"].is_null()) return;
     for (const auto& gene : j["genes"]) {
-        out << "<table class=\"top\">" << std::endl;
-        out << R"(
-<col width="40px"/>
-<col width="40px"/>
-<col width="40px"/>
-<col width="40px"/>
-<col width="40px"/>
-<col width="60px"/>
-<col width="60px"/>
-<col width="180px"/>
-<tr>
-<th colspan="9">)";
-        out << strip(gene["name"]);
-        out << R"(</th>
-</tr>
-<tr>
-<th colspan="3">HXB2</th>
-<th colspan="5">Sample</th>
-</tr>
-<tr>
-<th>Codon</th>
-<th>AA</th>
-<th>Pos</th>
-<th>AA</th>
-<th colspan="1">Codon</th>
-<th colspan="1">Frequency</th>
-<th colspan="1">Coverage</th>
-<th colspan="1">DRM</th>
-</tr>)" << std::endl;
+        out << "<table class=\"top\">" << std::endl
+            << R"(
+                <col width="40px"/>
+                <col width="40px"/>
+                <col width="40px"/>
+                <col width="40px"/>
+                <col width="40px"/>
+                <col width="60px"/>
+                <col width="60px"/>
+                <col width="180px"/>
+                <tr>
+                <th colspan="9">)"
+            << strip(gene["name"]) << R"(</th>
+                </tr>
+                <tr>
+                <th colspan="3">HXB2</th>
+                <th colspan="5">Sample</th>
+                </tr>
+                <tr>
+                <th>Codon</th>
+                <th>AA</th>
+                <th>Pos</th>
+                <th>AA</th>
+                <th colspan="1">Codon</th>
+                <th colspan="1">Frequency</th>
+                <th colspan="1">Coverage</th>
+                <th colspan="1">DRM</th>
+                </tr>)"
+            << std::endl;
 
         for (auto& variantPosition : gene["variant_positions"]) {
             std::stringstream line;
@@ -503,25 +527,25 @@ This software is for research only and has not been clinically validated!</p>
                     line.str("");
 
                     out << R"(
-                    <tr class="msa">
-                    <td colspan=3 style="background-color: white"></td>
-                    <td colspan=14 style="padding:0; margin:0">
-                    <table style="padding:0; margin:0">
-                    <col width="80px" />
-                    <col width="80px" />
-                    <col width="80px" />
-                    <col width="80px" />
-                    <col width="80px" />
-                    <col width="80px" />
-                    <tr style="padding:0">
-                    <th style="padding:2px 0 0px 0">Pos</th>
-                    <th style="padding:2px 0 0px 0">A</th>
-                    <th style="padding:2px 0 0px 0">C</th>
-                    <th style="padding:2px 0 0px 0">G</th>
-                    <th style="padding:2px 0 0px 0">T</th>
-                    <th style="padding:2px 0 0px 0">-</th>
-                    </tr>
-                    )";
+                        <tr class="msa">
+                        <td colspan=3 style="background-color: white"></td>
+                        <td colspan=14 style="padding:0; margin:0">
+                        <table style="padding:0; margin:0">
+                        <col width="80px" />
+                        <col width="80px" />
+                        <col width="80px" />
+                        <col width="80px" />
+                        <col width="80px" />
+                        <col width="80px" />
+                        <tr style="padding:0">
+                        <th style="padding:2px 0 0px 0">Pos</th>
+                        <th style="padding:2px 0 0px 0">A</th>
+                        <th style="padding:2px 0 0px 0">C</th>
+                        <th style="padding:2px 0 0px 0">G</th>
+                        <th style="padding:2px 0 0px 0">T</th>
+                        <th style="padding:2px 0 0px 0">-</th>
+                        </tr>
+                        )";
 
                     for (auto& column : variantPosition["msa"]) {
                         int relPos = column["rel_pos"];
@@ -545,9 +569,7 @@ This software is for research only and has not been clinically validated!</p>
             }
         }
     }
-    out << "</table>" << std::endl;
-    out << "</body>" << std::endl;
-    out << "</html>" << std::endl;
+    out << "</table>" << std::endl << "</body>" << std::endl << "</html>" << std::endl;
 #endif
 }
 

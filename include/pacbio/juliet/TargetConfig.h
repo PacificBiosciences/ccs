@@ -57,6 +57,11 @@ public:
 class TargetGene
 {
 public:
+    TargetGene(const int begin, const int end, const std::string& name,
+               const std::vector<DRM>& drms);
+    TargetGene() = default;
+
+public:
     int begin;
     int end;
     std::string name;

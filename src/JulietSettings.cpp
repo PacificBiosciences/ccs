@@ -96,7 +96,7 @@ const PlainOption TargetConfig{
     { "config", "c" },
     "Target config",
     "Path to the JSON target config, containing regions of interest, the JSON string itself, or a predefined config tag like <HIV>",
-    CLI::Option::StringType("<HIV>")
+    CLI::Option::StringType("")
 };
 // clang-format on
 }  // namespace OptionNames
