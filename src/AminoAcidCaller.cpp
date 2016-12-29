@@ -69,6 +69,10 @@ AminoAcidCaller::AminoAcidCaller(const std::vector<Data::ArrayRead>& reads,
     msa_ = std::make_unique<Data::MSA>(reads);
 
     GenerateMSA(reads);
+
+    beginPos_ += 1;
+    endPos_ += 1;
+
     CallVariants(reads);
 }
 
@@ -99,74 +103,19 @@ void AminoAcidCaller::GenerateMSA(const std::vector<Data::ArrayRead>& reads)
     }
 }
 
-void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
+int AminoAcidCaller::CountNumberOfTests(const std::vector<TargetGene>& genes) const
 {
-    auto genes = targetConfig_.targetGenes;
-    bool hasReference = !targetConfig_.referenceSequence.empty();
-    // If no user config has been provided, use complete input region
-    if (genes.empty()) {
-        TargetGene tg(beginPos_, endPos_, "unknown", {});
-        genes.emplace_back(tg);
-    }
-
-    ErrorEstimates error(errorModel_);
-    VariantGene curVariantGene;
-    std::string geneName;
-    int geneOffset = 0;
-    auto SetNewGene = [this, &geneName, &curVariantGene, &geneOffset](const int begin,
-                                                                      const std::string& name) {
-        geneName = name;
-        if (!curVariantGene.relPositionToVariant.empty())
-            variantGenes_.push_back(std::move(curVariantGene));
-        curVariantGene = VariantGene();
-        curVariantGene.geneName = name;
-        geneOffset = begin;
-    };
-    auto CodonProbability = [&error](const std::string& a, const std::string& b) {
-        double p = 1;
-        for (int i = 0; i < 3; ++i) {
-            if (a[i] == '-' || b[i] == '-')
-                p *= error.deletion;
-            else if (a[i] != b[i])
-                p *= error.substitution;
-            else
-                p *= error.match;
-        }
-        return p;
-    };
-    auto FindDRMs = [this, &geneName, &genes](const int position) {
-        std::string drmSummary;
-        for (const auto& gene : genes) {
-            if (geneName == gene.name) {
-                for (const auto& drms : gene.drms) {
-                    if (std::find(drms.positions.cbegin(), drms.positions.cend(), position) !=
-                        drms.positions.cend()) {
-                        if (!drmSummary.empty()) drmSummary += " + ";
-                        drmSummary += drms.name;
-                    }
-                }
-                break;
-            }
-        }
-        return drmSummary;
-    };
     int numberOfTests = 0;
     for (const auto& gene : genes) {
-        geneOffset = gene.begin;
         for (int i = gene.begin; i < gene.end - 2; ++i) {
-            // Corrected index for 1-based reference
-            const int ci = i + 1;
             // Relative to gene begin
-            int ri = ci - geneOffset;
+            const int ri = i - gene.begin;
             // Only work on beginnings of a codon
             if (ri % 3 != 0) continue;
             // Relative to window begin
-            int bi = i - beginPos_;
+            const int bi = i - beginPos_;
 
-            int codonPos = (1 + ri / 3);
-            auto& curVariantPosition = curVariantGene.relPositionToVariant[codonPos];
-
-            std::map<std::string, int> codons;
+            std::unordered_map<std::string, int> codons;
             int coverage = 0;
             for (const auto& row : matrix_) {
                 // Read does not cover codon
@@ -189,8 +138,67 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
             numberOfTests += codons.size();
         }
     }
+    return numberOfTests;
+}
 
-    geneOffset = 0;
+std::string AminoAcidCaller::FindDRMs(const std::string& geneName,
+                                      const std::vector<TargetGene>& genes,
+                                      const int position) const
+{
+    std::string drmSummary;
+    for (const auto& gene : genes) {
+        if (geneName == gene.name) {
+            for (const auto& drms : gene.drms) {
+                if (std::find(drms.positions.cbegin(), drms.positions.cend(), position) !=
+                    drms.positions.cend()) {
+                    if (!drmSummary.empty()) drmSummary += " + ";
+                    drmSummary += drms.name;
+                }
+            }
+            break;
+        }
+    }
+    return drmSummary;
+};
+void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
+{
+    auto genes = targetConfig_.targetGenes;
+    bool hasReference = !targetConfig_.referenceSequence.empty();
+    // If no user config has been provided, use complete input region
+    if (genes.empty()) {
+        TargetGene tg(beginPos_, endPos_, "unknown", {});
+        genes.emplace_back(tg);
+    }
+
+    const ErrorEstimates error(errorModel_);
+    VariantGene curVariantGene;
+    std::string geneName;
+    int geneOffset = 0;
+
+    const auto SetNewGene = [this, &geneName, &curVariantGene, &geneOffset](
+        const int begin, const std::string& name) {
+        geneName = name;
+        if (!curVariantGene.relPositionToVariant.empty())
+            variantGenes_.push_back(std::move(curVariantGene));
+        curVariantGene = VariantGene();
+        curVariantGene.geneName = name;
+        geneOffset = begin;
+    };
+
+    const auto CodonProbability = [&error](const std::string& a, const std::string& b) {
+        double p = 1;
+        for (int i = 0; i < 3; ++i) {
+            if (a[i] == '-' || b[i] == '-')
+                p *= error.deletion;
+            else if (a[i] != b[i])
+                p *= error.substitution;
+            else
+                p *= error.match;
+        }
+        return p;
+    };
+
+    const int numberOfTests = CountNumberOfTests(genes);
 
 #ifdef PERFORMANCE
     double truePositives = 0;
@@ -252,25 +260,23 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
     for (const auto& gene : genes) {
         SetNewGene(gene.begin, gene.name);
         for (int i = gene.begin; i < gene.end - 2; ++i) {
-
-            // for (int i = beginPos_; i < endPos_ - 2; ++i) {
-            // Corrected index for 1-based reference
-            const int ci = i + 1;
+            // Absolute reference position
+            const int ai = i - 1;
             // Relative to gene begin
-            int ri = ci - geneOffset;
+            const int ri = i - geneOffset;
             // Only work on beginnings of a codon
             if (ri % 3 != 0) continue;
             // Relative to window begin
-            int bi = i - beginPos_;
+            const int bi = i - beginPos_;
 
-            int codonPos = (1 + ri / 3);
+            const int codonPos = 1 + (ri / 3);
             auto& curVariantPosition = curVariantGene.relPositionToVariant[codonPos];
 
             std::map<std::string, int> codons;
             int coverage = 0;
             for (const auto& row : matrix_) {
                 // Read does not cover codon
-                if (bi + 2 >= static_cast<int>(row.size()) || bi < 0) continue;
+                if (bi + 2 > static_cast<int>(row.size()) || bi < 0) continue;
                 if (row.at(bi + 0) == ' ' || row.at(bi + 1) == ' ' || row.at(bi + 2) == ' ')
                     continue;
                 ++coverage;
@@ -279,7 +285,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                 if (row.at(bi + 0) == '-' || row.at(bi + 1) == '-' || row.at(bi + 2) == '-')
                     continue;
 
-                std::string codon = std::string() + row.at(bi) + row.at(bi + 1) + row.at(bi + 2);
+                const auto codon = std::string() + row.at(bi) + row.at(bi + 1) + row.at(bi + 2);
 
                 // Codon is bogus
                 if (codonToAmino_.find(codon) == codonToAmino_.cend()) continue;
@@ -288,7 +294,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
             }
 
             if (hasReference) {
-                curVariantPosition.refCodon = targetConfig_.referenceSequence.substr(ci - 1, 3);
+                curVariantPosition.refCodon = targetConfig_.referenceSequence.substr(ai, 3);
                 if (codonToAmino_.find(curVariantPosition.refCodon) == codonToAmino_.cend()) {
                     continue;
                 }
@@ -322,7 +328,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                 if (p > 1) p = 1;
 
 #ifdef PERFORMANCE
-                bool variableSite = MeasurePerformance(codon_counts, codonPos, i, p);
+                const bool variableSite = MeasurePerformance(codon_counts, codonPos, ai, p);
 
                 if (variableSite && p < alpha) {
 #else
@@ -332,7 +338,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                     curVariantCodon.codon = codon_counts.first;
                     curVariantCodon.frequency = codon_counts.second / static_cast<double>(coverage);
                     curVariantCodon.pValue = p;
-                    curVariantCodon.knownDRM = FindDRMs(codonPos);
+                    curVariantCodon.knownDRM = FindDRMs(geneName, genes, codonPos);
 
                     curVariantPosition.aminoAcidToCodons[codonToAmino_.at(codon_counts.first)]
                         .push_back(curVariantCodon);
@@ -342,20 +348,21 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
                 curVariantPosition.coverage = coverage;
                 for (int j = -3; j < 6; ++j) {
                     if (i + j >= beginPos_ && i + j < endPos_) {
+                        int abs = ai + j;
                         JSON::Json msaCounts;
                         msaCounts["rel_pos"] = j;
-                        msaCounts["abs_pos"] = i + j;
-                        msaCounts["A"] = (*msa_)[i + j][0];
-                        msaCounts["C"] = (*msa_)[i + j][1];
-                        msaCounts["G"] = (*msa_)[i + j][2];
-                        msaCounts["T"] = (*msa_)[i + j][3];
-                        msaCounts["-"] = (*msa_)[i + j][4];
+                        msaCounts["abs_pos"] = abs;
+                        msaCounts["A"] = (*msa_)[abs][0];
+                        msaCounts["C"] = (*msa_)[abs][1];
+                        msaCounts["G"] = (*msa_)[abs][2];
+                        msaCounts["T"] = (*msa_)[abs][3];
+                        msaCounts["-"] = (*msa_)[abs][4];
                         if (hasReference)
                             msaCounts["wt"] =
-                                std::string(1, targetConfig_.referenceSequence.at(i + j));
+                                std::string(1, targetConfig_.referenceSequence.at(abs));
                         else
                             msaCounts["wt"] =
-                                std::string(1, Data::TagToNucleotide((*msa_)[i + j].MaxElement()));
+                                std::string(1, Data::TagToNucleotide((*msa_)[abs].MaxElement()));
                         curVariantPosition.msa.push_back(msaCounts);
                     }
                 }

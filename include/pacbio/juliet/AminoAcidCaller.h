@@ -148,6 +148,9 @@ private:
     static constexpr float alpha = 0.01;
     void GenerateMSA(const std::vector<Data::ArrayRead>& reads);
     void CallVariants(const std::vector<Data::ArrayRead>& reads);
+    int CountNumberOfTests(const std::vector<TargetGene>& genes) const;
+    std::string FindDRMs(const std::string& geneName, const std::vector<TargetGene>& genes,
+                         const int position) const;
 
 private:
     int beginPos_ = std::numeric_limits<int>::max();

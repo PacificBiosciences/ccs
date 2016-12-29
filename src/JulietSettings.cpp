@@ -127,9 +127,9 @@ void JulietSettings::SplitRegion(const std::string& region, int* start, int* end
     if (region.compare("") != 0) {
         std::vector<std::string> splitVec;
         boost::split(splitVec, region, boost::is_any_of("-"));
-        *start = stoi(splitVec[0]) - 1;
-        *end = stoi(splitVec[1]) - 1;
-        if (*start < 0 || *end < 0) throw std::runtime_error("Indexing is 1-based");
+        *start = stoi(splitVec[0]);
+        *end = stoi(splitVec[1]);
+        if (*start <= 0 || *end <= 0) throw std::runtime_error("Indexing is 1-based");
     }
 }
 

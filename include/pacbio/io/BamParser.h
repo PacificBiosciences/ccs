@@ -51,10 +51,12 @@ namespace PacBio {
 namespace IO {
 
 /// \brief Wrapper around pbbam to ease BAM parsing and region extraction
-static std::vector<Data::ArrayRead> ParseBam(const std::string& filePath, const int regionStart = 0,
-                                             const int regionEnd = std::numeric_limits<int>::max())
+static std::vector<Data::ArrayRead> ParseBam(const std::string& filePath, int regionStart = 0,
+                                             int regionEnd = std::numeric_limits<int>::max())
 {
     std::vector<Data::ArrayRead> returnList;
+    regionStart = std::max(regionStart - 1, 0);
+    regionEnd = std::max(regionEnd - 1, 0);
 
     int idx = 0;
     // Iterate over all records and convert online
