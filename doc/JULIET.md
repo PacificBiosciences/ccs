@@ -12,44 +12,114 @@ Install the unanimity suite and one of the binaries is called `juliet`.
 ## Input data
 *Juliet* operates on aligned CCS records in the BAM format.
 Reads should be created with [CCS2](../PBCCS.md).
-The reference has to be [HXB2](https://www.hiv.lanl.gov/components/sequence/HIV/asearch/query_one.comp?se_id=K03455).
 BAM files have to PacBio-compliant, meaning, cigar `M` is forbidden.
-*Juliet* does not demultiplex barcoded data, provide one BAM per barcode.
+*Juliet* currently does not demultiplex barcoded data,
+provide one BAM per barcode.
 
 ## Scope
-Current scope of *Juliet* is identification of single-nucleotide variants in the
-function region POL of HIV.
+Current scope of *Juliet* is identification of codon-wise variants in coding
+regions.
 
 ## Output
-*Juliet* identifies SNVs and provides for each gene
-(*Protease*, *Reverse Transcriptase*, *RNase*, *Integrase*)
-mutated amino acids. For each amino acid, each nucleotide of the codon is
-being reported along with the observed relative abundance and its p-value;
-for major substitutions the p-value is replaced by `M`. Known
-positions of drug resistance mutations are marked.
+*Juliet* provides a JSON and HTML file. The JSON file contains for each gene
+the variant positions. Each variant position consists of the reference codon,
+reference aminoacid, relative aminoacid position in the gene, the mutated codon
+and aminoacid, the coverage, possible annotated drug resistance mutations, and
+counts of the multiple-sequence alignment of the -3 to +3 context positions.
 
-Example:
+The HTML page is a 1:1 conversion of the JSON file and contains the identical
+information, only human-readable.
 
+## Target configuration
+*Juliet* is a multi purpose minor variant caller with preinstalled configurations.
+A target configuration may contain multiple coding regions and optional drug
+resistance mutation positions.
+
+### Predefined target config
+Running on predefined organism:
 ```
-Reverse Transcriptase
-=====================
-  41 K(AAA) => N[(A 1 M)](A 0.0801 2.02769e-24)](C 0.3594 3.89532e-97)] <+> NNRTI surveillance
-```
-
-At RT amino acid position 41, the HXB2 reference is Lysine `K` with codon `AAA`.
-The observed amino acid is Asparagine `N` with codon `AAC`.
-The first nucleotide is wild-type `A`,
-the second `A` is only present as a minor variant with an observed frequency
-of 8.01% and a p-value of 2e-24,
-and the third `C` is a high-frequent variant of 35.94% and a p-value of 3e-97.
-
-## Usage
-
-Typical usage is:
-```
-juliet -i path/to/aligned_ccs_input.bam
+$ juliet -c "<HIV>" data.align.bam -o patientZero
 ```
 
-## Additional output
-*Juliet* produces a `msa_output.tsv` file, containing positional counts and
-their p-values.
+<img src="img/juliet_hiv-hiv.png" width="500px">
+
+Currently available configs are: `<HIV>`
+
+### Own target config
+Create a JSON file. The root child genes contains a list of coding regions, with
+begin and end, the name of the gene, and a list of drug resistent mutations
+drms. Each DRM consists of its name and the positions it targets. The drms
+field is optional. If provided, the referenceSequence is being used to call
+mutations, otherwise it will be tested against the major codon. All indices are
+with respect to the provided alignment space, 1-based.
+Save following as hiv.json:
+```
+{
+    "genes": [
+        {
+            "begin": 2253,
+            "drms": [
+                {
+                    "name": "PI",
+                    "positions": [ 24,32,46,47,50,54,76,82,84,88,90 ]
+                },
+                {
+                    "name": "PI S",
+                    "positions": [ 23,24,30,32,46,47,48,50,53,54,73,76,82,83,84,85,88,90 ]
+                }
+            ],
+            "end": 2550,
+            "name": "Protease"
+        },
+        {
+            "begin": 2550,
+            "drms": [
+                {
+                    "name": "NNRTI",
+                    "positions": [ 100,101,103,106,138,179,181,190,190,227,230 ]
+                },
+                {
+                    "name": "NNRTI S",
+                    "positions": [ 65,67,69,70,74,75,77,115,116,141,151,184,210,215,219 ]
+                }
+            ],
+            "end": 3870,
+            "name": "Reverse Transcriptase"
+        },
+        {
+            "begin": 3870,
+            "drms": [],
+            "end": 4230,
+            "name": "RNase"
+        }
+    ],
+    "referenceSequence": "TGGAAGGGCT..."
+}
+```
+
+Run with own target config:
+```
+$ juliet -c hiv.json data.align.bam -o patientZero
+```
+
+<img src="img/juliet_hiv-own.png" width="500px">
+
+
+### No target config
+If no target config has been specific, it is recommended to at least specify the
+region of interest to mark the correct reading frame. The output will be labeled
+with unknown as gene name:
+```
+$ juliet data.align.bam -o patientZero
+```
+
+<img src="img/juliet_hiv-unknown.png" width="500px">
+
+# FAQ
+
+### Can I use overlapping regions?
+Yes! Each gene is treated separately. Overlapping region, even with different
+reading frames are possible.
+
+### Can I call a smaller window from a target config?
+Use `--region` to specify the begin-end window to subset the target config.
