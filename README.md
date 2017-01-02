@@ -12,7 +12,6 @@
    - Available
      - Consensus Core
      - [Circular Consensus Calling `ccs`](doc/PBCCS.md)
-   - Work in Progress
      - [Minor Variant Calling `juliet`](doc/JULIET.md)
    - Planned
      - Genomic Consensus Calling `gcpp`
