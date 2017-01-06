@@ -10,31 +10,26 @@ namespace PacBio {
 namespace Statistics {
 double Fisher::fisher_exact_tiss(int chi11, int chi12, int chi21, int chi22)
 {
-    int co_occ, total_libs;
-    static int min_co_occ, max_co_occ;
-    static int gene_a, gene_b;
-    static double factor_inc, factor_dec;
-    static double base_p, curr_p;
-    int sign = 1;
+    // int sign = 1;
 
-    co_occ = chi11;
+    int co_occ = chi11;
 
-    gene_a = chi11 + chi12;
-    gene_b = chi11 + chi21;
-    total_libs = chi11 + chi12 + chi21 + chi22;
+    const int gene_a = chi11 + chi12;
+    const int gene_b = chi11 + chi21;
+    const int total_libs = chi11 + chi12 + chi21 + chi22;
 
     // If the two genes occur few enough times, the minimum number of
     // co-occurrences is 0.  If the total number of times they occur
     // exceeds the number of libraries (say by N), they must overlap
     // at least N times.
-    min_co_occ = 0;
+    int min_co_occ = 0;
     if (gene_a + gene_b > total_libs) {
         min_co_occ = gene_a + gene_b - total_libs;
     }
 
     // Maximum number of co-occurrences is at most the number of times
     // the rarer gene occurs in the library :
-
+    int max_co_occ;
     if (gene_a < gene_b) {
         max_co_occ = gene_a;
     } else {
@@ -43,7 +38,7 @@ double Fisher::fisher_exact_tiss(int chi11, int chi12, int chi21, int chi22)
 
     // Calculate the first hypergeometric value
 
-    base_p = calc_hypergeom(chi11, chi12, chi21, chi22);
+    double base_p = calc_hypergeom(chi11, chi12, chi21, chi22);
 
     // printf("base_p=%e\n",base_p);
 
@@ -51,20 +46,20 @@ double Fisher::fisher_exact_tiss(int chi11, int chi12, int chi21, int chi22)
     // Also if co-occurrences at min possible, this is our p-value.
 
     if (co_occ == max_co_occ || co_occ == min_co_occ) {
-        if (co_occ == max_co_occ) {
-            sign = 1;
-        } else {
-            sign = -1;
-        }
+        // if (co_occ == max_co_occ) {
+        //     sign = 1;
+        // } else {
+        //     sign = -1;
+        // }
     } else {
         // Need to add in the other possible p-values.
-        factor_inc = factorInc(chi11, chi12, chi21, chi22);
-        factor_dec = factorDec(chi11, chi12, chi21, chi22);
+        double factor_inc = factorInc(chi11, chi12, chi21, chi22);
+        double factor_dec = factorDec(chi11, chi12, chi21, chi22);
 
         // printf("%e,%e:%e\n",factor_inc,factor_dec,base_p);
 
         // Start out with the current p-value
-        curr_p = base_p;
+        double curr_p = base_p;
 
         // Want to sum the probabilites in the direction of decreasing P
         // if (factor_dec < factor_inc) {
@@ -89,7 +84,7 @@ double Fisher::fisher_exact_tiss(int chi11, int chi12, int chi21, int chi22)
         //     } while (co_occ > min_co_occ);
         // } else
         if (factor_inc < factor_dec) {
-            sign = 1;
+            // sign = 1;
             // Loop up over co-occurrences
             do {
                 // Determine P-value for chi^2 matrix from recurrence factor
