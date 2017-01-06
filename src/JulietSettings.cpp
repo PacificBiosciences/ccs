@@ -54,7 +54,7 @@ const PlainOption Region{
     { "region", "r"},
     "Region of Interest",
     "Genomic region of interest, reads will be clipped to that region, empty means all reads.",
-    CLI::Option::StringType("2253-5096")
+    CLI::Option::StringType("")
 };
 const PlainOption Output{
     "output",
