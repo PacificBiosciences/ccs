@@ -320,6 +320,7 @@ vector<int> ConsensusQualities(AbstractIntegrator& ai)
             if (m.Start() > i) continue;
             // TODO (lhepler): this is dumb, but untestable mutations,
             //   aka insertions at ends, cause all sorts of weird issues
+            // See also: Polish::ConsensusQVs(ai)
             double score;
             try {
                 score = ai.LL(m) - LL;
@@ -354,7 +355,22 @@ QualityValues ConsensusQVs(AbstractIntegrator& ai)
         for (const auto& m : Mutations(ai, i, i + 1)) {
             // skip mutations that start beyond the current site (e.g. trailing insertions)
             if (m.Start() > i) continue;
-            const double score = ai.LL(m) - LL;
+
+            // TODO (lhepler): this is dumb, but untestable mutations,
+            //   aka insertions at ends, cause all sorts of weird issues
+            // See also: Polish::ConsensusQualities(ai)
+            double score;
+            try {
+                score = ai.LL(m) - LL;
+            } catch (const Exception::InvalidEvaluatorException& e) {
+                // If an Evaluator exception occured, report and skip!
+                // We need to handle this!
+                std::string error = "In Polish::ConsensusQVs(ai): ";
+                error += e.what();
+                PBLOG_ERROR << error;
+                continue;
+            }
+
             // this really should never happen
             if (score >= 0.0) continue;
             const double expScore = exp(score);
