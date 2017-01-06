@@ -10,7 +10,7 @@ namespace PacBio {
 namespace Statistics {
 double Fisher::fisher_exact_tiss(int chi11, int chi12, int chi21, int chi22)
 {
-    register int co_occ, total_libs;
+    int co_occ, total_libs;
     static int min_co_occ, max_co_occ;
     static int gene_a, gene_b;
     static double factor_inc, factor_dec;
