@@ -153,7 +153,7 @@ void MSA::FillCounts(const std::vector<ArrayRead>& reads, const MSA& prior)
 
         auto CheckInsertion = [&insertion, &indels, &indelOffset, this, &pos]() {
             if (insertion.empty()) return;
-            if (pos < indels.size()) {
+            if (pos < static_cast<int>(indels.size())) {
                 const auto& insertions = indels.at(pos).insertions;
                 if (std::find(insertions.cbegin(), insertions.cend(), insertion) !=
                     insertions.cend()) {
