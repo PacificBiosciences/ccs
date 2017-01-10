@@ -55,7 +55,6 @@ struct JulietSettings
     std::vector<std::string> InputFiles;
     std::string OutputPrefix;
     TargetConfig TargetConfigUser;
-    const float PValueThreshold;
     int RegionStart = 0;
     int RegionEnd = std::numeric_limits<int>::max();
     bool Details;

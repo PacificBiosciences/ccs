@@ -85,10 +85,8 @@ void JulietWorkflow::Run(const JulietSettings& settings)
 
             // Compute fisher's exact test for each position
             for (auto& column : msa) {
-                column.AddFisherResult(
-                    Statistics::Tests::FisherCCS(column, settings.PValueThreshold));
-                column.AddFisherResult(Statistics::Tests::FisherCCS(column, column.insertions,
-                                                                    settings.PValueThreshold));
+                column.AddFisherResult(Statistics::Tests::FisherCCS(column));
+                column.AddFisherResult(Statistics::Tests::FisherCCS(column, column.insertions));
             }
 
             // Store msa + p-values
@@ -152,10 +150,8 @@ void JulietWorkflow::Run(const JulietSettings& settings)
 
             // Compute fisher's exact test for each position
             for (auto& column : msa) {
-                column.AddFisherResult(
-                    Statistics::Tests::FisherCCS(column, settings.PValueThreshold));
-                column.AddFisherResult(Statistics::Tests::FisherCCS(column, column.insertions,
-                                                                    settings.PValueThreshold));
+                column.AddFisherResult(Statistics::Tests::FisherCCS(column));
+                column.AddFisherResult(Statistics::Tests::FisherCCS(column, column.insertions));
             }
 
             Data::MSA msaWithPrior(reads, msa);

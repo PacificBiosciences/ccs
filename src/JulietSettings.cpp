@@ -63,13 +63,6 @@ const PlainOption Output{
     "Output prefix for generated files [Default: Input file prefix].",
     CLI::Option::StringType("")
 };
-const PlainOption PValueThreshold{
-    "p_value_threshold",
-    { "p-value-threshold", "d" },
-    "P-Value Threshold",
-    "P-value threshold to call SNV.",
-    CLI::Option::FloatType(0.01)
-};
 const PlainOption DRMOnly{
     "only_known_drms",
     { "drm-only", "k" },
@@ -105,7 +98,6 @@ JulietSettings::JulietSettings(const PacBio::CLI::Results& options)
     : InputFiles(options.PositionalArguments())
     , OutputPrefix(std::forward<std::string>(options[OptionNames::Output]))
     , TargetConfigUser(std::forward<std::string>(options[OptionNames::TargetConfig]))
-    , PValueThreshold(options[OptionNames::PValueThreshold])
     , DRMOnly(options[OptionNames::DRMOnly])
     , Mode(AnalysisModeFromString(options[OptionNames::Mode]))
     , SelectedErrorModel(ErrorModelFromString(options[OptionNames::ErrorModel]))
@@ -174,7 +166,6 @@ PacBio::CLI::Interface JulietSettings::CreateCLI()
         OptionNames::Mode,
         OptionNames::ErrorModel,
         OptionNames::Region,
-        OptionNames::PValueThreshold,
         OptionNames::DRMOnly,
         OptionNames::TargetConfig
     });
@@ -185,7 +176,6 @@ PacBio::CLI::Interface JulietSettings::CreateCLI()
     tcTask.AddOption(OptionNames::Mode);
     tcTask.AddOption(OptionNames::ErrorModel);
     tcTask.AddOption(OptionNames::Region);
-    tcTask.AddOption(OptionNames::PValueThreshold);
     tcTask.AddOption(OptionNames::DRMOnly);
     tcTask.AddOption(OptionNames::TargetConfig);
     tcTask.NumProcessors(Task::MAX_NPROC);

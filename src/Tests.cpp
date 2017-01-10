@@ -47,8 +47,7 @@
 namespace PacBio {
 namespace Statistics {
 std::map<std::string, double> Tests::FisherCCS(const std::array<int, 5>& observed,
-                                               const std::map<std::string, int> insertions,
-                                               const double threshold)
+                                               const std::map<std::string, int> insertions)
 {
     int argMax = 0;
     double sum = 0;
@@ -57,13 +56,13 @@ std::map<std::string, double> Tests::FisherCCS(const std::array<int, 5>& observe
     std::map<std::string, double> results;
     for (const auto& kv : insertions) {
         const double p = Fisher::fisher_exact_tiss(kv.second + 1, sum, 0.0084 / 4.0 * sum, sum);
-        if (p < threshold) results.insert({kv.first, p});
+        if (p < alpha) results.insert({kv.first, p});
     }
 
     return results;
 }
 
-Data::FisherResult Tests::FisherCCS(const std::array<int, 5>& observed, const double threshold)
+Data::FisherResult Tests::FisherCCS(const std::array<int, 5>& observed)
 {
     int argMax = 0;
     double sum = 0;
@@ -81,7 +80,7 @@ Data::FisherResult Tests::FisherCCS(const std::array<int, 5>& observed, const do
     Data::FisherResult fr;
     fr.pValues = {{fisherCCS(0), fisherCCS(1), fisherCCS(2), fisherCCS(3), fisherCCS(4)}};
     for (int i = 0; i < 5; ++i) {
-        if (fr.pValues.at(i) < threshold && observed.at(i) > 1) {
+        if (fr.pValues.at(i) < alpha && observed.at(i) > 1) {
             if (i != argMax) fr.hit = true;
             fr.mask[i] = 1;
         }
