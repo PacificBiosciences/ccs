@@ -200,7 +200,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
 
     const int numberOfTests = CountNumberOfTests(genes);
 
-#ifdef PERFORMANCE
+#ifdef JULIET_INHOUSE_PERFORMANCE
     double truePositives = 0;
     double falsePositives = 0;
     double falseNegative = 0;
@@ -327,7 +327,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
 
                 if (p > 1) p = 1;
 
-#ifdef PERFORMANCE
+#ifdef JULIET_INHOUSE_PERFORMANCE
                 const bool variableSite = MeasurePerformance(codon_counts, codonPos, ai, p);
 
                 if (variableSite && p < alpha) {
@@ -369,7 +369,7 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
             }
         }
     }
-#ifdef PERFORMANCE
+#ifdef JULIET_INHOUSE_PERFORMANCE
     std::cerr << (truePositives / 3.0);
     std::cerr << " " << (falsePositives / (numberOfTests - 3));
     std::cerr << " " << numberOfTests;

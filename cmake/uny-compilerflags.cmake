@@ -63,6 +63,6 @@ elseif(UNIX)
     SET(POST_LINK -Wl,-no-whole-archive)
 endif()
 
-if (PERFORMANCE)
-    add_definitions(-DPERFORMANCE)
+if (JULIET_INHOUSE_PERFORMANCE)
+    add_definitions(-DJULIET_INHOUSE_PERFORMANCE)
 endif()
