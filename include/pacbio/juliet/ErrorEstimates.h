@@ -47,8 +47,8 @@ namespace Juliet {
 
 enum class ErrorModel : uint8_t
 {
-    FLEA_RQ95 = 0,
-    FLEA_RQ99
+    SP1C1_RQ95 = 0,
+    SP1C1_RQ99
 };
 
 inline ErrorModel ErrorModelFromString(const std::string& input)
@@ -56,10 +56,10 @@ inline ErrorModel ErrorModelFromString(const std::string& input)
     ErrorModel e;
     std::string s = input;
     std::transform(s.begin(), s.end(), s.begin(), ::toupper);
-    if (s == "FLEA_RQ95")
-        e = ErrorModel::FLEA_RQ95;
-    else if (s == "FLEA_RQ99")
-        e = ErrorModel::FLEA_RQ99;
+    if (s == "SP1C1_RQ95")
+        e = ErrorModel::SP1C1_RQ95;
+    else if (s == "SP1C1_RQ99")
+        e = ErrorModel::SP1C1_RQ99;
     else
         throw std::runtime_error("Unknown error model string");
     return e;

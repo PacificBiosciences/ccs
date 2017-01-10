@@ -81,8 +81,8 @@ const PlainOption ErrorModel{
     "Error model",
     { "error", "e" },
     "Error model",
-    "Error model: FLEA_RQ95 or FLEA_RQ99",
-    CLI::Option::StringType("FLEA_RQ99")
+    "Error model: SP1C1_RQ95 or SP1C1_RQ99",
+    CLI::Option::StringType("SP1C1_RQ99")
 };
 const PlainOption TargetConfig{
     "Target config",
