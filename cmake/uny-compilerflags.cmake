@@ -2,7 +2,7 @@
 include(CheckCXXCompilerFlag)
 
 # shared CXX flags for all source code & tests
-set(UNY_FLAGS "-std=c++14 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable")
+set(UNY_FLAGS "-std=c++11 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable")
 
 # gperftools support
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND APPLE)

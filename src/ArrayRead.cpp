@@ -84,5 +84,47 @@ ArrayRead::ArrayRead(const BAM::BamRecord& record, int idx)
         for (size_t i = 0; i < cigar.length(); ++i)
             Bases.emplace_back(cigar.at(i), seq.at(i), qual.at(i));
 }
+
+#if __cplusplus < 201402L  // C++11
+char TagToNucleotide(uint8_t t)
+{
+    switch (t) {
+        case 0:
+            return 'A';
+        case 1:
+            return 'C';
+        case 2:
+            return 'G';
+        case 3:
+            return 'T';
+        case 4:
+            return '-';
+        default:
+            return 0;
+            // throw std::runtime_error("Woot is that tag? " + std::to_string(t));
+    }
+}
+
+uint8_t NucleotideToTag(char t)
+{
+    switch (t) {
+        case 'A':
+            return 0;
+        case 'C':
+            return 1;
+        case 'G':
+            return 2;
+        case 'T':
+            return 3;
+        case 'N':
+            return 4;
+        case '-':
+            return 4;
+        default:
+            return 0;
+            // throw std::runtime_error("Woot is that char " + std::to_string(t));
+    }
+}
+#endif
 }  // namespace Data
 }  // namespace PacBio

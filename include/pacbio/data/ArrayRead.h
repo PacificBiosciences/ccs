@@ -50,6 +50,11 @@
 
 namespace PacBio {
 namespace Data {
+
+#if __cplusplus < 201402L  // C++11
+char TagToNucleotide(uint8_t t);
+uint8_t NucleotideToTag(char t);
+#else  // C++14
 // Convert {0, 1, 2, 3, 4} to {'A', 'C', 'G', 'T', '-'}
 static constexpr char TagToNucleotide(uint8_t t)
 {
@@ -90,6 +95,7 @@ static constexpr uint8_t NucleotideToTag(char t)
             // throw std::runtime_error("Woot is that char " + std::to_string(t));
     }
 }
+#endif
 
 /// A single array read that is "unrolled", as in an array of bases.
 class ArrayRead

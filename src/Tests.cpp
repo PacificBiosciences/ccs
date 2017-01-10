@@ -97,16 +97,16 @@ std::array<double, 5> Tests::CalculatePml(const std::array<int, 5>& observed, in
                                           double* sum)
 {
     std::array<double, 5> pml;
-    std::copy_n(std::cbegin(observed), 5, std::begin(pml));
+    std::copy_n(observed.cbegin(), 5, pml.begin());
 
     // +1 each entry
-    std::for_each(std::begin(pml), std::end(pml), [](double& p) { ++p; });
+    std::for_each(pml.begin(), pml.end(), [](double& p) { ++p; });
 
-    *argMax = std::distance(std::cbegin(pml), std::max_element(std::cbegin(pml), std::cend(pml)));
-    *sum = std::accumulate(std::cbegin(pml), std::cend(pml), 0.0);
+    *argMax = std::distance(pml.cbegin(), std::max_element(pml.cbegin(), pml.cend()));
+    *sum = std::accumulate(pml.cbegin(), pml.cend(), 0.0);
 
     // normalize
-    std::for_each(std::begin(pml), std::end(pml), [&sum](double& p) { p /= (*sum); });
+    std::for_each(pml.begin(), pml.end(), [&sum](double& p) { p /= (*sum); });
     return pml;
 }
 

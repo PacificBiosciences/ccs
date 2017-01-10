@@ -87,10 +87,6 @@ public:
     JSON::Json JSON();
 
 public:
-    static void PrintSummary(std::ostream& out,
-                             const std::unordered_map<std::string, JSON::Json>& results,
-                             bool onlyKnownDRMs, bool details);
-
     /// Generate pretty print output of variant amino acids
     static void Print(std::ostream& out, const JSON::Json& j, bool onlyKnownDRMs, bool details);
 

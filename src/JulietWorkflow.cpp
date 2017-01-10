@@ -107,11 +107,6 @@ void JulietWorkflow::Run(const JulietSettings& settings)
             std::ofstream htmlStream(outputPrefix + ".html");
             ResistanceCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
         }
-        if (settings.InputFiles.size() > 1) {
-            std::ofstream summaryStream(globalOutputPrefix + "summary");
-            ResistanceCaller::PrintSummary(summaryStream, jsonResults, settings.DRMOnly,
-                                           settings.Details);
-        }
     } else if (settings.Mode == AnalysisMode::AMINO) {
         for (const auto& inputFile : settings.InputFiles) {
             const auto outputPrefix = globalOutputPrefix + IO::FilePrefix(inputFile);

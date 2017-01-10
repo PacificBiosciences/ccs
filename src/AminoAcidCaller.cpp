@@ -66,7 +66,7 @@ AminoAcidCaller::AminoAcidCaller(const std::vector<Data::ArrayRead>& reads,
         beginPos_ = std::min(beginPos_, r.ReferenceStart());
         endPos_ = std::max(endPos_, r.ReferenceEnd());
     }
-    msa_ = std::make_unique<Data::MSA>(reads);
+    msa_ = std::unique_ptr<Data::MSA>(new Data::MSA(reads));
 
     GenerateMSA(reads);
 
@@ -206,8 +206,8 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
     double falseNegative = 0;
     double trueNegative = 0;
     auto MeasurePerformance = [&truePositives, &falsePositives, &falseNegative, &trueNegative, this,
-                               &geneName](const auto& codon_counts, const auto& codonPos,
-                                          const auto& i, const auto& p) {
+                               &geneName](const std::pair<std::string, int>& codon_counts,
+                                          const int& codonPos, const int& i, const double& p) {
         const auto curCodon = codonToAmino_.at(codon_counts.first);
         bool predictor = (i == 3191 && curCodon == 'Y' && "TAC" == codon_counts.first) ||
                          (i == 2741 && curCodon == 'R' && "AGA" == codon_counts.first) ||
