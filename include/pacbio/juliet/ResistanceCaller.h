@@ -118,7 +118,7 @@ private:
     int begin_;
     int end_;
 
-    static const std::unordered_map<int, std::string> resistentCodon_;
+    static const std::unordered_map<int, std::string> resistantCodon_;
     static const std::unordered_map<std::string, char> codonToAmino_;
     static const std::string ref_;
 };

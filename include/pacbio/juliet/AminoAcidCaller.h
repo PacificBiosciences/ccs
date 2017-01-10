@@ -161,7 +161,6 @@ private:
     const TargetConfig targetConfig_;
 
     static const std::unordered_map<std::string, char> codonToAmino_;
-    static const std::unordered_map<int, std::string> resistentCodon_;
 
     static const std::vector<int> nnrti;
     static const std::vector<int> nnrtiSurveillance;

@@ -194,7 +194,7 @@ JSON::Json ResistanceCaller::JSON()
         for (const auto& c : codons) {
             const auto cc = CodonString(c);
             const auto a = codonToAmino_.at(cc);
-            bool isKnown = resistentCodon_.find(i + 4) != resistentCodon_.cend();
+            bool isKnown = resistantCodon_.find(i + 4) != resistantCodon_.cend();
             if (a != aminoRef) {
                 hit = true;
                 Json variant;
@@ -207,7 +207,7 @@ JSON::Json ResistanceCaller::JSON()
                                        c[2].major ? 0 : c[2].pValue};
                 variant["coverage"] = {msa_[i + 0].Coverage(), msa_[i + 1].Coverage(),
                                        msa_[i + 2].Coverage()};
-                variant["known_drm"] = isKnown ? resistentCodon_.at(i + 4) : "";
+                variant["known_drm"] = isKnown ? resistantCodon_.at(i + 4) : "";
 
                 for (int j = -3; j < 6; ++j) {
                     if (i + j >= begin_ && i + j < end_) {
@@ -539,7 +539,7 @@ std::vector<std::vector<VariantNucleotide>> ResistanceCaller::CreateCodons(
     return result;
 }
 
-const std::unordered_map<int, std::string> ResistanceCaller::resistentCodon_ = {
+const std::unordered_map<int, std::string> ResistanceCaller::resistantCodon_ = {
     {2253 + 3 * 23, "PI S"},
     {2253 + 3 * 24, "PI + PI S"},
     {2253 + 3 * 30, "PI S"},
