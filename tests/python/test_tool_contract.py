@@ -26,11 +26,11 @@ class TestCCSApp(pbcommand.testkit.PbTestApp):
     REQUIRES_PBCORE = True
     INPUT_FILES = [tempfile.NamedTemporaryFile(suffix=".subreadset.xml").name]
     TASK_OPTIONS = {
-        "pbccs.task_options.min_snr": 3,
+        "pbccs.task_options.min_snr": 3.0,
         "pbccs.task_options.min_read_score": 0.75,
         "pbccs.task_options.min_length": 10,
         "pbccs.task_options.min_passes": 3,
-        "pbccs.task_options.min_zscore": -5,
+        "pbccs.task_options.min_zscore": -5.0,
         "pbccs.task_options.max_drop_frac": 0.33,
         "pbccs.task_options.polish": False
     }
