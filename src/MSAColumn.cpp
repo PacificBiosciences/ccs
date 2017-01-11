@@ -49,6 +49,11 @@ int MSAColumn::MaxElement() const
 {
     return std::distance(counts.begin(), std::max_element(counts.begin(), counts.end()));
 }
+char MSAColumn::MaxBase() const
+{
+    static const char bases[]{'A', 'C', 'G', 'T', '-'};
+    return bases[MaxElement()];
+}
 int MSAColumn::Max() const { return counts.at(MaxElement()); }
 
 void MSAColumn::AddFisherResult(const FisherResult& f)

@@ -37,37 +37,34 @@
 
 #pragma once
 
-#include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include <pbbam/BamFile.h>
-#include <pbbam/BamRecord.h>
-#include <pbbam/EntireFileQuery.h>
-
-#include <pacbio/data/ArrayRead.h>
+#include <pbcopper/cli/CLI.h>
 
 namespace PacBio {
-namespace IO {
+namespace Realign {
 
-/// \brief Wrapper around pbbam to ease BAM parsing and region extraction
-static std::vector<Data::ArrayRead> ParseBam(const std::string& filePath, int regionStart = 0,
-                                             int regionEnd = std::numeric_limits<int>::max())
+/// Contains user provided CLI configuration for ConsensusFixer
+struct FuseSettings
 {
-    std::vector<Data::ArrayRead> returnList;
-    regionStart = std::max(regionStart - 1, 0);
-    regionEnd = std::max(regionEnd - 1, 0);
+    std::vector<std::string> InputFiles;
+    std::string OutputPrefix;
+    int RegionStart = 0;
+    int RegionEnd = std::numeric_limits<int>::max();
 
-    int idx = 0;
-    // Iterate over all records and convert online
-    for (auto& record : BAM::EntireFileQuery(filePath)) {
-        if (record.Impl().IsSupplementaryAlignment()) continue;
-        if (record.ReferenceStart() < regionEnd && record.ReferenceEnd() > regionStart) {
-            record.Clip(BAM::ClipType::CLIP_TO_REFERENCE, regionStart, regionEnd);
-            returnList.emplace_back(Data::BAMArrayRead(record, idx++));
-        }
-    }
-    return returnList;
+    /// Parses the provided CLI::Results and retrieves a defined set of options.
+    FuseSettings(const PacBio::CLI::Results& options);
+
+    size_t ThreadCount(int n);
+
+    /// Given the description of the tool and its version, create all
+    /// necessary CLI::Options for the ccs executable.
+    static PacBio::CLI::Interface CreateCLI();
+
+    /// Splits region into ReconstructionStart and ReconstructionEnd.
+    static void SplitRegion(const std::string& region, int* start, int* end);
+};
 }
-}
-}  // ::PacBio::IO
+}  // ::PacBio::Realign

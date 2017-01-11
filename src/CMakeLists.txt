@@ -66,6 +66,8 @@ add_library(unanimity STATIC
     ChemistryMapping.cpp
     ChemistryTriple.cpp
     ConsensusSettings.cpp
+    Fuse.cpp
+    FuseSettings.cpp
     ErrorEstimates.cpp
     Fisher.cpp
     Interval.cpp
@@ -129,20 +131,30 @@ if (UNY_build_bin)
 
     target_include_directories(juliet
         PUBLIC ${UNY_INCLUDE_DIRS}
-        PUBLIC ${JUNCTION_ALL_INCLUDE_DIRS}
     )
 
     target_link_libraries(juliet
         ${UNY_LIBRARIES}
-        ${JUNCTION_ALL_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${CMAKE_DL_LIBS}
     )
 
-    if (TARGET pbbam)
-        add_dependencies(ccs pbbam)
-        add_dependencies(juliet pbbam)
-    endif()
+    ## Fuse
+    add_executable(fuse ${UNY_SourceDir}/main/fuse.cpp)
 
-    install(TARGETS ccs juliet RUNTIME DESTINATION bin)
+    set_target_properties(fuse PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+
+    target_include_directories(fuse
+        PUBLIC ${UNY_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(fuse
+        ${UNY_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${CMAKE_DL_LIBS}
+    )
+
+    install(TARGETS ccs juliet fuse RUNTIME DESTINATION bin)
 endif()

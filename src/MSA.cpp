@@ -104,6 +104,9 @@ void MSA::FillCounts(const std::vector<ArrayRead>& reads)
                 case 'P':
                     CheckInsertion();
                     break;
+                case 'S':
+                    CheckInsertion();
+                    break;
                 default:
                     throw std::runtime_error("Unexpected cigar " + std::to_string(b.Cigar));
             }

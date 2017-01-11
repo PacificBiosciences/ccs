@@ -37,37 +37,37 @@
 
 #pragma once
 
-#include <functional>
+#include <fstream>
 #include <string>
 #include <vector>
 
-#include <pbbam/BamFile.h>
+#include <pacbio/data/MSA.h>
 #include <pbbam/BamRecord.h>
-#include <pbbam/EntireFileQuery.h>
-
-#include <pacbio/data/ArrayRead.h>
 
 namespace PacBio {
-namespace IO {
+namespace Realign {
 
-/// \brief Wrapper around pbbam to ease BAM parsing and region extraction
-static std::vector<Data::ArrayRead> ParseBam(const std::string& filePath, int regionStart = 0,
-                                             int regionEnd = std::numeric_limits<int>::max())
+class Fuse
 {
-    std::vector<Data::ArrayRead> returnList;
-    regionStart = std::max(regionStart - 1, 0);
-    regionEnd = std::max(regionEnd - 1, 0);
+public:
+    Fuse(const std::string& ccsInput);
+    Fuse(const std::vector<Data::ArrayRead>& arrayReads);
 
-    int idx = 0;
-    // Iterate over all records and convert online
-    for (auto& record : BAM::EntireFileQuery(filePath)) {
-        if (record.Impl().IsSupplementaryAlignment()) continue;
-        if (record.ReferenceStart() < regionEnd && record.ReferenceEnd() > regionStart) {
-            record.Clip(BAM::ClipType::CLIP_TO_REFERENCE, regionStart, regionEnd);
-            returnList.emplace_back(Data::BAMArrayRead(record, idx++));
-        }
-    }
-    return returnList;
+public:
+    std::string ConsensusSequence() const { return consensusSequence_; }
+
+private:
+    std::vector<Data::ArrayRead> FetchAlignedReads(const std::string& ccsInput) const;
+    std::string CreateConsensus(const std::vector<Data::ArrayRead>& arrayReads) const;
+    std::map<int, std::pair<std::string, int>> CollectInsertions(const Data::MSA& msa) const;
+    std::pair<int, std::string> FindInsertions(
+        std::map<int, std::pair<std::string, int>>* posInsCov, int windowSize = 20) const;
+
+private:
+    static constexpr int minCoverage_ = 50;
+    static constexpr int minInsertionCoverage_ = 50;
+
+    std::string consensusSequence_;
+};
 }
-}
-}  // ::PacBio::IO
+}  // ::PacBio::Realign
