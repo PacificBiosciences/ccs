@@ -35,7 +35,7 @@ if (SANITIZE)
     # AddressSanitizer is a fast memory error detector
     set(UNY_SANITY_FLAGS "${UNY_SANITY_FLAGS} -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls")
 
-    # Clang Thread Safety Analysis is a C++ language extension which warns about 
+    # Clang Thread Safety Analysis is a C++ language extension which warns about
     # potential race conditions in code.
     set(UNY_SANITY_FLAGS "${UNY_SANITY_FLAGS} -Wthread-safety")
 
@@ -61,4 +61,8 @@ if(APPLE)
 elseif(UNIX)
     SET(PRE_LINK -Wl,-whole-archive)
     SET(POST_LINK -Wl,-no-whole-archive)
+endif()
+
+if (JULIET_INHOUSE_PERFORMANCE)
+    add_definitions(-DJULIET_INHOUSE_PERFORMANCE)
 endif()

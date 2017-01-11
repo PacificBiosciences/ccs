@@ -1,5 +1,13 @@
 # UNANIMITY - CHANGELOG
 
+## [2.1.0]
+
+### Added
+ - Add juliet, a minimal minor variant caller
+ - Add Fisher's exact test
+ - Juliet JSON and HTMl output for HIV-1 pol region
+ - Call codon-wise
+
 ## [2.0.4]
 
 ### Added

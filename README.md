@@ -12,11 +12,10 @@
    - Available
      - Consensus Core
      - [Circular Consensus Calling `ccs`](doc/PBCCS.md)
-   - Work in Progress
+     - [Minor Variant Calling `juliet`](doc/JULIET.md)
+   - Planned
      - Genomic Consensus Calling `gcpp`
      - Viral Haplotype Phasing `eden`
-   - Planned
-     - Minor Variant Calling
  - [Developer environment](doc/DEVELOPER.md)
  - [PacBio open source license](LICENSE)
 
@@ -24,18 +23,18 @@
 
 ### [Circular Consensus Calling](doc/PBCCS.md)
 
-`ccs` takes multiple reads of the same SMRTbell sequence and combines 
+`ccs` takes multiple reads of the same SMRTbell sequence and combines
 them, employing a statistical model, to produce one high quality consensus sequence.
-    
-### [Genomic Consensus Calling](doc/GCPP.md)
+
+### Genomic Consensus Calling
 
 `gcpp` will replace the current python [GenomicConsensus](https://github.com/PacificBiosciences/GenomicConsensus), until then please use the existing solution.
 
-### Minor Variant Calling
+### [Minor variant caller](doc/JULIET.md)
 
-This tool will be able to precisely call single-nucleotide variants from consensus data.
+`juliet` identifies minor variants from aligned ccs reads.
 
-### [Viral Haplotype Phasing](doc/EDEN.md)
+### Viral Haplotype Phasing
 
 `eden` will leverage CCS reads to identify low-frequency haplotypes within polyploid samples.
 

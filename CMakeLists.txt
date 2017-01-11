@@ -3,7 +3,7 @@
 ##############################################
 
 cmake_policy(SET CMP0048 NEW)
-project(UNANIMITY VERSION 2.0.5 LANGUAGES CXX C)
+project(UNANIMITY VERSION 2.1.0 LANGUAGES CXX C)
 cmake_minimum_required(VERSION 3.2)
 
 set(ROOT_PROJECT_NAME ${PROJECT_NAME} CACHE STRING "root project name")
@@ -32,9 +32,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake ${CMAKE_MODULE_PATH})
 
 # Fixed order, do not sort or shuffle
 include(uny-ccache)
-include(uny-compilerflags)
 include(uny-releasewithassert)
 include(uny-dependencies)
+include(uny-compilerflags)
 include(uny-gitsha1)
 include(uny-config)
 

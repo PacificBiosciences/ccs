@@ -38,6 +38,7 @@
 #pragma once
 
 #include <chrono>
+#include <string>
 
 namespace PacBio {
 namespace Util {
@@ -49,6 +50,7 @@ public:
 
     float ElapsedMilliseconds() const;
     float ElapsedSeconds() const;
+    std::string ElapsedTime() const;
     void Restart();
 
 private:
