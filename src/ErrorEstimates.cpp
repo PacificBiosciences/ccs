@@ -36,6 +36,7 @@
 // Author: Armin Töpfer
 
 #include <pacbio/juliet/ErrorEstimates.h>
+#include <stdexcept>
 
 namespace PacBio {
 namespace Juliet {
