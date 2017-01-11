@@ -38,8 +38,8 @@
 #pragma once
 
 #include <algorithm>
-#include <exception>
 #include <locale>
+#include <stdexcept>
 #include <string>
 
 namespace PacBio {
