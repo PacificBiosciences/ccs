@@ -51,12 +51,20 @@
 namespace PacBio {
 namespace Data {
 
-ArrayRead::ArrayRead() : Idx(-1){};
-ArrayRead::ArrayRead(const BAM::BamRecord& record, int idx)
-    : Record(record), Idx(idx)  // Record(std::forward<BAM::BamRecord>(record))
+ArrayRead::ArrayRead(int idx) : Idx(idx){};
+
+BAMArrayRead::BAMArrayRead(const BAM::BamRecord& record, int idx)
+    : ArrayRead(idx), Record(record)  // Record(std::forward<BAM::BamRecord>(record))
 {
+    ArrayRead::referenceStart_ = record.ReferenceStart();
+    ArrayRead::referenceEnd_ = record.ReferenceEnd();
     const auto seq = Record.Sequence(BAM::Orientation::GENOMIC, true, true);
-    const auto qual = Record.Qualities(BAM::Orientation::GENOMIC, true, true);
+
+    // bool hasQualities = Record.HasQualities();
+    bool hasQualities = !Record.Qualities().empty();
+    BAM::QualityValues qual;
+    if (hasQualities) qual = Record.Qualities(BAM::Orientation::GENOMIC, true, true);
+
     std::string cigar;
     cigar.reserve(seq.size());
     for (const auto c : Record.CigarData(true))
@@ -73,16 +81,24 @@ ArrayRead::ArrayRead(const BAM::BamRecord& record, int idx)
         delQV = Record.DeletionQV(BAM::Orientation::GENOMIC, true, true);
         insQV = Record.InsertionQV(BAM::Orientation::GENOMIC, true, true);
     }
-    assert(cigar.size() == seq.size() && seq.size() == qual.size());
+
+    assert(cigar.size() == seq.size());
+
+    if (hasQualities) {
+        assert(seq.size() == qual.size());
+    }
 
     Bases.reserve(cigar.length());
     if (richQVs)
         for (size_t i = 0; i < cigar.length(); ++i)
             Bases.emplace_back(cigar.at(i), seq.at(i), qual.at(i), subQV.at(i), delQV.at(i),
                                insQV.at(i));
-    else
+    else if (hasQualities)
         for (size_t i = 0; i < cigar.length(); ++i)
             Bases.emplace_back(cigar.at(i), seq.at(i), qual.at(i));
+    else
+        for (size_t i = 0; i < cigar.length(); ++i)
+            Bases.emplace_back(cigar.at(i), seq.at(i), 0);
 }
 
 #if __cplusplus < 201402L  // C++11
@@ -100,8 +116,7 @@ char TagToNucleotide(uint8_t t)
         case 4:
             return '-';
         default:
-            return 0;
-            // throw std::runtime_error("Woot is that tag? " + std::to_string(t));
+            throw std::runtime_error("Unsupported tag: " + std::to_string(t));
     }
 }
 
@@ -116,13 +131,11 @@ uint8_t NucleotideToTag(char t)
             return 2;
         case 'T':
             return 3;
+        case '-':
         case 'N':
             return 4;
-        case '-':
-            return 4;
         default:
-            return 0;
-            // throw std::runtime_error("Woot is that char " + std::to_string(t));
+            throw std::runtime_error("Unsupported character: " + std::to_string(t));
     }
 }
 #endif

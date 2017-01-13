@@ -101,15 +101,13 @@ static constexpr uint8_t NucleotideToTag(char t)
 class ArrayRead
 {
 public:  // ctors
-    ArrayRead();
-    /// Constructor that needs the BamRecord to be "unrolled" and a unique index
-    ArrayRead(const BAM::BamRecord& record, int idx);
+    ArrayRead(int idx = -1);
 
     // friend std::ostream& operator<<(std::ostream& stream, const ArrayRead& r);
 
 public:  // non-mod methods
-    int ReferenceStart() const { return Record.ReferenceStart(); }
-    int ReferenceEnd() const { return Record.ReferenceEnd(); }
+    int ReferenceStart() const { return referenceStart_; }
+    int ReferenceEnd() const { return referenceEnd_; }
 
 public:
     friend std::ostream& operator<<(std::ostream& stream, const ArrayRead& r)
@@ -125,8 +123,23 @@ public:
 
 public:  // data
     std::vector<ArrayBase> Bases;
-    const BAM::BamRecord Record;
     const int Idx;
+
+protected:
+    size_t referenceStart_;
+    size_t referenceEnd_;
+};
+
+class BAMArrayRead : public ArrayRead
+{
+public:  // ctors
+    /// Constructor that needs the BamRecord to be "unrolled" and a unique index
+    BAMArrayRead(const BAM::BamRecord& record, int idx);
+
+    // friend std::ostream& operator<<(std::ostream& stream, const ArrayRead& r);
+
+private:
+    const BAM::BamRecord Record;
 };
 }  // namespace Data
 }  // namespace PacBio

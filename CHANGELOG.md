@@ -3,6 +3,7 @@
 ## [2.1.0]
 
 ### Added
+ - Add fuse, an alignment consensus caller
  - Add juliet, a minimal minor variant caller
  - Add Fisher's exact test
  - Juliet JSON and HTMl output for HIV-1 pol region

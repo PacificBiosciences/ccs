@@ -61,10 +61,11 @@ struct ArrayBase
         , ProbTrue(1 - pow(10, -1.0 * qualQV / 10.0))
     {
     }
+    ArrayBase(char cigar, char nucleotide) : Cigar(cigar), Nucleotide(nucleotide) {}
     char Cigar;
     char Nucleotide;
-    uint8_t QualQV;
-    double ProbTrue;
+    uint8_t QualQV = 0;
+    double ProbTrue = 0;
     double ProbCorrectBase = 0;
     double ProbNoDeletion = 0;
     double ProbNoInsertion = 0;

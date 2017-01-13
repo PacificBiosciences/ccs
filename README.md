@@ -13,6 +13,7 @@
      - Consensus Core
      - [Circular Consensus Calling `ccs`](doc/PBCCS.md)
      - [Minor Variant Calling `juliet`](doc/JULIET.md)
+     - [Reduce Alignment `fuse`](doc/FUSE.md)
    - Planned
      - Genomic Consensus Calling `gcpp`
      - Viral Haplotype Phasing `eden`
@@ -33,6 +34,10 @@ them, employing a statistical model, to produce one high quality consensus seque
 ### [Minor variant caller](doc/JULIET.md)
 
 `juliet` identifies minor variants from aligned ccs reads.
+
+### [Reduce alignment](doc/FUSE.md)
+
+`fuse` reduces an alignment into its closest representative sequence.
 
 ### Viral Haplotype Phasing
 

@@ -47,7 +47,7 @@
 namespace PacBio {
 namespace Data {
 /// Multiple sequence alignment containing counts
-struct MSA
+class MSA
 {
 private:
     using MsaVec = std::vector<MSAColumn>;
@@ -65,6 +65,8 @@ public:
     MSAColumn operator[](int i) const { return counts[i - beginPos]; }
     /// Parameter is an index in ABSOLUTE reference space
     MSAColumn& operator[](int i) { return counts[i - beginPos]; }
+
+    bool has(int i) { return i >= beginPos && i < endPos; }
 
     // clang-format off
     MsaIt      begin()        { return counts.begin();  }

@@ -104,7 +104,6 @@ string FilePrefix(const string& path)
     if (extStart == string::npos) return "";
 
     auto suffix = path.substr(fileStart, extStart);
-    std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::tolower);
     return suffix;
 }
 

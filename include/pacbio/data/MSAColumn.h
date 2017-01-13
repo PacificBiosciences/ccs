@@ -65,6 +65,7 @@ public:
 
 public:
     int Coverage() const;
+    char MaxBase() const;
     int MaxElement() const;
     int Max() const;
 
