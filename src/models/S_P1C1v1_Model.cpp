@@ -43,6 +43,7 @@
 
 #include "../ModelFactory.h"
 #include "../Recursor.h"
+#include "CounterWeight.h"
 
 using namespace PacBio::Data;
 
@@ -50,7 +51,6 @@ namespace PacBio {
 namespace Consensus {
 namespace {
 
-constexpr double kCounterWeight = 15.0;
 constexpr size_t OUTCOME_NUMBER = 12;
 constexpr size_t CONTEXT_NUMBER = 16;
 
@@ -80,10 +80,14 @@ class S_P1C1v1_Recursor : public Recursor<S_P1C1v1_Recursor>
 {
 public:
     S_P1C1v1_Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                      double scoreDiff);
+                      double scoreDiff, double counterWeight);
     static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
-    static inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr);
+    inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
     virtual double UndoCounterWeights(size_t nEmissions) const;
+
+private:
+    double counterWeight_;
+    double nLgCounterWeight_;
 };
 
 constexpr double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
@@ -310,8 +314,20 @@ S_P1C1v1_Model::S_P1C1v1_Model(const SNR& snr) : snr_(snr)
 std::unique_ptr<AbstractRecursor> S_P1C1v1_Model::CreateRecursor(
     std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
 {
-    return std::unique_ptr<AbstractRecursor>(
-        new S_P1C1v1_Recursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
+    const double counterWeight = CounterWeight(
+        [this](size_t ctx, MoveType m) { return ctxTrans_[ctx][static_cast<uint8_t>(m)]; },
+        [](size_t ctx, MoveType m) {
+            double r = 0.0;
+            for (size_t o = 0; o < OUTCOME_NUMBER; ++o) {
+                const double p = emissionPmf[static_cast<uint8_t>(m)][ctx][o];
+                if (p > 0.0) r += p * std::log(p);
+            }
+            return r;
+        },
+        CONTEXT_NUMBER);
+
+    return std::unique_ptr<AbstractRecursor>(new S_P1C1v1_Recursor(
+        std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff, counterWeight));
 }
 
 std::vector<TemplatePosition> S_P1C1v1_Model::Populate(const std::string& tpl) const
@@ -354,9 +370,11 @@ double S_P1C1v1_Model::ExpectedLLForEmission(const MoveType move, const uint8_t 
 }
 
 S_P1C1v1_Recursor::S_P1C1v1_Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                                     double scoreDiff)
+                                     double scoreDiff, double counterWeight)
     : Recursor<S_P1C1v1_Recursor>(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
                                   scoreDiff)
+    , counterWeight_{counterWeight}
+    , nLgCounterWeight_{-std::log(counterWeight_)}
 {
 }
 
@@ -379,16 +397,17 @@ std::vector<uint8_t> S_P1C1v1_Recursor::EncodeRead(const MappedRead& read)
     return result;
 }
 
-double S_P1C1v1_Recursor::EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr)
+double S_P1C1v1_Recursor::EmissionPr(MoveType move, uint8_t emission, uint8_t prev,
+                                     uint8_t curr) const
 {
     assert(move != MoveType::DELETION);
     const auto row = (prev << 2) | curr;
-    return emissionPmf[static_cast<uint8_t>(move)][row][emission] * kCounterWeight;
+    return emissionPmf[static_cast<uint8_t>(move)][row][emission] * counterWeight_;
 }
 
 double S_P1C1v1_Recursor::UndoCounterWeights(const size_t nEmissions) const
 {
-    return -std::log(kCounterWeight) * nEmissions;
+    return nLgCounterWeight_ * nEmissions;
 }
 }  // namespace anonymous
 }  // namespace Consensus

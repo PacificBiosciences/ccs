@@ -48,6 +48,7 @@
 #include "../ModelFactory.h"
 #include "../ModelFormFactory.h"
 #include "../Recursor.h"
+#include "CounterWeight.h"
 
 using namespace PacBio::Data;
 
@@ -82,14 +83,13 @@ private:
     const SnrModelCreator* params_;
     SNR snr_;
     double ctxTrans_[CONTEXT_NUMBER][4];
-    double counterWeight_;
 };
 
 class SnrRecursor : public Recursor<SnrRecursor>
 {
 public:
     SnrRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff,
-                const SnrModelCreator* params, double counterWeight);
+                double counterWeight, const SnrModelCreator* params);
 
     static std::vector<uint8_t> EncodeRead(const MappedRead& read);
     double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
@@ -120,7 +120,6 @@ private:
     double emissionPmf_[3][2];
     double transitionParams_[CONTEXT_NUMBER][3][4];
     double substitutionRate_;
-    double counterWeight_;
 };
 
 REGISTER_MODELFORM_IMPL(SnrModelCreator);
@@ -147,17 +146,32 @@ SnrModel::SnrModel(const SnrModelCreator* params, const SNR& snr) : params_{para
         for (size_t j = 0; j < 4; ++j)
             ctxTrans_[ctx][j] /= sum;
     }
-
-    counterWeight_ = params_->counterWeight_;
 }
 
 std::unique_ptr<AbstractRecursor> SnrModel::CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                            const MappedRead& mr,
                                                            double scoreDiff) const
 {
+    const double counterWeight = CounterWeight(
+        [this](size_t ctx, MoveType m) { return ctxTrans_[ctx][static_cast<uint8_t>(m)]; },
+        [this](size_t ctx, MoveType m) {
+            const double kEps = params_->substitutionRate_;
+            const double kInvEps = 1.0 - kEps;
+            switch (m) {
+                case MoveType::MATCH:
+                    return kInvEps * std::log(kInvEps) + kEps * std::log(kEps / 3.0);
+                case MoveType::STICK:
+                    return -std::log(3.0);
+                default:
+                    break;
+            }
+            return 0.0;
+        },
+        CONTEXT_NUMBER);
+
     return std::unique_ptr<AbstractRecursor>(
         new SnrRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff,
-                        params_, counterWeight_));
+                        counterWeight, params_));
 }
 
 std::vector<TemplatePosition> SnrModel::Populate(const std::string& tpl) const
@@ -216,7 +230,7 @@ double SnrModel::ExpectedLLForEmission(const MoveType move, const uint8_t prev, 
 }
 
 SnrRecursor::SnrRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                         double scoreDiff, const SnrModelCreator* params, double counterWeight)
+                         double scoreDiff, double counterWeight, const SnrModelCreator* params)
     : Recursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
     , params_{params}
     , counterWeight_{counterWeight}
@@ -259,7 +273,6 @@ SnrModelCreator::SnrModelCreator(const boost::property_tree::ptree& pt)
         substitutionRate_ = pt.get<double>("SubstitutionRate");
         emissionPmf_[0][0] = 1.0 - substitutionRate_;
         emissionPmf_[0][1] = substitutionRate_ / 3.0;
-        counterWeight_ = pt.get<double>("CounterWeight");
     } catch (std::invalid_argument& e) {
         throw MalformedModelFile();
     } catch (boost::property_tree::ptree_error) {

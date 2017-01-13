@@ -48,6 +48,7 @@
 #include "../ModelFactory.h"
 #include "../ModelFormFactory.h"
 #include "../Recursor.h"
+#include "CounterWeight.h"
 
 using namespace PacBio::Data;
 
@@ -75,14 +76,13 @@ public:
 
 private:
     const MarginalModelCreator* params_;
-    double counterWeight_;
 };
 
 class MarginalRecursor : public Recursor<MarginalRecursor>
 {
 public:
     MarginalRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                     double scoreDiff, const MarginalModelCreator* params, double counterWeight);
+                     double scoreDiff, double counterWeight, const MarginalModelCreator* params);
 
     static std::vector<uint8_t> EncodeRead(const MappedRead& read);
     double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
@@ -111,22 +111,34 @@ public:
 private:
     double emissionPmf_[3][CONTEXT_NUMBER][OUTCOME_NUMBER];
     double transitionPmf_[CONTEXT_NUMBER][4];
-    double counterWeight_;
 };
 
 REGISTER_MODELFORM_IMPL(MarginalModelCreator);
 
 MarginalModel::MarginalModel(const MarginalModelCreator* params, const SNR& snr) : params_{params}
 {
-    counterWeight_ = params_->counterWeight_;
 }
 
 std::unique_ptr<AbstractRecursor> MarginalModel::CreateRecursor(
     std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
 {
+    const double counterWeight = CounterWeight(
+        [this](size_t ctx, MoveType m) {
+            return params_->transitionPmf_[ctx][static_cast<uint8_t>(m)];
+        },
+        [this](size_t ctx, MoveType m) {
+            double r = 0.0;
+            for (size_t o = 0; o < OUTCOME_NUMBER; ++o) {
+                const double p = params_->emissionPmf_[static_cast<uint8_t>(m)][ctx][o];
+                if (p > 0.0) r += p * std::log(p);
+            }
+            return r;
+        },
+        CONTEXT_NUMBER);
+
     return std::unique_ptr<AbstractRecursor>(
         new MarginalRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff,
-                             params_, counterWeight_));
+                             counterWeight, params_));
 }
 
 std::vector<TemplatePosition> MarginalModel::Populate(const std::string& tpl) const
@@ -177,8 +189,8 @@ double MarginalModel::ExpectedLLForEmission(const MoveType move, const uint8_t p
 }
 
 MarginalRecursor::MarginalRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                                   double scoreDiff, const MarginalModelCreator* params,
-                                   double counterWeight)
+                                   double scoreDiff, double counterWeight,
+                                   const MarginalModelCreator* params)
     : Recursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
     , params_{params}
     , counterWeight_{counterWeight}
@@ -219,7 +231,6 @@ MarginalModelCreator::MarginalModelCreator(const boost::property_tree::ptree& pt
         ReadMatrix<3, CONTEXT_NUMBER, OUTCOME_NUMBER>(emissionPmf_,
                                                       pt.get_child("EmissionParameters"));
         ReadMatrix<CONTEXT_NUMBER, 4>(transitionPmf_, pt.get_child("TransitionParameters"));
-        counterWeight_ = pt.get<double>("CounterWeight");
     } catch (std::invalid_argument& e) {
         throw MalformedModelFile();
     } catch (boost::property_tree::ptree_error) {

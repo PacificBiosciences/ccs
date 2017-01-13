@@ -48,6 +48,7 @@
 #include "../ModelFactory.h"
 #include "../ModelFormFactory.h"
 #include "../Recursor.h"
+#include "CounterWeight.h"
 
 using namespace PacBio::Data;
 
@@ -87,14 +88,13 @@ private:
     SNR snr_;
     double ctxTrans_[CONTEXT_NUMBER][4];
     double cachedEmissionExpectations_[CONTEXT_NUMBER][3][2];
-    double counterWeight_;
 };
 
 class PwSnrARecursor : public Recursor<PwSnrARecursor>
 {
 public:
     PwSnrARecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff,
-                   const PwSnrAModelCreator* params, double counterWeight);
+                   double counterWeight, const PwSnrAModelCreator* params);
 
     static std::vector<uint8_t> EncodeRead(const MappedRead& read);
     double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
@@ -124,7 +124,6 @@ private:
     double snrRanges_[2];
     double emissionPmf_[3][CONTEXT_NUMBER][OUTCOME_NUMBER];
     double transitionParams_[CONTEXT_NUMBER][3][4];
-    double counterWeight_;
 };
 
 REGISTER_MODELFORM_IMPL(PwSnrAModelCreator);
@@ -171,16 +170,26 @@ PwSnrAModel::PwSnrAModel(const PwSnrAModelCreator* params, const SNR& snr)
                 cachedEmissionExpectations_[ctx][move][moment] =
                     CalculateExpectedLLForEmission(move, ctx, moment);
     }
-
-    counterWeight_ = params_->counterWeight_;
 }
 
 std::unique_ptr<AbstractRecursor> PwSnrAModel::CreateRecursor(
     std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
 {
+    const double counterWeight = CounterWeight(
+        [this](size_t ctx, MoveType m) { return ctxTrans_[ctx][static_cast<uint8_t>(m)]; },
+        [this](size_t ctx, MoveType m) {
+            double r = 0.0;
+            for (size_t o = 0; o < OUTCOME_NUMBER; ++o) {
+                const double p = params_->emissionPmf_[static_cast<uint8_t>(m)][ctx][o];
+                if (p > 0.0) r += p * std::log(p);
+            }
+            return r;
+        },
+        CONTEXT_NUMBER);
+
     return std::unique_ptr<AbstractRecursor>(
         new PwSnrARecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff,
-                           params_, counterWeight_));
+                           counterWeight, params_));
 }
 
 std::vector<TemplatePosition> PwSnrAModel::Populate(const std::string& tpl) const
@@ -223,8 +232,8 @@ double PwSnrAModel::ExpectedLLForEmission(const MoveType move, const uint8_t pre
 }
 
 PwSnrARecursor::PwSnrARecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                               double scoreDiff, const PwSnrAModelCreator* params,
-                               double counterWeight)
+                               double scoreDiff, double counterWeight,
+                               const PwSnrAModelCreator* params)
     : Recursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
     , params_{params}
     , counterWeight_{counterWeight}
@@ -270,7 +279,6 @@ PwSnrAModelCreator::PwSnrAModelCreator(const boost::property_tree::ptree& pt)
         ReadMatrix<3, CONTEXT_NUMBER, OUTCOME_NUMBER>(emissionPmf_,
                                                       pt.get_child("EmissionParameters"));
         ReadMatrix<CONTEXT_NUMBER, 3, 4>(transitionParams_, pt.get_child("TransitionParameters"));
-        counterWeight_ = pt.get<double>("CounterWeight");
     } catch (std::invalid_argument& e) {
         throw MalformedModelFile();
     } catch (boost::property_tree::ptree_error) {
