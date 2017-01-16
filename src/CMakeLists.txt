@@ -73,11 +73,13 @@ add_library(unanimity STATIC
     ChainSeeds.cpp
     ChemistryMapping.cpp
     ChemistryTriple.cpp
+    Cleric.cpp
+    ClericSettings.cpp
     ConsensusSettings.cpp
-    Fuse.cpp
-    FuseSettings.cpp
     ErrorEstimates.cpp
     Fisher.cpp
+    Fuse.cpp
+    FuseSettings.cpp
     Interval.cpp
     JulietSettings.cpp
     JulietWorkflow.cpp
@@ -131,39 +133,61 @@ if (UNY_build_bin)
         ${CMAKE_DL_LIBS}
     )
 
-    ## Juliet
-    add_executable(juliet ${UNY_SourceDir}/main/juliet.cpp)
+    if (NOT PYTHON_SWIG)
+        ## Juliet
+        add_executable(juliet ${UNY_SourceDir}/main/juliet.cpp)
 
-    set_target_properties(juliet PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
+        set_target_properties(juliet PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
 
-    target_include_directories(juliet
-        PUBLIC ${UNY_INCLUDE_DIRS}
-    )
+        target_include_directories(juliet
+            PUBLIC ${UNY_INCLUDE_DIRS}
+        )
 
-    target_link_libraries(juliet
-        ${UNY_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${CMAKE_DL_LIBS}
-    )
+        target_link_libraries(juliet
+            ${UNY_LIBRARIES}
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${CMAKE_DL_LIBS}
+        )
 
-    ## Fuse
-    add_executable(fuse ${UNY_SourceDir}/main/fuse.cpp)
+        ## Fuse
+        add_executable(fuse ${UNY_SourceDir}/main/fuse.cpp)
 
-    set_target_properties(fuse PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
+        set_target_properties(fuse PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
 
-    target_include_directories(fuse
-        PUBLIC ${UNY_INCLUDE_DIRS}
-    )
+        target_include_directories(fuse
+            PUBLIC ${UNY_INCLUDE_DIRS}
+        )
 
-    target_link_libraries(fuse
-        ${UNY_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${CMAKE_DL_LIBS}
-    )
+        target_link_libraries(fuse
+            ${UNY_LIBRARIES}
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${CMAKE_DL_LIBS}
+        )
 
-    install(TARGETS ccs juliet fuse RUNTIME DESTINATION bin)
+
+        ## Cleric
+        add_executable(cleric ${UNY_SourceDir}/main/cleric.cpp)
+
+        set_target_properties(cleric PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
+
+        target_include_directories(cleric
+            PUBLIC ${UNY_INCLUDE_DIRS}
+        )
+
+        target_link_libraries(cleric
+            ${UNY_LIBRARIES}
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${CMAKE_DL_LIBS}
+            cssw
+        )
+        install(TARGETS ccs juliet fuse cleric RUNTIME DESTINATION bin)
+    else()
+        install(TARGETS ccs RUNTIME DESTINATION bin)
+    endif()
 endif()
