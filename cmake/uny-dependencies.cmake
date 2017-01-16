@@ -55,4 +55,7 @@ if (NOT PYTHON_SWIG)
     if (NOT SEQAN_INCLUDE_DIRS)
         set(SEQAN_INCLUDE_DIRS ${UNY_ThirdPartyDir}/seqan/include CACHE INTERNAL "" FORCE)
     endif()
+
+    # Complete-Striped-Smith-Waterman-Library
+    set(ssw_INCLUDE_DIRS ${UNY_ThirdPartyDir}/cssw)
 endif()

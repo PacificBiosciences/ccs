@@ -21,6 +21,7 @@ set(UNY_INCLUDE_DIRS
     ${CPPOPTPARSE_IncludeDir}
     ${PacBioBAM_INCLUDE_DIRS}
     ${pbcopper_INCLUDE_DIRS}
+    ${ssw_INCLUDE_DIRS}
     CACHE INTERNAL
     "${PROJECT_NAME}: Include Directories"
     FORCE
@@ -54,6 +55,13 @@ add_library(cc2 STATIC
 target_include_directories(cc2
     PUBLIC ${UNY_INCLUDE_DIRS}
 )
+
+if (NOT PYTHON_SWIG)
+    add_library(cssw STATIC
+        ${ssw_INCLUDE_DIRS}/ssw_cpp.cpp
+        ${ssw_INCLUDE_DIRS}/ssw.c
+    )
+endif()
 
 # add main library including everything
 add_library(unanimity STATIC
