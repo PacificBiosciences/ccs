@@ -85,6 +85,7 @@ add_library(unanimity STATIC
     MSAColumn.cpp
     ReadId.cpp
     ResistanceCaller.cpp
+    SimdAlignment.cpp
     SparsePoa.cpp
     SubreadResultCounter.cpp
     TargetConfig.cpp
