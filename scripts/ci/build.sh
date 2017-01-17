@@ -12,7 +12,7 @@ GetBBRepo () {
 echo "#############################"
 echo "# LOAD MODULES"
 source /mnt/software/Modules/current/init/bash
-module load git gcc/5.3.0 python/2.7.9 cmake cram swig ccache virtualenv zlib/1.2.5 ninja boost
+module load git gcc/4.9.2 python/2.7.9 cmake cram swig ccache virtualenv zlib/1.2.5 ninja boost
 
 echo "#############################"
 echo "# EXTERNAL DEPENDENCIES"
@@ -64,11 +64,11 @@ if [ ! -d build ] ; then mkdir build ; fi
 echo "## Build source"
 ( cd build &&\
   rm -rf * &&\
-  CMAKE_BUILD_TYPE=ReleaseWithAssert cmake -DZLIB_INCLUDE_DIR=/mnt/software/z/zlib/1.2.5/include -DZLIB_LIBRARY=/mnt/software/z/zlib/1.2.5/lib/libz.so -DJULIET_INHOUSE_PERFORMANCE=T -GNinja .. )
+  CMAKE_BUILD_TYPE=ReleaseWithAssert cmake -DJULIET_INHOUSE_PERFORMANCE=T -GNinja .. )
 ( cd build && ninja )
 
 echo "## pip install CC2"
-CMAKE_BUILD_TYPE=ReleaseWithAssert CMAKE_COMMAND=cmake ZLIB_INCLUDE_DIR=/mnt/software/z/zlib/1.2.5/include ZLIB_LIBRARY=/mnt/software/z/zlib/1.2.5/lib/libz.so VERBOSE=1 pip install --verbose --upgrade --no-deps .
+CMAKE_BUILD_TYPE=ReleaseWithAssert CMAKE_COMMAND=cmake VERBOSE=1 pip install --verbose --upgrade --no-deps .
 
 echo "## Install ConsensusCore"
 ( cd _deps/ConsensusCore && python setup.py install --boost=$BOOST_ROOT )
