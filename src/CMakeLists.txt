@@ -1,3 +1,21 @@
+# functions
+function(create_exe libName)
+    add_executable(${libName} ${UNY_SourceDir}/main/${libName}.cpp)
+
+    set_target_properties(${libName} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+
+    target_link_libraries(${libName}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${CMAKE_DL_LIBS}
+        ${UNY_LIBRARIES}
+        ${ARGV1}
+    )
+
+    install(TARGETS ${libName} RUNTIME DESTINATION bin)
+endfunction()
+
 # get all header files for IDE support
 file(GLOB_RECURSE UNY_HEADER "${UNY_IncludeDir}/*.h")
 file(GLOB_RECURSE UNY_HIDDEN_HEADER "*.h")
@@ -21,6 +39,7 @@ set(UNY_INCLUDE_DIRS
     ${CPPOPTPARSE_IncludeDir}
     ${PacBioBAM_INCLUDE_DIRS}
     ${pbcopper_INCLUDE_DIRS}
+    ${ssw_INCLUDE_DIRS}
     CACHE INTERNAL
     "${PROJECT_NAME}: Include Directories"
     FORCE
@@ -56,33 +75,47 @@ target_include_directories(cc2
 )
 
 # add main library including everything
-add_library(unanimity STATIC
+set(UNANIMITY_FILES
     ${UNY_HEADER}
     ${UNY_HIDDEN_HEADER}
     ${CPPOPTPARSE_CPP}
-    AminoAcidCaller.cpp
-    ArrayRead.cpp
     ChainSeeds.cpp
     ChemistryMapping.cpp
     ChemistryTriple.cpp
-    ConsensusSettings.cpp
-    Fuse.cpp
-    FuseSettings.cpp
-    ErrorEstimates.cpp
     Fisher.cpp
     Interval.cpp
-    JulietSettings.cpp
-    JulietWorkflow.cpp
-    MSA.cpp
-    MSAColumn.cpp
     ReadId.cpp
-    ResistanceCaller.cpp
     SparsePoa.cpp
     SubreadResultCounter.cpp
-    TargetConfig.cpp
     Tests.cpp
     Timer.cpp
     Utility.cpp
+)
+
+if (NOT PYTHON_SWIG)
+    set(UNANIMITY_FILES ${UNANIMITY_FILES}
+        ${ssw_INCLUDE_DIRS}/ssw_cpp.cpp
+        ${ssw_INCLUDE_DIRS}/ssw.c
+        AminoAcidCaller.cpp
+        ArrayRead.cpp
+        Cleric.cpp
+        ClericSettings.cpp
+        ConsensusSettings.cpp
+        ErrorEstimates.cpp
+        Fuse.cpp
+        FuseSettings.cpp
+        JulietSettings.cpp
+        JulietWorkflow.cpp
+        MSA.cpp
+        MSAColumn.cpp
+        ResistanceCaller.cpp
+        SimdAlignment.cpp
+        TargetConfig.cpp
+    )
+endif()
+
+add_library(unanimity STATIC
+    ${UNANIMITY_FILES}
 )
 
 target_include_directories(unanimity
@@ -105,56 +138,12 @@ set(UNY_LIBRARIES
 
 # add executables
 if (UNY_build_bin)
-    ## CCS
-    add_executable(ccs ${UNY_SourceDir}/main/ccs.cpp)
+    ## Binaries
+    create_exe(ccs)
 
-    set_target_properties(ccs PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
-
-    target_include_directories(ccs
-        PUBLIC ${UNY_INCLUDE_DIRS}
-    )
-
-    target_link_libraries(ccs
-        ${UNY_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${CMAKE_DL_LIBS}
-    )
-
-    ## Juliet
-    add_executable(juliet ${UNY_SourceDir}/main/juliet.cpp)
-
-    set_target_properties(juliet PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
-
-    target_include_directories(juliet
-        PUBLIC ${UNY_INCLUDE_DIRS}
-    )
-
-    target_link_libraries(juliet
-        ${UNY_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${CMAKE_DL_LIBS}
-    )
-
-    ## Fuse
-    add_executable(fuse ${UNY_SourceDir}/main/fuse.cpp)
-
-    set_target_properties(fuse PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
-
-    target_include_directories(fuse
-        PUBLIC ${UNY_INCLUDE_DIRS}
-    )
-
-    target_link_libraries(fuse
-        ${UNY_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${CMAKE_DL_LIBS}
-    )
-
-    install(TARGETS ccs juliet fuse RUNTIME DESTINATION bin)
+    if (NOT PYTHON_SWIG)
+        create_exe(juliet)
+        create_exe(fuse)
+        create_exe(cleric)
+    endif()
 endif()

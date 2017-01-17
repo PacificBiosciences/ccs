@@ -14,6 +14,7 @@
      - [Circular Consensus Calling `ccs`](doc/PBCCS.md)
      - [Minor Variant Calling `juliet`](doc/JULIET.md)
      - [Reduce Alignment `fuse`](doc/FUSE.md)
+     - [Swap Alignment Reference `cleric`](doc/CLERIC.md)
    - Planned
      - Genomic Consensus Calling `gcpp`
      - Viral Haplotype Phasing `eden`
@@ -38,6 +39,10 @@ them, employing a statistical model, to produce one high quality consensus seque
 ### [Reduce alignment](doc/FUSE.md)
 
 `fuse` reduces an alignment into its closest representative sequence.
+
+### [Swap BAM reference](doc/CLERIC.md)
+
+`cleric` swaps the reference of an alignment by transitive alignment.
 
 ### Viral Haplotype Phasing
 
