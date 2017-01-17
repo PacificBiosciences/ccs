@@ -4,12 +4,7 @@ set -euo pipefail
 # Function definitions
 GetBBRepo () {
     echo "## Clone $1"
-    ( cd $2 && git clone ssh://git@bitbucket.nanofluidics.com:7999/sat/$1)
-}
-
-GetGHRepo () {
-    echo "## Clone $1"
-    ( cd $2 && git clone https://github.com/PacificBiosciences/$1)
+    ( cd $3 && git clone ssh://git@bitbucket.nanofluidics.com:7999/$1/$2)
 }
 
 # Main script
@@ -28,11 +23,11 @@ echo "## Create reverse external dependency directory"
 if [ -d _rev_deps ] ; then rm -rf _rev_deps ; fi
 mkdir _rev_deps
 
-GetBBRepo GenomicConsensus _rev_deps
-GetBBRepo ConsensusCore _deps
-GetGHRepo pbcommand _deps
-GetGHRepo pbcore _deps
-GetGHRepo PacBioTestData _deps
+GetBBRepo sat GenomicConsensus _rev_deps
+GetBBRepo sat ConsensusCore _deps
+GetBBRepo sl pbcommand _deps
+GetBBRepo sat pbcore _deps
+GetBBRepo sat pacbiotestdata _deps
 
 echo "## Fetch submodules"
 git submodule update --init --remote
@@ -58,8 +53,8 @@ pip install numpy cython h5py pysam cram nose jsonschema avro
 ( cd _deps/pbcommand && pip install --no-deps . )
 ( cd _deps/pbcore && pip install --no-deps . )
 
-echo "## Install PacBioTestData"
-( cd _deps/PacBioTestData && git lfs pull && make python )
+echo "## Install pacbiotestdata"
+( cd _deps/pacbiotestdata && git lfs pull && make python )
 
 echo "#############################"
 echo "# BUILD"
