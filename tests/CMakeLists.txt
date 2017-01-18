@@ -54,7 +54,7 @@ if(${ROOT_PROJECT_NAME} STREQUAL "UNANIMITY")
         COMMAND test_unanimity --gtest_output=xml:${CMAKE_BINARY_DIR}/uny-unit.xml
         COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs __PBTEST_JULIET_EXE=${CMAKE_BINARY_DIR}/juliet __PBTEST_FUSE_EXE=${CMAKE_BINARY_DIR}/fuse ${UNY_RootDir}/scripts/cram --xunit-file=${CMAKE_BINARY_DIR}/uny-cram.xml ${UNY_TestsDir}/cram/*.t
         COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${UNY_TestsDir}/python/test_tool_contract.py
-        DEPENDS ccs
+        DEPENDS ccs juliet fuse
         WORKING_DIRECTORY ${UNY_RootDir})
 endif()
 

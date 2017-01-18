@@ -75,6 +75,7 @@ constexpr int numSamples = 333;
 constexpr int numSamples = 3;
 #endif
 
+constexpr uint8_t avgPw = 10;
 const double prec = 0.001;  // alpha/beta mismatch tolerance
 const SNR snr(10, 7, 5, 11);
 const string P6C4 = "P6-C4";
@@ -109,10 +110,10 @@ const string longRead =
     "AATTACTATCTCCCGAAAGAATC";
 const IntegratorConfig cfg(std::numeric_limits<double>::quiet_NaN());
 
-Read MkRead(const string& seq, const SNR& snr, const string& mdl, const vector<uint8_t>& pw)
+Read MkRead(const string& seq, const SNR& snr, const string& mdl, const vector<uint8_t>& pws)
 {
-    vector<uint8_t> ipd(seq.length(), 0);
-    return Read("NA", seq, ipd, pw, snr, mdl);
+    const vector<uint8_t> ipds(seq.length(), 0);
+    return Read("NA", seq, ipds, pws, snr, mdl);
 }
 
 #if EXTENSIVE_TESTING
@@ -120,17 +121,17 @@ TEST(IntegratorTest, TestLongTemplate)
 {
     // TODO: Write a test for a longer molecule
     const string mdl = P6C4;
-    vector<uint8_t> pw(longRead.length(), 1);
+    vector<uint8_t> pws(longRead.length(), avgPw);
     MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
     EXPECT_EQ(State::VALID,
-              ai.AddRead(MappedRead(MkRead(longRead, snr, mdl, pw), StrandType::FORWARD, 0,
+              ai.AddRead(MappedRead(MkRead(longRead, snr, mdl, pws), StrandType::FORWARD, 0,
                                     longTpl.length(), true, true)));
     EXPECT_NEAR(-148.92614949338801011, ai.LL(), prec);
 }
 
 void TestTiming(const string& mdl)
 {
-    const vector<uint8_t> pws(longRead.length(), 2);
+    const vector<uint8_t> pws(longRead.length(), avgPw);
     const size_t nsamp = 5000;
     MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
     const auto stime = std::chrono::high_resolution_clock::now();
@@ -141,7 +142,8 @@ void TestTiming(const string& mdl)
     const auto etime = std::chrono::high_resolution_clock::now();
     const auto duration =
         std::chrono::duration_cast<std::chrono::microseconds>(etime - stime).count();
-    // std::cout << "avg duration: " << duration / nsamp << "us" << std::endl;
+    // std::cout << "avg duration: " << duration / nsamp << "us from " << nsamp << " samples"
+    //           << std::endl;
     EXPECT_LT(duration / nsamp, 1500);
 }
 
@@ -229,7 +231,7 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
             vector<Mutation> muts{mut};
             const string app = ApplyMutations(tpl, &muts);  // template with mutation applied
             std::tie(read, strand) = Mutate(app, nmut, &gen);
-            vector<uint8_t> pws = RandomPW(read.length(), &gen);
+            const vector<uint8_t> pws = RandomPW(read.length(), &gen);
             try {
                 auto ai1 = makeIntegrator(tpl);
                 const auto arr1 = addRead(ai1, MappedRead(MkRead(read, snr, mdl, pws), strand, 0,
@@ -335,9 +337,9 @@ TEST(IntegratorTest, TestP6C4NoCovAgainstCSharpModel)
     MultiMolecularIntegrator ai(tpl, cfg);
 
     const string readSeq = "ACGTACGT";
-    const vector<uint8_t> pw(readSeq.length(), 1);
+    const vector<uint8_t> pws(readSeq.length(), avgPw);
     EXPECT_EQ(State::VALID,
-              ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, mdl, pw), StrandType::FORWARD, 0,
+              ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, mdl, pws), StrandType::FORWARD, 0,
                                     tpl.length(), true, true)));
     auto score = [&ai](Mutation&& mut) { return ai.LL(mut) - ai.LL(); };
     EXPECT_NEAR(-4.74517984808494, ai.LL(), prec);
@@ -353,24 +355,24 @@ TEST(IntegratorTest, TestP6C4NoCovAgainstCSharpModel)
 TEST(IntegratorTest, TestFailAddRead)
 {
     const string tpl = "A";
-    const vector<uint8_t> pw(tpl.length(), 1);
+    const vector<uint8_t> pws(tpl.length(), avgPw);
     auto mdl = P6C4;
     MultiMolecularIntegrator ai(tpl, cfg);
 
     EXPECT_EQ(State::TEMPLATE_TOO_SMALL,
-              ai.AddRead(MappedRead(MkRead(tpl, snr, mdl, pw), StrandType::FORWARD, 0, tpl.length(),
-                                    true, true)));
+              ai.AddRead(MappedRead(MkRead(tpl, snr, mdl, pws), StrandType::FORWARD, 0,
+                                    tpl.length(), true, true)));
 }
 
 TEST(IntegratorTest, TestSuccessAddRead)
 {
     const string tpl = "AA";
-    const vector<uint8_t> pw(tpl.length(), 1);
+    const vector<uint8_t> pws(tpl.length(), avgPw);
     const auto mdl = P6C4;
     MultiMolecularIntegrator ai(tpl, cfg);
 
-    EXPECT_EQ(State::VALID, ai.AddRead(MappedRead(MkRead(tpl, snr, mdl, pw), StrandType::FORWARD, 0,
-                                                  tpl.length(), true, true)));
+    EXPECT_EQ(State::VALID, ai.AddRead(MappedRead(MkRead(tpl, snr, mdl, pws), StrandType::FORWARD,
+                                                  0, tpl.length(), true, true)));
 }
 
 }  // namespace anonymous

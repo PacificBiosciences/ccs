@@ -43,6 +43,7 @@
 
 #include "../ModelFactory.h"
 #include "../Recursor.h"
+#include "CounterWeight.h"
 
 using namespace PacBio::Data;
 
@@ -73,10 +74,14 @@ class S_P1C1Beta_Recursor : public Recursor<S_P1C1Beta_Recursor>
 {
 public:
     S_P1C1Beta_Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                        double scoreDiff);
+                        double scoreDiff, double counterWeight);
     static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
-    static inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr);
+    inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
     virtual double UndoCounterWeights(size_t nEmissions) const;
+
+private:
+    double counterWeight_;
+    double nLgCounterWeight_;
 };
 
 constexpr double emissionPmf[3][8][4] = {
@@ -159,8 +164,20 @@ std::vector<TemplatePosition> S_P1C1Beta_Model::Populate(const std::string& tpl)
 std::unique_ptr<AbstractRecursor> S_P1C1Beta_Model::CreateRecursor(
     std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
 {
+    const double counterWeight = CounterWeight(
+        [](size_t ctx, MoveType m) { return transProbs[ctx][static_cast<uint8_t>(m)]; },
+        [](size_t ctx, MoveType m) {
+            double r = 0.0;
+            for (size_t o = 0; o < 4; ++o) {
+                const double p = emissionPmf[static_cast<uint8_t>(m)][ctx][o];
+                if (p > 0.0) r += p * std::log(p);
+            }
+            return r;
+        },
+        8);
+
     return std::unique_ptr<AbstractRecursor>(new S_P1C1Beta_Recursor(
-        std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
+        std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff, counterWeight));
 }
 
 double S_P1C1Beta_Model::ExpectedLLForEmission(const MoveType move, const uint8_t prev,
@@ -181,9 +198,12 @@ double S_P1C1Beta_Model::ExpectedLLForEmission(const MoveType move, const uint8_
 }
 
 S_P1C1Beta_Recursor::S_P1C1Beta_Recursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                         const MappedRead& mr, double scoreDiff)
+                                         const MappedRead& mr, double scoreDiff,
+                                         double counterWeight)
     : Recursor<S_P1C1Beta_Recursor>(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
                                     scoreDiff)
+    , counterWeight_{counterWeight}
+    , nLgCounterWeight_{-std::log(counterWeight_)}
 {
 }
 
@@ -201,16 +221,19 @@ std::vector<uint8_t> S_P1C1Beta_Recursor::EncodeRead(const MappedRead& read)
 }
 
 double S_P1C1Beta_Recursor::EmissionPr(MoveType move, const uint8_t emission, const uint8_t prev,
-                                       const uint8_t curr)
+                                       const uint8_t curr) const
 {
     assert(move != MoveType::DELETION);
     const uint8_t hpAdd = prev == curr ? 0 : 4;
     // Which row do we want?
     const uint8_t row = curr + hpAdd;
-    return emissionPmf[static_cast<uint8_t>(move)][row][emission];
+    return emissionPmf[static_cast<uint8_t>(move)][row][emission] * counterWeight_;
 }
 
-double S_P1C1Beta_Recursor::UndoCounterWeights(const size_t nEmissions) const { return 0; }
+double S_P1C1Beta_Recursor::UndoCounterWeights(const size_t nEmissions) const
+{
+    return nLgCounterWeight_ * nEmissions;
+}
 }  // namespace anonymous
 }  // namespace Consensus
 }  // namespace PacBio

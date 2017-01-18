@@ -89,7 +89,7 @@ const string longRead =
     "CTGCGGCATTTTGTCCGCGCCGGGCTTCGCTCACTGTTCAGGCCGGAGCCACAGACCGCCGTTGAACGGATGCT"
     "AATTACTATCTCCCGAAAGAATC";
 
-const std::vector<uint8_t> longPws(longRead.size(), 2);
+const std::vector<uint8_t> longPws(longRead.size(), 10);
 const IntegratorConfig cfg(-100.0);  // disable zscore filtering
 
 Read MkRead(const string& seq, const SNR& snr, const string& mdl, const vector<uint8_t>& pw)
@@ -139,14 +139,14 @@ TEST(LoadModelsTest, Directory)
 //   disabled until S_P1C1Beta is fixed
 #if 0
     {
-        MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P1-C1/beta::Compiled");
+        MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P1-C1/beta::Marginal::Compiled");
         EXPECT_EQ(State::VALID,
-                  ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1/beta::Compiled", longPws),
+                  ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1/beta::Marginal::Compiled", longPws),
                                          StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
-        MonoMolecularIntegrator ai2(longTpl, cfg, snr, "S/P1-C1/beta::Marginal");
+        MonoMolecularIntegrator ai2(longTpl, cfg, snr, "S/P1-C1/beta::Marginal::FromFile");
         EXPECT_EQ(State::VALID,
-                  ai2.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1/beta::Marginal", longPws),
+                  ai2.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1/beta::Marginal::FromFile", longPws),
                                          StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
         EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
@@ -223,7 +223,7 @@ TEST(LoadModelsTest, ModelTiming)
         const auto etime = std::chrono::high_resolution_clock::now();
         const auto duration =
             std::chrono::duration_cast<std::chrono::microseconds>(etime - stime).count();
-        // std::cout << "avg duration: " << duration / nsamp << "us" << std::endl;
+        // std::cout << mdl << " avg duration: " << duration / nsamp << "us" << std::endl;
         EXPECT_LT(duration / nsamp, 1500);
     }
 }
