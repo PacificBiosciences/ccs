@@ -19,7 +19,7 @@ Fuse includes in-frame insertions with a certain distance to each other.
 Major deletions are being removed.
 
 ## Output
-*Juliet* provides a FASTA file per input. If no output prefix has been specified
+*Fuse* provides a FASTA file per input. If no output prefix has been specified
 via `-o`, the output files are called `inputPrefix.cons`, otherwise
 `outputPrefix_inputPrefix.cons`. There is no warning, existing files will be
 overwritten.
