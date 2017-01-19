@@ -27,7 +27,8 @@ Output: `m530526_cleric.html`
 
 ## Dependencies
 *Julietflow* currently depends on `juliet`, `cleric`, `fuse` all of which are
-part of unanimity, `bwa` or `blasr`, and `samtools`.
+part of unanimity, `blasr`, and `samtools`. Those are all part of the
+SMRT-bundle that is officially being provided by PacBio.
 
 ## Workflow
 <p align="center">
