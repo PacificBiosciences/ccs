@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ $1 == /* ]]; then input=$1; else input=$(pwd)/$1; fi
+reference=$2
+cores=8
+max=1
+ref_map=$reference
+if [ $# -ge 3 ]; then cores=$3; fi
+if [ $# -ge 4 ]; then max=$4; fi
+if [ $# -ge 5 ]; then ref_map=$5; fi
+
+run_directory=${input%/*}
+run_name=${input##*/}
+run_suffix=${run_name##*.}
+run_prefix=${run_name%.*}
+
+function blasrAlign()
+{
+    blasr $input $1 --placeGapConsistently --bam --out out.bam --nproc ${cores} &>> console
+    samtools sort -@${cores} -o ${run_prefix}.align.bam out.bam 2>> console
+    samtools index ${run_prefix}.align.bam &>> console
+    rm out.bam
+}
+function bwaAlign()
+{
+    samtools view $input | awk '{print ">"$1"\n"$10 }' > data.fasta
+    cp $1 ref.fasta
+    if [ ! -f ref.fasta.bwt ]; then bwa index ref.fasta &>> console; fi
+    bwa mem -t ${cores} ref.fasta data.fasta 2>> console | sed 's/M/=/g' | samtools view -F 0x800 -bS - 2>> console | samtools sort -@${cores} -o ${run_prefix}.align.bam 2>> console
+    samtools index ${run_prefix}.align.bam &>> console
+}
+function align()
+{
+    bwaAlign $@;
+}
+
+# Create provided directory tree and cd
+function mmkdir()
+{
+    mkdir -p $1;
+    cd $1
+}
+
+# Create temporary directory, under which all work will be performed
+wdir=`pwd`
+tdir=`mktemp -d` && cd $tdir
+#echo $tdir
+
+# Generally, never do work if file is already present.
+# Align against given reference and create consensus sequence
+mmkdir 0
+if [ ! -f $run_prefix.align.bam ]; then align $reference; fi
+if [ ! -f $run_prefix.cons ]; then cp $reference $run_prefix.cons; fi
+cd ..
+
+# Iteratively align against previous consensus
+for i in $(seq 1 $max); do
+    mmkdir ${i}
+    if [ ! -f $run_prefix.cons ]; then fuse ../$(($i-1))/$run_prefix.align.bam; fi
+    if [ ! -f $run_prefix.align.bam ]; then align $run_prefix.cons; fi
+    cd ..
+done
+
+# Re-map last alignment against original reference
+mmkdir merge
+cleric ../${max}/$run_prefix.align.bam ../${max}/$run_prefix.cons $ref_map
+juliet ${run_prefix}_cleric.bam -c '<HIV>'
+cp ${run_prefix}_cleric.html $wdir/
+
+# switch back to original root
+cd $wdir
+mkdir -p tmp
+mv $tdir/* tmp/
+rm -rf $tdir
