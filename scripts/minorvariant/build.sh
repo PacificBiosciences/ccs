@@ -16,4 +16,4 @@ export LD_LIBRARY_PATH=/mnt/software/h/hdf5-tools/1.8.16/centos-7/lib:`pwd`/arti
 set -u
 
 wdir=$(pwd)
-scripts/cram tests/cram/julietflow.t --xunit-file=${wdir}/juliet-cram.xml
+scripts/cram tests/cram/siv/julietflow.t --xunit-file=${wdir}/juliet-cram.xml
