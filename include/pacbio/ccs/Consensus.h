@@ -468,7 +468,7 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
 
                     try {
                         // setup the arrow integrator
-                        IntegratorConfig cfg(settings.MinZScore, 12.5);
+                        IntegratorConfig cfg(settings.MinZScore);
                         MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise,
                                                    chunk.Chemistry);
                         const size_t nReads = readKeys.size();
