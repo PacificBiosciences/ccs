@@ -1,0 +1,2 @@
+tests/data/julietflow/flea99_97_1.bam filter=lfs diff=lfs merge=lfs -text
+tests/data/julietflow/hxb2.fasta filter=lfs diff=lfs merge=lfs -text

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [[ $1 == /* ]]; then input=$1; else input=$(pwd)/$1; fi
+if [[ $2 == /* ]]; then reference=$2; else reference=$(pwd)/$2; fi
 reference=$2
 cores=8
 max=1
@@ -16,7 +17,7 @@ run_prefix=${run_name%.*}
 
 function blasrAlign()
 {
-    blasr $input $1 --placeGapConsistently --bam --out out.bam --nproc ${cores} --scoreMatrix "-1 4 4 4 6 4 -1 4 4 6 4 4 -1 4 6 4 4 4 -1 6 6 6 6 6 6" &>> console
+    blasr $input $1 --placeGapConsistently --bam --out out.bam --nproc ${cores} --scoreMatrix "-1 4 4 4 6 4 -1 4 4 6 4 4 -1 4 6 4 4 4 -1 6 6 6 6 6 6" --maxMatch 15 &>> console
     samtools sort -@${cores} -o ${run_prefix}.align.bam out.bam 2>> console
     samtools index ${run_prefix}.align.bam &>> console
     rm out.bam
@@ -69,6 +70,4 @@ cp ${run_prefix}_cleric.html $wdir/
 
 # switch back to original root
 cd $wdir
-mkdir -p tmp
-mv $tdir/* tmp/
 rm -rf $tdir
