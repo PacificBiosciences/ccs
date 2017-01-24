@@ -15,6 +15,6 @@ Run ccscheck, check output:
 
   $ /pbi/dept/consensus/ccscheck/bin/ccscheck out.bam stats /pbi/dept/consensus/references/lambdaNEB.fasta
   $ sort -t, -n -k1,1 -k2,2 stats/zmws.csv > zmws.sorted.csv
-  $ diff -NrU1 zmws.sorted.csv /pbi/dept/consensus/testdata/unanimity-nightly/big.sorted.to187412.csv.gz
+  $ zdiff -NrU1 zmws.sorted.csv /pbi/dept/consensus/testdata/unanimity-nightly/big.sorted.to187412.csv.gz
 
 TODO: copy back to the "lastrun" dir
