@@ -158,13 +158,17 @@ void JulietWorkflow::Run(const JulietSettings& settings)
             Data::MSA msa(reads);
             double sub = 0;
             double del = 0;
+            int columnCount = 0;
             for (const auto& column : msa) {
-                del += column.Frequency(4);
-                sub += 1.0 - column.Frequency(4) - column.Frequency(column.MaxElement());
+                if (column.Coverage() > 100) {
+                    del += column.Frequency(4);
+                    sub += 1.0 - column.Frequency(4) - column.Frequency(column.MaxElement());
+                    ++columnCount;
+                }
             }
             std::cout << inputFile << std::endl;
-            std::cout << "sub: " << (sub / msa.counts.size()) << std::endl;
-            std::cout << "del: " << (del / msa.counts.size()) << std::endl;
+            std::cout << "sub: " << (sub / columnCount) << std::endl;
+            std::cout << "del: " << (del / columnCount) << std::endl;
         }
     }
 }
