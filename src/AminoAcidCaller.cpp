@@ -59,8 +59,8 @@
 namespace PacBio {
 namespace Juliet {
 AminoAcidCaller::AminoAcidCaller(const std::vector<Data::ArrayRead>& reads,
-                                 const ErrorModel& errorModel, const TargetConfig& targetConfig)
-    : errorModel_(errorModel), targetConfig_(targetConfig)
+                                 const ErrorEstimates& error, const TargetConfig& targetConfig)
+    : error_(error), targetConfig_(targetConfig)
 {
     for (const auto& r : reads) {
         beginPos_ = std::min(beginPos_, r.ReferenceStart());
@@ -170,7 +170,6 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         genes.emplace_back(tg);
     }
 
-    const ErrorEstimates error(errorModel_);
     VariantGene curVariantGene;
     std::string geneName;
     int geneOffset = 0;
@@ -185,15 +184,15 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         geneOffset = begin;
     };
 
-    const auto CodonProbability = [&error](const std::string& a, const std::string& b) {
+    const auto CodonProbability = [this](const std::string& a, const std::string& b) {
         double p = 1;
         for (int i = 0; i < 3; ++i) {
             if (a[i] == '-' || b[i] == '-')
-                p *= error.deletion;
+                p *= error_.deletion;
             else if (a[i] != b[i])
-                p *= error.substitution;
+                p *= error_.substitution;
             else
-                p *= error.match;
+                p *= error_.match;
         }
         return p;
     };

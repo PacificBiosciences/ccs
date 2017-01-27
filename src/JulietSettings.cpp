@@ -77,12 +77,19 @@ const PlainOption Mode{
     "Execution mode: amino, base, phasing, or error",
     CLI::Option::StringType("amino")
 };
-const PlainOption ErrorModel{
-    "Error model",
-    { "error", "e" },
-    "Error model",
-    "Error model: SP1C1_RQ95 or SP1C1_RQ99",
-    CLI::Option::StringType("SP1C1_RQ99")
+const PlainOption SubstitutionRate{
+    "SubstitutionRate",
+    { "sub", "s" },
+    "SubstitutionRate",
+    "Substitution Rate, specify to override the learned rate",
+    CLI::Option::FloatType(0)
+};
+const PlainOption DeletionRate{
+    "DeletionRate",
+    { "del", "d" },
+    "DeletionRate",
+    "Deletion Rate, specify to override the learned rate",
+    CLI::Option::FloatType(0)
 };
 const PlainOption TargetConfig{
     "Target config",
@@ -100,7 +107,8 @@ JulietSettings::JulietSettings(const PacBio::CLI::Results& options)
     , TargetConfigUser(std::forward<std::string>(options[OptionNames::TargetConfig]))
     , DRMOnly(options[OptionNames::DRMOnly])
     , Mode(AnalysisModeFromString(options[OptionNames::Mode]))
-    , SelectedErrorModel(ErrorModelFromString(options[OptionNames::ErrorModel]))
+    , SubstitutionRate(options[OptionNames::SubstitutionRate])
+    , DeletionRate(options[OptionNames::DeletionRate])
 {
     SplitRegion(options[OptionNames::Region], &RegionStart, &RegionEnd);
 }
@@ -164,20 +172,22 @@ PacBio::CLI::Interface JulietSettings::CreateCLI()
     {
         OptionNames::Output,
         OptionNames::Mode,
-        OptionNames::ErrorModel,
         OptionNames::Region,
         OptionNames::DRMOnly,
-        OptionNames::TargetConfig
+        OptionNames::TargetConfig,
+        OptionNames::SubstitutionRate,
+        OptionNames::DeletionRate
     });
 
     const std::string id = "uny.tasks.juliet";
     Task tcTask(id);
     tcTask.AddOption(OptionNames::Output);
     tcTask.AddOption(OptionNames::Mode);
-    tcTask.AddOption(OptionNames::ErrorModel);
     tcTask.AddOption(OptionNames::Region);
     tcTask.AddOption(OptionNames::DRMOnly);
     tcTask.AddOption(OptionNames::TargetConfig);
+    tcTask.AddOption(OptionNames::SubstitutionRate);
+    tcTask.AddOption(OptionNames::DeletionRate);
     tcTask.NumProcessors(Task::MAX_NPROC);
 
     tcTask.InputFileTypes({

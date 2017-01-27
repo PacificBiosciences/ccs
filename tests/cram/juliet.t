@@ -1,5 +1,5 @@
 Make sure that the json output stays until we make adjustments to the algo or workflow
-  $ $__PBTEST_JULIET_EXE $TESTDIR/../data/juliet_hiv_3000_97-1-1-1.align.bam -e SP1C1_RQ99 -c "<HIV>" 2> $CRAMTMP/julietPerformance
+  $ $__PBTEST_JULIET_EXE $TESTDIR/../data/juliet_hiv_3000_97-1-1-1.align.bam -s 0.0007421148 -d 0.006179274 -c "<HIV>" 2> $CRAMTMP/julietPerformance
 
 Keep true positive rate of 1
   $ cut -f 1 -d' ' $CRAMTMP/julietPerformance

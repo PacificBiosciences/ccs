@@ -41,28 +41,24 @@
 namespace PacBio {
 namespace Juliet {
 
-ErrorEstimates::ErrorEstimates(const std::string& s) { SetFromModel(ErrorModelFromString(s)); }
-
-ErrorEstimates::ErrorEstimates(const ErrorModel& e) { SetFromModel(e); }
-
-void ErrorEstimates::SetFromModel(const ErrorModel& e)
+ErrorEstimates::ErrorEstimates(const std::string& chemistry)
 {
-    switch (e) {
-        case ErrorModel::SP1C1_RQ99:
-            match = 0.9930786;
-            substitution = 0.0007421148 / 3.0;  // 0.0006101725 + 3*4.398076e-05
-            deletion = 0.006179274;             // 0.003515625 + 3*0.0008878829
-            insertion = 0;
-            break;
-        case ErrorModel::SP1C1_RQ95:
-            match = 0.9877258;
-            substitution = 0.00216356 / 3.0;  // 0.001664215 + 3*0.0001664483
-            deletion = 0.01011063;            // 0.00646245 + 3*0.001216059
-            insertion = 0;
-            break;
-        default:
-            throw std::runtime_error("Unknown error model");
+    if (chemistry == "S/P1-C1") {
+        match = 0.9930786;
+        substitution = 0.0007421148 / 3.0;  // 0.0006101725 + 3*4.398076e-05
+        deletion = 0.006179274;             // 0.003515625 + 3*0.0008878829
+        insertion = 0;
+    } else {
+        throw std::runtime_error("Unknown error model");
     }
+}
+
+ErrorEstimates::ErrorEstimates(const double substitutionRate, const double deletionRate)
+    : match(1 - substitutionRate - deletionRate)
+    , substitution(substitutionRate / 3.0)
+    , deletion(deletionRate)
+    , insertion(0)
+{
 }
 }
 }
