@@ -43,7 +43,7 @@ namespace Juliet {
 
 ErrorEstimates::ErrorEstimates(const std::string& chemistry)
 {
-    if (chemistry == "S/P1-C1") {
+    if (chemistry == "S/P1-C1" || chemistry == "S/P1-C1.2") {
         match = 0.9930786;
         substitution = 0.0007421148 / 3.0;  // 0.0006101725 + 3*4.398076e-05
         deletion = 0.006179274;             // 0.003515625 + 3*0.0008878829
@@ -54,7 +54,7 @@ ErrorEstimates::ErrorEstimates(const std::string& chemistry)
         deletion = 0.003791086;
         insertion = 0;
     } else {
-        throw std::runtime_error("Unknown error model");
+        throw std::runtime_error("Unknown error model " + chemistry);
     }
 }
 
