@@ -210,7 +210,9 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         const auto curCodon = codonToAmino_.at(codon_counts.first);
         bool predictor = (i == 3191 && curCodon == 'Y' && "TAC" == codon_counts.first) ||
                          (i == 2741 && curCodon == 'R' && "AGA" == codon_counts.first) ||
-                         (i == 2669 && curCodon == 'L' && "TTG" == codon_counts.first);
+                         (i == 2669 && curCodon == 'L' && "TTG" == codon_counts.first) ||
+                         (i == 3089 && curCodon == 'C' && "TGT" == codon_counts.first) ||
+                         (i == 3116 && curCodon == 'A' && "GCA" == codon_counts.first);
         bool ignored =
             (geneName == "Protease" && codonPos == 3 && curCodon == 'I') ||
             (geneName == "Protease" && codonPos == 37 && curCodon == 'N') ||
@@ -369,12 +371,13 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         }
     }
 #ifdef JULIET_INHOUSE_PERFORMANCE
-    std::cerr << (truePositives / 3.0);
-    std::cerr << " " << (falsePositives / (numberOfTests - 3));
+    std::cerr << (truePositives / 5.0);
+    std::cerr << " " << (falsePositives / (numberOfTests - 5));
     std::cerr << " " << numberOfTests;
     std::cerr << " " << ((truePositives + trueNegative) /
-                         (truePositives + falsePositives + falseNegative + trueNegative))
-              << std::endl;
+                         (truePositives + falsePositives + falseNegative + trueNegative));
+    std::cerr << " " << falsePositives;
+    std::cerr << std::endl;
 #endif
     if (!curVariantGene.relPositionToVariant.empty())
         variantGenes_.push_back(std::move(curVariantGene));
