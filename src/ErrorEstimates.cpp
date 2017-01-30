@@ -49,7 +49,7 @@ ErrorEstimates::ErrorEstimates(const std::string& chemistry)
         deletion = 0.006179274;             // 0.003515625 + 3*0.0008878829
         insertion = 0;
     } else if (chemistry == "S/P2-C2") {
-        match = 0.9930786;
+        match = 0.9956844883;
         substitution = 0.0005244257 / 3.0;
         deletion = 0.003791086;
         insertion = 0;
