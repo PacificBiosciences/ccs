@@ -54,6 +54,7 @@
 #include <pacbio/juliet/ResistanceCaller.h>
 #include <pacbio/statistics/Fisher.h>
 #include <pacbio/statistics/Tests.h>
+#include <pbbam/BamReader.h>
 #include <pbbam/BamRecord.h>
 #include <pbcopper/json/JSON.h>
 
@@ -72,6 +73,7 @@ void JulietWorkflow::Run(const JulietSettings& settings)
 {
     auto globalOutputPrefix = settings.OutputPrefix;
     globalOutputPrefix += globalOutputPrefix.empty() ? "" : "/";
+
     if (settings.Mode == AnalysisMode::BASE) {
         std::unordered_map<std::string, JSON::Json> jsonResults;
         for (const auto& inputFile : settings.InputFiles) {
@@ -111,12 +113,28 @@ void JulietWorkflow::Run(const JulietSettings& settings)
         for (const auto& inputFile : settings.InputFiles) {
             const auto outputPrefix = globalOutputPrefix + IO::FilePrefix(inputFile);
 
+            ErrorEstimates error;
+            if (settings.SubstitutionRate != 0.0 && settings.DeletionRate != 0.0) {
+                error = ErrorEstimates(settings.SubstitutionRate, settings.DeletionRate);
+            } else {
+                std::string chemistry;
+                const BAM::BamReader bamReader(inputFile);
+                const auto readGroups = bamReader.Header().ReadGroups();
+                for (const auto& rg : readGroups) {
+                    if (chemistry.empty())
+                        chemistry = rg.SequencingChemistry();
+                    else if (chemistry != rg.SequencingChemistry())
+                        throw std::runtime_error("Mixed chemistries are not allowed");
+                }
+                error = ErrorEstimates(chemistry);
+            }
+
             // Convert BamRecords to unrolled ArrayReads
             std::vector<Data::ArrayRead> reads;
             reads = IO::ParseBam(inputFile, settings.RegionStart, settings.RegionEnd);
 
             // Call variants
-            AminoAcidCaller aac(reads, settings.SelectedErrorModel, settings.TargetConfigUser);
+            AminoAcidCaller aac(reads, error, settings.TargetConfigUser);
             const auto json = aac.JSON();
 
             std::ofstream jsonStream(outputPrefix + ".json");
@@ -158,13 +176,17 @@ void JulietWorkflow::Run(const JulietSettings& settings)
             Data::MSA msa(reads);
             double sub = 0;
             double del = 0;
+            int columnCount = 0;
             for (const auto& column : msa) {
-                del += column.Frequency(4);
-                sub += 1.0 - column.Frequency(4) - column.Frequency(column.MaxElement());
+                if (column.Coverage() > 100) {
+                    del += column.Frequency(4);
+                    sub += 1.0 - column.Frequency(4) - column.Frequency(column.MaxElement());
+                    ++columnCount;
+                }
             }
             std::cout << inputFile << std::endl;
-            std::cout << "sub: " << (sub / msa.counts.size()) << std::endl;
-            std::cout << "del: " << (del / msa.counts.size()) << std::endl;
+            std::cout << "sub: " << (sub / columnCount) << std::endl;
+            std::cout << "del: " << (del / columnCount) << std::endl;
         }
     }
 }

@@ -130,7 +130,7 @@ struct VariantGene
 class AminoAcidCaller
 {
 public:
-    AminoAcidCaller(const std::vector<Data::ArrayRead>& reads, const ErrorModel& errorModel,
+    AminoAcidCaller(const std::vector<Data::ArrayRead>& reads, const ErrorEstimates& error,
                     const TargetConfig& targetConfig);
 
 public:
@@ -157,7 +157,7 @@ private:
     int endPos_ = 0;
     std::vector<std::vector<char>> matrix_;
     std::vector<VariantGene> variantGenes_;
-    const ErrorModel errorModel_;
+    const ErrorEstimates error_;
     const TargetConfig targetConfig_;
 
     static const std::unordered_map<std::string, char> codonToAmino_;

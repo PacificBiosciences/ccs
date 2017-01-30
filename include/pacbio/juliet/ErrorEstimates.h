@@ -38,47 +38,32 @@
 #pragma once
 
 #include <algorithm>
+#include <iostream>
 #include <locale>
 #include <stdexcept>
 #include <string>
 
 namespace PacBio {
 namespace Juliet {
-
-enum class ErrorModel : uint8_t
-{
-    SP1C1_RQ95 = 0,
-    SP1C1_RQ99
-};
-
-inline ErrorModel ErrorModelFromString(const std::string& input)
-{
-    ErrorModel e;
-    std::string s = input;
-    std::transform(s.begin(), s.end(), s.begin(), ::toupper);
-    if (s == "SP1C1_RQ95")
-        e = ErrorModel::SP1C1_RQ95;
-    else if (s == "SP1C1_RQ99")
-        e = ErrorModel::SP1C1_RQ99;
-    else
-        throw std::runtime_error("Unknown error model string");
-    return e;
-}
-
 /// Contains CCS error estimates
 class ErrorEstimates
 {
 public:
-    ErrorEstimates(const std::string& s);
-    ErrorEstimates(const ErrorModel& e);
+    ErrorEstimates() = default;
+    ErrorEstimates(const std::string& chemistry);
+    ErrorEstimates(const double substitutionRate, const double deletionRate);
 
-    double match;
-    double substitution;
-    double deletion;
-    double insertion;
+    double match = -1;
+    double substitution = -1;
+    double deletion = -1;
+    double insertion = -1;
 
-private:
-    void SetFromModel(const ErrorModel& e);
+    friend std::ostream& operator<<(std::ostream& stream, const ErrorEstimates& r)
+    {
+        stream << "match:" << r.match << "\tsubstitution:" << r.substitution
+               << "\tdeletion:" << r.deletion << "\tinsertion:" << r.insertion;
+        return stream;
+    }
 };
 }
 }  // ::PacBio::Juliet

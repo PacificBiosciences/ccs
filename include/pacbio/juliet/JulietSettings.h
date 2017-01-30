@@ -42,7 +42,6 @@
 #include <vector>
 
 #include <pacbio/juliet/AnalysisMode.h>
-#include <pacbio/juliet/ErrorEstimates.h>
 #include <pacbio/juliet/TargetConfig.h>
 #include <pbcopper/cli/CLI.h>
 
@@ -61,7 +60,8 @@ struct JulietSettings
     bool DRMOnly;
 
     AnalysisMode Mode;
-    ErrorModel SelectedErrorModel;
+    double SubstitutionRate;
+    double DeletionRate;
 
     /// Parses the provided CLI::Results and retrieves a defined set of options.
     JulietSettings(const PacBio::CLI::Results& options);

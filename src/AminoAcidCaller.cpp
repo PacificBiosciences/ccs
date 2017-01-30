@@ -59,8 +59,8 @@
 namespace PacBio {
 namespace Juliet {
 AminoAcidCaller::AminoAcidCaller(const std::vector<Data::ArrayRead>& reads,
-                                 const ErrorModel& errorModel, const TargetConfig& targetConfig)
-    : errorModel_(errorModel), targetConfig_(targetConfig)
+                                 const ErrorEstimates& error, const TargetConfig& targetConfig)
+    : error_(error), targetConfig_(targetConfig)
 {
     for (const auto& r : reads) {
         beginPos_ = std::min(beginPos_, r.ReferenceStart());
@@ -170,7 +170,6 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         genes.emplace_back(tg);
     }
 
-    const ErrorEstimates error(errorModel_);
     VariantGene curVariantGene;
     std::string geneName;
     int geneOffset = 0;
@@ -185,15 +184,15 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         geneOffset = begin;
     };
 
-    const auto CodonProbability = [&error](const std::string& a, const std::string& b) {
+    const auto CodonProbability = [this](const std::string& a, const std::string& b) {
         double p = 1;
         for (int i = 0; i < 3; ++i) {
             if (a[i] == '-' || b[i] == '-')
-                p *= error.deletion;
+                p *= error_.deletion;
             else if (a[i] != b[i])
-                p *= error.substitution;
+                p *= error_.substitution;
             else
-                p *= error.match;
+                p *= error_.match;
         }
         return p;
     };
@@ -211,7 +210,9 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         const auto curCodon = codonToAmino_.at(codon_counts.first);
         bool predictor = (i == 3191 && curCodon == 'Y' && "TAC" == codon_counts.first) ||
                          (i == 2741 && curCodon == 'R' && "AGA" == codon_counts.first) ||
-                         (i == 2669 && curCodon == 'L' && "TTG" == codon_counts.first);
+                         (i == 2669 && curCodon == 'L' && "TTG" == codon_counts.first) ||
+                         (i == 3089 && curCodon == 'C' && "TGT" == codon_counts.first) ||
+                         (i == 3116 && curCodon == 'A' && "GCA" == codon_counts.first);
         bool ignored =
             (geneName == "Protease" && codonPos == 3 && curCodon == 'I') ||
             (geneName == "Protease" && codonPos == 37 && curCodon == 'N') ||
@@ -370,12 +371,13 @@ void AminoAcidCaller::CallVariants(const std::vector<Data::ArrayRead>& reads)
         }
     }
 #ifdef JULIET_INHOUSE_PERFORMANCE
-    std::cerr << (truePositives / 3.0);
-    std::cerr << " " << (falsePositives / (numberOfTests - 3));
+    std::cerr << (truePositives / 5.0);
+    std::cerr << " " << (falsePositives / (numberOfTests - 5));
     std::cerr << " " << numberOfTests;
     std::cerr << " " << ((truePositives + trueNegative) /
-                         (truePositives + falsePositives + falseNegative + trueNegative))
-              << std::endl;
+                         (truePositives + falsePositives + falseNegative + trueNegative));
+    std::cerr << " " << falsePositives;
+    std::cerr << std::endl;
 #endif
     if (!curVariantGene.relPositionToVariant.empty())
         variantGenes_.push_back(std::move(curVariantGene));
