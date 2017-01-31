@@ -73,8 +73,7 @@ namespace CCS {
 ///
 /// \return Seeds collection containing all hits
 ///
-inline PacBio::Align::Seeds FindSeeds(const size_t qGramSize,
-                                      const std::string& seq1,
+inline PacBio::Align::Seeds FindSeeds(const size_t qGramSize, const std::string& seq1,
                                       const std::string& seq2)
 {
     return PacBio::Align::FindSeeds(qGramSize, seq1, seq2, true);
@@ -93,10 +92,9 @@ inline PacBio::Align::Seeds FindSeeds(const size_t qGramSize,
 ///
 /// \return map containing Seeds for each referenceIndex with a hit
 ///
-inline std::map<size_t, PacBio::Align::Seeds> FindSeeds(
-        const PacBio::QGram::Index& index,
-        const std::string& seq,
-        const boost::optional<size_t> qIdx)
+inline std::map<size_t, PacBio::Align::Seeds> FindSeeds(const PacBio::QGram::Index& index,
+                                                        const std::string& seq,
+                                                        const boost::optional<size_t> qIdx)
 {
     return PacBio::Align::FindSeeds(index, seq, qIdx, true);
 }
@@ -113,9 +111,8 @@ inline std::map<size_t, PacBio::Align::Seeds> FindSeeds(
 ///
 /// \return map containing Seeds for each referenceIndex with a hit
 ///
-inline std::map<size_t, PacBio::Align::Seeds> FindSeeds(
-        const PacBio::QGram::Index& index,
-        const std::string& seq)
+inline std::map<size_t, PacBio::Align::Seeds> FindSeeds(const PacBio::QGram::Index& index,
+                                                        const std::string& seq)
 {
     return PacBio::Align::FindSeeds(index, seq, boost::none, true);
 }
@@ -214,11 +211,10 @@ inline std::vector<PacBio::Align::Seed> SparseAlignSeeds(const size_t qGramSize,
                                                          const std::string& seq1,
                                                          const std::string& seq2)
 {
-    const auto config = PacBio::Align::ChainSeedsConfig{ UINT_MAX, 0, 3, 1, -1, -1, INT_MAX };
-    const auto seeds  = PacBio::Align::FindSeeds(qGramSize, seq1, seq2, true);
+    const auto config = PacBio::Align::ChainSeedsConfig{UINT_MAX, 0, 3, 1, -1, -1, INT_MAX};
+    const auto seeds = PacBio::Align::FindSeeds(qGramSize, seq1, seq2, true);
     const auto chains = PacBio::Align::ChainSeeds(seeds, config);
-    if (chains.empty())
-        return std::vector<PacBio::Align::Seed>{};
+    if (chains.empty()) return std::vector<PacBio::Align::Seed>{};
     return chains[0];
 }
 

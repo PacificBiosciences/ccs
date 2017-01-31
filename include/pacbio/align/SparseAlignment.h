@@ -78,7 +78,7 @@ namespace {
 //    const TAlignConfig& config)
 //{
 
-    // TODO (dbarnett) : remove this? Doesn't look like it's used anywhere
+// TODO (dbarnett) : remove this? Doesn't look like it's used anywhere
 
 //    using namespace seqan;
 
@@ -104,15 +104,12 @@ namespace {
 ///
 /// \returns   The SDP alignment as a vector of Seeds
 ///
-inline std::vector<Seed> SparseAlignSeeds(const size_t qGramSize,
-                                          const std::string& seq1,
-                                          const std::string& seq2,
-                                          const bool filterHomopolymers)
+inline std::vector<Seed> SparseAlignSeeds(const size_t qGramSize, const std::string& seq1,
+                                          const std::string& seq2, const bool filterHomopolymers)
 {
     const auto seeds = FindSeeds(qGramSize, seq1, seq2, filterHomopolymers);
     const auto chains = ChainSeeds(seeds, ChainSeedsConfig{});
-    if (chains.empty())
-        return std::vector<Seed>{};
+    if (chains.empty()) return std::vector<Seed>{};
     return chains[0];
 }
 
@@ -126,8 +123,7 @@ inline std::vector<Seed> SparseAlignSeeds(const size_t qGramSize,
 ///
 /// \returns   The SDP alignment as a vector of Seeds
 ///
-inline std::vector<Seed> SparseAlignSeeds(const size_t qGramSize,
-                                          const std::string& seq1,
+inline std::vector<Seed> SparseAlignSeeds(const size_t qGramSize, const std::string& seq1,
                                           const std::string& seq2)
 {
 #ifdef FILTERHOMOPOLYMERS
@@ -157,8 +153,7 @@ inline std::pair<size_t, std::vector<Seed>> BestSparseAlign(const std::string& s
     const auto fwd = SparseAlignSeeds(10, seq1, seq2, filterHomopolymers);
     const auto rev = SparseAlignSeeds(10, seq1, seq2rc, filterHomopolymers);
 
-    if (fwd.size() > rev.size())
-        return std::make_pair(0, fwd);
+    if (fwd.size() > rev.size()) return std::make_pair(0, fwd);
     return std::make_pair(1, rev);
 }
 

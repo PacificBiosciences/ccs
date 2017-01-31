@@ -151,9 +151,7 @@ inline bool DiagonalCompare(const Seed& lhs, const Seed& rhs)
 ///
 /// \return  long  The score associated with the linkage
 ///
-inline long LinkScore(const Seed& lhs,
-                      const Seed& rhs,
-                      const ChainSeedsConfig config)
+inline long LinkScore(const Seed& lhs, const Seed& rhs, const ChainSeedsConfig config)
 {
     const auto lH = static_cast<long>(lhs.BeginPositionH());
     const auto lV = static_cast<long>(lhs.BeginPositionV());
@@ -197,10 +195,7 @@ struct SDPHit : public Seed
 {
     size_t Index;
 
-    SDPHit(const Seed& seed, const size_t index)
-        : Seed(seed), Index(index)
-    {
-    }
+    SDPHit(const Seed& seed, const size_t index) : Seed(seed), Index(index) {}
 
     ///
     ///
@@ -322,8 +317,7 @@ public:
 /// \param  seedSet  The collection of seeds to be chained
 /// \param  seeds    The vector of SDPHit objects that will actually be chained
 /// \param  scores   The vector of scores to initialize with default per-seed scores
-inline void InitializeSeedsAndScores(const Seeds& seedSet,
-                                     std::vector<SDPHit>* seeds,
+inline void InitializeSeedsAndScores(const Seeds& seedSet, std::vector<SDPHit>* seeds,
                                      std::vector<long>* scores)
 {
     size_t i = 0;
@@ -500,8 +494,8 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
 ///
 /// \return  A vector of Seed vectors containing locally chained seeds.
 ///
-inline std::vector<std::vector<Seed>>
-ChainSeeds(const Seeds& seedSet, const ChainSeedsConfig& config)
+inline std::vector<std::vector<Seed>> ChainSeeds(const Seeds& seedSet,
+                                                 const ChainSeedsConfig& config)
 {
     using namespace seqan;
     using namespace std;
@@ -556,8 +550,7 @@ ChainSeeds(const Seeds& seedSet, const ChainSeedsConfig& config)
 /////
 ///// \return A vector of Seed sets containing locally chained seeds.
 /////
-inline std::vector<Seeds>
-ChainedSeedSets(const Seeds& seedSet, const ChainSeedsConfig& config)
+inline std::vector<Seeds> ChainedSeedSets(const Seeds& seedSet, const ChainSeedsConfig& config)
 {
     using namespace seqan;
     using namespace std;
@@ -608,8 +601,8 @@ ChainedSeedSets(const Seeds& seedSet, const ChainSeedsConfig& config)
 ///
 /// \return  A vector of SeedSets containing locally chained seeds.
 ///
-inline std::vector<std::pair<size_t, Seeds>>
-ChainSeeds(const std::map<size_t, Seeds> seedSets, const ChainSeedsConfig config)
+inline std::vector<std::pair<size_t, Seeds>> ChainSeeds(const std::map<size_t, Seeds> seedSets,
+                                                        const ChainSeedsConfig config)
 {
     using namespace seqan;
     using namespace std;
