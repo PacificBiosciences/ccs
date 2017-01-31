@@ -370,9 +370,7 @@ private:  // non-modifying methods
         // Pre-calculate the size of each chunk
         size_t chunkSize = seqan::length(sequence) / chunks;
 
-        const PacBio::Align::LocalAlignConfig alignConfig {
-            2, 5, 3, 3
-        };
+        const PacBio::Align::LocalAlignConfig alignConfig{2, 5, 3, 3};
 
         // Iterate over each chunk, aligning it to all possible parents
         for (size_t i = 0; i < chunks; ++i) {
