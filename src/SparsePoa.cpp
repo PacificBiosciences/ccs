@@ -65,7 +65,7 @@ typedef PoaGraph::Vertex Vertex;
 SdpAnchorVector SdpRangeFinder::FindAnchors(const std::string& consensusSequence,
                                             const std::string& readSequence) const
 {
-    return CCS::SparseAlign<6>(consensusSequence, readSequence);
+    return CCS::SparseAlign(6, consensusSequence, readSequence);
 }
 
 SparsePoa::SparsePoa()

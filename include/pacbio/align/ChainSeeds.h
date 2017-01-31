@@ -47,6 +47,8 @@
 #include <seqan/seeds.h>
 #include <seqan/sequence.h>
 
+#include <pbcopper/align/Seeds.h>
+
 #include <pacbio/align/ChainSeedsConfig.h>
 
 namespace PacBio {
@@ -66,10 +68,11 @@ namespace {
 ///
 /// \return  long  The distance from the seed's upper-left corner and
 ///                the diagonal axis of the matrix.
-long Diagonal(const seqan::Seed<seqan::Simple>& seed)
+///
+inline long Diagonal(const Seed& seed)
 {
-    size_t v = beginPositionV(seed);
-    size_t h = beginPositionH(seed);
+    const auto v = seed.BeginPositionV();
+    const auto h = seed.BeginPositionH();
 
     if (v > h) return -static_cast<long>(v - h);
 
@@ -83,13 +86,15 @@ long Diagonal(const seqan::Seed<seqan::Simple>& seed)
 /// \param  rhs  The right-hand side seed to compare
 ///
 /// \return  bool  Whether the left seed preceeds the right seed
-bool HVCompare(const seqan::Seed<seqan::Simple>& lhs, const seqan::Seed<seqan::Simple>& rhs)
+///
+inline bool HVCompare(const Seed& lhs, const Seed& rhs)
 {
-    unsigned leftH = beginPositionH(lhs), rightH = beginPositionH(rhs);
+    const auto leftH = lhs.BeginPositionH();
+    const auto rightH = rhs.BeginPositionH();
 
     if (leftH < rightH) return true;
 
-    if (leftH == rightH) return endPositionV(lhs) < endPositionV(rhs);
+    if (leftH == rightH) return lhs.EndPositionV() < rhs.EndPositionV();
 
     return false;
 }
@@ -101,13 +106,15 @@ bool HVCompare(const seqan::Seed<seqan::Simple>& lhs, const seqan::Seed<seqan::S
 /// \param  rhs  The right-hand side seed to compare
 ///
 /// \return  bool  Whether the left seed preceeds the right seed
-bool VHCompare(const seqan::Seed<seqan::Simple>& lhs, const seqan::Seed<seqan::Simple>& rhs)
+///
+inline bool VHCompare(const Seed& lhs, const Seed& rhs)
 {
-    unsigned leftV = beginPositionV(lhs), rightV = beginPositionV(rhs);
+    const auto leftV = lhs.BeginPositionV();
+    const auto rightV = rhs.BeginPositionV();
 
     if (leftV < rightV) return true;
 
-    if (leftV == rightV) return endPositionH(lhs) < endPositionH(rhs);
+    if (leftV == rightV) return lhs.EndPositionH() < rhs.EndPositionH();
 
     return false;
 }
@@ -121,11 +128,13 @@ bool VHCompare(const seqan::Seed<seqan::Simple>& lhs, const seqan::Seed<seqan::S
 /// \param  rhs  The right-hand seed to compare
 ///
 /// \return  bool  Whether the left seed preceeds the right seed
-bool DiagonalCompare(const seqan::Seed<seqan::Simple>& lhs, const seqan::Seed<seqan::Simple>& rhs)
+///
+inline bool DiagonalCompare(const Seed& lhs, const Seed& rhs)
 {
-    int leftD = beginDiagonal(lhs), rightD = beginDiagonal(rhs);
+    const auto leftD = lhs.BeginDiagonal();
+    const auto rightD = rhs.BeginDiagonal();
 
-    if (leftD == rightD) return beginPositionH(lhs) < beginPositionH(rhs);
+    if (leftD == rightD) return lhs.BeginPositionH() < rhs.BeginPositionH();
 
     return leftD < rightD;
 }
@@ -136,45 +145,38 @@ bool DiagonalCompare(const seqan::Seed<seqan::Simple>& lhs, const seqan::Seed<se
 ///     (C) The size of the difference between their diagonals
 /// each with it's own weight(s).
 ///
-/// \param  lhs  The left-hand side seed to link
-/// \param  rhs  The right-hand side seed to link
-/// \param  matchScore  The reward for each base within the seeds.
-///                     (Value should be > 0).
-/// \param  mismatchScore  The penalty for each base between the seeds.
-///                        (Value should be <= 0)
-/// \param  insertionScore  The penalty for each difference in between the
-///                         diagonals, if Left > Right. (Value should be < 0)
-/// \param  deletionScore  The penalty for each difference in between the
-///                        diagonals, if Right > Left. (Value should be < 0)
+/// \param  lhs     The left-hand side seed to link
+/// \param  rhs     The right-hand side seed to link
+/// \param  config  Provides scoring values to use when chaining
 ///
 /// \return  long  The score associated with the linkage
-long LinkScore(const seqan::Seed<seqan::Simple>& lhs, const seqan::Seed<seqan::Simple>& rhs,
-               const ChainSeedsConfig config)
+///
+inline long LinkScore(const Seed& lhs,
+                      const Seed& rhs,
+                      const ChainSeedsConfig config)
 {
-    using namespace std;
-
-    long lH = static_cast<long>(beginPositionH(lhs));
-    long lV = static_cast<long>(beginPositionV(lhs));
-    long rH = static_cast<long>(beginPositionH(rhs));
-    long rV = static_cast<long>(beginPositionV(rhs));
-    long k = min(static_cast<long>(seedSize(lhs)), static_cast<long>(seedSize(rhs)));
-    long fwd = min(lH - rH, lV - rV);
+    const auto lH = static_cast<long>(lhs.BeginPositionH());
+    const auto lV = static_cast<long>(lhs.BeginPositionV());
+    const auto rH = static_cast<long>(rhs.BeginPositionH());
+    const auto rV = static_cast<long>(rhs.BeginPositionV());
+    const auto k = std::min(static_cast<long>(lhs.Size()), static_cast<long>(rhs.Size()));
+    const auto fwd = std::min(lH - rH, lV - rV);
 
     // matchReward = # of anchor bases * matchScore;
-    long matches = k - max(0l, k - fwd);
-    long matchReward = matches * config.matchScore;
+    const auto matches = k - std::max(0l, k - fwd);
+    const auto matchReward = matches * config.matchScore;
 
     // nonMatchPenalty = # of non-anchor, on-diagonal bases * nonMatchPenalty
-    long nonMatches = fwd - matches;
-    long nonMatchScorePenalty = nonMatches * config.nonMatchPenalty;
+    const auto nonMatches = fwd - matches;
+    const auto nonMatchScorePenalty = nonMatches * config.nonMatchPenalty;
 
     // Ignore any linkage over a certain size, no matter the score
     if (nonMatches > config.maxSeedGap) return -1;
 
     // indelPenalty = difference in the seed diagonals * indelScore
-    long diagL = Diagonal(lhs);
-    long diagR = Diagonal(rhs);
-    long drift = diagL - diagR;
+    const auto diagL = lhs.Diagonal();
+    const auto diagR = rhs.Diagonal();
+    const auto drift = diagL - diagR;
     long indelScorePenalty = 0;
     if (drift > 0)
         indelScorePenalty = drift * config.insertionPenalty;
@@ -191,12 +193,12 @@ long LinkScore(const seqan::Seed<seqan::Simple>& lhs, const seqan::Seed<seqan::S
 /// TODO (bbowman): Can I replace this struct with just Seeds by using the
 ///                 build in SeedScore field and setter/getters?
 ///
-struct SDPHit : public seqan::Seed<seqan::Simple>
+struct SDPHit : public Seed
 {
     size_t Index;
 
-    SDPHit(const seqan::Seed<seqan::Simple>& seed, const size_t index)
-        : seqan::Seed<seqan::Simple>(seed), Index(index)
+    SDPHit(const Seed& seed, const size_t index)
+        : Seed(seed), Index(index)
     {
     }
 
@@ -213,7 +215,8 @@ struct SDPHit : public seqan::Seed<seqan::Simple>
 /// \param  rhs  The right-hand side seed to compare
 ///
 /// \return  bool  Whether the original index of LHS is less than RHS
-bool IndexCompare(const SDPHit& lhs, const SDPHit& rhs) { return lhs.Index < rhs.Index; }
+///
+inline bool IndexCompare(const SDPHit& lhs, const SDPHit& rhs) { return lhs.Index < rhs.Index; }
 
 ///
 /// A column in the Sparse Dynamic Programming matrix.  A wrapper around the above
@@ -244,8 +247,8 @@ struct SDPColumn
 ///
 /// \return  vector<optional<SDPHits>>  For each seed in the input vector, the
 ///             first index that is visible to it's left, if any.
-std::vector<boost::optional<SDPHit>> ComputeVisibilityLeft(const std::vector<SDPHit>& seeds,
-                                                           std::set<SDPHit>& sweepSet)
+inline std::vector<boost::optional<SDPHit>> ComputeVisibilityLeft(const std::vector<SDPHit>& seeds,
+                                                                  std::set<SDPHit>& sweepSet)
 {
     using namespace seqan;
     using namespace std;
@@ -255,12 +258,12 @@ std::vector<boost::optional<SDPHit>> ComputeVisibilityLeft(const std::vector<SDP
 
     auto toRemove = seeds.begin();
     for (auto it = seeds.begin(); it != seeds.end();) {
-        const size_t col = beginPositionH(*it);
+        const auto col = (*it).BeginPositionH();
         const auto start = it;
 
         // Advance the iterator to the end of the current column in our
         //  column-sorted vector of seeds
-        for (; it != seeds.end() && col == beginPositionH(*it); ++it) {
+        for (; it != seeds.end() && col == (*it).BeginPositionH(); ++it) {
             // For each seed, record in the output vector, record the first
             //  seed after it in the sweepSet (if any).  Since the sweepSet
             //  only contains seeds from previous columns and is sorted by
@@ -276,7 +279,7 @@ std::vector<boost::optional<SDPHit>> ComputeVisibilityLeft(const std::vector<SDP
         sweepSet.insert(start, it);
 
         // Remove all seeds from the sweepSet that end before the current column
-        for (; toRemove != seeds.end() && endPositionH(*toRemove) < col; ++toRemove) {
+        for (; toRemove != seeds.end() && (*toRemove).EndPositionH() < col; ++toRemove) {
             sweepSet.erase(*toRemove);
         }
     }
@@ -312,20 +315,22 @@ public:
 };
 
 /// Though we expect to receive the Seeds we'll be chaining in a tree-like
-///  SeedSet, we need them and their scores in well-ordered vectors to
+///  Seeds collection, we need them and their scores in well-ordered vectors to
 ///  perform the actual chaining ourselves.  This function is a simple
 ///  helper for abstracting away that process.
 ///
 /// \param  seedSet  The collection of seeds to be chained
 /// \param  seeds    The vector of SDPHit objects that will actually be chained
 /// \param  scores   The vector of scores to initialize with default per-seed scores
-void InitializeSeedsAndScores(const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
-                              std::vector<SDPHit>* seeds, std::vector<long>* scores)
+inline void InitializeSeedsAndScores(const Seeds& seedSet,
+                                     std::vector<SDPHit>* seeds,
+                                     std::vector<long>* scores)
 {
     size_t i = 0;
-    for (auto it = begin(seedSet); it != end(seedSet); ++it, ++i) {
-        seeds->push_back(SDPHit(*it, i));
-        scores->at(i) = seedSize(*it);
+    for (const auto& seed : seedSet) {
+        seeds->push_back(SDPHit(seed, i));
+        scores->at(i) = seed.Size();
+        ++i;
     }
 }
 
@@ -340,6 +345,7 @@ void InitializeSeedsAndScores(const seqan::SeedSet<seqan::Seed<seqan::Simple>>& 
 /// TODO (bbowman): I shouldn't report partial and complete chains of the same seeds
 /// TODO (bbowman): Figure out why my penalties need to be lower than BLASR's
 ///                 for similar results
+/// TODO (dbarnett): This parameter documentation below is _way_ out of sync.
 ///
 /// \param  chains  A vector of SeedSets to store and return collections of
 ///                 locally chained seeds in.
@@ -355,7 +361,7 @@ void InitializeSeedsAndScores(const seqan::SeedSet<seqan::Seed<seqan::Simple>>& 
 /// \param  deletion  Penalty for each base along the diagonal that
 ///                   separates two seeds, if the 'upstream' seed is on
 ///                   a lower diagonal than the 'downstream' seed.
-void __attribute__((__unused__))
+inline void __attribute__((__unused__))
 ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitCompare>* chainHits,
                std::vector<boost::optional<size_t>>* chainPred, std::vector<SDPHit>* seeds,
                std::vector<long>& scores, const size_t seedSetIdx, const ChainSeedsConfig& config)
@@ -374,20 +380,20 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
     std::set<SDPColumn> colSet;
 
     auto zScore = [&scores](const SDPHit& seed) {
-        return scores[seed.Index] + beginPositionH(seed) + beginPositionV(seed);
+        return scores[seed.Index] + seed.BeginPositionH() + seed.BeginPositionV();
     };
 
     for (auto it = seeds->begin(); it != seeds->end();) {
-        const size_t row = beginPositionV(*it);
+        const size_t row = (*it).BeginPositionV();
         const auto start = it;
 
-        for (; it != seeds->end() && row == beginPositionV(*it); ++it) {
+        for (; it != seeds->end() && row == (*it).BeginPositionV(); ++it) {
             long bestScore = -numeric_limits<long>::max();
             boost::optional<SDPHit> bestSeed = boost::none;
 
             // find the previous column and best fragment from it
             {
-                SDPColumn col(beginPositionH(*it));
+                SDPColumn col((*it).BeginPositionH());
                 auto pred = colSet.lower_bound(col);
 
                 if (pred != colSet.begin()) {
@@ -456,8 +462,8 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
         // remove all seeds from the sweepSet with end position less than the current row,
         // and ensure the colSet invariant is kept:
         //   that all columns greater than our current
-        for (; toRemove != seeds->end() && endPositionV(*toRemove) < row; ++toRemove) {
-            SDPColumn col(endPositionH(*toRemove), boost::make_optional(*toRemove));
+        for (; toRemove != seeds->end() && (*toRemove).EndPositionV() < row; ++toRemove) {
+            SDPColumn col((*toRemove).EndPositionH(), boost::make_optional(*toRemove));
 
             auto it = colSet.find(col);
 
@@ -481,7 +487,7 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
     sort(seeds->begin(), seeds->end(), IndexCompare);
 }
 
-/// Search a SeedSet for the best numCandidates sets of locally-chainable
+/// Search a Seed set for the best numCandidates sets of locally-chainable
 /// seeds according to some scoring criteria.  Seed chains are scored based
 /// on their length and penalized according to the distance between them and
 /// how far apart their diagonals are.  Final scores for a chain must be above
@@ -489,41 +495,30 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
 ///
 /// Roughly equivalent to BLASR's SDPAlign
 ///
-/// \param  chains  A vector of SeedSets to store and return collections of
-///                 locally chained seeds in.
-/// \param  seedSet  The SeedSet to search for chains in
-/// \param  numCandidates  The maximum number of chains to report
-/// \param  minScore  The minimum score to require from a reported chain
-/// \param  match  Score to add to each matching base in each seed
-/// \param  nonmatch  Penalty for each non-aligned base between seeds
-///                   along whichever dimension they are closest together
-/// \param  insertion  Penalty for each base along the diagonal that
-///                    separates two seeds, if the 'upstream' seed is on
-///                    a higher diagonal than the 'downstream' seed.
-/// \param  deletion  Penalty for each base along the diagonal that
-///                   separates two seeds, if the 'upstream' seed is on
-///                   a lower diagonal than the 'downstream' seed.
-void __attribute__((__unused__))
-ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>* chains,
-           const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
-           const ChainSeedsConfig& config)
+/// \param  seedSet The Seeds set to search for chains in
+/// \param  config  Provides scoring values to use when chaining
+///
+/// \return  A vector of Seed vectors containing locally chained seeds.
+///
+inline std::vector<std::vector<Seed>>
+ChainSeeds(const Seeds& seedSet, const ChainSeedsConfig& config)
 {
     using namespace seqan;
     using namespace std;
 
     // Initialize the work-horse vectors we will actually work with
     priority_queue<ChainHit, vector<ChainHit>, ChainHitCompare> chainHits;
-    vector<boost::optional<size_t>> chainPred(length(seedSet), boost::none);
+    vector<boost::optional<size_t>> chainPred(seedSet.size(), boost::none);
     vector<SDPHit> seeds;
-    vector<long> scores(length(seedSet), 0L);
+    vector<long> scores(seedSet.size(), 0L);
     InitializeSeedsAndScores(seedSet, &seeds, &scores);
 
     // Call the main function
     ChainSeedsImpl(&chainHits, &chainPred, &seeds, scores, 0, config);
 
     // Empty and resize the result vector
-    chains->clear();
-    chains->resize(chainHits.size());
+    std::vector<std::vector<Seed>> chains;
+    chains.resize(chainHits.size());
 
     // Pop our results from our queue and convert them into Seed Chains / Sets
     int i = chainHits.size() - 1;
@@ -534,61 +529,52 @@ ChainSeeds(std::vector<seqan::String<seqan::Seed<seqan::Simple>>>* chains,
         // While there are additional links in the chain, append them
         boost::optional<size_t> chainEnd = hit.endIndex;
         while (chainEnd) {
-            appendValue(chains->at(i), seeds[*chainEnd]);
+            chains.at(i).push_back(seeds[*chainEnd]);
             chainEnd = chainPred[*chainEnd];
         }
 
         // We appended seeds back-to-front, so reverse the current order in place
-        reverse(chains->at(i));
+        std::reverse(chains.at(i).begin(), chains.at(i).end());
 
         chainHits.pop();
         --i;
     }
+
+    return chains;
 }
 
-/// Search a SeedSet for the best numCandidates sets of locally-chainable
-/// seeds according to some scoring criteria.  Seed chains are scored based
-/// on their length and penalized according to the distance between them and
-/// how far apart their diagonals are.  Final scores for a chain must be above
-/// some minScore threshold to be reported.
-///
-/// Roughly equivalent to BLASR's SDPAlign
-///
-/// \param  chains  A vector of SeedSets to store and return collections of
-///                 locally chained seeds in.
-/// \param  seedSet  The SeedSet to search for chains in
-/// \param  numCandidates  The maximum number of chains to report
-/// \param  minScore  The minimum score to require from a reported chain
-/// \param  match  Score to add to each matching base in each seed
-/// \param  nonmatch  Penalty for each non-aligned base between seeds
-///                   along whichever dimension they are closest together
-/// \param  insertion  Penalty for each base along the diagonal that
-///                    separates two seeds, if the 'upstream' seed is on
-///                    a higher diagonal than the 'downstream' seed.
-/// \param  deletion  Penalty for each base along the diagonal that
-///                   separates two seeds, if the 'upstream' seed is on
-///                   a lower diagonal than the 'downstream' seed.
-void __attribute__((__unused__))
-ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>* chains,
-           const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
-           const ChainSeedsConfig& config)
+///// Search a Seed set for the best numCandidates sets of locally-chainable
+///// seeds according to some scoring criteria.  Seed chains are scored based
+///// on their length and penalized according to the distance between them and
+///// how far apart their diagonals are.  Final scores for a chain must be above
+///// some minScore threshold to be reported.
+/////
+///// Roughly equivalent to BLASR's SDPAlign
+/////
+///// \param  seedSet The SeedSet to search for chains in
+///// \param  config  Provides scoring values to use when chaining
+/////
+///// \return A vector of Seed sets containing locally chained seeds.
+/////
+inline std::vector<Seeds>
+ChainedSeedSets(const Seeds& seedSet, const ChainSeedsConfig& config)
 {
     using namespace seqan;
     using namespace std;
 
     // Initialize the work-horse vectors we will actually work with
     priority_queue<ChainHit, vector<ChainHit>, ChainHitCompare> chainHits;
-    vector<boost::optional<size_t>> chainPred(length(seedSet), boost::none);
+    vector<boost::optional<size_t>> chainPred(seedSet.size(), boost::none);
     vector<SDPHit> seeds;
-    vector<long> scores(length(seedSet), 0L);
+    vector<long> scores(seedSet.size(), 0L);
     InitializeSeedsAndScores(seedSet, &seeds, &scores);
 
     // Call the main function
     ChainSeedsImpl(&chainHits, &chainPred, &seeds, scores, 0, config);
 
     // Empty and resize the result vector
-    chains->clear();
-    chains->resize(chainHits.size());
+    std::vector<Seeds> chains;
+    chains.resize(chainHits.size());
 
     // Pop our results from our queue and convert them into Seed Chains / Sets
     int i = chainHits.size() - 1;
@@ -598,17 +584,18 @@ ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>* chains,
         // While there are additional links in the chain, append them
         boost::optional<size_t> chainEnd = hit.endIndex;
         while (chainEnd) {
-            Seed<Simple> seed = seeds[*chainEnd];
-            addSeed(chains->at(i), seed, Single());
+            auto seed = seeds[*chainEnd];
+            chains.at(i).AddSeed(seed);
             chainEnd = chainPred[*chainEnd];
         }
 
         chainHits.pop();
         --i;
     }
+    return chains;
 }
 
-/// Search a SeedSet for the best numCandidates sets of locally-chainable
+/// Search a Seed set for the best numCandidates sets of locally-chainable
 /// seeds according to some scoring criteria.  Seed chains are scored based
 /// on their length and penalized according to the distance between them and
 /// how far apart their diagonals are.  Final scores for a chain must be above
@@ -616,24 +603,13 @@ ChainSeeds(std::vector<seqan::SeedSet<seqan::Seed<seqan::Simple>>>* chains,
 ///
 /// Roughly equivalent to BLASR's SDPAlign
 ///
-/// \param  chains  A vector of SeedSets to store and return collections of
-///                 locally chained seeds in.
-/// \param  seedSet  The SeedSet to search for chains in
-/// \param  numCandidates  The maximum number of chains to report
-/// \param  minScore  The minimum score to require from a reported chain
-/// \param  match  Score to add to each matching base in each seed
-/// \param  nonmatch  Penalty for each non-aligned base between seeds
-///                   along whichever dimension they are closest together
-/// \param  insertion  Penalty for each base along the diagonal that
-///                    separates two seeds, if the 'upstream' seed is on
-///                    a higher diagonal than the 'downstream' seed.
-/// \param  deletion  Penalty for each base along the diagonal that
-///                   separates two seeds, if the 'upstream' seed is on
-///                   a lower diagonal than the 'downstream' seed.
-void __attribute__((unused))
-ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>>* chains,
-           const std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>> seedSets,
-           const ChainSeedsConfig config)
+/// \param  seedSet The SeedSet to search for chains in
+/// \param  config  Provides scoring values to use when chaining
+///
+/// \return  A vector of SeedSets containing locally chained seeds.
+///
+inline std::vector<std::pair<size_t, Seeds>>
+ChainSeeds(const std::map<size_t, Seeds> seedSets, const ChainSeedsConfig config)
 {
     using namespace seqan;
     using namespace std;
@@ -659,8 +635,8 @@ ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::Simpl
         const auto& seedSet = it->second;
 
         // Initialize the work-horse vectors we will actually work with
-        chainPred[i] = vector<boost::optional<size_t>>(length(seedSet), boost::none);
-        vector<long> scores(length(seedSet), 0L);
+        chainPred[i] = vector<boost::optional<size_t>>(seedSet.size(), boost::none);
+        vector<long> scores(seedSet.size(), 0L);
         InitializeSeedsAndScores(seedSet, &seeds[i], &scores);
 
         // Call the main function on the current seedSet
@@ -668,27 +644,29 @@ ChainSeeds(std::vector<std::pair<size_t, seqan::SeedSet<seqan::Seed<seqan::Simpl
     }
 
     // Empty and resize the result vector
-    chains->clear();
-    chains->resize(chainHits.size());
+    std::vector<std::pair<size_t, Seeds>> chains;
+    chains.resize(chainHits.size());
 
     // Pop our results from our queue and convert them into Seed Chains / Sets
     int j = chainHits.size() - 1;
     while (!chainHits.empty()) {
         // Take our next hit and extract the relevant indices ...
         const auto hit = chainHits.top();
-        chains->at(j).first = references[hit.seedSetIdx];
+        chains.at(j).first = references[hit.seedSetIdx];
 
         // While there are additional links in the chain, append them
         boost::optional<size_t> chainEnd = hit.endIndex;
         while (chainEnd) {
-            Seed<Simple> seed = seeds[hit.seedSetIdx][*chainEnd];
-            addSeed(chains->at(j).second, seed, Single());
+            auto seed = seeds[hit.seedSetIdx][*chainEnd];
+            chains.at(j).second.AddSeed(seed);
             chainEnd = chainPred[hit.seedSetIdx][*chainEnd];
         }
 
         chainHits.pop();
         --j;
     }
+
+    return chains;
 }
 
 }  // anonymous namespace

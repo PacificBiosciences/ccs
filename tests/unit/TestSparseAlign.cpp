@@ -46,7 +46,7 @@ TEST(SparseAlignTest, ExactAlign)
 
     const size_t K = 5;
     string s1 = "ACGTACACACAGTACAGTACAAGTTTCACGGACATTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
-    auto chain = PacBio::CCS::SparseAlign<K>(s1, s1);
+    auto chain = PacBio::CCS::SparseAlign(K, s1, s1);
     auto fst = chain[0];
     auto lst = chain[chain.size() - 1];
 
@@ -64,7 +64,7 @@ TEST(SparseAlignTest, ExactPartial)
     const size_t K = 5;
     string s1 = "ACGTACACACAGTACAGTACAAGTTTCACGGACATTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
     string s2 = "TTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
-    auto chain = PacBio::CCS::SparseAlign<K>(s1, s2);
+    auto chain = PacBio::CCS::SparseAlign(K, s1, s2);
     auto fst = chain[0];
     auto lst = chain[chain.size() - 1];
 
@@ -84,7 +84,7 @@ TEST(SparseAlignTest, InsertAlign)
     string s2 =
         "ACGTACACACAGTACAGTACAAGTTTCACGGACATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTGGTTCCCACTTGTAC"
         "AGTGCACACGGGTTACACGT";
-    auto chain = PacBio::CCS::SparseAlign<K>(s1, s2);
+    auto chain = PacBio::CCS::SparseAlign(K, s1, s2);
     auto fst = chain[0];
     auto lst = chain[chain.size() - 1];
 
@@ -101,7 +101,7 @@ TEST(SparseAlignTest, NoAlign)
     const size_t K = 5;
     string s1 = "ACGTACACACAGTACAGTACAAGTTTCACGGACATTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
     string s2 = "AAAATCCCCCCCCCCAGGGGG";
-    auto chain = PacBio::CCS::SparseAlign<K>(s1, s2);
+    auto chain = PacBio::CCS::SparseAlign(K, s1, s2);
 
     EXPECT_EQ(0, chain.size());
 }
@@ -113,7 +113,7 @@ TEST(SparseAlignTest, SimpleAlign)
     const size_t K = 5;
     string s1 = "ACGTACACACAGTACAGTACAAGTTTCACGGACATTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
     string s2 = "ACGTACACCAGTAAGTACAAGTTTCACGCGAATTTGGTTCCCACTTGTCAAGTGCACACGGGTTACACGT";
-    auto chain = PacBio::CCS::SparseAlign<K>(s1, s2);
+    auto chain = PacBio::CCS::SparseAlign(K, s1, s2);
     auto fst = chain[0];
     auto lst = chain[chain.size() - 1];
 
@@ -152,7 +152,7 @@ TEST(SparseAlignTest, LongAlign)
         "ATACACGCACGTATACTGACACACAAAGACAGATTACATCATACACACAATGACACATTTGGGCGAGAGATTACAACCACGTATGAATAC"
         "AACAAGAGAAACCGACGCAAACAACATAGATCAGATATTTAGCTGAAAAATGTACCAGAACTTTAGAAGAAAGGAAAATACACGTACAAG"
         "CATAGGTGAGAAGCACAACCATTCGATTATGCAACAGAATCTACAGATACTATAT";
-    auto chain = PacBio::CCS::SparseAlign<K>(s1, s2);
+    auto chain = PacBio::CCS::SparseAlign(K, s1, s2);
     auto fst = chain[0];
     auto lst = chain[chain.size() - 1];
 
