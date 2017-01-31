@@ -47,6 +47,8 @@
 #include <seqan/graph_msa.h>
 #include <seqan/sequence.h>
 
+#include <pacbio/align/LocalAlignment.h>
+
 #include "ChimeraLabel.h"
 
 namespace PacBio {
@@ -365,20 +367,19 @@ private:  // non-modifying methods
         std::vector<size_t> output;
         std::set<size_t> parentIds;
 
-        // Initialize the pairwise-alignment object we will be reusing
-        TAlign align;
-        seqan::resize(rows(align), 2);
-
         // Pre-calculate the size of each chunk
         size_t chunkSize = seqan::length(sequence) / chunks;
+
+        const PacBio::Align::LocalAlignConfig alignConfig {
+            2, 5, 3, 3
+        };
 
         // Iterate over each chunk, aligning it to all possible parents
         for (size_t i = 0; i < chunks; ++i) {
             // Initialize the alignment with the current sequence chunk
-            size_t chunkStart = i * chunkSize;
-            size_t chunkEnd = chunkStart + chunkSize;
-            const auto chunkSeq = infix(sequence, chunkStart, chunkEnd);
-            seqan::assignSource(seqan::row(align, 0), chunkSeq);
+            const size_t chunkStart = i * chunkSize;
+            std::string target = seqan::toCString(seqan::CharString(sequence));
+            target = target.substr(chunkStart, chunkSize);
 
             // Initialize loop variables;
             size_t score = 0;
@@ -388,8 +389,9 @@ private:  // non-modifying methods
             // iterate over each non-Chimeric sequence
             for (size_t i = 0; i < nonChimeras_.size(); ++i) {
                 // Fill out the alignment with the current parents
-                seqan::assignSource(seqan::row(align, 1), nonChimeras_[i]);
-                score = seqan::localAlignment(align, scoringScheme);
+                const std::string query = seqan::toCString(seqan::CharString(nonChimeras_[i]));
+                const auto al = PacBio::Align::LocalAlign(target, query, alignConfig);
+                score = al.Score();
 
                 // If the current parent is better than the best, keep it
                 if (score > maxScore) {
