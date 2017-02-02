@@ -106,6 +106,7 @@ if (NOT PYTHON_SWIG)
         FuseSettings.cpp
         JulietSettings.cpp
         JulietWorkflow.cpp
+        LocalAlignment.cpp
         MSA.cpp
         MSAColumn.cpp
         ResistanceCaller.cpp

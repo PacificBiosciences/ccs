@@ -40,6 +40,7 @@
 
 #include <pacbio/align/AffineAlignment.h>
 #include <pacbio/align/LinearAlignment.h>
+#include <pacbio/align/LocalAlignment.h>
 #include <pacbio/align/PairwiseAlignment.h>
 
 using namespace PacBio::Align;  // NOLINT
@@ -368,3 +369,20 @@ TEST(LinearAlignmentTests, SemiglobalTests)
 
 }
 #endif
+
+// ------------------ Local alignment tests ---------------------
+
+TEST(LocalAlignmentTests, Simple)
+{
+    const std::string target = "CAGCCTTTCTGACCCGGAAATCAAAATAGGCACAACAAA";
+    const std::string query = "CTGAGCCGGTAAATC";
+
+    const auto a = LocalAlign(target, query);
+
+    EXPECT_EQ(8, a.TargetBegin());
+    EXPECT_EQ(21, a.TargetEnd());
+    EXPECT_EQ(0, a.QueryBegin());
+    EXPECT_EQ(14, a.QueryEnd());
+    EXPECT_EQ(2, a.NumMismatches());
+    EXPECT_EQ(21, a.Score());
+}
