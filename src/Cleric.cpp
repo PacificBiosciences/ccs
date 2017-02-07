@@ -737,7 +737,8 @@ void Cleric::Convert(const std::string& outputFile)
                                          std::to_string(static_cast<int>(cigar_op)));
             }
         }
-        read.Map(0, new_sam_start, Strand::FORWARD, replace_cigar_tuple, read.MapQuality());
+        read.Impl().CigarData(replace_cigar_tuple);
+        read.Impl().Position(new_sam_start);
         out.Write(read);
     }
 }
