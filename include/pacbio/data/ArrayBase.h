@@ -48,6 +48,9 @@ struct ArrayBase
         : Cigar(cigar)
         , Nucleotide(nucleotide)
         , QualQV(qualQV)
+        , DelQV(delQV)
+        , SubQV(subQV)
+        , InsQV(insQV)
         , ProbTrue(1 - pow(10, -1.0 * qualQV / 10.0))
         , ProbCorrectBase(1 - pow(10, -1.0 * subQV / 10.0))
         , ProbNoDeletion(1 - pow(10, -1.0 * delQV / 10.0))
@@ -64,7 +67,10 @@ struct ArrayBase
     ArrayBase(char cigar, char nucleotide) : Cigar(cigar), Nucleotide(nucleotide) {}
     char Cigar;
     char Nucleotide;
-    uint8_t QualQV = 0;
+    int8_t QualQV = -1;
+    int8_t DelQV = -1;
+    int8_t SubQV = -1;
+    int8_t InsQV = -1;
     double ProbTrue = 0;
     double ProbCorrectBase = 0;
     double ProbNoDeletion = 0;

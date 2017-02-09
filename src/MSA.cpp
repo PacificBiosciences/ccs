@@ -45,11 +45,12 @@
 
 namespace PacBio {
 namespace Data {
-MSA::MSA(const std::vector<Data::ArrayRead>& reads)
+MSA::MSA(const std::vector<Data::ArrayRead>& reads, const int qualQv, const int delQv,
+         const int subQv, const int insQv)
 {
     BeginEnd(reads);
     // Fill counts
-    FillCounts(reads);
+    FillCounts(reads, qualQv, delQv, subQv, insQv);
 }
 MSA::MSA(const std::vector<Data::ArrayRead>& reads, const MSA& prior)
 {
@@ -67,7 +68,8 @@ void MSA::BeginEnd(const std::vector<Data::ArrayRead>& reads)
     }
 }
 
-void MSA::FillCounts(const std::vector<ArrayRead>& reads)
+void MSA::FillCounts(const std::vector<ArrayRead>& reads, const int qualQv, const int delQv,
+                     const int subQv, const int insQv)
 {
     // Prepare 2D array for counts
     counts.resize(endPos - beginPos);
@@ -90,7 +92,13 @@ void MSA::FillCounts(const std::vector<ArrayRead>& reads)
                 case 'X':
                 case '=':
                     CheckInsertion();
-                    counts[pos][b.Nucleotide]++;
+                    if ((b.DelQV == -1 || b.DelQV >= delQv) &&
+                        (b.InsQV == -1 || b.InsQV >= insQv) &&
+                        (b.SubQV == -1 || b.SubQV >= subQv) &&
+                        (b.QualQV == -1 || b.QualQV >= qualQv))
+                        counts[pos][b.Nucleotide]++;
+                    else
+                        counts[pos]['N']++;
                     ++pos;
                     break;
                 case 'D':

@@ -37,6 +37,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstdlib>
 #include <exception>
 #include <fstream>
 #include <functional>
@@ -62,11 +63,20 @@ AminoAcidCaller::AminoAcidCaller(const std::vector<Data::ArrayRead>& reads,
                                  const ErrorEstimates& error, const TargetConfig& targetConfig)
     : error_(error), targetConfig_(targetConfig)
 {
+    auto SetQV = [](const char* env, int* qv, int defaultQv) {
+        char* val = std::getenv(env);
+        *qv = val == NULL ? defaultQv : std::stoi(std::string(val));
+    };
+    SetQV("DELQV", &delQv_, -1);
+    SetQV("SUBQV", &subQv_, 42);
+    SetQV("INSQV", &insQv_, -1);
+    SetQV("QUALQV", &qualQv_, -1);
+
     for (const auto& r : reads) {
         beginPos_ = std::min(beginPos_, r.ReferenceStart());
         endPos_ = std::max(endPos_, r.ReferenceEnd());
     }
-    msa_ = std::unique_ptr<Data::MSA>(new Data::MSA(reads));
+    msa_ = std::unique_ptr<Data::MSA>(new Data::MSA(reads, qualQv_, delQv_, subQv_, insQv_));
 
     GenerateMSA(reads);
 
@@ -87,7 +97,13 @@ void AminoAcidCaller::GenerateMSA(const std::vector<Data::ArrayRead>& reads)
             switch (b.Cigar) {
                 case 'X':
                 case '=':
-                    row[pos++] = b.Nucleotide;
+                    if ((b.DelQV == -1 || b.DelQV >= delQv_) &&
+                        (b.InsQV == -1 || b.InsQV >= insQv_) &&
+                        (b.SubQV == -1 || b.SubQV >= subQv_) &&
+                        (b.QualQV == -1 || b.QualQV >= qualQv_))
+                        row[pos++] = b.Nucleotide;
+                    else
+                        row[pos++] = '-';
                     break;
                 case 'D':
                     row[pos++] = '-';

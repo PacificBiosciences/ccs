@@ -160,6 +160,11 @@ private:
     const ErrorEstimates error_;
     const TargetConfig targetConfig_;
 
+    int delQv_;
+    int subQv_;
+    int insQv_;
+    int qualQv_;
+
     static const std::unordered_map<std::string, char> codonToAmino_;
 
     static const std::vector<int> nnrti;
