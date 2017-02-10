@@ -722,6 +722,10 @@ void Cleric::Convert(const std::string& outputFile)
         }
         read.Impl().CigarData(replace_cigar_tuple);
         read.Impl().Position(new_sam_start);
+        if (read.Impl().HasTag("NM"))
+            read.Impl().EditTag("NM", new_edit_distance);
+        else
+            read.Impl().AddTag("NM", new_edit_distance);
         out.Write(read);
     }
 }
