@@ -270,29 +270,21 @@ void Cleric::Convert(const std::string& outputFile)
                                 ++pos_in_read;
                             }
                         } else {
-                            if (dest_str.at(pos_in_dest_ref) == '-') {
-                                // Dest:   AAA -AAA
-                                // Source: AAA AAAA
-                                // Read:   AAAA AAA
-                                //            ^
+                            // Dest:   AAA -AAA
+                            // Source: AAA AAAA
+                            // Read:   AAAA AAA
+                            //            ^
+                            // OR
+                            // Dest:   AAA AAA
+                            // Source: AAA AAA
+                            // Read:   AAAAAAA
+                            //            ^
 
-                                // Insertion
-                                new_state = newIns_;
+                            // Insertion
+                            new_state = newIns_;
 
-                                ++pos_in_cigar;
-                                ++pos_in_read;
-                            } else {
-                                // Dest:   AAA AAA
-                                // Source: AAA AAA
-                                // Read:   AAAAAAA
-                                //            ^
-
-                                // Insertion
-                                new_state = newIns_;
-
-                                ++pos_in_cigar;
-                                ++pos_in_read;
-                            }
+                            ++pos_in_cigar;
+                            ++pos_in_read;
                         }
                     }
                     break;
@@ -419,28 +411,20 @@ void Cleric::Convert(const std::string& outputFile)
                                 ++pos_in_dest_ref;
                             }
                         } else {
-                            if (dest_str.at(pos_in_dest_ref) == '-') {
-                                // Dest:   AAA--AAA
-                                // Source: AAAAAAAA
-                                // Read:   AAA-AAAA
-                                //            ^
+                            // Dest:   AAA--AAA
+                            // Source: AAAAAAAA
+                            // Read:   AAA-AAAA
+                            //            ^
+                            // OR
+                            // Dest:   AAA AAAA
+                            // Source: AAA AAAA
+                            // Read:   AAA-AAAA
+                            //            ^
 
-                                // Padded deletion
-                                ++pos_in_cigar;
+                            // Padded deletion
+                            ++pos_in_cigar;
 
-                                new_state = newPad_;
-
-                            } else {
-                                // Dest:   AAA AAAA
-                                // Source: AAA AAAA
-                                // Read:   AAA-AAAA
-                                //            ^
-
-                                // Padded deletion
-                                ++pos_in_cigar;
-
-                                new_state = newPad_;
-                            }
+                            new_state = newPad_;
                         }
                     }
                     break;
