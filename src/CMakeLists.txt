@@ -79,7 +79,6 @@ set(UNANIMITY_FILES
     ${UNY_HEADER}
     ${UNY_HIDDEN_HEADER}
     ${CPPOPTPARSE_CPP}
-    ChainSeeds.cpp
     ChemistryMapping.cpp
     ChemistryTriple.cpp
     Fisher.cpp

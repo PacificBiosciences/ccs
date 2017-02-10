@@ -33,23 +33,19 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler, Brett Bowman
+// Author: Lance Hepler, Brett Bowman, Derek Barnett
 
 #pragma once
 
 #include <map>
 #include <vector>
 
-#include <seqan/basic.h>
-#include <seqan/index.h>
-#include <seqan/seeds.h>
-#include <seqan/sequence.h>
+#include <boost/optional.hpp>
 
-#include <pacbio/align/ChainSeeds.h>
-#include <pacbio/align/FindSeedsConfig.h>
-#include <pacbio/align/HomopolymerHasher.h>
+#include <pbcopper/align/Seeds.h>
+#include <pbcopper/qgram/Index.h>
 
-/* 
+/*
  * This file contains a few minimal wrapper functions around the index types
  * provided by SeqAn for finding K-mer seeds between some query sequence
  * and some reference sequence or index.
@@ -57,7 +53,7 @@
  * NOTE: Though these functions should in theory work with any index type
  * supported by SeqAn, they have only been extensively tested with the QGram
  * index specialization.  Use other types at your own risk.
- * 
+ *
  * In addition to the templating around the TConfig, of which more details
  * are in FindSeedConfig.h, there are two pre-processor directives that
  * can be used to further customize the code, described below.  Speed costs
@@ -65,134 +61,65 @@
  * testing both for each new application.
  *
  * MERGESEEDS: There are two common specializations of the addSeeds function
- *      that we use to add a K-mer hit to a SeedSet - Single() and Merge().  
- *      By default FindSeeds uses Single(), which is the fastest method 
- *      because it does no chaining at all.  Alternatively, we can use the 
- *      Merge() function from SeqAn, which combines seeds that precisely 
+ *      that we use to add a K-mer hit to a SeedSet - Single() and Merge().
+ *      By default FindSeeds uses Single(), which is the fastest method
+ *      because it does no chaining at all.  Alternatively, we can use the
+ *      Merge() function from SeqAn, which combines seeds that precisely
  *      overlap with each other but is slightly slower.  The advantage of
  *      Merge() is that the resulting SeedSets are smaller, so down-stream
  *      processes that require for sorting and iterating may be greatly
  *      expedited.  Enable this directive to use Merge() instead of Single().
  *
  * FILTERHOMOPOLYMERS: By default, FindSeeds treats all K-mer seeds it finds
- *      as equal.  However if the sequences might contain large homopolymers, 
- *      or if there is a large number of sequences in the the reference / 
- *      index, it may be faster in the long run to spend some CPU cycles 
- *      checking whether a K-mer is a homopolymer before searching the index 
+ *      as equal.  However if the sequences might contain large homopolymers,
+ *      or if there is a large number of sequences in the the reference /
+ *      index, it may be faster in the long run to spend some CPU cycles
+ *      checking whether a K-mer is a homopolymer before searching the index
  *      for it.  Enable this directive to enable that filter.
  */
 
 namespace PacBio {
 namespace Align {
 
-/// Unsigned-integer safe subtraction - returns either the difference
-/// between the arguments or zero, whichever is larger.
-///
-/// \param  size  The first integer, or minuend
-/// \param  k  The second interger, or the subtrahend
-///
-/// \return  size_t  The difference
-inline size_t SafeSubtract(size_t size, size_t k) { return size > k ? size - k : 0; }
-
-/// Find all matching seeds between two DNA sequences
-///
-/// \param  seeds  The SeedSet object to store the results in
-/// \param  seq1  The first, or query, sequence
-/// \param  seq2  The second, or reference, sequence
-template <typename TConfig>
-void FindSeeds(seqan::SeedSet<seqan::Seed<seqan::Simple>>* seeds, const seqan::DnaString& seq1,
-               const seqan::DnaString& seq2)
-{
-    using namespace seqan;
-
-    typedef Shape<Dna, typename TConfig::ShapeType> TShape;
-
-    Index<DnaString, typename TConfig::IndexType> index(seq1);
-    TShape shape = indexShape(index);
-
-#ifdef FILTERHOMOPOLYMERS
-    HomopolymerHasher<TShape> isHomopolymer(shape);
-#endif
-
-    auto start = begin(seq2);
-    size_t end = SafeSubtract(length(seq2) + 1, TConfig::Size);
-
-    hashInit(shape, start);
-    for (size_t i = 0; i < end; i++) {
-        hashNext(shape, start + i);
-#ifdef FILTERHOMOPOLYMERS
-        if (isHomopolymer(hashNext(shape, start + i))) continue;
-#endif
-
-        auto hits = getOccurrences(index, shape);
-
-        for (const auto& hit : hits) {
-            Seed<Simple> seed(hit, i, TConfig::Size);
-
-#ifdef MERGESEEDS
-            if (!addSeed(*seeds, seed, 0, Merge()))
-#endif
-            {
-                addSeed(*seeds, seed, Single());
-            }
-        }
-    }
-}
-
 /// Find all matching seeds between a DNA index and the sequences
 /// represented in some supplied index of the type specified in TConfig.
 /// Since some index types, most notably the QGram index, can store seeds
 /// from multiple references, the return value has to be a map of seed sets
-/// rather than a single one.
+/// rather than a single one.  In addition the query sequence may itself
+/// be in the index, in which case we pass in it's known index so we do
+/// not count it.
 ///
-/// \param  seeds  A map of integers-SeedSet pairs for storing results
-/// \param  index  The index of of the various
-/// \param  seq  The query sequence
-template <typename TConfig>
-void FindSeeds(
-    std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* seeds,
-    const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
-    const seqan::DnaString& seq)
+/// \param[in]  index               The hashed index on the reference sequence(s)
+/// \param[in]  seq                 The query sequence
+/// \param[in]  qIdx                (optional) The index of the query sequence, so it can be ignored
+/// \param[in]  filterHomopolymers  If true, homopolymer k-mers will be filtered before searching the index.
+///
+/// \return map containing Seeds for each referenceIndex with a hit
+///
+inline std::map<size_t, Seeds> FindSeeds(const PacBio::QGram::Index& index, const std::string& seq,
+                                         const boost::optional<size_t> qIdx,
+                                         const bool filterHomopolymers)
 {
-    using namespace seqan;
-    using namespace std;
+    std::map<size_t, Seeds> seeds;
 
-    typedef Shape<Dna, typename TConfig::ShapeType> TShape;
-
-    TShape shape = indexShape(index);
-
-#ifdef FILTERHOMOPOLYMERS
-    HomopolymerHasher<TShape> isHomopolymer(shape);
-#endif
-
-    auto start = begin(seq);
-    size_t end = SafeSubtract(length(seq) + 1, TConfig::Size);
-
-    hashInit(shape, start);
-
-    for (size_t i = 0; i < end; i++) {
-        hashNext(shape, start + i);
-
-#ifdef FILTERHOMOPOLYMERS
-        if (isHomopolymer(hashNext(shape, start + i))) continue;
-#endif
-
-        auto hits = getOccurrences(index, shape);
-
+    for (const auto& hits : index.Hits(seq, filterHomopolymers)) {
+        const auto queryPos = hits.QueryPosition();
         for (const auto& hit : hits) {
-            size_t rIdx = getValueI1(hit);
+            const auto rIdx = hit.Id();
+            if (qIdx && rIdx == *qIdx) continue;
 
-            size_t j = getValueI2(hit);
-            Seed<Simple> seed(i, j, TConfig::Size);
-
+            const auto seed = Seed{queryPos, hit.Position(), index.Size()};
+            auto& rIdxSeeds = seeds[rIdx];
 #ifdef MERGESEEDS
-            if (!addSeed(seeds->operator[](rIdx), seed, 0, Merge()))
+            if (!rIdxSeeds.TryMerge(seed))
 #endif
             {
-                addSeed(seeds->operator[](rIdx), seed, Single());
+                rIdxSeeds.AddSeed(seed);
             }
         }
     }
+
+    return seeds;
 }
 
 /// Find all matching seeds between a DNA index and the sequences
@@ -203,57 +130,104 @@ void FindSeeds(
 /// be in the index, in which case we pass in it's known index so we do
 /// not count it.
 ///
-/// \param  seeds  A map of integers-SeedSet pairs for storing results
-/// \param  index  The index of of the various
-/// \param  seq  The query sequence
-/// \param  qIdx  The index of the query in the ... index, so it can be ignored
-template <typename TConfig>
-void FindSeeds(
-    std::map<size_t, seqan::SeedSet<seqan::Seed<seqan::Simple>>>* seeds,
-    const seqan::Index<seqan::StringSet<seqan::DnaString>, typename TConfig::IndexType>& index,
-    const seqan::DnaString& seq, const size_t qIdx)
+/// This overload enables homopolymer-filtering when FILTERHOMOPOLYMERS is defined.
+///
+/// \param[in]  index   The hashed index on the reference sequence(s)
+/// \param[in]  seq     The query sequence
+/// \param[in]  qIdx    (optional) The index of the query sequence, so it can be ignored
+///
+/// \return  map containing Seeds for each referenceIndex with a hit
+///
+inline std::map<size_t, Seeds> FindSeeds(const PacBio::QGram::Index& index, const std::string& seq,
+                                         const boost::optional<size_t> qIdx)
 {
-    using namespace seqan;
-    using namespace std;
-
-    typedef Shape<Dna, typename TConfig::ShapeType> TShape;
-
-    TShape shape = indexShape(index);
-
 #ifdef FILTERHOMOPOLYMERS
-    HomopolymerHasher<TShape> isHomopolymer(shape);
+    const bool filterHomopolymers = true;
+#else
+    const bool filterHomopolymers = false;
 #endif
 
-    auto start = begin(seq);
-    size_t end = SafeSubtract(length(seq) + 1, TConfig::Size);
+    return FindSeeds(index, seq, qIdx, filterHomopolymers);
+}
 
-    hashInit(shape, start);
+/// Find all matching seeds between a DNA index and the sequences
+/// represented in some supplied index of the type specified in TConfig.
+/// Since some index types, most notably the QGram index, can store seeds
+/// from multiple references, the return value has to be a map of seed sets
+/// rather than a single one.
+///
+/// \param[in]  index               The hashed index on the reference sequence(s)
+/// \param[in]  seq                 The query sequence
+/// \param[in]  filterHomopolymers  If true, homopolymer k-mers will be filtered before searching the index.
+///
+/// \return  map containing Seeds for each referenceIndex with a hit
+///
+inline std::map<size_t, Seeds> FindSeeds(const PacBio::QGram::Index& index, const std::string& seq,
+                                         const bool filterHomopolymers)
+{
+    return FindSeeds(index, seq, boost::none, filterHomopolymers);
+}
 
-    for (size_t i = 0; i < end; i++) {
-        hashNext(shape, start + i);
-
+/// Find all matching seeds between a DNA index and the sequences
+/// represented in some supplied index of the type specified in TConfig.
+/// Since some index types, most notably the QGram index, can store seeds
+/// from multiple references, the return value has to be a map of seed sets
+/// rather than a single one.
+///
+/// This overload enables homopolymer-filtering when FILTERHOMOPOLYMERS is defined.
+///
+/// \param[in]  index  The hashed index on the reference sequence(s)
+/// \param[in]  seq    The query sequence
+///
+/// \return  map containing Seeds for each referenceIndex with a hit
+///
+inline std::map<size_t, Seeds> FindSeeds(const PacBio::QGram::Index& index, const std::string& seq)
+{
 #ifdef FILTERHOMOPOLYMERS
-        if (isHomopolymer(hashNext(shape, start + i))) continue;
+    const bool filterHomopolymers = true;
+#else
+    const bool filterHomopolymers = false;
 #endif
 
-        auto hits = getOccurrences(index, shape);
+    return FindSeeds(index, seq, boost::none, filterHomopolymers);
+}
 
-        for (const auto& hit : hits) {
-            size_t rIdx;
+/// Find all matching seeds between two DNA sequences
+///
+/// \param[in]  qGramSize           qgram size to use for index hashing
+/// \param[in]  seq1                The first, or query, sequence
+/// \param[in]  seq2                The second, or reference, sequence
+/// \param[in]  filterHomopolymers  If true, homopolymer k-mers will be filtered before searching the index.
+///
+/// \return Seeds collection containing all hits
+///
+inline Seeds FindSeeds(const size_t qGramSize, const std::string& seq1, const std::string& seq2,
+                       const bool filterHomopolymers)
+{
+    const auto index = PacBio::QGram::Index{qGramSize, seq2};
+    const auto multiSeeds = FindSeeds(index, seq1, filterHomopolymers);
+    return (multiSeeds.empty() ? Seeds{} : multiSeeds.cbegin()->second);
+}
 
-            if ((rIdx = getValueI1(hit)) == qIdx) continue;
-
-            size_t j = getValueI2(hit);
-            Seed<Simple> seed(i, j, TConfig::Size);
-
-#ifdef MERGESEEDS
-            if (!addSeed(seeds->operator[](rIdx), seed, 0, Merge()))
+/// Find all matching seeds between two DNA sequences
+///
+/// This overload enables homopolymer-filtering when FILTERHOMOPOLYMERS is defined.
+///
+/// \param[in]  qGramSize   qgram size to use for index hashing
+/// \param[in]  seq1        The first, or query, sequence
+/// \param[in]  seq2        The second, or reference, sequence
+///
+/// \return Seeds collection containing all hits
+///
+inline Seeds FindSeeds(const size_t qGramSize, const std::string& seq1, const std::string& seq2)
+{
+#ifdef FILTERHOMOPOLYMERS
+    const bool filterHomopolymers = true;
+#else
+    const bool filterHomopolymers = false;
 #endif
-            {
-                addSeed(seeds->operator[](rIdx), seed, Single());
-            }
-        }
-    }
+
+    return FindSeeds(qGramSize, seq1, seq2, filterHomopolymers);
 }
 
 }  // Align
