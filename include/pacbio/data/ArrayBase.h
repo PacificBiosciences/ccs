@@ -37,6 +37,8 @@
 
 #pragma once
 
+#include <boost/optional.hpp>
+
 namespace PacBio {
 namespace Data {
 
@@ -66,22 +68,29 @@ struct ArrayBase
     }
     ArrayBase(char cigar, char nucleotide) : Cigar(cigar), Nucleotide(nucleotide) {}
 
-    bool HasQualQV() const { return QualQV != -1; }
-    bool HasDelQV() const { return DelQV != -1; }
-    bool HasSubQV() const { return SubQV != -1; }
-    bool HasInsQV() const { return InsQV != -1; }
-
-    bool MeetQualQVThreshold(int threshold) const { return !HasQualQV() || QualQV >= threshold; }
-    bool MeetDelQVThreshold(int threshold) const { return !HasDelQV() || DelQV >= threshold; }
-    bool MeetSubQVThreshold(int threshold) const { return !HasSubQV() || SubQV >= threshold; }
-    bool MeetInsQVThreshold(int threshold) const { return !HasInsQV() || InsQV >= threshold; }
+    bool MeetQualQVThreshold(boost::optional<uint8_t> threshold) const
+    {
+        return !threshold || !QualQV || *QualQV >= *threshold;
+    }
+    bool MeetDelQVThreshold(boost::optional<uint8_t> threshold) const
+    {
+        return !threshold || !DelQV || *DelQV >= *threshold;
+    }
+    bool MeetSubQVThreshold(boost::optional<uint8_t> threshold) const
+    {
+        return !threshold || !SubQV || *SubQV >= *threshold;
+    }
+    bool MeetInsQVThreshold(boost::optional<uint8_t> threshold) const
+    {
+        return !threshold || !InsQV || *InsQV >= *threshold;
+    }
 
     char Cigar;
     char Nucleotide;
-    int8_t QualQV = -1;
-    int8_t DelQV = -1;
-    int8_t SubQV = -1;
-    int8_t InsQV = -1;
+    boost::optional<uint8_t> QualQV;
+    boost::optional<uint8_t> DelQV;
+    boost::optional<uint8_t> SubQV;
+    boost::optional<uint8_t> InsQV;
     double ProbTrue = 0;
     double ProbCorrectBase = 0;
     double ProbNoDeletion = 0;

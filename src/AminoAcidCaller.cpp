@@ -52,6 +52,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <boost/optional.hpp>
+
 #include <pacbio/data/MSA.h>
 #include <pacbio/juliet/AminoAcidCaller.h>
 #include <pacbio/statistics/Fisher.h>
@@ -63,14 +65,15 @@ AminoAcidCaller::AminoAcidCaller(const std::vector<Data::ArrayRead>& reads,
                                  const ErrorEstimates& error, const TargetConfig& targetConfig)
     : error_(error), targetConfig_(targetConfig)
 {
-    auto SetQV = [](const char* env, int* qv, int defaultQv) {
+    auto SetQV = [](const char* env, boost::optional<uint8_t>* qv,
+                    boost::optional<uint8_t> defaultQv = boost::none) {
         char* val = std::getenv(env);
         *qv = val == NULL ? defaultQv : std::stoi(std::string(val));
     };
-    SetQV("DELQV", &delQv_, -1);
+    SetQV("DELQV", &delQv_);
     SetQV("SUBQV", &subQv_, 42);
-    SetQV("INSQV", &insQv_, -1);
-    SetQV("QUALQV", &qualQv_, -1);
+    SetQV("INSQV", &insQv_);
+    SetQV("QUALQV", &qualQv_);
 
     for (const auto& r : reads) {
         beginPos_ = std::min(beginPos_, r.ReferenceStart());

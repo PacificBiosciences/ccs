@@ -45,9 +45,13 @@
 
 namespace PacBio {
 namespace Data {
-MSA::MSA(const std::vector<Data::ArrayRead>& reads) : MSA(reads, 0, 0, 0, 0) {}
-MSA::MSA(const std::vector<Data::ArrayRead>& reads, const int qualQv, const int delQv,
-         const int subQv, const int insQv)
+MSA::MSA(const std::vector<Data::ArrayRead>& reads)
+    : MSA(reads, boost::none, boost::none, boost::none, boost::none)
+{
+}
+MSA::MSA(const std::vector<Data::ArrayRead>& reads, const boost::optional<uint8_t> qualQv,
+         const boost::optional<uint8_t> delQv, const boost::optional<uint8_t> subQv,
+         const boost::optional<uint8_t> insQv)
 {
     BeginEnd(reads);
     // Fill counts
@@ -69,10 +73,14 @@ void MSA::BeginEnd(const std::vector<Data::ArrayRead>& reads)
     }
 }
 
-void MSA::FillCounts(const std::vector<ArrayRead>& reads) { FillCounts(reads, 0, 0, 0, 0); }
+void MSA::FillCounts(const std::vector<ArrayRead>& reads)
+{
+    FillCounts(reads, boost::none, boost::none, boost::none, boost::none);
+}
 
-void MSA::FillCounts(const std::vector<ArrayRead>& reads, const int qualQv, const int delQv,
-                     const int subQv, const int insQv)
+void MSA::FillCounts(const std::vector<ArrayRead>& reads, const boost::optional<uint8_t> qualQv,
+                     const boost::optional<uint8_t> delQv, const boost::optional<uint8_t> subQv,
+                     const boost::optional<uint8_t> insQv)
 {
     // Prepare 2D array for counts
     counts.resize(endPos - beginPos);

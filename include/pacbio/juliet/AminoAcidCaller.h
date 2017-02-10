@@ -160,10 +160,10 @@ private:
     const ErrorEstimates error_;
     const TargetConfig targetConfig_;
 
-    int delQv_;
-    int subQv_;
-    int insQv_;
-    int qualQv_;
+    boost::optional<uint8_t> delQv_;
+    boost::optional<uint8_t> subQv_;
+    boost::optional<uint8_t> insQv_;
+    boost::optional<uint8_t> qualQv_;
 
     static const std::unordered_map<std::string, char> codonToAmino_;
 
