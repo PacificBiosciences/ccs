@@ -93,7 +93,7 @@ std::vector<std::pair<int, int>> CoveredIntervals(int minCoverage, int tStartDim
         // startRowInChunk is computed by scanning from where it was for the last chunk.
         // This is the best we can do within pulling in the nBackRead stuff.
         int endRowInChunk = std::lower_bound(tStart, tStart + tStartDim, chunkEnd) - tStart;
-        for (; ((startRowInChunk < endRowInChunk) & (tEnd[startRowInChunk] < chunkStart));
+        for (; ((startRowInChunk < endRowInChunk) && (tEnd[startRowInChunk] < chunkStart));
              startRowInChunk++)
             ;
 
