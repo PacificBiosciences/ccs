@@ -51,8 +51,6 @@
 #include <seqan/sequence.h>
 
 #include <pacbio/align/SparseAlignment.h>
-
-#include <pacbio/ccs/ChainSeeds.h>
 #include <pacbio/exception/CCSExceptions.h>
 
 #include <pbcopper/align/Seed.h>
@@ -211,8 +209,11 @@ inline std::vector<PacBio::Align::Seed> SparseAlignSeeds(const size_t qGramSize,
                                                          const std::string& seq1,
                                                          const std::string& seq2)
 {
+    const auto config = PacBio::Align::ChainSeedsConfig{1, 1, 3, -1, -1, -1, INT_MAX};
     const auto seeds = PacBio::Align::FindSeeds(qGramSize, seq1, seq2, true);
-    return PacBio::CCS::ChainSeeds(seeds, 3);
+    const auto chains = PacBio::Align::ChainSeeds(seeds, config);
+    if (chains.empty()) return std::vector<PacBio::Align::Seed>{};
+    return chains[0];
 }
 
 ///
