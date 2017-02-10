@@ -45,6 +45,7 @@
 
 namespace PacBio {
 namespace Data {
+MSA::MSA(const std::vector<Data::ArrayRead>& reads) : MSA(reads, 0, 0, 0, 0) {}
 MSA::MSA(const std::vector<Data::ArrayRead>& reads, const int qualQv, const int delQv,
          const int subQv, const int insQv)
 {
@@ -67,6 +68,8 @@ void MSA::BeginEnd(const std::vector<Data::ArrayRead>& reads)
         endPos = std::max(endPos, r.ReferenceEnd());
     }
 }
+
+void MSA::FillCounts(const std::vector<ArrayRead>& reads) { FillCounts(reads, 0, 0, 0, 0); }
 
 void MSA::FillCounts(const std::vector<ArrayRead>& reads, const int qualQv, const int delQv,
                      const int subQv, const int insQv)

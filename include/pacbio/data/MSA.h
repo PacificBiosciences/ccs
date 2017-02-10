@@ -57,8 +57,9 @@ public:
     using MsaItConst = MsaVec::const_iterator;
 
 public:
-    MSA(const std::vector<Data::ArrayRead>& reads, const int qualQv = 0, const int delQv = 0,
-        const int subQv = 0, const int insQv = 0);
+    MSA(const std::vector<Data::ArrayRead>& reads);
+    MSA(const std::vector<Data::ArrayRead>& reads, const int qualQv, const int delQv,
+        const int subQv, const int insQv);
     MSA(const std::vector<Data::ArrayRead>& reads, const MSA& prior);
 
 public:
@@ -85,8 +86,9 @@ public:
 
 private:
     void BeginEnd(const std::vector<Data::ArrayRead>& reads);
-    void FillCounts(const std::vector<ArrayRead>& reads, const int qualQv = 0, const int delQv = 0,
-                    const int subQv = 0, const int insQv = 0);
+    void FillCounts(const std::vector<ArrayRead>& reads);
+    void FillCounts(const std::vector<ArrayRead>& reads, const int qualQv, const int delQv,
+                    const int subQv, const int insQv);
     void FillCounts(const std::vector<ArrayRead>& reads, const MSA& prior);
 };
 }  // namespace Data
