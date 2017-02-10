@@ -40,9 +40,7 @@
 
 #include <boost/optional.hpp>
 
-#include <seqan/seeds.h>
-#include <seqan/sequence.h>
-
+#include <pacbio/align/ChainSeeds.h>
 #include <pacbio/ccs/ChainSeeds.h>
 
 namespace PacBio {
@@ -51,57 +49,29 @@ namespace {
 
 // H is query, V is reference
 
-long Diagonal(const seqan::Seed<seqan::Simple>& seed)
-{
-    size_t v = beginPositionV(seed);
-    size_t h = beginPositionH(seed);
+using PacBio::Align::ComputeVisibilityLeft;
+using PacBio::Align::Diagonal;
+using PacBio::Align::DiagonalCompare;
+using PacBio::Align::HVCompare;
+using PacBio::Align::IndexCompare;
+using PacBio::Align::VHCompare;
 
-    if (v > h) return -static_cast<long>(v - h);
+using SDPHit = PacBio::Align::SDPHit;
+using SDPColumn = PacBio::Align::SDPColumn;
 
-    return static_cast<long>(h - v);
-}
-
-bool HVCompare(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Simple>& b)
-{
-    unsigned leftA = beginPositionH(a), leftB = beginPositionH(b);
-
-    if (leftA < leftB) return true;
-
-    if (leftA == leftB) return endPositionV(a) < endPositionV(b);
-
-    return false;
-}
-
-bool VHCompare(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Simple>& b)
-{
-    unsigned leftA = beginPositionV(a), leftB = beginPositionV(b);
-
-    if (leftA < leftB) return true;
-
-    if (leftA == leftB) return endPositionH(a) < endPositionH(b);
-
-    return false;
-}
-
-bool DiagonalCompare(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Simple>& b)
-{
-    int diagA = Diagonal(a), diagB = Diagonal(b);
-
-    if (diagA == diagB) return beginPositionH(a) < beginPositionH(b);
-
-    return diagA < diagB;
-}
-
-long LinkScore(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Simple>& b,
+long LinkScore(const PacBio::Align::Seed& a,
+               const PacBio::Align::Seed& b,
                const int matchReward)
 {
     using namespace std;
 
-    long aH = static_cast<long>(beginPositionH(a));
-    long aV = static_cast<long>(beginPositionV(a));
-    long bH = static_cast<long>(beginPositionH(b));
-    long bV = static_cast<long>(beginPositionV(b));
-    long k = min(static_cast<long>(seedSize(a)), static_cast<long>(seedSize(b)));
+    // TODO (dbarnett) : sync this up with PacBio::Align::LinkScore
+
+    long aH = static_cast<long>(a.BeginPositionH());
+    long aV = static_cast<long>(a.BeginPositionV());
+    long bH = static_cast<long>(b.BeginPositionH());
+    long bV = static_cast<long>(b.BeginPositionV());
+    long k = min(static_cast<long>(a.Size()), static_cast<long>(b.Size()));
 
     long diagA = Diagonal(a);
     long diagB = Diagonal(b);
@@ -113,84 +83,25 @@ long LinkScore(const seqan::Seed<seqan::Simple>& a, const seqan::Seed<seqan::Sim
     return matchReward * matches - indels - mismatches;
 }
 
-struct SDPHit : public seqan::Seed<seqan::Simple>
-{
-    size_t Index;
-
-    SDPHit(const seqan::Seed<seqan::Simple>& seed, const size_t index)
-        : seqan::Seed<seqan::Simple>(seed), Index(index)
-    {
-    }
-
-    bool operator<(const SDPHit& other) const { return DiagonalCompare(*this, other); }
-};
-
-bool IndexCompare(const SDPHit& a, const SDPHit& b) { return a.Index < b.Index; }
-struct SDPColumn
-{
-    boost::optional<SDPHit> Seed;
-    size_t Column;
-
-    SDPColumn(size_t column, const boost::optional<SDPHit> seed = boost::none)
-        : Seed(seed), Column(column)
-    {
-    }
-
-    bool operator<(const SDPColumn& other) const { return Column < other.Column; }
-};
-
-std::vector<boost::optional<SDPHit>> ComputeVisibilityLeft(const std::vector<SDPHit>& seeds,
-                                                           std::set<SDPHit>& sweepSet)
-{
-    using namespace seqan;
-    using namespace std;
-
-    vector<boost::optional<SDPHit>> visible(seeds.size(), boost::none);
-    auto toRemove = seeds.begin();
-
-    for (auto it = seeds.begin(); it != seeds.end();) {
-        const size_t col = beginPositionH(*it);
-        const auto start = it;
-
-        for (; it != seeds.end() && col == beginPositionH(*it); ++it) {
-            auto succ = sweepSet.upper_bound(*it);
-
-            if (succ != sweepSet.end()) {
-                visible[it->Index] = *succ;
-            }
-        }
-
-        sweepSet.insert(start, it);
-
-        for (; toRemove != seeds.end() && endPositionH(*toRemove) < col; ++toRemove) {
-            sweepSet.erase(*toRemove);
-        }
-    }
-
-    // clear the sweepSet after use
-    sweepSet.clear();
-
-    return visible;
-}
-
 }  // anonymous namespace
 
-void ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
-                const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet, const int matchReward)
+std::vector<PacBio::Align::Seed> ChainSeeds(const PacBio::Align::Seeds& seedSet,
+                                            const int matchReward)
 {
-    using namespace seqan;
     using namespace std;
 
+    // TODO (dbarnett) : sync this up with PacBio::Align::ChainSeeds
+
     vector<SDPHit> seeds;
-    vector<long> scores(length(seedSet), 0L);
+    vector<long> scores(seedSet.size(), 0L);
 
     // initialize our "SDPHits" vector (has fixed index)
     {
         size_t i = 0;
 
-        for (auto it = begin(seedSet); it != end(seedSet); ++it, ++i) {
+        for (auto it = seedSet.begin(); it != seedSet.end(); ++it, ++i) {
             seeds.push_back(SDPHit(*it, i));
-            scores[i] = seedSize(*it);
+            scores[i] = (*it).Size();
         }
     }
 
@@ -209,20 +120,20 @@ void ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
     vector<boost::optional<size_t>> chainPred(seeds.size(), boost::none);
 
     auto zScore = [&scores](const SDPHit& seed) {
-        return scores[seed.Index] + beginPositionH(seed) + beginPositionV(seed);
+        return scores[seed.Index] + seed.BeginPositionH() + seed.BeginPositionV();
     };
 
     for (auto it = seeds.begin(); it != seeds.end();) {
-        const size_t row = beginPositionV(*it);
+        const size_t row = (*it).BeginPositionV();
         const auto start = it;
 
-        for (; it != seeds.end() && row == beginPositionV(*it); ++it) {
+        for (; it != seeds.end() && row == (*it).BeginPositionV(); ++it) {
             long bestScore = -numeric_limits<long>::max();
             boost::optional<SDPHit> bestSeed = boost::none;
 
             // find the previous column and best fragment from it
             {
-                SDPColumn col(beginPositionH(*it));
+                SDPColumn col((*it).BeginPositionH());
                 auto pred = colSet.lower_bound(col);
 
                 if (pred != colSet.begin()) {
@@ -281,8 +192,8 @@ void ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
         // remove all seeds from the sweepSet with end position less than the current row,
         // and ensure the colSet invariant is kept:
         //   that all columns greater than our current
-        for (; toRemove != seeds.end() && endPositionV(*toRemove) < row; ++toRemove) {
-            SDPColumn col(endPositionH(*toRemove), boost::make_optional(*toRemove));
+        for (; toRemove != seeds.end() && (*toRemove).EndPositionV() < row; ++toRemove) {
+            SDPColumn col((*toRemove).EndPositionH(), boost::make_optional(*toRemove));
 
             auto it = colSet.find(col);
 
@@ -304,15 +215,17 @@ void ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
 
     // seeds need to be sorted by Index to ... index into it properly
     sort(seeds.begin(), seeds.end(), IndexCompare);
-    clear(chain);
 
+    std::vector<PacBio::Align::Seed> chain;
     while (bestChainEnd) {
-        appendValue(chain, seeds[*bestChainEnd]);
+        chain.push_back(seeds[*bestChainEnd]);
         bestChainEnd = chainPred[*bestChainEnd];
     }
 
-    // reverse the chain order in place
-    reverse(chain);
+    // Seeds were added back-to-front, so reverse the current order in place
+    std::reverse(chain.begin(), chain.end());
+
+    return chain;
 }
 
 }  // namespace CCS

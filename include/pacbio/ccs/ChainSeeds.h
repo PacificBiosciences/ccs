@@ -37,15 +37,16 @@
 
 #pragma once
 
-#include <seqan/seeds.h>
-#include <seqan/sequence.h>
+#include <vector>
+
+#include <pbcopper/align/Seed.h>
+#include <pbcopper/align/Seeds.h>
 
 namespace PacBio {
 namespace CCS {
 
-void ChainSeeds(seqan::String<seqan::Seed<seqan::Simple>>& chain,
-                const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seedSet,
-                const int matchReward = 3);
+std::vector<PacBio::Align::Seed> ChainSeeds(const PacBio::Align::Seeds& seedSet,
+                                            const int matchReward = 3);
 
 }  // namespace CCS
 }  // namespace PacBio

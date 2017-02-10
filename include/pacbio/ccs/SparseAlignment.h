@@ -211,11 +211,8 @@ inline std::vector<PacBio::Align::Seed> SparseAlignSeeds(const size_t qGramSize,
                                                          const std::string& seq1,
                                                          const std::string& seq2)
 {
-    const auto config = PacBio::Align::ChainSeedsConfig{UINT_MAX, 0, 3, 1, -1, -1, INT_MAX};
     const auto seeds = PacBio::Align::FindSeeds(qGramSize, seq1, seq2, true);
-    const auto chains = PacBio::Align::ChainSeeds(seeds, config);
-    if (chains.empty()) return std::vector<PacBio::Align::Seed>{};
-    return chains[0];
+    return PacBio::CCS::ChainSeeds(seeds, 3);
 }
 
 ///
@@ -233,7 +230,6 @@ inline std::vector<std::pair<size_t, size_t>> SparseAlign(const size_t qGramSize
                                                           const std::string& seq1,
                                                           const std::string& seq2)
 {
-
     std::vector<std::pair<size_t, size_t>> result;
     const auto chain = SparseAlignSeeds(qGramSize, seq1, seq2);
     for (const auto& s : chain)
