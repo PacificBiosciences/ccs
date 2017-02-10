@@ -59,9 +59,7 @@ using PacBio::Align::VHCompare;
 using SDPHit = PacBio::Align::SDPHit;
 using SDPColumn = PacBio::Align::SDPColumn;
 
-long LinkScore(const PacBio::Align::Seed& a,
-               const PacBio::Align::Seed& b,
-               const int matchReward)
+long LinkScore(const PacBio::Align::Seed& a, const PacBio::Align::Seed& b, const int matchReward)
 {
     using namespace std;
 
