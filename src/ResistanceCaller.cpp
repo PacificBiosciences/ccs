@@ -62,7 +62,6 @@ namespace Juliet {
 ResistanceCaller::ResistanceCaller(const Data::MSA& msa)
     : msa_(msa), begin_(msa.beginPos), end_(msa.endPos)
 {
-    int pos = begin_;
     for (const auto& column : msa) {
         std::vector<VariantNucleotide> nucs;
         for (int j = 0; j < 4; ++j) {
@@ -75,7 +74,6 @@ ResistanceCaller::ResistanceCaller(const Data::MSA& msa)
             }
         }
         AddPosition(std::move(nucs));
-        ++pos;
     }
 }
 
