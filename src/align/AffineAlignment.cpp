@@ -103,9 +103,7 @@ inline float MatchScore<IupacAware>(char t, char q, float matchScore, float mism
 {
     if (t == q) {
         return matchScore;
-    } else if (IsIupacPartialMatch(t, q)) {
-        return partialMatchScore;
-    } else if (IsIupacPartialMatch(q, t)) {
+    } else if (IsIupacPartialMatch(t, q) || IsIupacPartialMatch(q, t)) {
         return partialMatchScore;
     } else {
         return mismatchScore;
