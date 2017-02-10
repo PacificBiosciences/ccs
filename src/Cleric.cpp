@@ -270,29 +270,21 @@ void Cleric::Convert(const std::string& outputFile)
                                 ++pos_in_read;
                             }
                         } else {
-                            if (dest_str.at(pos_in_dest_ref) == '-') {
-                                // Dest:   AAA -AAA
-                                // Source: AAA AAAA
-                                // Read:   AAAA AAA
-                                //            ^
+                            // Dest:   AAA -AAA
+                            // Source: AAA AAAA
+                            // Read:   AAAA AAA
+                            //            ^
+                            // OR
+                            // Dest:   AAA AAA
+                            // Source: AAA AAA
+                            // Read:   AAAAAAA
+                            //            ^
 
-                                // Insertion
-                                new_state = newIns_;
+                            // Insertion
+                            new_state = newIns_;
 
-                                ++pos_in_cigar;
-                                ++pos_in_read;
-                            } else {
-                                // Dest:   AAA AAA
-                                // Source: AAA AAA
-                                // Read:   AAAAAAA
-                                //            ^
-
-                                // Insertion
-                                new_state = newIns_;
-
-                                ++pos_in_cigar;
-                                ++pos_in_read;
-                            }
+                            ++pos_in_cigar;
+                            ++pos_in_read;
                         }
                     }
                     break;
@@ -419,28 +411,20 @@ void Cleric::Convert(const std::string& outputFile)
                                 ++pos_in_dest_ref;
                             }
                         } else {
-                            if (dest_str.at(pos_in_dest_ref) == '-') {
-                                // Dest:   AAA--AAA
-                                // Source: AAAAAAAA
-                                // Read:   AAA-AAAA
-                                //            ^
+                            // Dest:   AAA--AAA
+                            // Source: AAAAAAAA
+                            // Read:   AAA-AAAA
+                            //            ^
+                            // OR
+                            // Dest:   AAA AAAA
+                            // Source: AAA AAAA
+                            // Read:   AAA-AAAA
+                            //            ^
 
-                                // Padded deletion
-                                ++pos_in_cigar;
+                            // Padded deletion
+                            ++pos_in_cigar;
 
-                                new_state = newPad_;
-
-                            } else {
-                                // Dest:   AAA AAAA
-                                // Source: AAA AAAA
-                                // Read:   AAA-AAAA
-                                //            ^
-
-                                // Padded deletion
-                                ++pos_in_cigar;
-
-                                new_state = newPad_;
-                            }
+                            new_state = newPad_;
                         }
                     }
                     break;
@@ -453,8 +437,7 @@ void Cleric::Convert(const std::string& outputFile)
                     isSecondCigarAfterEnd = true;
                     break;
                 default:
-                    throw std::runtime_error("UNKNOW CIGAR");
-                    break;
+                    throw std::runtime_error("UNKNOWN CIGAR");
             }
 
             // If we reached Z, we have processed the CIGAR and can push the
@@ -739,6 +722,10 @@ void Cleric::Convert(const std::string& outputFile)
         }
         read.Impl().CigarData(replace_cigar_tuple);
         read.Impl().Position(new_sam_start);
+        if (read.Impl().HasTag("NM"))
+            read.Impl().EditTag("NM", new_edit_distance);
+        else
+            read.Impl().AddTag("NM", new_edit_distance);
         out.Write(read);
     }
 }

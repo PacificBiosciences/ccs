@@ -75,7 +75,7 @@ BAMArrayRead::BAMArrayRead(const BAM::BamRecord& record, int idx)
     BAM::QualityValues delQV;
     BAM::QualityValues insQV;
 
-    bool richQVs = Record.HasDeletionQV() && Record.HasDeletionQV() && Record.HasInsertionQV();
+    bool richQVs = Record.HasSubstitutionQV() && Record.HasDeletionQV() && Record.HasInsertionQV();
     if (richQVs) {
         subQV = Record.SubstitutionQV(BAM::Orientation::GENOMIC, true, true);
         delQV = Record.DeletionQV(BAM::Orientation::GENOMIC, true, true);

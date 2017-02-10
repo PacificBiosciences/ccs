@@ -281,7 +281,7 @@ PwSnrAModelCreator::PwSnrAModelCreator(const boost::property_tree::ptree& pt)
         ReadMatrix<CONTEXT_NUMBER, 3, 4>(transitionParams_, pt.get_child("TransitionParameters"));
     } catch (std::invalid_argument& e) {
         throw MalformedModelFile();
-    } catch (boost::property_tree::ptree_error) {
+    } catch (boost::property_tree::ptree_error&) {
         throw MalformedModelFile();
     }
 }

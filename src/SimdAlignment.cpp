@@ -92,7 +92,6 @@ PariwiseAlignmentFasta SimdNeedleWunschAlignment(const std::string& target,
                     throw std::runtime_error("H");
                 default:
                     throw std::runtime_error("unknown");
-                    break;
             }
         }
     }

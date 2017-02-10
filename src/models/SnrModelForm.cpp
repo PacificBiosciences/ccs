@@ -275,7 +275,7 @@ SnrModelCreator::SnrModelCreator(const boost::property_tree::ptree& pt)
         emissionPmf_[0][1] = substitutionRate_ / 3.0;
     } catch (std::invalid_argument& e) {
         throw MalformedModelFile();
-    } catch (boost::property_tree::ptree_error) {
+    } catch (boost::property_tree::ptree_error&) {
         throw MalformedModelFile();
     }
 }

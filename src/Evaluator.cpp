@@ -82,6 +82,7 @@ Evaluator::Evaluator(Evaluator&& eval) : impl_{std::move(eval.impl_)}, curState_
 
 Evaluator& Evaluator::operator=(Evaluator&& eval)
 {
+    if (eval == *this) return *this;
     impl_ = move(eval.impl_);
     curState_ = eval.curState_;
     return *this;

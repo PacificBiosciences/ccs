@@ -144,7 +144,7 @@ std::vector<TemplatePosition> S_P1C1Beta_Model::Populate(const std::string& tpl)
     for (size_t i = 1; i < tpl.size(); ++i) {
         const uint8_t curr = detail::TranslationTable[static_cast<uint8_t>(tpl[i])];
         if (curr > 3) throw std::invalid_argument("invalid character in sequence!");
-        const bool hpAdd = tpl[i - 1] == tpl[i] ? 0 : 4;
+        const auto hpAdd = tpl[i - 1] == tpl[i] ? 0 : 4;
         const auto params = transProbs[curr + hpAdd];
         result.emplace_back(TemplatePosition{
             tpl[i - 1], prev,

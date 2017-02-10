@@ -130,19 +130,19 @@ std::vector<VD> PoaGraphImpl::consensusPath(AlignMode mode, int minCoverage) con
     int totalReads = NumReads();
 
     std::list<VD> path;
-    std::list<VD> sortedVertices(num_vertices(g_));
-    topological_sort(g_, sortedVertices.rbegin());
+    std::list<VD> sortedVerticesLocal(num_vertices(g_));
+    topological_sort(g_, sortedVerticesLocal.rbegin());
     unordered_map<VD, VD> bestPrevVertex;
 
     // ignore ^ and $
     // TODO(dalexander): find a cleaner way to do this
-    vertexInfoMap_[sortedVertices.front()].ReachingScore = 0;
-    sortedVertices.pop_back();
-    sortedVertices.pop_front();
+    vertexInfoMap_[sortedVerticesLocal.front()].ReachingScore = 0;
+    sortedVerticesLocal.pop_back();
+    sortedVerticesLocal.pop_front();
 
     VD bestVertex = null_vertex;
     float bestReachingScore = -FLT_MAX;
-    for (const VD v : sortedVertices) {
+    for (const VD v : sortedVerticesLocal) {
         PoaNode& vInfo = vertexInfoMap_[v];
         int containingReads = vInfo.Reads;
         int spanningReads = vInfo.SpanningReads;

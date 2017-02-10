@@ -70,7 +70,7 @@ bool ModelFormFactory::LoadModel(const std::string& path)
         // verify we're looking at consensus model parameters
         std::string version = pt.get<std::string>("ConsensusModelVersion");
         if (version != "3.0.0") return false;
-    } catch (boost::property_tree::ptree_error) {
+    } catch (boost::property_tree::ptree_error&) {
         return false;
     }
 

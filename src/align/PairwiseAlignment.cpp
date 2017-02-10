@@ -232,16 +232,13 @@ std::vector<int> TargetToQueryPositions(const std::string& transcript)
     std::vector<int> ntp;
     ntp.reserve(targetLength(transcript) + 1);
 
-    int targetPos = 0;
     int queryPos = 0;
     for (const char c : transcript) {
         if (c == 'M' || c == 'R') {
             ntp.push_back(queryPos);
-            targetPos++;
             queryPos++;
         } else if (c == 'D') {
             ntp.push_back(queryPos);
-            targetPos++;
         } else if (c == 'I') {
             queryPos++;
         } else {

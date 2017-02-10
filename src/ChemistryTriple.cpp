@@ -78,6 +78,7 @@ bool ChemistryTriple::SetValues(const std::string& bindingKit, const std::string
             return true;
         }
     } catch (const boost::bad_lexical_cast& e) {
+        return false;
     }
 
     return false;

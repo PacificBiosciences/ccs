@@ -388,10 +388,10 @@ PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq, const A
     mat->mode_ = config.Mode;
     mat->graph_ = this;
 
-    vector<VD> sortedVertices(num_vertices(g_));
-    topological_sort(g_, sortedVertices.rbegin());
+    vector<VD> sortedVerticesLocal(num_vertices(g_));
+    topological_sort(g_, sortedVerticesLocal.rbegin());
     const AlignmentColumn* curCol;
-    for (const auto& v : sortedVertices) {
+    for (const auto& v : sortedVerticesLocal) {
         if (v != exitVertex_) {
             size_t startRow = 0, endRow = readSeq.size() + 1;
             if (rangeFinder) {
@@ -463,14 +463,14 @@ void PoaGraphImpl::PruneGraph(const int minCoverage)
     // than num_vertices(g_) causes a crash. Instead we sort the vertices by
     // their existing index.  This should still be very fast, as the underlying
     // collection should be mostly sorted already.
-    vector<VD> sortedVertices;
-    BGL_FORALL_VERTICES(v, g_, BoostGraph) sortedVertices.push_back(v);
-    std::sort(sortedVertices.begin(), sortedVertices.end(), VertexComparator(g_));
+    vector<VD> sortedVerticesLocal;
+    BGL_FORALL_VERTICES(v, g_, BoostGraph) sortedVerticesLocal.push_back(v);
+    std::sort(sortedVerticesLocal.begin(), sortedVerticesLocal.end(), VertexComparator(g_));
 
     // Finally, re-index all vertices to the range [0, num_vertices(g_)]
     graph_traits<BoostGraph>::vertices_size_type current_index = 0;
     index_map_t index_map = get(vertex_index, g_);
-    for (const VD& v : sortedVertices) {
+    for (const VD& v : sortedVerticesLocal) {
         index_map[v] = current_index++;
     }
 }
@@ -500,11 +500,11 @@ void PoaGraphImpl::WriteGraphCsvFile(const string& filename) const
 {
     std::ofstream outfile(filename.c_str());
 
-    std::list<VD> sortedVertices(num_vertices(g_));
-    topological_sort(g_, sortedVertices.rbegin());
+    std::list<VD> sortedVerticesLocal(num_vertices(g_));
+    topological_sort(g_, sortedVerticesLocal.rbegin());
 
     outfile << "Id,Base,Reads,SpanningReads,Score,ReachingScore" << std::endl;
-    for (const VD v : sortedVertices) {
+    for (const VD v : sortedVerticesLocal) {
         PoaNode& vi = vertexInfoMap_[v];
         outfile << vi.Id << "," << vi.Base << "," << vi.Reads << "," << vi.SpanningReads << ","
                 << vi.Score << "," << vi.ReachingScore << std::endl;

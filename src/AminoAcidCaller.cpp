@@ -116,13 +116,11 @@ int AminoAcidCaller::CountNumberOfTests(const std::vector<TargetGene>& genes) co
             const int bi = i - beginPos_;
 
             std::unordered_map<std::string, int> codons;
-            int coverage = 0;
             for (const auto& row : matrix_) {
                 // Read does not cover codon
                 if (bi + 2 >= static_cast<int>(row.size()) || bi < 0) continue;
                 if (row.at(bi + 0) == ' ' || row.at(bi + 1) == ' ' || row.at(bi + 2) == ' ')
                     continue;
-                ++coverage;
 
                 // Read has a deletion
                 if (row.at(bi + 0) == '-' || row.at(bi + 1) == '-' || row.at(bi + 2) == '-')
