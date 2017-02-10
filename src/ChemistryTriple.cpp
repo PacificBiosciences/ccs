@@ -78,6 +78,8 @@ bool ChemistryTriple::SetValues(const std::string& bindingKit, const std::string
             return true;
         }
     } catch (const boost::bad_lexical_cast& e) {
+        throw BadChemistryTriple("unparsable setting ChemistryTriple(" + bindingKit + ", " +
+                                 sequencingKit + ", " + changeListID + ")");
     }
 
     return false;
