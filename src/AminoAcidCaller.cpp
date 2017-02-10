@@ -97,10 +97,8 @@ void AminoAcidCaller::GenerateMSA(const std::vector<Data::ArrayRead>& reads)
             switch (b.Cigar) {
                 case 'X':
                 case '=':
-                    if ((b.DelQV == -1 || b.DelQV >= delQv_) &&
-                        (b.InsQV == -1 || b.InsQV >= insQv_) &&
-                        (b.SubQV == -1 || b.SubQV >= subQv_) &&
-                        (b.QualQV == -1 || b.QualQV >= qualQv_))
+                    if ((b.MeetDelQVThreshold(delQv_)) && (b.MeetInsQVThreshold(insQv_)) &&
+                        (b.MeetSubQVThreshold(subQv_)) && (b.MeetQualQVThreshold(qualQv_)))
                         row[pos++] = b.Nucleotide;
                     else
                         row[pos++] = '-';

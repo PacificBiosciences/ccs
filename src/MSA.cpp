@@ -92,10 +92,8 @@ void MSA::FillCounts(const std::vector<ArrayRead>& reads, const int qualQv, cons
                 case 'X':
                 case '=':
                     CheckInsertion();
-                    if ((b.DelQV == -1 || b.DelQV >= delQv) &&
-                        (b.InsQV == -1 || b.InsQV >= insQv) &&
-                        (b.SubQV == -1 || b.SubQV >= subQv) &&
-                        (b.QualQV == -1 || b.QualQV >= qualQv))
+                    if ((b.MeetDelQVThreshold(delQv)) && (b.MeetInsQVThreshold(insQv)) &&
+                        (b.MeetSubQVThreshold(subQv)) && (b.MeetQualQVThreshold(qualQv)))
                         counts[pos][b.Nucleotide]++;
                     else
                         counts[pos]['N']++;
