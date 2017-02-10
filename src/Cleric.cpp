@@ -437,8 +437,7 @@ void Cleric::Convert(const std::string& outputFile)
                     isSecondCigarAfterEnd = true;
                     break;
                 default:
-                    throw std::runtime_error("UNKNOW CIGAR");
-                    break;
+                    throw std::runtime_error("UNKNOWN CIGAR");
             }
 
             // If we reached Z, we have processed the CIGAR and can push the
