@@ -37,6 +37,8 @@
 
 #pragma once
 
+#include <boost/optional.hpp>
+
 namespace PacBio {
 namespace Data {
 
@@ -48,6 +50,9 @@ struct ArrayBase
         : Cigar(cigar)
         , Nucleotide(nucleotide)
         , QualQV(qualQV)
+        , DelQV(delQV)
+        , SubQV(subQV)
+        , InsQV(insQV)
         , ProbTrue(1 - pow(10, -1.0 * qualQV / 10.0))
         , ProbCorrectBase(1 - pow(10, -1.0 * subQV / 10.0))
         , ProbNoDeletion(1 - pow(10, -1.0 * delQV / 10.0))
@@ -62,9 +67,30 @@ struct ArrayBase
     {
     }
     ArrayBase(char cigar, char nucleotide) : Cigar(cigar), Nucleotide(nucleotide) {}
+
+    bool MeetQualQVThreshold(boost::optional<uint8_t> threshold) const
+    {
+        return !threshold || !QualQV || *QualQV >= *threshold;
+    }
+    bool MeetDelQVThreshold(boost::optional<uint8_t> threshold) const
+    {
+        return !threshold || !DelQV || *DelQV >= *threshold;
+    }
+    bool MeetSubQVThreshold(boost::optional<uint8_t> threshold) const
+    {
+        return !threshold || !SubQV || *SubQV >= *threshold;
+    }
+    bool MeetInsQVThreshold(boost::optional<uint8_t> threshold) const
+    {
+        return !threshold || !InsQV || *InsQV >= *threshold;
+    }
+
     char Cigar;
     char Nucleotide;
-    uint8_t QualQV = 0;
+    boost::optional<uint8_t> QualQV;
+    boost::optional<uint8_t> DelQV;
+    boost::optional<uint8_t> SubQV;
+    boost::optional<uint8_t> InsQV;
     double ProbTrue = 0;
     double ProbCorrectBase = 0;
     double ProbNoDeletion = 0;

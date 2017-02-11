@@ -58,6 +58,9 @@ public:
 
 public:
     MSA(const std::vector<Data::ArrayRead>& reads);
+    MSA(const std::vector<Data::ArrayRead>& reads, const boost::optional<uint8_t> qualQv,
+        const boost::optional<uint8_t> delQv, const boost::optional<uint8_t> subQv,
+        const boost::optional<uint8_t> insQv);
     MSA(const std::vector<Data::ArrayRead>& reads, const MSA& prior);
 
 public:
@@ -85,6 +88,9 @@ public:
 private:
     void BeginEnd(const std::vector<Data::ArrayRead>& reads);
     void FillCounts(const std::vector<ArrayRead>& reads);
+    void FillCounts(const std::vector<ArrayRead>& reads, const boost::optional<uint8_t> qualQv,
+                    const boost::optional<uint8_t> delQv, const boost::optional<uint8_t> subQv,
+                    const boost::optional<uint8_t> insQv);
     void FillCounts(const std::vector<ArrayRead>& reads, const MSA& prior);
 };
 }  // namespace Data

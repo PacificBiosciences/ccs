@@ -46,10 +46,16 @@
 namespace PacBio {
 namespace Data {
 MSA::MSA(const std::vector<Data::ArrayRead>& reads)
+    : MSA(reads, boost::none, boost::none, boost::none, boost::none)
+{
+}
+MSA::MSA(const std::vector<Data::ArrayRead>& reads, const boost::optional<uint8_t> qualQv,
+         const boost::optional<uint8_t> delQv, const boost::optional<uint8_t> subQv,
+         const boost::optional<uint8_t> insQv)
 {
     BeginEnd(reads);
     // Fill counts
-    FillCounts(reads);
+    FillCounts(reads, qualQv, delQv, subQv, insQv);
 }
 MSA::MSA(const std::vector<Data::ArrayRead>& reads, const MSA& prior)
 {
@@ -68,6 +74,13 @@ void MSA::BeginEnd(const std::vector<Data::ArrayRead>& reads)
 }
 
 void MSA::FillCounts(const std::vector<ArrayRead>& reads)
+{
+    FillCounts(reads, boost::none, boost::none, boost::none, boost::none);
+}
+
+void MSA::FillCounts(const std::vector<ArrayRead>& reads, const boost::optional<uint8_t> qualQv,
+                     const boost::optional<uint8_t> delQv, const boost::optional<uint8_t> subQv,
+                     const boost::optional<uint8_t> insQv)
 {
     // Prepare 2D array for counts
     counts.resize(endPos - beginPos);
@@ -90,7 +103,11 @@ void MSA::FillCounts(const std::vector<ArrayRead>& reads)
                 case 'X':
                 case '=':
                     CheckInsertion();
-                    counts[pos][b.Nucleotide]++;
+                    if ((b.MeetDelQVThreshold(delQv)) && (b.MeetInsQVThreshold(insQv)) &&
+                        (b.MeetSubQVThreshold(subQv)) && (b.MeetQualQVThreshold(qualQv)))
+                        counts[pos][b.Nucleotide]++;
+                    else
+                        counts[pos]['N']++;
                     ++pos;
                     break;
                 case 'D':
