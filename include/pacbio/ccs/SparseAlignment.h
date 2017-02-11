@@ -123,7 +123,7 @@ size_t CountSeeds(const const PacBio::Align::Seeds& seeds& seeds)
     for (const auto& seed : seeds)
         count += seed.Size() - TSize;
 #endif
-    return cout;
+    return count;
 }
 
 template <typename TSize>
@@ -134,7 +134,7 @@ size_t CountSeeds(const std::vector<PacBio::Align::Seed>& seeds)
     for (const auto& seed : seeds)
         count += seed.Size() - TSize;
 #endif
-    return cout;
+    return count;
 }
 
 template <size_t TSize>
