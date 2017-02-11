@@ -14,7 +14,9 @@ set -o nounset
 set -o pipefail
 
 function echoHelp() {
-    echo "  -i [arg]  BAM CCS file to process. Required.
+    echo "USAGE: julietflow -i movie.ccs.bam -r reference.fasta
+
+  -i [arg]  BAM CCS file to process. Required.
   -r [arg]  Reference FASTA file. Required.
   -c [arg]  Juliet target config. Default='<HIV>'
   -j [arg]  Number of CPU cores. Default=1
@@ -53,8 +55,7 @@ while getopts ":h :i: :r: :c: :j: :t: :k :m:" opt; do
     k)
       keep="1";;
     h)
-      helpRequested="1"
-      echo "get help";;
+      helpRequested="1";;
     \?)
       echo "Invalid option: -$OPTARG" >&2;;
   esac
