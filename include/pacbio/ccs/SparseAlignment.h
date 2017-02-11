@@ -115,7 +115,7 @@ inline std::map<size_t, PacBio::Align::Seeds> FindSeeds(const PacBio::QGram::Ind
     return PacBio::Align::FindSeeds(index, seq, boost::none, true);
 }
 
-template <typename TSize>
+template <size_t TSize>
 size_t CountSeeds(const PacBio::Align::Seeds& seeds)
 {
     size_t count = seeds.size();
@@ -126,7 +126,7 @@ size_t CountSeeds(const PacBio::Align::Seeds& seeds)
     return count;
 }
 
-template <typename TSize>
+template <size_t TSize>
 size_t CountSeeds(const std::vector<PacBio::Align::Seed>& seeds)
 {
     size_t count = seeds.size();
