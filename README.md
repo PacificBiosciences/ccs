@@ -15,6 +15,7 @@
      - [Minor Variant Calling `juliet`](doc/JULIET.md)
      - [Reduce Alignment `fuse`](doc/FUSE.md)
      - [Swap Alignment Reference `cleric`](doc/CLERIC.md)
+     - [Minor Variant Pipeline `julietflow`](doc/JULIETFLOW.md)
    - Planned
      - Genomic Consensus Calling `gcpp`
      - Viral Haplotype Phasing `eden`
@@ -43,6 +44,10 @@ them, employing a statistical model, to produce one high quality consensus seque
 ### [Swap BAM reference](doc/CLERIC.md)
 
 `cleric` swaps the reference of an alignment by transitive alignment.
+
+### [Minor variant pipeline](doc/JULIETFLOW.md)
+
+`julietflow` automatizes the minor variant pipeline.
 
 ### Viral Haplotype Phasing
 
