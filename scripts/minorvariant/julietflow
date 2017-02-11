@@ -23,7 +23,7 @@ function echoHelp() {
   -m [arg]  Maximal number of re-align iterations. Default=1
   -t [arg]  Target reference FASTA, per default using --ref.
   -k        Keep temporary files
-  -h        This help page"
+  -h --help This help page"
   exit 0
 }
 
@@ -38,28 +38,48 @@ if [[ $# -eq 0 ]]; then
     echoHelp
 fi
 
-while getopts ":h :i: :r: :c: :j: :t: :k :m:" opt; do
-  case $opt in
-    i)
-      if [[ ${OPTARG} == /* ]]; then input=${OPTARG}; else input=$(pwd)/${OPTARG}; fi;;
-    r)
-      if [[ ${OPTARG} == /* ]]; then reference=${OPTARG}; else reference=$(pwd)/${OPTARG}; fi;;
-    c)
-      config=$OPTARG;;
-    j)
-      cores=$OPTARG;;
-    t)
-      target=$OPTARG;;
-    m)
-      max=$OPTARG;;
-    k)
+PROGNAME=${0##*/}
+SHORTOPTS="hmi:r:c:j:t:m:"
+LONGOPTS="help"
+
+ARGS=$(getopt -s bash --options $SHORTOPTS  \
+  --longoptions $LONGOPTS --name $PROGNAME -- "$@" )
+
+eval set -- "$ARGS"
+
+while [[ $# -gt 0 ]] ; do
+   case $1 in
+    -i)
+      shift
+      if [[ ${1} == /* ]]; then input=${1}; else input=$(pwd)/${1}; fi;;
+    -r)
+      shift
+      if [[ ${1} == /* ]]; then reference=${1}; else reference=$(pwd)/${1}; fi;;
+    -c)
+      shift
+      config=$1;;
+    -j)
+      shift
+      cores=$1;;
+    -t)
+      shift
+      target=$1;;
+    -m)
+      shift
+      max=$1;;
+    -k)
       keep="1";;
-    h)
+    -h | --help)
       helpRequested="1";;
     \?)
-      echo "Invalid option: -$OPTARG" >&2;;
+      echo "Invalid option: -$1" >&2;;
   esac
+  shift
 done
+
+if [[ "${helpRequested}" = "1" ]]; then
+  echoHelp
+fi
 
 if [[ -z "${input:-}" ]]; then
     echo "Please provide the CCS BAM file via -i"
@@ -69,10 +89,6 @@ fi
 if [[ -z "${reference:-}" ]]; then
     echo "Please provide the reference FASTA file via -r"
     exit 1
-fi
-
-if [[ "${helpRequested}" = "1" ]]; then
-  echoHelp
 fi
 
 if [[ -z "${target:-}" ]]; then
