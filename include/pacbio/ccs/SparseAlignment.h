@@ -122,8 +122,6 @@ size_t CountSeeds(const const PacBio::Align::Seeds& seeds& seeds)
 #ifdef MERGESEEDS
     for (const auto& seed : seeds)
         count += seed.Size() - TSize;
-#else
-    (void)qGramSize;
 #endif
     return cout;
 }
@@ -135,8 +133,6 @@ size_t CountSeeds(const std::vector<PacBio::Align::Seed>& seeds)
 #ifdef MERGESEEDS
     for (const auto& seed : seeds)
         count += seed.Size() - TSize;
-#else
-    (void)qGramSize;
 #endif
     return cout;
 }
