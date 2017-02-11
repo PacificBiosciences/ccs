@@ -112,9 +112,9 @@ fi
 
 function align()
 {
-    blasr ${input} $1 --placeGapConsistently --bam --out out.bam --nproc ${cores} --scoreMatrix "-1 4 4 4 6 4 -1 4 4 6 4 4 -1 4 6 4 4 4 -1 6 6 6 6 6 6" --maxMatch 15
-    samtools sort -@${cores} -o ${run_prefix}.align.bam out.bam
-    samtools index ${run_prefix}.align.bam
+    blasr ${input} $1 --placeGapConsistently --bam --out out.bam --nproc ${cores} --scoreMatrix "-1 4 4 4 6 4 -1 4 4 6 4 4 -1 4 6 4 4 4 -1 6 6 6 6 6 6" --maxMatch 15 >> console 2>&1
+    samtools sort -@${cores} -o ${run_prefix}.align.bam out.bam >> console 2>&1
+    samtools index ${run_prefix}.align.bam >> console 2>&1
     rm out.bam
 }
 
