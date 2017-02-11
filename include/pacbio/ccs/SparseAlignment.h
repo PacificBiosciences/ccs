@@ -116,7 +116,7 @@ inline std::map<size_t, PacBio::Align::Seeds> FindSeeds(const PacBio::QGram::Ind
 }
 
 template <typename TSize>
-size_t CountSeeds(const PacBio::Align::Seeds& seeds& seeds)
+size_t CountSeeds(const PacBio::Align::Seeds& seeds)
 {
     size_t count = seeds.size();
 #ifdef MERGESEEDS
