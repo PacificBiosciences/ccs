@@ -17,4 +17,7 @@ Run ccscheck, check output:
   $ sort -t, -n -k1,1 -k2,2 stats/zmws.csv > zmws.sorted.csv
   $ zdiff -NrU1 zmws.sorted.csv /pbi/dept/consensus/testdata/unanimity-nightly/big.sorted.to187412.csv.gz
 
-TODO: copy back to the "lastrun" dir
+Copy outputs to lastrun directory, for later inspection if need be
+
+  $ cp out.bam* $DATADIR/lastrun/
+  $ cp zmws.sorted.csv $DATADIR/lastrun/
