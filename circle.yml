@@ -15,7 +15,7 @@ dependencies:
         - pushd _deps ; if [ ! -f swig-3.0.8/bin/swig ] ; then rm -fr swig-3.0.8* ; mkdir dl ; pushd dl ; wget https://downloads.sourceforge.net/project/swig/swig/swig-3.0.8/swig-3.0.8.tar.gz ; tar xzf swig-3.0.8.tar.gz ; pushd swig-3.0.8 ; ./configure --prefix $(readlink -f ../../swig-3.0.8) ; make ; make install ; fi
         - pushd _deps ; git clone https://github.com/PacificBiosciences/PacBioTestData.git
         - pip install --upgrade pip
-        - pip install numpy cython h5py pysam cram nose
+        - pip install numpy cython h5py pysam cram nose jsonschema avro
         - pip install --upgrade --no-deps git+https://github.com/PacificBiosciences/pbcommand.git
         - pip install --upgrade --no-deps git+https://github.com/PacificBiosciences/pbcore.git
         - pushd _deps/PacBioTestData ; git lfs pull && make python
