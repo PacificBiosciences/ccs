@@ -104,7 +104,7 @@ static int Runner(const PacBio::CLI::Results& options)
         std::cerr << "ERROR: Please provide BAM input, see --help" << std::endl;
         return EXIT_FAILURE;
     }
-    if (options.PositionalArguments().size() >= 4) {
+    if (options.PositionalArguments().size() < 2 || options.PositionalArguments().size() >= 4) {
         std::cerr
             << "ERROR: Please provide _one_ BAM input and maximal _two_ FASTA files, see --help"
             << std::endl;

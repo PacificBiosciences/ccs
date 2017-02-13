@@ -58,6 +58,7 @@ struct JulietSettings
     int RegionEnd = std::numeric_limits<int>::max();
     bool Details;
     bool DRMOnly;
+    bool SaveMSA;
 
     AnalysisMode Mode;
     double SubstitutionRate;

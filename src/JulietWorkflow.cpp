@@ -91,14 +91,15 @@ void JulietWorkflow::Run(const JulietSettings& settings)
                 column.AddFisherResult(Statistics::Tests::FisherCCS(column, column.insertions));
             }
 
-            // Store msa + p-values
-            std::ofstream msaStream(outputPrefix + ".msa");
-            msaStream << "pos A Fa C Fc G Fg T Ft N Fn" << std::endl;
-            int pos = msa.beginPos;
-            for (auto& column : msa)
-                msaStream << ++pos << " " << column << std::endl;
-            msaStream.close();
-
+            if (settings.SaveMSA) {
+                // Store msa + p-values
+                std::ofstream msaStream(outputPrefix + ".msa");
+                msaStream << "pos A Fa C Fc G Fg T Ft N Fn" << std::endl;
+                int pos = msa.beginPos;
+                for (auto& column : msa)
+                    msaStream << ++pos << " " << column << std::endl;
+                msaStream.close();
+            }
             ResistanceCaller resiCaller(msa);
 
             const auto json = resiCaller.JSON();
@@ -144,12 +145,19 @@ void JulietWorkflow::Run(const JulietSettings& settings)
             AminoAcidCaller::HTML(htmlStream, json, settings.DRMOnly, settings.Details);
 
             // Store msa + p-values
-            std::ofstream msaStream(outputPrefix + ".msa");
-            msaStream << "pos A Fa C Fc G Fg T Ft N Fn" << std::endl;
-            int pos = aac.msa_->beginPos;
-            for (auto& column : *aac.msa_)
-                msaStream << ++pos << " " << column << std::endl;
-            msaStream.close();
+            if (settings.SaveMSA) {
+                std::ofstream msaStream(outputPrefix + ".msa");
+                msaStream << "pos A C G T N" << std::endl;
+                int pos = aac.msa_->beginPos;
+                for (auto& column : *aac.msa_) {
+                    msaStream << ++pos;
+                    const std::array<int, 5>& counts = column;
+                    for (const auto& c : counts)
+                        msaStream << " " << c;
+                    msaStream << std::endl;
+                }
+                msaStream.close();
+            }
         }
     } else if (settings.Mode == AnalysisMode::PHASING) {
         for (const auto& inputFile : settings.InputFiles) {
