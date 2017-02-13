@@ -72,7 +72,7 @@ const PlainOption DRMOnly{
 };
 const PlainOption SaveMSA{
     "Save MSA counts",
-    { "msacounts", "b" },
+    { "save-msa" },
     "Save MSA counts",
     "Save the MSA counts that are used for minor variant calling after QV filtering.",
     CLI::Option::BoolType()
