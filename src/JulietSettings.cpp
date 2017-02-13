@@ -70,6 +70,13 @@ const PlainOption DRMOnly{
     "Only report known DRM positions.",
     CLI::Option::BoolType()
 };
+const PlainOption SaveMSA{
+    "Save MSA counts",
+    { "msacounts", "b" },
+    "Save MSA counts",
+    "Save the MSA counts that are used for minor variant calling after QV filtering.",
+    CLI::Option::BoolType()
+};
 const PlainOption Mode{
     "Execution mode",
     { "mode", "m" },
@@ -106,6 +113,7 @@ JulietSettings::JulietSettings(const PacBio::CLI::Results& options)
     , OutputPrefix(std::forward<std::string>(options[OptionNames::Output]))
     , TargetConfigUser(std::forward<std::string>(options[OptionNames::TargetConfig]))
     , DRMOnly(options[OptionNames::DRMOnly])
+    , SaveMSA(options[OptionNames::SaveMSA])
     , Mode(AnalysisModeFromString(options[OptionNames::Mode]))
     , SubstitutionRate(options[OptionNames::SubstitutionRate])
     , DeletionRate(options[OptionNames::DeletionRate])
@@ -174,6 +182,7 @@ PacBio::CLI::Interface JulietSettings::CreateCLI()
         OptionNames::Mode,
         OptionNames::Region,
         OptionNames::DRMOnly,
+        OptionNames::SaveMSA,
         OptionNames::TargetConfig,
         OptionNames::SubstitutionRate,
         OptionNames::DeletionRate
@@ -185,6 +194,7 @@ PacBio::CLI::Interface JulietSettings::CreateCLI()
     tcTask.AddOption(OptionNames::Mode);
     tcTask.AddOption(OptionNames::Region);
     tcTask.AddOption(OptionNames::DRMOnly);
+    tcTask.AddOption(OptionNames::SaveMSA);
     tcTask.AddOption(OptionNames::TargetConfig);
     tcTask.AddOption(OptionNames::SubstitutionRate);
     tcTask.AddOption(OptionNames::DeletionRate);
