@@ -42,14 +42,14 @@
 #include <pacbio/data/ChemistryMapping.h>
 #include <pacbio/data/ChemistryTriple.h>
 #include <pacbio/exception/CCSExceptions.h>
-#include <pacbio/io/Utility.h>
+#include <pbcopper/utility/FileUtils.h>
 
 using namespace std;
 
 namespace PacBio {
 namespace Data {
 
-using namespace PacBio::IO;
+using namespace PacBio::Utility;
 using namespace PacBio::Exception;
 
 ChemistryMapping::ChemistryMapping(const std::string& mappingXML)

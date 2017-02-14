@@ -62,13 +62,3 @@ bool LoadFastaSequences(std::string fastaFname, std::vector<std::string>& ids,
 
     return true;
 }
-
-TEST(UtilityTest, TestFileExtension)
-{
-    using PacBio::IO::FileExtension;
-
-    EXPECT_EQ("bar", FileExtension("/path/to/foo.bar"));
-    EXPECT_EQ("bar", FileExtension("/foo.bar"));
-    EXPECT_EQ("bar", FileExtension("foo.bar"));
-    EXPECT_EQ("", FileExtension("foo"));
-}

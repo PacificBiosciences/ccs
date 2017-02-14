@@ -46,7 +46,8 @@
 #include <pbbam/BamReader.h>
 #include <pbbam/FastaReader.h>
 
-#include <pacbio/io/Utility.h>
+#include <pbcopper/utility/FileUtils.h>
+
 #include <pacbio/realign/Cleric.h>
 #include <pacbio/realign/ClericSettings.h>
 
@@ -124,7 +125,7 @@ static int Runner(const PacBio::CLI::Results& options)
 
     std::string output;
     if (settings.OutputPrefix.empty())
-        output = PacBio::IO::FilePrefix(bamPath) + "_cleric.bam";
+        output = PacBio::Utility::FilePrefix(bamPath) + "_cleric.bam";
     else
         output = settings.OutputPrefix + ".bam";
 

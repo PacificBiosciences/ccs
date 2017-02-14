@@ -43,7 +43,8 @@
 
 #include <pbcopper/cli/CLI.h>
 
-#include <pacbio/io/Utility.h>
+#include <pbcopper/utility/FileUtils.h>
+
 #include <pacbio/realign/Fuse.h>
 #include <pacbio/realign/FuseSettings.h>
 
@@ -63,7 +64,7 @@ static int Runner(const PacBio::CLI::Results& options)
     // if (settings.OutputPrefix)
     for (const auto& input : options.PositionalArguments()) {
         Fuse fuse(input);
-        std::string outputFileName = PacBio::IO::FilePrefix(input) + ".cons";
+        std::string outputFileName = PacBio::Utility::FilePrefix(input) + ".cons";
         if (!settings.OutputPrefix.empty()) {
             std::string infix;
             if (settings.OutputPrefix.back() != '/') infix = '_';

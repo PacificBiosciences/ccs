@@ -49,64 +49,6 @@ using namespace std;
 
 namespace PacBio {
 namespace IO {
-
-string AbsolutePath(const string& path)
-{
-    char buf[PATH_MAX + 1];
-    char* res = realpath(path.c_str(), buf);
-
-    if (res != nullptr) {
-        string abspath(res);
-        return abspath;
-    }
-
-    return path;
-}
-
-bool FileExists(const string& path)
-{
-    struct stat buffer;
-    return stat(path.c_str(), &buffer) == 0;
-}
-
-string FileExtension(const string& path)
-{
-    size_t fileStart = path.find_last_of("/");
-
-    if (fileStart == string::npos) fileStart = 0;
-
-    // increment beyond the '/'
-    ++fileStart;
-
-    size_t extStart = path.substr(fileStart, path.length() - fileStart).find_last_of(".");
-
-    if (extStart == string::npos) return "";
-
-    // increment beyond '.'
-    ++extStart;
-
-    auto suffix = path.substr(fileStart + extStart, path.length() - fileStart - extStart);
-    std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::tolower);
-    return suffix;
-}
-
-string FilePrefix(const string& path)
-{
-    size_t fileStart = path.find_last_of("/");
-
-    if (fileStart == string::npos) fileStart = -1;
-
-    // increment beyond the '/'
-    ++fileStart;
-
-    size_t extStart = path.substr(fileStart, path.length() - fileStart).find_first_of(".");
-
-    if (extStart == string::npos) return "";
-
-    auto suffix = path.substr(fileStart, extStart);
-    return suffix;
-}
-
 void FlattenFofn(vector<string>& res, const string& file)
 {
     using boost::algorithm::iends_with;
