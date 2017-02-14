@@ -33,9 +33,15 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
+#include <utility>
+#include <vector>
 
 #include <boost/optional.hpp>
+
+#include <pacbio/align/LinearAlignment.h>
 
 #include "EvaluatorImpl.h"
 #include "matrix/BasicDenseMatrix.h"
@@ -49,6 +55,7 @@ namespace {  // anonymous
 constexpr double ALPHA_BETA_MISMATCH_TOLERANCE = 0.001;
 constexpr double EARLY_ALPHA_BETA_MISMATCH_TOLERANCE = 0.0001;
 constexpr size_t EXTEND_BUFFER_COLUMNS = 8;
+constexpr double NEG_DBL_INF = -std::numeric_limits<double>::infinity();
 
 #if 0
 std::ostream& operator<<(std::ostream& out, const std::pair<size_t, size_t>& x)
@@ -104,6 +111,9 @@ std::string EvaluatorImpl::ReadName() const { return recursor_->read_.Name; }
 
 double EvaluatorImpl::LL(const Mutation& mut)
 {
+    // if we've masked out the mutation then just return the ll as-is
+    if (mask_.Contains(mut)) return LL();
+
     // Make a View of the template of what it would look like w/ Mutation
     boost::optional<MutatedTemplate> mutTpl = tpl_->Mutate(mut);
 
@@ -210,6 +220,7 @@ bool EvaluatorImpl::ApplyMutation(const Mutation& mut)
 {
     if (tpl_->ApplyMutation(mut)) {
         Recalculate();
+        mask_.Mutate({mut});
         return true;
     }
     return false;
@@ -219,6 +230,7 @@ bool EvaluatorImpl::ApplyMutations(std::vector<Mutation>* muts)
 {
     if (tpl_->ApplyMutations(muts)) {
         Recalculate();
+        mask_.Mutate(*muts);
         return true;
     }
     return false;
@@ -274,6 +286,56 @@ const AbstractMatrix* EvaluatorImpl::BetaView(MatrixViewConvention c) const
     }
 
     return m;
+}
+
+void EvaluatorImpl::MaskIntervals(const size_t radius, const double maxErrRate)
+{
+    using namespace PacBio::Align;
+
+    const auto alignAndJustify = [this](const StrandType strand) {
+        auto aln = std::unique_ptr<PairwiseAlignment>(
+            AlignLinear(std::string(*tpl_), recursor_->read_.Seq));
+        if (strand == StrandType::FORWARD)
+            aln->Justify(LRType::LEFT);
+        else if (strand == StrandType::REVERSE)
+            aln->Justify(LRType::RIGHT);
+        return aln;
+    };
+
+    const auto aln = alignAndJustify(recursor_->read_.Strand);
+
+    std::vector<size_t> errsBySite;
+    size_t nErr = 0;
+    for (const char c : aln->Transcript()) {
+        switch (c) {
+            case 'I':
+                nErr += 1;
+                break;
+            case 'D':
+            case 'R':
+                nErr += 1;
+            case 'M':
+                errsBySite.emplace_back(nErr);
+                nErr = 0;
+                break;
+            default:
+                throw std::runtime_error("unknown value in Transcript");
+        }
+    }
+
+    if (errsBySite.size() != tpl_->Length()) throw std::runtime_error("|errsBySite| != |tpl|");
+
+    // filter windows with extreme mutations
+    const size_t start = tpl_->Start();
+    for (size_t i = 0; i < errsBySite.size(); ++i) {
+        const size_t b = (radius >= i) ? 0 : i - radius;
+        const size_t e = std::min(i + radius + 1, errsBySite.size());
+        nErr = 0;
+        for (size_t j = b; j < e; ++j)
+            nErr += errsBySite[j];
+        const double errRate = static_cast<double>(nErr) / (e - b);
+        if (errRate >= maxErrRate) mask_.Insert({start + b, start + e});
+    }
 }
 
 }  // namespace Consensus
