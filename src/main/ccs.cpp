@@ -60,6 +60,9 @@
 #include <pbbam/PbiFilterQuery.h>
 #include <pbbam/ReadGroupInfo.h>
 
+#include <pbcopper/logging/Logging.h>
+#include <pbcopper/utility/FileUtils.h>
+
 #include <pacbio/ccs/Consensus.h>
 #include <pacbio/ccs/Whitelist.h>
 #include <pacbio/consensus/ModelSelection.h>
@@ -67,7 +70,6 @@
 #include <pacbio/data/ReadId.h>
 #include <pacbio/io/Utility.h>
 #include <pacbio/parallel/WorkQueue.h>
-#include <pbcopper/logging/Logging.h>
 
 #include <pacbio/Version.h>
 
@@ -81,6 +83,7 @@ using namespace PacBio::Consensus;
 using namespace PacBio::Parallel;
 using namespace PacBio::Util;
 using namespace PacBio::IO;
+using namespace PacBio::Utility;
 using namespace PacBio::Logging;
 
 using boost::none;

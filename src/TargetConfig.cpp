@@ -41,8 +41,8 @@
 #include <streambuf>
 #include <string>
 
-#include <pacbio/io/Utility.h>
 #include <pacbio/juliet/TargetConfig.h>
+#include <pbcopper/utility/FileUtils.h>
 
 namespace PacBio {
 namespace Juliet {
@@ -105,7 +105,7 @@ std::string TargetConfig::DetermineConfigInput(const std::string& input)
         output = predefinedConfigs_.at(key);
     } else if (input.at(0) == '{') {
         output = input;
-    } else if (IO::FileExists(input)) {
+    } else if (Utility::FileExists(input)) {
         std::ifstream t(input);
         output = std::string((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
     }
