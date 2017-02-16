@@ -3,12 +3,6 @@
 ## [2.1.0]
 
 ### Added
- - Add Cleric, an alignment reference sequence replacer
- - Add fuse, an alignment consensus caller
- - Add juliet, a minimal minor variant caller
- - Add Fisher's exact test
- - Juliet JSON and HTMl output for HIV-1 pol region
- - Call codon-wise
  - Use pbcopper's q-gram index for sparse alignment
 
 ## [2.0.4]

@@ -12,13 +12,9 @@
    - Available
      - Consensus Core
      - [Circular Consensus Calling `ccs`](doc/PBCCS.md)
-     - [Minor Variant Calling `juliet`](doc/JULIET.md)
-     - [Reduce Alignment `fuse`](doc/FUSE.md)
-     - [Swap Alignment Reference `cleric`](doc/CLERIC.md)
-     - [Minor Variant Pipeline `julietflow`](doc/JULIETFLOW.md)
+     - [Minor Variant Calling `juliet`](https://github.com/pacificbiosciences/minorseq)
    - Planned
      - Genomic Consensus Calling `gcpp`
-     - Viral Haplotype Phasing `eden`
  - [Developer environment](doc/DEVELOPER.md)
  - [PacBio open source license](LICENSE)
 
@@ -33,25 +29,9 @@ them, employing a statistical model, to produce one high quality consensus seque
 
 `gcpp` will replace the current python [GenomicConsensus](https://github.com/PacificBiosciences/GenomicConsensus), until then please use the existing solution.
 
-### [Minor variant caller](doc/JULIET.md)
+### [Minor variant caller](https://github.com/pacificbiosciences/minorseq)
 
-`juliet` identifies minor variants from aligned ccs reads.
-
-### [Reduce alignment](doc/FUSE.md)
-
-`fuse` reduces an alignment into its closest representative sequence.
-
-### [Swap BAM reference](doc/CLERIC.md)
-
-`cleric` swaps the reference of an alignment by transitive alignment.
-
-### [Minor variant pipeline](doc/JULIETFLOW.md)
-
-`julietflow` automatizes the minor variant pipeline.
-
-### Viral Haplotype Phasing
-
-`eden` will leverage CCS reads to identify low-frequency haplotypes within polyploid samples.
+`juliet` identifies minor variants from aligned ccs reads; this tool has been moved to a new repository [MinorSeq](https://github.com/pacificbiosciences/minorseq)
 
 ## Help
 

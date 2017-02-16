@@ -10,7 +10,6 @@ function(create_exe libName)
         ${CMAKE_THREAD_LIBS_INIT}
         ${CMAKE_DL_LIBS}
         ${UNY_LIBRARIES}
-        ${ARGV1}
     )
 
     install(TARGETS ${libName} RUNTIME DESTINATION bin)
@@ -81,12 +80,10 @@ set(UNANIMITY_FILES
     ${CPPOPTPARSE_CPP}
     ChemistryMapping.cpp
     ChemistryTriple.cpp
-    Fisher.cpp
     Interval.cpp
     ReadId.cpp
     SparsePoa.cpp
     SubreadResultCounter.cpp
-    Tests.cpp
     Timer.cpp
     Utility.cpp
 )
@@ -95,22 +92,8 @@ if (NOT PYTHON_SWIG)
     set(UNANIMITY_FILES ${UNANIMITY_FILES}
         ${ssw_INCLUDE_DIRS}/ssw_cpp.cpp
         ${ssw_INCLUDE_DIRS}/ssw.c
-        AminoAcidCaller.cpp
-        ArrayRead.cpp
-        Cleric.cpp
-        ClericSettings.cpp
         ConsensusSettings.cpp
-        ErrorEstimates.cpp
-        Fuse.cpp
-        FuseSettings.cpp
-        JulietSettings.cpp
-        JulietWorkflow.cpp
         LocalAlignment.cpp
-        MSA.cpp
-        MSAColumn.cpp
-        ResistanceCaller.cpp
-        SimdAlignment.cpp
-        TargetConfig.cpp
     )
 endif()
 
@@ -138,12 +121,5 @@ set(UNY_LIBRARIES
 
 # add executables
 if (UNY_build_bin)
-    ## Binaries
     create_exe(ccs)
-
-    if (NOT PYTHON_SWIG)
-        create_exe(juliet)
-        create_exe(fuse)
-        create_exe(cleric)
-    endif()
 endif()
