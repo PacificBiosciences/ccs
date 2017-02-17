@@ -62,5 +62,5 @@ endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND UNY_inc_coverage)
     include(uny-codecoverage)
-    SETUP_TARGET_FOR_COVERAGE(coverage test_unanimity coverage)
+    SETUP_TARGET_FOR_COVERAGE_COBERTURA(coverage test_unanimity coverage)
 endif()
