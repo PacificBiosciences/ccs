@@ -62,7 +62,3 @@ elseif(UNIX)
     SET(PRE_LINK -Wl,-whole-archive)
     SET(POST_LINK -Wl,-no-whole-archive)
 endif()
-
-if (JULIET_INHOUSE_PERFORMANCE)
-    add_definitions(-DJULIET_INHOUSE_PERFORMANCE)
-endif()
