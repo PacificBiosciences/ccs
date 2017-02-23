@@ -10,6 +10,7 @@
  - Juliet JSON and HTMl output for HIV-1 pol region
  - Call codon-wise
  - Use pbcopper's q-gram index for sparse alignment
+ - Replaced seqan MSA in ChimeraLabaler
 
 ## [2.0.4]
 

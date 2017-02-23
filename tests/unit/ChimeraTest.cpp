@@ -26,11 +26,11 @@ TEST(ChimeraLabeler, MinimalEndToEnd)
 
     // Declare the vectors we'll use to actually perform the Chimera-labeling
     std::vector<std::string> idList;
-    std::vector<Dna5String> seqList;
+    std::vector<std::string> seqList;
 
     for (size_t i = 0; i < length(ids); ++i) {
         idList.push_back(toCString(static_cast<CharString>(ids[i])));
-        seqList.push_back(static_cast<Dna5String>(seqs[i]));
+        seqList.push_back(toCString(static_cast<CharString>(seqs[i])));
     }
 
     // Label the Records
@@ -66,11 +66,11 @@ TEST(ChimeraLabeler, ExtensiveEndToEnd)
 
     // Declare the vectors we'll use to actually perform the Chimera-labeling
     std::vector<std::string> idList;
-    std::vector<Dna5String> seqList;
+    std::vector<std::string> seqList;
 
     for (size_t i = 0; i < length(ids); ++i) {
         idList.push_back(toCString(static_cast<CharString>(ids[i])));
-        seqList.push_back(static_cast<Dna5String>(seqs[i]));
+        seqList.push_back(toCString(static_cast<CharString>(seqs[i])));
     }
 
     // Label the Records

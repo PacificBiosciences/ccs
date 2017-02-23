@@ -50,8 +50,9 @@ namespace Align {
 
 static inline LocalAlignment FromSSW(StripedSmithWaterman::Alignment&& sswAl)
 {
-    return LocalAlignment{sswAl.ref_begin,  sswAl.ref_end,  sswAl.query_begin,     sswAl.query_end,
-                          sswAl.mismatches, sswAl.sw_score, std::move(sswAl.cigar)};
+    return LocalAlignment{
+        sswAl.ref_begin,  sswAl.ref_end,  sswAl.query_begin,      sswAl.query_end,
+        sswAl.mismatches, sswAl.sw_score, std::move(sswAl.cigar), std::move(sswAl.cigar_string)};
 }
 
 LocalAlignConfig LocalAlignConfig::Default(void) { return LocalAlignConfig{2, 2, 3, 1}; }
@@ -59,7 +60,7 @@ LocalAlignConfig LocalAlignConfig::Default(void) { return LocalAlignConfig{2, 2,
 LocalAlignment::LocalAlignment(const int32_t targetBegin, const int32_t targetEnd,
                                const int32_t queryBegin, const int32_t queryEnd,
                                const int32_t mismatches, const uint16_t score,
-                               const std::vector<uint32_t>& cigar)
+                               const std::vector<uint32_t>& cigar, const std::string& cigarString)
     : targetBegin_(targetBegin)
     , targetEnd_(targetEnd)
     , queryBegin_(queryBegin)
@@ -67,13 +68,14 @@ LocalAlignment::LocalAlignment(const int32_t targetBegin, const int32_t targetEn
     , mismatches_(mismatches)
     , score_(score)
     , cigar_(cigar)
+    , cigarString_(cigarString)
 {
 }
 
 LocalAlignment::LocalAlignment(const int32_t targetBegin, const int32_t targetEnd,
                                const int32_t queryBegin, const int32_t queryEnd,
                                const int32_t mismatches, const uint16_t score,
-                               std::vector<uint32_t>&& cigar)
+                               std::vector<uint32_t>&& cigar, std::string&& cigarString)
     : targetBegin_(targetBegin)
     , targetEnd_(targetEnd)
     , queryBegin_(queryBegin)
@@ -81,6 +83,7 @@ LocalAlignment::LocalAlignment(const int32_t targetBegin, const int32_t targetEn
     , mismatches_(mismatches)
     , score_(score)
     , cigar_(std::move(cigar))
+    , cigarString_(std::move(cigarString))
 {
 }
 
@@ -94,6 +97,25 @@ LocalAlignment LocalAlign(const std::string& target, const std::string& query,
 
     aligner.Align(query.c_str(), target.c_str(), target.size(), filter, &alignment);
     return FromSSW(std::move(alignment));
+}
+
+std::vector<LocalAlignment> LocalAlign(const std::string& target,
+                                       const std::vector<std::string>& queries,
+                                       const LocalAlignConfig& config)
+{
+    StripedSmithWaterman::Aligner aligner{config.MatchScore, config.MismatchPenalty,
+                                          config.GapOpenPenalty, config.GapExtendPenalty};
+    StripedSmithWaterman::Filter filter;
+    aligner.SetReferenceSequence(target.c_str(), target.size());
+
+    std::vector<LocalAlignment> results;
+    results.reserve(queries.size());
+    for (const auto& query : queries) {
+        StripedSmithWaterman::Alignment alignment;
+        aligner.Align(query.c_str(), filter, &alignment);
+        results.push_back(FromSSW(std::move(alignment)));
+    }
+    return results;
 }
 
 }  // namespace Align

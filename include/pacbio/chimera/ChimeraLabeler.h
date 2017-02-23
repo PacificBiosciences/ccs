@@ -37,43 +37,29 @@
 
 #pragma once
 
+#include <cassert>
+
 #include <algorithm>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <set>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
-#include <seqan/graph_msa.h>
-#include <seqan/sequence.h>
+#include <pbcopper/utility/StringUtils.h>
+
+#include <pbbam/Cigar.h>
 
 #include <pacbio/align/LocalAlignment.h>
+#include <pacbio/data/Sequence.h>
 
 #include "ChimeraLabel.h"
 
 namespace PacBio {
 namespace Chimera {
-
-namespace {
-
-/// Seprates a string on a specified delimiter
-///
-/// \param s      Input string
-/// \param delim  Delimiter character
-///
-/// \return Vector of sub-strings of the input string
-static std::vector<std::string> Split(const std::string &s, char delim)
-{
-    std::vector<std::string> elems;
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-    return elems;
-}
-
-}  // Anonymous namespace
 
 ///
 /// Chimera detector - this is an implementation of the UCHIME algorithm, with a
@@ -98,27 +84,20 @@ public:  // structors
                             bool verboseArg = false)
         : minChimeraScore(minChimeraScoreArg)
         , maxChimeraSupport(maxChimeraSupportArg)
-        , beta(4)
-        , pseudocount(2.0)
         , chunks(4)
         , verbose(verboseArg){};
     // Move constructor
-    ChimeraLabeler(ChimeraLabeler &&src) = delete;
+    ChimeraLabeler(ChimeraLabeler&& src) = delete;
     // Copy constructor
-    ChimeraLabeler(const ChimeraLabeler &src) = delete;
+    ChimeraLabeler(const ChimeraLabeler& src) = delete;
     // Move assignment constructor
-    ChimeraLabeler &operator=(ChimeraLabeler &&rhs) = delete;
+    ChimeraLabeler& operator=(ChimeraLabeler&& rhs) = delete;
     // Copy assignment constructor
-    ChimeraLabeler &operator=(const ChimeraLabeler &rhs) = delete;
+    ChimeraLabeler& operator=(const ChimeraLabeler& rhs) = delete;
     // Destructor
     ~ChimeraLabeler() = default;
 
 private:  // Type definitions
-    typedef seqan::Align<seqan::Dna5String, seqan::ArrayGaps> TAlign;
-    typedef seqan::Score<int32_t, seqan::Simple> TScore;
-    typedef seqan::Row<TAlign>::Type TRow;
-    typedef seqan::Iterator<TRow>::Type TRowIter;
-    typedef seqan::IterMakeConst<TRowIter>::Type TRowIterC;
     enum orientation_t
     {
         A_B,
@@ -129,15 +108,12 @@ private:  // Type definitions
 private:  // Instance variables
     const double minChimeraScore;
     const size_t maxChimeraSupport;
-    const size_t beta;
-    const double pseudocount;
     const size_t chunks;
     const bool verbose;
-    const TScore scoringScheme = TScore(2, -5, -3, -3);
 
 private:  // State variables
     std::vector<std::string> ids_;
-    std::vector<seqan::Dna5String> nonChimeras_;
+    std::vector<std::string> nonChimeras_;
     size_t minSize_ = std::numeric_limits<size_t>::max();
     size_t numAnalyzed_ = 0;
 
@@ -157,53 +133,14 @@ public:  // Modifying methods
     ///
     /// \param A vector of all of the sequence ids as strings
     /// \param A vector of all of the sequences as strings
-    /// \param A vector of integers, representing the support for each sequence
     ///
     /// \return A set of labels representing the chimeric parents (if any) for
     ///         each input sequence
     ///
-    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string> &idList,
-                                            const std::vector<std::string> &seqList,
-                                            const std::vector<size_t> &sizeList)
+    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& idList,
+                                            const std::vector<std::string>& seqList)
     {
-        std::vector<seqan::Dna5String> dnaStringList;
-        for (const auto &seq : seqList)
-            dnaStringList.emplace_back(seq);
-        return LabelChimeras(idList, dnaStringList, sizeList);
-    }
-
-    /// \brief Label a vector of sequence records as Chimeric or not.
-    ///        Secondary entry-point.
-    ///
-    /// \param A vector of all of the sequence ids as strings
-    /// \param A vector of all of the sequences as strings
-    ///
-    /// \return A set of labels representing the chimeric parents (if any) for
-    ///         each input sequence
-    ///
-    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string> &idList,
-                                            const std::vector<std::string> &seqList)
-    {
-        std::vector<size_t> sizeList = ParseNumReads(idList);
-        std::vector<seqan::Dna5String> dnaStringList;
-        for (const auto &seq : seqList)
-            dnaStringList.emplace_back(seq);
-        return LabelChimeras(idList, dnaStringList, sizeList);
-    }
-
-    /// \brief Label a vector of sequence records as Chimeric or not.
-    ///        Secondary entry-point.
-    ///
-    /// \param A vector of all the sequence ids as strings
-    /// \param A vector of all the sequences as Dna5Strings
-    ///
-    /// \return A set of labels representing the chimeric parents (if any) for
-    ///         each input sequence
-    ///
-    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string> &idList,
-                                            const std::vector<seqan::Dna5String> &seqList)
-    {
-        std::vector<size_t> sizeList = ParseNumReads(idList);
+        const auto sizeList = ParseNumReads(idList);
         return LabelChimeras(idList, seqList, sizeList);
     }
 
@@ -211,25 +148,25 @@ public:  // Modifying methods
     ///        Main entry-point.
     ///
     /// \param A vector of all the sequence ids as strings
-    /// \param A vector of all the sequences as Dna5Strings
+    /// \param A vector of all the sequences as strings
     /// \param A vector of integers, representing the support for each sequence
     ///
     /// \return A set of labels representing the chimeric parents (if any) for
     ///         each input sequence
     ///
-    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string> &ids,
-                                            const std::vector<seqan::Dna5String> &seqs,
-                                            const std::vector<size_t> &sizes)
+    std::vector<ChimeraLabel> LabelChimeras(const std::vector<std::string>& ids,
+                                            const std::vector<std::string>& seqs,
+                                            const std::vector<size_t>& sizes)
     {
-        // Declare the output vector now
+        const size_t numSeqs = seqs.size();
+        if (ids.size() != numSeqs || sizes.size() != numSeqs)
+            throw std::runtime_error("Input containers must contain the same number of elements.");
+
         std::vector<ChimeraLabel> output;
-
-        // Iterate over each Fasta record in order of their size
-        for (size_t i = 0; i < ids.size(); ++i) {
-            ChimeraLabel label = LabelChimera(ids[i], seqs[i], sizes[i]);
-            output.push_back(label);
+        output.reserve(numSeqs);
+        for (size_t i = 0; i < numSeqs; ++i) {
+            output.push_back(LabelChimera(ids[i], seqs[i], sizes[i]));
         }
-
         return output;
     }
 
@@ -242,11 +179,8 @@ public:  // Modifying methods
     ///
     /// \return A label for whether and how the query is chimeric
     ///
-    ChimeraLabel LabelChimera(const std::string &id, const seqan::Dna5String &sequence,
-                              const size_t size)
+    ChimeraLabel LabelChimera(const std::string& id, const std::string& sequence, const size_t size)
     {
-        ChimeraLabel label(id);
-
         // Error-out if sequences are presented out of order
         if (size > minSize_) throw std::runtime_error("Sequences analyzed out of order!");
 
@@ -263,7 +197,7 @@ public:  // Modifying methods
 #endif
             // Create a default label for the assumed-non-chimeric read
             AddNonChimera(id, sequence, size);
-            return label;
+            return ChimeraLabel{id};
         } else  // Otherwise we align
         {
             // Find probable parents from the highest scoring SW templates
@@ -281,12 +215,12 @@ public:  // Modifying methods
 #endif
                 // Add a default label for the non-chimeric read
                 AddNonChimera(id, sequence, size);
-                return label;
+                return ChimeraLabel{id};
             } else  // Otherwise we need to test it for chimerism
             {
                 auto label = TestPossibleChimera(id, sequence, parentIds);
 
-                if (label.score > 0.0f) {
+                if (label.score > 0.0) {
                     if (verbose) {
                         std::cout << "consensus '" << id << "' has a possible cross-over at "
                                   << label.crossover << " with a score of " << label.score
@@ -326,58 +260,45 @@ public:  // Modifying methods
         }
     }
 
-private:  // non-modifying methods
-    /// \brief Add a non-chimeric sequence to th
+private:
+    /// \brief Add a non-chimeric sequence to the
     ///
     /// \param The sequence Id as a string
-    /// \param The sequence itself, as a Dna5String
-    /// \param It's level of coverage or support
+    /// \param The sequence itself, as a string
+    /// \param Its level of coverage or support
     ///
-    void AddNonChimera(const std::string &id, const seqan::Dna5String sequence, const size_t size)
+    void AddNonChimera(const std::string& id, const std::string& sequence, const size_t size)
     {
         ids_.push_back(id);
         nonChimeras_.push_back(sequence);
-        AddReverseComplement(sequence);
+        nonChimeras_.push_back(PacBio::Data::ReverseComplement(sequence));
         minSize_ = std::min(size, minSize_);
-    }
-
-    /// \brief Add the reverse-complement of a Sequence to the references
-    ///
-    /// \param The sequence itself, as a Dna5String
-    ///
-    void AddReverseComplement(const seqan::Dna5String &sequence)
-    {
-        seqan::Dna5String revComSeq = sequence;
-        seqan::reverseComplement(revComSeq);
-        nonChimeras_.push_back(revComSeq);
     }
 
     /// \brief Find the most probable parents for a possible chimera
     ///
-    /// \param A vector of all of the available sequences
-    /// \param A vector of indices of non-chimeric sequences in that vector
-    /// \param The index of the current sequence to be tested
+    /// \param the sequence to be tested
     ///
     /// \return A set of indices representing the best scoring parents for the
     ///         various regions of the current sequences
     ///
-    std::vector<size_t> FindParents(const seqan::Dna5String &sequence)
+    std::vector<size_t> FindParents(const std::string& sequence) const
     {
         // Declare the output variable and the set we will build it from
         std::vector<size_t> output;
         std::set<size_t> parentIds;
 
         // Pre-calculate the size of each chunk
-        size_t chunkSize = seqan::length(sequence) / chunks;
+        const size_t chunkSize = sequence.size() / chunks;
 
+        // Re-used alignment scoring scheme
         const PacBio::Align::LocalAlignConfig alignConfig{2, 5, 3, 3};
 
         // Iterate over each chunk, aligning it to all possible parents
         for (size_t i = 0; i < chunks; ++i) {
             // Initialize the alignment with the current sequence chunk
             const size_t chunkStart = i * chunkSize;
-            std::string target = seqan::toCString(seqan::CharString(sequence));
-            target = target.substr(chunkStart, chunkSize);
+            const auto target = sequence.substr(chunkStart, chunkSize);
 
             // Initialize loop variables;
             size_t score = 0;
@@ -387,7 +308,7 @@ private:  // non-modifying methods
             // iterate over each non-Chimeric sequence
             for (size_t i = 0; i < nonChimeras_.size(); ++i) {
                 // Fill out the alignment with the current parents
-                const std::string query = seqan::toCString(seqan::CharString(nonChimeras_[i]));
+                const auto& query = nonChimeras_[i];
                 const auto al = PacBio::Align::LocalAlign(target, query, alignConfig);
                 score = al.Score();
 
@@ -408,23 +329,19 @@ private:  // non-modifying methods
     }
 
     /// \brief Identify the highest-scoring chimeric explaination for a query
-    ///        from a list of
+    ///        from a list of possible parents
     ///
-    /// \param A pointer to a vector of sequences
-    /// \param A pointer to a vector of sequence ids
-    /// \param An unsigned int for the index of the query in the above vectors
-    /// \param A vector of unsigned ints for
+    /// \param The query Id as a string
+    /// \param The query sequence as a string
+    /// \param A vector of row indices indicating possible parent
     ///
     /// \return A ChimeraLabel for the highest-scoring chimeric explaination
     ///         for a given query
     ///
-    ChimeraLabel TestPossibleChimera(const std::string &id, const seqan::Dna5String &sequence,
-                                     const std::vector<size_t> &possibleParents)
+    ChimeraLabel TestPossibleChimera(const std::string& id, const std::string& sequence,
+                                     const std::vector<size_t>& possibleParents) const
     {
-        // First we align the query to all of the possible parents
-        //  auto alignments = GetFullAlignments(sequences, index,
-        //     possibleParents);
-        auto alignments = GetMultiSequenceAlignment(sequence, possibleParents);
+        const auto alignments = GetMultiSequenceAlignment(sequence, possibleParents);
 
         // Initialize two Labels - one for the max and one for the loop variable
         ChimeraLabel bestLabel(id);
@@ -449,7 +366,7 @@ private:  // non-modifying methods
                     ScorePossibleChimera(alignments, id, parentA, parentB, i + 1, j + 1);
 
                 // Keep the highest scoring label
-                if (label.score > bestLabel.score && label.score > 0.0f)
+                if (label.score > bestLabel.score && label.score > 0.0)
                     bestLabel = std::move(label);
             }
         }
@@ -457,38 +374,163 @@ private:  // non-modifying methods
         return bestLabel;
     }
 
-    /// \brief Generate an MSA of a query sequence and all possible parents
+    /// \brief Generate a (pseudo-)MSA of a query sequence and all possible parents
     ///
-    /// \param A pointer to a vector of possible sequences
-    /// \param An unsigned int for the index of the query in the vector of
-    /// sequences
+    /// \param target seequence
     /// \param A vector of unsigned ints for the indices of all possible parents
     ///
-    /// \return a pointer to an MSA
+    /// \return a vector of aligned sequences
     ///
-    TAlign GetMultiSequenceAlignment(const seqan::Dna5String &sequence,
-                                     const std::vector<size_t> &parentIds)
+    std::vector<std::string> GetMultiSequenceAlignment(const std::string& targetSequence,
+                                                       const std::vector<size_t>& parentIds) const
     {
-        // Initialize the alignment with the query sequence
-        TAlign align;
-        seqan::resize(rows(align), parentIds.size() + 1);
-        seqan::assignSource(seqan::row(align, 0), sequence);
+        typedef std::map<size_t, uint32_t> InsertionMap;  // position -> numInsertions
 
-        // Successively add each parent to the alignment
-        for (size_t i = 1; i <= parentIds.size(); ++i) {
-            size_t parentIdx = parentIds[i - 1];
-            seqan::assignSource(seqan::row(align, i), nonChimeras_[parentIdx]);
+        // align each parentId seq (using both orientations) against main sequence
+        std::vector<std::string> queries;
+        queries.reserve(parentIds.size() * 2);  // forward + reverse orientation
+        for (const auto parentIdx : parentIds) {
+            const auto& parentSeq = nonChimeras_[parentIdx];
+            queries.emplace_back(parentSeq);
+            queries.emplace_back(PacBio::Data::ReverseComplement(parentSeq));
         }
 
-        // Perform the alignment operation and return
-        seqan::globalMsaAlignment(align, scoringScheme);
-        return align;
+        // align all possible parents against 'sequence'
+        const PacBio::Align::LocalAlignConfig alignConfig{2, 5, 3, 3};
+        auto alignments = PacBio::Align::LocalAlign(targetSequence, queries, alignConfig);
+        assert(alignments.size() == queries.size());
+        assert(alignments.size() % 2 == 0);
+
+        // setup alignment matrix, with gapped sequences, storing max insertions at each position
+        std::vector<std::string> alignmentMatrix;
+        alignmentMatrix.reserve(parentIds.size() + 1);
+        alignmentMatrix.push_back(targetSequence);
+
+        InsertionMap maxInsertionsLookup;
+        std::vector<InsertionMap> perAlignmentInsertions;
+        perAlignmentInsertions.push_back(InsertionMap{});  // empty map for target seq
+
+        const auto numAlignments = alignments.size();
+        for (size_t i = 0; i < numAlignments; i += 2) {
+            assert((numAlignments - i) >= 2);
+
+            const bool usingForward = (alignments.at(i).Score() >= alignments.at(i + 1).Score());
+            const auto& align = (usingForward ? alignments.at(i) : alignments.at(i + 1));
+            const auto& query = (usingForward ? queries.at(i) : queries.at(i + 1));
+            const size_t alignBegin = static_cast<size_t>(align.TargetBegin());
+
+            std::string gappedSeq;
+            gappedSeq.reserve(targetSequence.size());
+
+            // add gaps before alignment begin
+            for (size_t j = 0; j < alignBegin; ++j)
+                gappedSeq.push_back('-');
+
+            size_t qPos = 0;
+            size_t tPos = alignBegin;
+            InsertionMap insertions;
+
+            // fill out sequence, adding gaps for deletions
+            const auto cigar = PacBio::BAM::Cigar::FromStdString(align.CigarString());
+            for (const auto& op : cigar) {
+                const auto type = op.Type();
+                const auto length = op.Length();
+
+                using PacBio::BAM::CigarOperationType;
+
+                // store insertions for later
+                if (type == CigarOperationType::INSERTION ||
+                    type == CigarOperationType::SOFT_CLIP) {
+                    const auto iter = maxInsertionsLookup.find(tPos);
+                    if (iter == maxInsertionsLookup.cend() || (length > iter->second))
+                        maxInsertionsLookup[tPos] = length;
+                    insertions[tPos] = length;
+                }
+
+                for (size_t j = 0; j < length; ++j) {
+                    switch (type) {
+                        case CigarOperationType::SEQUENCE_MATCH:
+                            assert(targetSequence.at(tPos) == query.at(qPos));  // fall-through
+                        case CigarOperationType::ALIGNMENT_MATCH:               // fall-through
+                        case CigarOperationType::SEQUENCE_MISMATCH:
+                            gappedSeq.push_back(query.at(qPos++));
+                            ++tPos;
+                            break;
+
+                        case CigarOperationType::DELETION:
+                            gappedSeq.push_back('-');
+                            ++tPos;
+                            break;
+
+                        case CigarOperationType::INSERTION:  // fall-through
+                        case CigarOperationType::SOFT_CLIP:
+                            gappedSeq.push_back(query.at(qPos++));
+                            break;
+
+                        case CigarOperationType::PADDING:         // fall-through
+                        case CigarOperationType::REFERENCE_SKIP:  // .
+                        case CigarOperationType::HARD_CLIP:       // .
+                        case CigarOperationType::UNKNOWN_OP:
+                            throw std::runtime_error("encountered unsupported CIGAR operation");
+                    }
+                }
+            }
+
+            // add gaps after alignment end
+            while (tPos < targetSequence.size()) {
+                gappedSeq.push_back('-');
+                ++tPos;
+            }
+
+            // store gapped sequence & insertions for alignment
+            alignmentMatrix.push_back(gappedSeq);
+            perAlignmentInsertions.push_back(insertions);
+        }
+
+        // apply gap-padding across all sequences at insertion sites
+        size_t j = 0;
+        for (auto& seq : alignmentMatrix) {
+
+            const auto& insertions = perAlignmentInsertions.at(j);
+            size_t padsSeen = 0;
+
+            auto insertIter = maxInsertionsLookup.cbegin();
+            const auto insertEnd = maxInsertionsLookup.cend();
+            for (; insertIter != insertEnd; ++insertIter) {
+                auto pos = insertIter->first;
+                const auto maxPadsToInsert = insertIter->second;
+
+                // decrement if alignment already has insertions at this position
+                auto padsToInsert = maxPadsToInsert;
+                const auto existingInserts = insertions.find(pos);
+                if (existingInserts != insertions.cend()) padsToInsert -= existingInserts->second;
+
+                // shift position to account for pads already inserted
+                pos += padsSeen;
+
+                // insert pads & update padding counter
+                seq.insert(pos, std::string(padsToInsert, '-'));
+                padsSeen += maxPadsToInsert;
+            }
+            ++j;
+        }
+
+        // sanity check
+        std::size_t seqLength = std::string::npos;
+        for (const auto& seq : alignmentMatrix) {
+            if (seqLength == std::string::npos)
+                seqLength = seq.size();
+            else
+                assert(seqLength == seq.size());
+        }
+
+        return alignmentMatrix;
     }
 
     /// \brief Scan an MSA of sequences for all possible chimeric break-points
     ///        that could explain the query as a composite of the parents
     ///
-    /// \param A pointer to an MSA of sequences
+    /// \param A vector of aligned sequences
     /// \param A string for the name of the Query
     /// \param A string for the name of the first parent
     /// \param A string for the name of the second parent
@@ -497,23 +539,24 @@ private:  // non-modifying methods
     ///
     /// \return A ChimeraLabel of the highest-scoring possible chimera
     ///
-    ChimeraLabel ScorePossibleChimera(const TAlign &alignment, const std::string &queryId,
-                                      const std::string &parentAId, const std::string &parentBId,
-                                      const size_t firstIdx, const size_t secondIdx)
+    ChimeraLabel ScorePossibleChimera(const std::vector<std::string>& alignments,
+                                      const std::string& queryId, const std::string& parentAId,
+                                      const std::string& parentBId, const size_t firstIdx,
+                                      const size_t secondIdx) const
     {
-        // Second, extract references to the rows we need to inspect
-        const TRow &queryRow = seqan::row(alignment, 0);
-        const TRow &parentA = seqan::row(alignment, firstIdx);
-        const TRow &parentB = seqan::row(alignment, secondIdx);
+        // Extract references to the rows we need to inspect
+        const auto& queryRow = alignments.at(0);
+        const auto& parentA = alignments.at(firstIdx);
+        const auto& parentB = alignments.at(secondIdx);
 
         // Initialize const-iterators for each row
-        TRowIterC itQ = seqan::begin(queryRow);
-        TRowIterC itA = seqan::begin(parentA);
-        TRowIterC itB = seqan::begin(parentB);
+        auto itQ = queryRow.cbegin();
+        auto itA = parentA.cbegin();
+        auto itB = parentB.cbegin();
 
         // Initialize end-point for the const-iterators (since we're traversing
         //    an MSA all 3 iterators will terminate at the same point)
-        TRowIterC qEnd = seqan::end(queryRow);
+        const auto qEnd = queryRow.cend();
 
         // Count variables
         size_t rightA = 0;
@@ -523,65 +566,80 @@ private:  // non-modifying methods
         size_t leftB = 0;
         size_t leftAbs = 0;
 
+        // returns true if input character is a gap
+        auto isGap = [](const char c) { return c == '-'; };
+
         // First we iterate once, counting up the total number of A/B/Abs votes
         //    to initialize the counts for the right-hand segment
         for (; itQ != qEnd; ++itQ, ++itA, ++itB) {
+
+            const char q = *itQ;
+            const char a = *itA;
+            const char b = *itB;
+
             // We can't trust our consensus around gaps for low-coverage reads
             //     so we skip them
-            if (seqan::isGap(itQ) || seqan::isGap(itA) || seqan::isGap(itB)) continue;
+            if (isGap(q) || isGap(a) || isGap(b)) continue;
 
             // Identical bases are useless for Chimera Detection - skip
-            if (*itQ == *itA && *itQ == *itB) continue;
+            if (q == a && q == b) continue;
 
             // If we made it here, count the difference as a vote
-            if (*itA == *itB) {
+            if (a == b) {
                 ++rightAbs;
-            } else if (*itQ == *itA) {
+            } else if (q == a) {
                 ++rightA;
-            } else if (*itQ == *itB) {
+            } else if (q == b) {
                 ++rightB;
             }
         }
 
         // Re-initialize iterators for each row
-        itQ = seqan::begin(queryRow);
-        itA = seqan::begin(parentA);
-        itB = seqan::begin(parentB);
+        itQ = queryRow.cbegin();
+        itA = parentA.cbegin();
+        itB = parentB.cbegin();
 
         // Initialize variables for the maximum chimera
-        double maxChimeraScore = 0.0f;
+        double maxChimeraScore = 0.0;
         size_t maxChimeraCrossover = 0;
         orientation_t maxChimeraOrientation = NA;
 
         // And per-iteration variables
-        double abScore, baScore, chimeraScore;
+        double abScore = 0.0;
+        double baScore = 0.0;
+        double chimeraScore = 0.0;
         size_t chimeraCrossover = 0;
-        orientation_t chimeraOrientation;
+        orientation_t chimeraOrientation = NA;
 
         // Second time we iterate, we subtract from the right
         for (; itQ != qEnd; ++itQ, ++itA, ++itB) {
+
+            const char q = *itQ;
+            const char a = *itA;
+            const char b = *itB;
+
             // If the Query sequence is not at a gap, increment the
             //     tracking variable for the crossover postion
-            if (seqan::isGap(itQ))
+            if (isGap(q))
                 continue;
             else
                 ++chimeraCrossover;
 
             // We can't trust our consensus around gaps for low-coverage reads
             //     so we skip them
-            if (seqan::isGap(itA) || seqan::isGap(itB)) continue;
+            if (isGap(a) || isGap(b)) continue;
 
             // Identical bases are useless for Chimera Detection - skip
-            if (*itQ == *itA && *itQ == *itB) continue;
+            if (q == a && q == b) continue;
 
             // If we made it here, count the differences as a vote
-            if (*itA == *itB) {
+            if (a == b) {
                 ++leftAbs;
                 --rightAbs;
-            } else if (*itQ == *itA) {
+            } else if (q == a) {
                 ++leftA;
                 --rightA;
-            } else if (*itQ == *itB) {
+            } else if (q == b) {
                 ++leftB;
                 --rightB;
             }
@@ -633,7 +691,7 @@ private:  // non-modifying methods
     }
 
 public:  // Public Static Methods
-    /// \brief Parse the number of reads supporting a sequence from it's Id
+    /// \brief Parse the number of reads supporting a sequence from its Id
     ///
     /// \param The Id to be parsed as a string
     ///
@@ -641,9 +699,9 @@ public:  // Public Static Methods
     ///
     static size_t ParseNumReads(const std::string id)
     {
-        const auto &parts = Split(id, '_');
-        const auto &numReadsString = parts[3].substr(8);
-        const size_t numReads = std::stoi(numReadsString);
+        const auto parts = PacBio::Utility::Split(id, '_');
+        const auto numReadsString = parts[3].substr(8);
+        const auto numReads = std::stoul(numReadsString);
         return numReads;
     }
 
@@ -654,15 +712,16 @@ public:  // Public Static Methods
     ///
     /// \return The support for those sequences, as integers
     ///
-    static std::vector<size_t> ParseNumReads(const std::vector<std::string> ids)
+    static std::vector<size_t> ParseNumReads(const std::vector<std::string>& ids)
     {
         std::vector<size_t> retval;
-        for (size_t i = 0; i < ids.size(); ++i)
-            retval.emplace_back(ParseNumReads(ids[i]));
+        retval.reserve(ids.size());
+        for (const auto& id : ids)
+            retval.emplace_back(ParseNumReads(id));
         return retval;
     }
 
-private:  // Inlined methods
+private:
     /// \brief Calculates the H-score for a chimeric alignment as per Edgar(2011)
     ///
     /// \param An unsigned int of votes for left-side similarity
@@ -673,20 +732,16 @@ private:  // Inlined methods
     /// \param An unsigned int of votes neither for or against the right side
     ///
     /// \return A double representing the strength of the similarity between the
-    /// query
-    ///         sequence and a hypothetical chimera composed of left and right
-    ///         segments
-    ///         taken from existing sequences
+    ///         query sequence and a hypothetical chimera composed of left and
+    ///         right segments taken from existing sequences
     ///
-    inline double ScoreBreakPoint(const size_t leftYesVotes, const size_t leftNoVotes,
-                                  const size_t leftAbsVotes, const size_t rightYesVotes,
-                                  const size_t rightNoVotes, const size_t rightAbsVotes)
+    double ScoreBreakPoint(const size_t leftYesVotes, const size_t leftNoVotes,
+                           const size_t leftAbsVotes, const size_t rightYesVotes,
+                           const size_t rightNoVotes, const size_t rightAbsVotes) const
     {
         // Score the left and right segments independently
-        double leftScore = ScoreSegment(leftYesVotes, leftNoVotes, leftAbsVotes);
-        double rightScore = ScoreSegment(rightYesVotes, rightNoVotes, rightAbsVotes);
-
-        // Return their product
+        const auto leftScore = ScoreSegment(leftYesVotes, leftNoVotes, leftAbsVotes);
+        const auto rightScore = ScoreSegment(rightYesVotes, rightNoVotes, rightAbsVotes);
         return leftScore * rightScore;
     }
 
@@ -700,8 +755,10 @@ private:  // Inlined methods
     /// \return A double representing the strength of the similarity between two
     ///         sequences
     ///
-    inline double ScoreSegment(const size_t yesVotes, const size_t noVotes, const size_t absVotes)
+    double ScoreSegment(const size_t yesVotes, const size_t noVotes, const size_t absVotes) const
     {
+        static const size_t beta = 4;
+        static const double pseudocount = 2.0;
         return yesVotes / (beta * (noVotes + pseudocount) + absVotes);
     }
 };
