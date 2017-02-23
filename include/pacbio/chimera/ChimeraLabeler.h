@@ -387,7 +387,7 @@ private:
 
         // store each parentId seq (both orientations) to align against target sequence
         std::vector<std::string> queries;
-        queries.reserve(parentIds.size() * 2); 
+        queries.reserve(parentIds.size() * 2);
         for (const auto parentIdx : parentIds) {
             const auto& parentSeq = nonChimeras_[parentIdx];
             queries.emplace_back(parentSeq);
