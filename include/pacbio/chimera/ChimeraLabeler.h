@@ -44,7 +44,6 @@
 #include <limits>
 #include <map>
 #include <set>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -261,7 +260,7 @@ public:  // Modifying methods
     }
 
 private:
-    /// \brief Add a non-chimeric sequence to the
+    /// \brief Store a non-chimeric sequence to consider as a possible parent later
     ///
     /// \param The sequence Id as a string
     /// \param The sequence itself, as a string
@@ -386,16 +385,16 @@ private:
     {
         typedef std::map<size_t, uint32_t> InsertionMap;  // position -> numInsertions
 
-        // align each parentId seq (using both orientations) against main sequence
+        // store each parentId seq (both orientations) to align against target sequence
         std::vector<std::string> queries;
-        queries.reserve(parentIds.size() * 2);  // forward + reverse orientation
+        queries.reserve(parentIds.size() * 2); 
         for (const auto parentIdx : parentIds) {
             const auto& parentSeq = nonChimeras_[parentIdx];
             queries.emplace_back(parentSeq);
             queries.emplace_back(PacBio::Data::ReverseComplement(parentSeq));
         }
 
-        // align all possible parents against 'sequence'
+        // align all possible parents against target sequence
         const PacBio::Align::LocalAlignConfig alignConfig{2, 5, 3, 3};
         auto alignments = PacBio::Align::LocalAlign(targetSequence, queries, alignConfig);
         assert(alignments.size() == queries.size());
