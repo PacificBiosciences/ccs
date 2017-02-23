@@ -130,6 +130,116 @@ TEST(PairwiseAlignmentTests, TargetPositionsInQueryTest)
     }
 }
 
+// ---------------- Alignment justification tests ----------------------
+
+TEST(PairwiseAlignmentTests, JustifyTest)
+{
+    // deletion
+    {
+        PairwiseAlignment a = PairwiseAlignment("AAAAAA", "AAA-AA");
+
+        a.Justify(LRType::LEFT);
+        EXPECT_EQ("AAAAAA", a.Target());
+        EXPECT_EQ("-AAAAA", a.Query());
+        EXPECT_EQ("DMMMMM", a.Transcript());
+
+        a.Justify(LRType::RIGHT);
+        EXPECT_EQ("AAAAAA", a.Target());
+        EXPECT_EQ("AAAAA-", a.Query());
+        EXPECT_EQ("MMMMMD", a.Transcript());
+    }
+
+    // insertion
+    {
+        PairwiseAlignment a = PairwiseAlignment("A-AAAA", "AAAAAA");
+
+        a.Justify(LRType::LEFT);
+        EXPECT_EQ("-AAAAA", a.Target());
+        EXPECT_EQ("AAAAAA", a.Query());
+        EXPECT_EQ("IMMMMM", a.Transcript());
+
+        a.Justify(LRType::RIGHT);
+        EXPECT_EQ("AAAAA-", a.Target());
+        EXPECT_EQ("AAAAAA", a.Query());
+        EXPECT_EQ("MMMMMI", a.Transcript());
+    }
+
+    // interruption in homopolymer
+    {
+        PairwiseAlignment a = PairwiseAlignment("GATTTACA", "GAGT-ACA");
+
+        a.Justify(LRType::LEFT);
+        EXPECT_EQ("GATTTACA", a.Target());
+        EXPECT_EQ("GAG-TACA", a.Query());
+        EXPECT_EQ("MMRDMMMM", a.Transcript());
+
+        a.Justify(LRType::RIGHT);
+        EXPECT_EQ("GATTTACA", a.Target());
+        EXPECT_EQ("GAGT-ACA", a.Query());
+        EXPECT_EQ("MMRMDMMM", a.Transcript());
+    }
+
+    // double bases, adjacent
+    {
+        PairwiseAlignment a = PairwiseAlignment("AAAAAA", "AAA--A");
+
+        a.Justify(LRType::LEFT);
+        EXPECT_EQ("AAAAAA", a.Target());
+        EXPECT_EQ("--AAAA", a.Query());
+        EXPECT_EQ("DDMMMM", a.Transcript());
+
+        a.Justify(LRType::RIGHT);
+        EXPECT_EQ("AAAAAA", a.Target());
+        EXPECT_EQ("AAAA--", a.Query());
+        EXPECT_EQ("MMMMDD", a.Transcript());
+    }
+
+    // double bases, separated
+    {
+        PairwiseAlignment a = PairwiseAlignment("AAAAAA", "A-AA-A");
+
+        a.Justify(LRType::LEFT);
+        EXPECT_EQ("AAAAAA", a.Target());
+        EXPECT_EQ("--AAAA", a.Query());
+        EXPECT_EQ("DDMMMM", a.Transcript());
+
+        a.Justify(LRType::RIGHT);
+        EXPECT_EQ("AAAAAA", a.Target());
+        EXPECT_EQ("AAAA--", a.Query());
+        EXPECT_EQ("MMMMDD", a.Transcript());
+    }
+
+    // intervening insertion
+    {
+        PairwiseAlignment a = PairwiseAlignment("A----A", "AATAAA");
+
+        a.Justify(LRType::LEFT);
+        EXPECT_EQ("----AA", a.Target());
+        EXPECT_EQ("AATAAA", a.Query());
+        EXPECT_EQ("IIIIMM", a.Transcript());
+
+        a.Justify(LRType::RIGHT);
+        EXPECT_EQ("AA----", a.Target());
+        EXPECT_EQ("AATAAA", a.Query());
+        EXPECT_EQ("MMIIII", a.Transcript());
+    }
+
+    // intervening match
+    {
+        PairwiseAlignment a = PairwiseAlignment("A-T--A", "AATAAA");
+
+        a.Justify(LRType::LEFT);
+        EXPECT_EQ("-AT--A", a.Target());
+        EXPECT_EQ("AATAAA", a.Query());
+        EXPECT_EQ("IMMIIM", a.Transcript());
+
+        a.Justify(LRType::RIGHT);
+        EXPECT_EQ("A-TA--", a.Target());
+        EXPECT_EQ("AATAAA", a.Query());
+        EXPECT_EQ("MIMMII", a.Transcript());
+    }
+}
+
 // ------------------ AffineAlignment tests ---------------------
 
 TEST(AffineAlignmentTests, BasicTests)

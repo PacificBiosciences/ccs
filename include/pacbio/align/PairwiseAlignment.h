@@ -61,6 +61,12 @@ inline int ArgMax3(int a, int b, int c)
 
 }  // anonymous namespace
 
+enum class LRType
+{
+    LEFT,
+    RIGHT
+};
+
 /// \brief A pairwise alignment
 class PairwiseAlignment
 {
@@ -68,6 +74,10 @@ private:
     std::string target_;
     std::string query_;
     std::string transcript_;
+
+public:
+    // either left- or right- justify indels
+    void Justify(LRType);
 
 public:
     // target string, including gaps; usually the "reference"
