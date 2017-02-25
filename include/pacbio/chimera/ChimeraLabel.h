@@ -73,7 +73,7 @@ struct ChimeraLabel
         , leftParentId("N/A")
         , rightParentId("N/A")
         , crossover(-1)
-        , score(-1.0f){};
+        , score(-1.0){};
 
     // Empty or Dummy Constructor
     ChimeraLabel()
@@ -82,7 +82,7 @@ struct ChimeraLabel
         , leftParentId("N/A")
         , rightParentId("N/A")
         , crossover(-1)
-        , score(-1.0f){};
+        , score(-1.0){};
 
     // Move constructor
     ChimeraLabel(ChimeraLabel &&src) = default;
@@ -109,7 +109,7 @@ struct ChimeraLabel
               << ",";
 
         // The score is only meaningfully defined > 0
-        if (label.score >= 0.0f)
+        if (label.score >= 0.0)
             o << label.score << ",";
         else
             o << "NaN"

@@ -52,11 +52,11 @@ class LocalAlignment
 public:
     LocalAlignment(const int32_t targetBegin, const int32_t targetEnd, const int32_t queryBegin,
                    const int32_t queryEnd, const int32_t mismatches, const uint16_t score,
-                   const std::vector<uint32_t>& cigar);
+                   const std::vector<uint32_t>& cigar, const std::string& cigarString);
 
     LocalAlignment(const int32_t targetBegin, const int32_t targetEnd, const int32_t queryBegin,
                    const int32_t queryEnd, const int32_t mismatches, const uint16_t score,
-                   std::vector<uint32_t>&& cigar);
+                   std::vector<uint32_t>&& cigar, std::string&& cigarString);
 
     LocalAlignment(const LocalAlignment&) = delete;
     LocalAlignment(LocalAlignment&&) = default;
@@ -72,6 +72,7 @@ public:
     int32_t NumMismatches(void) const { return mismatches_; }
     uint16_t Score(void) const { return score_; }
     std::vector<uint32_t> Cigar(void) const { return cigar_; }
+    std::string CigarString(void) const { return cigarString_; }
 
 private:
     int32_t targetBegin_;
@@ -81,6 +82,7 @@ private:
     int32_t mismatches_;
     uint16_t score_;
     std::vector<uint32_t> cigar_;
+    std::string cigarString_;
 };
 
 struct LocalAlignConfig
@@ -106,6 +108,19 @@ public:
 ///
 LocalAlignment LocalAlign(const std::string& target, const std::string& query,
                           const LocalAlignConfig& config = LocalAlignConfig::Default());
+
+///
+/// \brief LocalAlign
+///
+/// \param target
+/// \param queries
+/// \param config
+///
+/// \return
+///
+std::vector<LocalAlignment> LocalAlign(
+    const std::string& target, const std::vector<std::string>& queries,
+    const LocalAlignConfig& config = LocalAlignConfig::Default());
 
 }  // namespace Align
 }  // namespace PacBio

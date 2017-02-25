@@ -4,6 +4,7 @@
 
 ### Added
  - Use pbcopper's q-gram index for sparse alignment
+ - Replaced seqan MSA in ChimeraLabaler
 
 ## [2.0.4]
 
