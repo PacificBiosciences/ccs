@@ -5,6 +5,7 @@
 ### Added
  - Use pbcopper's q-gram index for sparse alignment
  - Replaced seqan MSA in ChimeraLabaler
+ - supported loading updated models defined with PB_CHEMISTRY_BUNDLE_DIR
 
 ## [2.0.4]
 
