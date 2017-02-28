@@ -50,6 +50,11 @@
 
 namespace PacBio {
 namespace Consensus {
+
+// fwd decl from ModelSelection.cpp
+boost::optional<size_t> LoadModelsFromDirectory(const std::string& path, const std::string& origin,
+                                                bool strict);
+
 namespace {
 
 using ChemistryNotFound = PacBio::Exception::ChemistryNotFound;
@@ -66,10 +71,26 @@ size_t Count(const std::string& str, const std::string& delim)
 
     return count;
 }
+
+void LoadUpdateModels()
+{
+    static bool updatesLoaded = false;
+    if (!updatesLoaded) {
+        if (const char* pth = getenv("PB_CHEMISTRY_BUNDLE_DIR")) {
+            if (!LoadModelsFromDirectory(std::string(pth) + "/arrow", "Update", true))
+                throw Exception::ModelError(
+                    std::string("unable to load arrow model updates from: ") + pth);
+            updatesLoaded = true;
+        }
+    }
+}
 }
 
 std::unique_ptr<ModelConfig> ModelFactory::Create(const std::string& name, const SNR& snr)
 {
+    // Load updated models before we create anything
+    LoadUpdateModels();
+
     boost::optional<std::string> model(boost::none);
 
     if (!(model = ModelOverride()))
@@ -98,7 +119,7 @@ bool ModelFactory::Register(const std::string& name, std::unique_ptr<ModelCreato
 boost::optional<std::string> ModelFactory::Resolve(const std::string& name)
 {
     const std::vector<std::string> forms = {"PwSnr", "PwSnrA", "Snr", "Marginal"};
-    const std::vector<std::string> origins = {"FromFile", "Compiled"};
+    const std::vector<std::string> origins = {"FromFile", "Update", "Compiled"};
     const auto& tbl = CreatorTable();
     const size_t nParts = Count(name, "::") + 1;
 
@@ -127,6 +148,9 @@ boost::optional<std::string> ModelFactory::Resolve(const std::string& name)
 
 std::set<std::string> ModelFactory::SupportedModels()
 {
+    // Load updated models before we report anything
+    LoadUpdateModels();
+
     const auto& tbl = CreatorTable();
     std::set<std::string> result;
     for (const auto& item : tbl)

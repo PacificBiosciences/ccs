@@ -58,7 +58,7 @@ std::map<std::string, ModelFormCreator*>& ModelFormFactory::CreatorTable()
     return tbl;
 }
 
-bool ModelFormFactory::LoadModel(const std::string& path)
+bool ModelFormFactory::LoadModel(const std::string& path, const std::string& origin)
 {
     using boost::property_tree::ptree;
     using boost::property_tree::read_json;
@@ -82,7 +82,7 @@ bool ModelFormFactory::LoadModel(const std::string& path)
 
     if (it == tbl.end()) return false;
 
-    const std::string name = chemistry + "::" + form + "::" + "FromFile";
+    const std::string name = chemistry + "::" + form + "::" + origin;
 
     try {
         return ModelFactory::Register(name, it->second->LoadParams(pt));
