@@ -72,7 +72,7 @@ size_t Count(const std::string& str, const std::string& delim)
     return count;
 }
 
-void LoadUpdateModels()
+void LoadBundleModels()
 {
     static bool updatesLoaded = false;
     if (!updatesLoaded) {
@@ -88,8 +88,8 @@ void LoadUpdateModels()
 
 std::unique_ptr<ModelConfig> ModelFactory::Create(const std::string& name, const SNR& snr)
 {
-    // Load updated models before we create anything
-    LoadUpdateModels();
+    // Load update bundle models before we create anything
+    LoadBundleModels();
 
     boost::optional<std::string> model(boost::none);
 
@@ -148,8 +148,8 @@ boost::optional<std::string> ModelFactory::Resolve(const std::string& name)
 
 std::set<std::string> ModelFactory::SupportedModels()
 {
-    // Load updated models before we report anything
-    LoadUpdateModels();
+    // Load update bundle models before we report anything
+    LoadBundleModels();
 
     const auto& tbl = CreatorTable();
     std::set<std::string> result;
