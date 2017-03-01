@@ -179,7 +179,7 @@ private:
         if (snd == std::string::npos) throw std::runtime_error("invalid model name: " + s);
         ModelForm form(s.substr(fst + 2, snd - (fst + 2)));
         ModelOrigin origin(s.substr(snd + 2));
-        return {std::move(chemistry), std::move(form), std::move(origin)};
+        return std::make_tuple(std::move(chemistry), std::move(form), std::move(origin));
     }
 };
 }
