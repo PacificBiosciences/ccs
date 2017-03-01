@@ -72,7 +72,7 @@ public:
 class ModelFormFactory
 {
 public:
-    static bool LoadModel(const std::string& path, const std::string& origin);
+    static bool LoadModel(const std::string& path, const ModelOrigin origin);
     static bool Register(ModelForm form, ModelFormCreator* ctor);
 
 private:
