@@ -182,12 +182,10 @@ private:
     {
         static const auto d = "::";
         const size_t fst = s.find(d);
-        if (fst == std::string::npos)
-            throw Exception::ModelNamingError("invalid model name: " + s);
+        if (fst == std::string::npos) throw Exception::ModelNamingError("invalid model name: " + s);
         std::string chemistry = s.substr(0, fst);
         const size_t snd = s.find(d, fst + 2);
-        if (snd == std::string::npos)
-            throw Exception::ModelNamingError("invalid model name: " + s);
+        if (snd == std::string::npos) throw Exception::ModelNamingError("invalid model name: " + s);
         ModelForm form(s.substr(fst + 2, snd - (fst + 2)));
         ModelOrigin origin(s.substr(snd + 2));
         return std::make_tuple(std::move(chemistry), std::move(form), std::move(origin));
