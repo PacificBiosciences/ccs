@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <iterator>
 #include <set>
 #include <string>
@@ -121,7 +122,7 @@ TEST(LoadModelsTest, Malformed)
 // disable this test because we cannot load S/P1-C1.2 more than once
 // TEST(LoadModelsTest, DISABLED_SingleFile)
 // {
-//     std::string sp1c1v2 = tests::DataDir + "/params/SP1C1v2.json";
+//     std::string sp1c1v2 = tests::DataDir + "/arrow/SP1C1v2.json";
 //     ASSERT_TRUE(LoadModelFromFile(sp1c1v2));
 //     std::set<std::string> chems = SupportedChemistries();
 //     ASSERT_TRUE(chems.find("S/P1-C1.2::PwSnr") != chems.end());
@@ -129,7 +130,7 @@ TEST(LoadModelsTest, Malformed)
 
 TEST(LoadModelsTest, Directory)
 {
-    ASSERT_TRUE(LoadModels(tests::DataDir + "/params"));
+    ASSERT_TRUE(LoadModels(tests::DataDir + "/arrow"));
     std::set<std::string> chems = SupportedModels();
     ASSERT_TRUE(chems.find("S/P1-C1/beta::Marginal::FromFile") != chems.end());
     ASSERT_TRUE(chems.find("S/P1-C1.1::PwSnrA::FromFile") != chems.end());
@@ -199,6 +200,19 @@ TEST(LoadModelsTest, Directory)
     }
 }
 
+TEST(LoadModelsTest, UpdateBundle)
+{
+    const char* varname = "PB_CHEMISTRY_BUNDLE_DIR";
+    EXPECT_EQ(0, setenv(varname, tests::DataDir.c_str(), 0));
+
+    std::set<std::string> chems = SupportedModels();
+    ASSERT_TRUE(chems.find("S/P1-C1/beta::Marginal::Bundled") != chems.end());
+    ASSERT_TRUE(chems.find("S/P1-C1.1::PwSnrA::Bundled") != chems.end());
+    ASSERT_TRUE(chems.find("S/P1-C1.2::PwSnr::Bundled") != chems.end());
+
+    EXPECT_EQ(0, unsetenv(varname));
+}
+
 #if EXTENSIVE_TESTING
 #ifndef NDEBUG
 TEST(LoadModelsTest, DISABLED_ModelTiming)
@@ -207,7 +221,7 @@ TEST(LoadModelsTest, ModelTiming)
 #endif
 {
     // load required models just in case they haven't been already
-    LoadModels(tests::DataDir + "/params");
+    LoadModels(tests::DataDir + "/arrow");
 
     const size_t nsamp = 100;
     const std::vector<std::string> mdls = {"S/P1-C1/beta::Marginal::FromFile",

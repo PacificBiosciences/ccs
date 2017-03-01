@@ -50,6 +50,11 @@
 
 namespace PacBio {
 namespace Consensus {
+
+// fwd decl from ModelSelection.cpp
+boost::optional<size_t> LoadModelsFromDirectory(const std::string& path, const ModelOrigin origin,
+                                                bool strict);
+
 namespace {
 
 using ChemistryNotFound = PacBio::Exception::ChemistryNotFound;
@@ -66,10 +71,26 @@ size_t Count(const std::string& str, const std::string& delim)
 
     return count;
 }
+
+void LoadBundleModels()
+{
+    static bool updatesLoaded = false;
+    if (!updatesLoaded) {
+        if (const char* pth = getenv("PB_CHEMISTRY_BUNDLE_DIR")) {
+            if (!LoadModelsFromDirectory(std::string(pth) + "/arrow", ModelOrigin::BUNDLED, true))
+                throw Exception::ModelError(
+                    std::string("unable to load arrow model updates from: ") + pth);
+            updatesLoaded = true;
+        }
+    }
+}
 }
 
 std::unique_ptr<ModelConfig> ModelFactory::Create(const std::string& name, const SNR& snr)
 {
+    // Load update bundle models before we create anything
+    LoadBundleModels();
+
     boost::optional<std::string> model(boost::none);
 
     if (!(model = ModelOverride()))
@@ -88,7 +109,7 @@ std::unique_ptr<ModelConfig> ModelFactory::Create(const PacBio::Data::Read& read
     return Create(read.Model, read.SignalToNoise);
 }
 
-bool ModelFactory::Register(const std::string& name, std::unique_ptr<ModelCreator>&& ctor)
+bool ModelFactory::Register(const ModelName& name, std::unique_ptr<ModelCreator>&& ctor)
 {
     return CreatorTable()
         .insert(std::make_pair(name, std::forward<std::unique_ptr<ModelCreator>>(ctor)))
@@ -97,8 +118,8 @@ bool ModelFactory::Register(const std::string& name, std::unique_ptr<ModelCreato
 
 boost::optional<std::string> ModelFactory::Resolve(const std::string& name)
 {
-    const std::vector<std::string> forms = {"PwSnr", "PwSnrA", "Snr", "Marginal"};
-    const std::vector<std::string> origins = {"FromFile", "Compiled"};
+    const std::vector<std::string> forms = ModelForm::Preferences();
+    const std::vector<std::string> origins = ModelOrigin::Preferences();
     const auto& tbl = CreatorTable();
     const size_t nParts = Count(name, "::") + 1;
 
@@ -127,6 +148,9 @@ boost::optional<std::string> ModelFactory::Resolve(const std::string& name)
 
 std::set<std::string> ModelFactory::SupportedModels()
 {
+    // Load update bundle models before we report anything
+    LoadBundleModels();
+
     const auto& tbl = CreatorTable();
     std::set<std::string> result;
     for (const auto& item : tbl)
@@ -134,9 +158,9 @@ std::set<std::string> ModelFactory::SupportedModels()
     return result;
 }
 
-std::map<std::string, std::unique_ptr<ModelCreator>>& ModelFactory::CreatorTable()
+std::map<ModelName, std::unique_ptr<ModelCreator>>& ModelFactory::CreatorTable()
 {
-    static std::map<std::string, std::unique_ptr<ModelCreator>> tbl;
+    static std::map<ModelName, std::unique_ptr<ModelCreator>> tbl;
     return tbl;
 }
 

@@ -108,7 +108,7 @@ class SnrModelCreator : public ModelCreator
     friend class SnrRecursor;
 
 public:
-    static std::string Name() { return "Snr"; }
+    static ModelForm Form() { return ModelForm::SNR; }
     SnrModelCreator(const boost::property_tree::ptree& pt);
     virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
     {

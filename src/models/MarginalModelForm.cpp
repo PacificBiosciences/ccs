@@ -101,7 +101,7 @@ class MarginalModelCreator : public ModelCreator
     friend class MarginalRecursor;
 
 public:
-    static std::string Name() { return "Marginal"; }
+    static ModelForm Form() { return ModelForm::MARGINAL; }
     MarginalModelCreator(const boost::property_tree::ptree& pt);
     virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
     {

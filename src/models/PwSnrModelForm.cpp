@@ -113,7 +113,7 @@ class PwSnrModelCreator : public ModelCreator
     friend class PwSnrRecursor;
 
 public:
-    static std::string Name() { return "PwSnr"; }
+    static ModelForm Form() { return ModelForm::PWSNR; }
     PwSnrModelCreator(const boost::property_tree::ptree& pt);
     virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
     {

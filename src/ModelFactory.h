@@ -47,6 +47,8 @@
 #include <pacbio/data/Read.h>
 #include <pacbio/exception/ModelError.h>
 
+#include "ModelNaming.h"
+
 namespace PacBio {
 
 // forward declarations
@@ -81,12 +83,12 @@ class ModelFactory
 public:
     static std::unique_ptr<ModelConfig> Create(const std::string& name, const SNR&);
     static std::unique_ptr<ModelConfig> Create(const PacBio::Data::Read& read);
-    static bool Register(const std::string& name, std::unique_ptr<ModelCreator>&& ctor);
+    static bool Register(const ModelName& name, std::unique_ptr<ModelCreator>&& ctor);
     static boost::optional<std::string> Resolve(const std::string& name);
     static std::set<std::string> SupportedModels();
 
 private:
-    static std::map<std::string, std::unique_ptr<ModelCreator>>& CreatorTable();
+    static std::map<ModelName, std::unique_ptr<ModelCreator>>& CreatorTable();
 };
 
 // The concrete form of ModelCreator, which registers a compiled-in
@@ -97,12 +99,12 @@ class ModelCreatorImpl : public ModelCreator
 {
 public:
     ModelCreatorImpl<T>() {}
-    ModelCreatorImpl<T>(const std::set<std::string>& names)
+    ModelCreatorImpl<T>(const std::set<std::string>& chemistries, const ModelForm form)
     {
-        for (const std::string& name : names)
-            if (!ModelFactory::Register(name + "::Compiled",
+        for (const std::string& chemistry : chemistries)
+            if (!ModelFactory::Register({chemistry, form, ModelOrigin::COMPILED},
                                         std::unique_ptr<ModelCreator>(new ModelCreatorImpl<T>())))
-                throw PacBio::Exception::DuplicateModel(name);
+                throw PacBio::Exception::DuplicateModel(chemistry);
     }
 
     virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
@@ -118,7 +120,8 @@ boost::optional<std::string>& ModelOverride();
 private:                    \
     static const ModelCreatorImpl<cls> creator_
 
-#define REGISTER_MODEL_IMPL(cls) const ModelCreatorImpl<cls> cls::creator_(cls::Names())
+#define REGISTER_MODEL_IMPL(cls) \
+    const ModelCreatorImpl<cls> cls::creator_(cls::Chemistries(), cls::Form())
 
 }  // namespace Consensus
 }  // namespace PacBio
