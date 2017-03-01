@@ -52,7 +52,7 @@ namespace PacBio {
 namespace Consensus {
 
 // fwd decl from ModelSelection.cpp
-boost::optional<size_t> LoadModelsFromDirectory(const std::string& path, const std::string& origin,
+boost::optional<size_t> LoadModelsFromDirectory(const std::string& path, const ModelOrigin origin,
                                                 bool strict);
 
 namespace {
@@ -77,7 +77,7 @@ void LoadBundleModels()
     static bool updatesLoaded = false;
     if (!updatesLoaded) {
         if (const char* pth = getenv("PB_CHEMISTRY_BUNDLE_DIR")) {
-            if (!LoadModelsFromDirectory(std::string(pth) + "/arrow", "Update", true))
+            if (!LoadModelsFromDirectory(std::string(pth) + "/arrow", ModelOrigin::BUNDLED, true))
                 throw Exception::ModelError(
                     std::string("unable to load arrow model updates from: ") + pth);
             updatesLoaded = true;
@@ -109,7 +109,7 @@ std::unique_ptr<ModelConfig> ModelFactory::Create(const PacBio::Data::Read& read
     return Create(read.Model, read.SignalToNoise);
 }
 
-bool ModelFactory::Register(const std::string& name, std::unique_ptr<ModelCreator>&& ctor)
+bool ModelFactory::Register(const ModelName& name, std::unique_ptr<ModelCreator>&& ctor)
 {
     return CreatorTable()
         .insert(std::make_pair(name, std::forward<std::unique_ptr<ModelCreator>>(ctor)))
@@ -118,8 +118,8 @@ bool ModelFactory::Register(const std::string& name, std::unique_ptr<ModelCreato
 
 boost::optional<std::string> ModelFactory::Resolve(const std::string& name)
 {
-    const std::vector<std::string> forms = {"PwSnr", "PwSnrA", "Snr", "Marginal"};
-    const std::vector<std::string> origins = {"FromFile", "Update", "Compiled"};
+    const std::vector<std::string> forms = ModelForm::Preferences();
+    const std::vector<std::string> origins = ModelOrigin::Preferences();
     const auto& tbl = CreatorTable();
     const size_t nParts = Count(name, "::") + 1;
 
@@ -158,9 +158,9 @@ std::set<std::string> ModelFactory::SupportedModels()
     return result;
 }
 
-std::map<std::string, std::unique_ptr<ModelCreator>>& ModelFactory::CreatorTable()
+std::map<ModelName, std::unique_ptr<ModelCreator>>& ModelFactory::CreatorTable()
 {
-    static std::map<std::string, std::unique_ptr<ModelCreator>> tbl;
+    static std::map<ModelName, std::unique_ptr<ModelCreator>> tbl;
     return tbl;
 }
 

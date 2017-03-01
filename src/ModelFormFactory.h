@@ -44,6 +44,7 @@
 #include <boost/property_tree/ptree.hpp>
 
 #include "ModelFactory.h"
+#include "ModelNaming.h"
 
 namespace PacBio {
 namespace Consensus {
@@ -72,10 +73,10 @@ class ModelFormFactory
 {
 public:
     static bool LoadModel(const std::string& path, const std::string& origin);
-    static bool Register(const std::string& form, ModelFormCreator* ctor);
+    static bool Register(ModelForm form, ModelFormCreator* ctor);
 
 private:
-    static std::map<std::string, ModelFormCreator*>& CreatorTable();
+    static std::map<ModelForm, ModelFormCreator*>& CreatorTable();
 };
 
 // The concrete version of the ModelFormCreator, which registers
@@ -86,7 +87,7 @@ template <typename T>
 class ModelFormCreatorImpl : public ModelFormCreator
 {
 public:
-    ModelFormCreatorImpl<T>(const std::string& form)
+    ModelFormCreatorImpl<T>(const ModelForm form)
     {
         if (!ModelFormFactory::Register(form, this))
             throw std::runtime_error("duplicate model form inserted into form factory!");
@@ -102,7 +103,7 @@ public:
 private:                        \
     static const ModelFormCreatorImpl<cls> creator_
 
-#define REGISTER_MODELFORM_IMPL(cls) const ModelFormCreatorImpl<cls> cls::creator_(cls::Name())
+#define REGISTER_MODELFORM_IMPL(cls) const ModelFormCreatorImpl<cls> cls::creator_(cls::Form())
 
 }  // namespace Consensus
 }  // namespace PacBio

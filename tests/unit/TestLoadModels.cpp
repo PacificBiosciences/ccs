@@ -200,15 +200,15 @@ TEST(LoadModelsTest, Directory)
     }
 }
 
-TEST(LoadModelsTest, UpdatePackage)
+TEST(LoadModelsTest, UpdateBundle)
 {
     const char* varname = "PB_CHEMISTRY_BUNDLE_DIR";
     EXPECT_EQ(0, setenv(varname, tests::DataDir.c_str(), 0));
 
     std::set<std::string> chems = SupportedModels();
-    ASSERT_TRUE(chems.find("S/P1-C1/beta::Marginal::Update") != chems.end());
-    ASSERT_TRUE(chems.find("S/P1-C1.1::PwSnrA::Update") != chems.end());
-    ASSERT_TRUE(chems.find("S/P1-C1.2::PwSnr::Update") != chems.end());
+    ASSERT_TRUE(chems.find("S/P1-C1/beta::Marginal::Bundled") != chems.end());
+    ASSERT_TRUE(chems.find("S/P1-C1.1::PwSnrA::Bundled") != chems.end());
+    ASSERT_TRUE(chems.find("S/P1-C1.2::PwSnr::Bundled") != chems.end());
 
     EXPECT_EQ(0, unsetenv(varname));
 }

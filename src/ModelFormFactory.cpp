@@ -52,9 +52,9 @@ namespace Consensus {
 
 using ModelError = PacBio::Exception::ModelError;
 
-std::map<std::string, ModelFormCreator*>& ModelFormFactory::CreatorTable()
+std::map<ModelForm, ModelFormCreator*>& ModelFormFactory::CreatorTable()
 {
-    static std::map<std::string, ModelFormCreator*> tbl;
+    static std::map<ModelForm, ModelFormCreator*> tbl;
     return tbl;
 }
 
@@ -91,7 +91,7 @@ bool ModelFormFactory::LoadModel(const std::string& path, const std::string& ori
     }
 }
 
-bool ModelFormFactory::Register(const std::string& form, ModelFormCreator* ctor)
+bool ModelFormFactory::Register(const ModelForm form, ModelFormCreator* ctor)
 {
     return CreatorTable().insert(std::make_pair(form, ctor)).second;
 }

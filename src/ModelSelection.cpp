@@ -49,6 +49,7 @@
 
 #include "ModelFactory.h"
 #include "ModelFormFactory.h"
+#include "ModelNaming.h"
 
 namespace PacBio {
 namespace Consensus {
@@ -79,7 +80,7 @@ bool UnOverrideModel()
     return true;
 }
 
-bool LoadModelFromFile(const std::string& path, const std::string& origin)
+bool LoadModelFromFile(const std::string& path, const ModelOrigin origin)
 {
     struct stat st;
     if (stat(path.c_str(), &st) != 0 || !S_ISREG(st.st_mode)) return false;
@@ -87,7 +88,7 @@ bool LoadModelFromFile(const std::string& path, const std::string& origin)
 }
 
 boost::optional<size_t> LoadModelsFromDirectory(const std::string& dirPath,
-                                                const std::string& origin, const bool strict)
+                                                const ModelOrigin origin, const bool strict)
 {
     struct stat st;
     if (stat(dirPath.c_str(), &st) != 0) return boost::none;
