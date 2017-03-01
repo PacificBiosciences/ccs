@@ -50,8 +50,6 @@
 namespace PacBio {
 namespace Consensus {
 
-using ModelError = PacBio::Exception::ModelError;
-
 std::map<ModelForm, ModelFormCreator*>& ModelFormFactory::CreatorTable()
 {
     static std::map<ModelForm, ModelFormCreator*> tbl;
@@ -70,25 +68,23 @@ bool ModelFormFactory::LoadModel(const std::string& path, const ModelOrigin orig
         // verify we're looking at consensus model parameters
         std::string version = pt.get<std::string>("ConsensusModelVersion");
         if (version != "3.0.0") return false;
-    } catch (boost::property_tree::ptree_error&) {
-        return false;
-    }
 
-    const std::string chemistry = pt.get<std::string>("ChemistryName");
-    const std::string form = pt.get<std::string>("ModelForm");
+        const std::string chemistry = pt.get<std::string>("ChemistryName");
+        const ModelForm form(pt.get<std::string>("ModelForm"));
 
-    const auto tbl = CreatorTable();
-    const auto it = tbl.find(form);
+        const auto tbl = CreatorTable();
+        const auto it = tbl.find(form);
 
-    if (it == tbl.end()) return false;
+        if (it == tbl.end()) return false;
 
-    const std::string name = chemistry + "::" + form + "::" + std::string(origin);
+        const ModelName name(chemistry, form, origin);
 
-    try {
         return ModelFactory::Register(name, it->second->LoadParams(pt));
-    } catch (ModelError& e) {
-        return false;
+    } catch (boost::property_tree::ptree_error&) {
+    } catch (Exception::ModelNamingError&) {
+    } catch (Exception::ModelError& e) {
     }
+    return false;
 }
 
 bool ModelFormFactory::Register(const ModelForm form, ModelFormCreator* ctor)

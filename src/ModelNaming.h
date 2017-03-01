@@ -44,6 +44,15 @@
 #include <vector>
 
 namespace PacBio {
+namespace Exception {
+
+class ModelNamingError : public std::runtime_error
+{
+public:
+    ModelNamingError(const std::string& msg) : std::runtime_error(msg) {}
+};
+}
+
 namespace Consensus {
 
 struct ModelForm
@@ -66,7 +75,7 @@ struct ModelForm
         static const std::map<std::string, uint8_t> m{
             {"Marginal", MARGINAL}, {"Snr", SNR}, {"PwSnrA", PWSNRA}, {"PwSnr", PWSNR}};
         const auto it = m.find(s);
-        if (it == m.end()) throw std::runtime_error("invalid model form: " + s);
+        if (it == m.end()) throw Exception::ModelNamingError("invalid model form: " + s);
         v = it->second;
     }
 
@@ -119,7 +128,7 @@ struct ModelOrigin
         static const std::map<std::string, uint8_t> m{
             {"Compiled", COMPILED}, {"Bundled", BUNDLED}, {"FromFile", PROVIDED}};
         const auto it = m.find(s);
-        if (it == m.end()) throw std::runtime_error("invalid model origin: " + s);
+        if (it == m.end()) throw Exception::ModelNamingError("invalid model origin: " + s);
         v = it->second;
     }
 
@@ -173,10 +182,12 @@ private:
     {
         static const auto d = "::";
         const size_t fst = s.find(d);
-        if (fst == std::string::npos) throw std::runtime_error("invalid model name: " + s);
+        if (fst == std::string::npos)
+            throw Exception::ModelNamingError("invalid model name: " + s);
         std::string chemistry = s.substr(0, fst);
         const size_t snd = s.find(d, fst + 2);
-        if (snd == std::string::npos) throw std::runtime_error("invalid model name: " + s);
+        if (snd == std::string::npos)
+            throw Exception::ModelNamingError("invalid model name: " + s);
         ModelForm form(s.substr(fst + 2, snd - (fst + 2)));
         ModelOrigin origin(s.substr(snd + 2));
         return std::make_tuple(std::move(chemistry), std::move(form), std::move(origin));
