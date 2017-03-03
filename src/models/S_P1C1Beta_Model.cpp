@@ -56,7 +56,8 @@ class S_P1C1Beta_Model : public ModelConfig
     REGISTER_MODEL(S_P1C1Beta_Model);
 
 public:
-    static std::set<std::string> Names() { return {"S/P1-C1/beta::Marginal"}; }
+    static std::set<std::string> Chemistries() { return {"S/P1-C1/beta"}; }
+    static ModelForm Form() { return ModelForm::MARGINAL; }
     S_P1C1Beta_Model(const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
                                                      const MappedRead& mr, double scoreDiff) const;
