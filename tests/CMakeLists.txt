@@ -52,7 +52,7 @@ if(${ROOT_PROJECT_NAME} STREQUAL "UNANIMITY")
     add_custom_target(check
         COMMAND ${UNY_RootDir}/tools/check-formatting --all
         COMMAND test_unanimity --gtest_output=xml:${CMAKE_BINARY_DIR}/uny-unit.xml
-        COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${UNY_RootDir}/scripts/cram --xunit-file=${CMAKE_BINARY_DIR}/uny-cram.xml ${UNY_TestsDir}/cram/*.t
+        COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${UNY_RootDir}/scripts/cram --xunit-file=${CMAKE_BINARY_DIR}/uny-cram.xml --verbose ${UNY_TestsDir}/cram/*.t
         COMMAND __PBTEST_CCS_EXE=${CMAKE_BINARY_DIR}/ccs ${UNY_TestsDir}/python/test_tool_contract.py
         DEPENDS ccs
         WORKING_DIRECTORY ${UNY_RootDir})
