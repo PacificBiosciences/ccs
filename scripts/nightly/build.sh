@@ -4,7 +4,7 @@ set -euo pipefail
 echo "# DEPENDENCIES"
 echo "## Load modules"
 source /mnt/software/Modules/current/init/bash
-module load git gcc/5.3.0 python/2.7.9 cmake swig ccache virtualenv zlib/1.2.5 ninja boost
+module load git gcc/4.9.2 python/2.7.9 cmake swig ccache virtualenv zlib/1.2.5 ninja boost
 
 echo "## Get into virtualenv"
 if [ ! -d venv ]
