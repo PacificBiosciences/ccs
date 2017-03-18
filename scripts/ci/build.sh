@@ -64,7 +64,7 @@ if [ ! -d build ] ; then mkdir build ; fi
 echo "## Build source"
 ( cd build &&\
   rm -rf * &&\
-  CMAKE_BUILD_TYPE=ReleaseWithAssert cmake -DJULIET_INHOUSE_PERFORMANCE=T -GNinja .. )
+  cmake -DCMAKE_BUILD_TYPE=ReleaseWithAssert -GNinja .. )
 ( cd build && ninja )
 
 echo "## pip install CC2"
