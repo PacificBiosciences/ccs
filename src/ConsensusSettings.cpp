@@ -286,6 +286,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     tcTask.AddOption(OptionNames::ModelPath);
     tcTask.AddOption(OptionNames::ModelSpec);
     tcTask.AddOption(OptionNames::ReportFile);
+    tcTask.AddOption(OptionNames::RichQVs);
     tcTask.NumProcessors(Task::MAX_NPROC);
 
     tcTask.InputFileTypes({
