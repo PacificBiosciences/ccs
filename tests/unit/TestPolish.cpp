@@ -38,11 +38,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <iostream>
 #include <string>
 #include <tuple>
 
-#include <pacbio/consensus/MonoMolecularIntegrator.h>
-#include <pacbio/consensus/MultiMolecularIntegrator.h>
+#include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Polish.h>
 #include <pacbio/data/Read.h>
 #include <pacbio/data/Sequence.h>
@@ -60,22 +60,9 @@ Read MkRead(const std::string& seq, const SNR& snr, const std::string& mdl)
 
 const SNR snr(10, 7, 5, 11);
 
-TEST(PolishTest, MonoBasic)
+TEST(PolishTest, Basic)
 {
-    MonoMolecularIntegrator ai("GCGTCGT", IntegratorConfig(), snr, "P6-C4");
-
-    ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, "P6-C4"), StrandType::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandType::FORWARD, 0, 7, true, true));
-    ai.AddRead(MappedRead(MkRead("ACGACGT", snr, "P6-C4"), StrandType::FORWARD, 0, 7, true, true));
-
-    Polish(&ai, PolishConfig());
-
-    EXPECT_EQ("ACGACGT", std::string(ai));
-}
-
-TEST(PolishTest, MultiBasic)
-{
-    MultiMolecularIntegrator ai("GCGTCGT", IntegratorConfig());
+    Integrator ai("GCGTCGT", IntegratorConfig());
 
     ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, "P6-C4"), StrandType::FORWARD, 0, 7, true, true));
     ai.AddRead(MappedRead(MkRead(ReverseComplement("ACGACGT"), snr, "P6-C4"), StrandType::REVERSE,

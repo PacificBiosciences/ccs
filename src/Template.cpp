@@ -46,6 +46,9 @@ namespace Consensus {
 
 using TemplateTooSmall = PacBio::Exception::TemplateTooSmall;
 
+//
+// AbstractTemplate Function Definitions
+//
 AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const bool pinStart,
                                    const bool pinEnd)
     : start_{start}, end_{end}, pinStart_{pinStart}, pinEnd_{pinEnd}
@@ -53,7 +56,7 @@ AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const b
     assert(start_ <= end_);
 
     // Templates that are below two bases are not allowed.
-    // This exception will get propagted up the chain up to the Integrator
+    // This exception will get propagated up the chain up to the Integrator
     // constructor or Integrator::AddRead.
     if (end_ - start_ < 2) throw TemplateTooSmall();
 }
@@ -122,8 +125,6 @@ std::pair<double, double> AbstractTemplate::NormalParameters() const
     }
     return std::make_pair(mean, var);
 }
-
-size_t AbstractTemplate::TrueLength() const { return end_ - start_; }
 
 /* See PBEP #4 for a write-up of this code and an explanation of the algorithm.
 
@@ -216,12 +217,21 @@ std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i)
     return std::make_pair(mean, var);
 }
 
+bool AbstractTemplate::InRange(const size_t start, const size_t end) const
+{
+    if ((pinStart_ || start_ < end) && (pinEnd_ || start < end_)) return true;
+    return false;
+}
+
 std::ostream& operator<<(std::ostream& os, const AbstractTemplate& tpl)
 {
     os << std::string(tpl);
     return os;
 }
 
+//
+// (Concrete) Template Function Definitions
+//
 Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg)
     : Template(tpl, std::forward<std::unique_ptr<ModelConfig>>(cfg), 0, tpl.length(), true, true)
 {
@@ -232,8 +242,6 @@ Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg, c
     : AbstractTemplate(start, end, pinStart, pinEnd)
     , cfg_(std::forward<std::unique_ptr<ModelConfig>>(cfg))
     , tpl_{cfg_->Populate(tpl)}
-    , mutated_{false}
-    , mutOff_{0}
 {
     assert(end_ - start_ == tpl_.size());
     assert(!pinStart_ || start_ == 0);
@@ -241,10 +249,8 @@ Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg, c
     //   assert(!pinEnd_ || end_ == tpl_.size());
 }
 
-boost::optional<Mutation> Template::Mutate(const Mutation& mut)
+boost::optional<MutatedTemplate> Template::Mutate(const Mutation& mut)
 {
-    Reset();
-
     if (Length() == 0 && mut.LengthDiff() < 1) return boost::none;
     if (!InRange(mut.Start(), mut.End())) return boost::none;
 
@@ -252,65 +258,11 @@ boost::optional<Mutation> Template::Mutate(const Mutation& mut)
     if (mut.Type != MutationType::DELETION && idx > 3)
         throw std::invalid_argument("invalid character in template!");
 
-    mutStart_ = mut.Start() - start_;
-    mutEnd_ = mut.End() - start_;
-
-    if (mut.Type == MutationType::INSERTION) {
-        if (mutStart_ > 0) mutTpl_[0] = cfg_->Populate({tpl_[mutStart_ - 1].Base, mut.Base})[0];
-
-        if (mutStart_ < tpl_.size())
-            mutTpl_[1] = cfg_->Populate({mut.Base, tpl_[mutStart_].Base})[0];
-        else
-            mutTpl_[1] = TemplatePosition{mut.Base, idx, 1.0, 0.0, 0.0, 0.0};
-    } else if (mut.Type == MutationType::SUBSTITUTION) {
-        if (mutStart_ > 0) mutTpl_[0] = cfg_->Populate({tpl_[mutStart_ - 1].Base, mut.Base})[0];
-
-        if (mutStart_ + 1 < tpl_.size())
-            mutTpl_[1] = cfg_->Populate({mut.Base, tpl_[mutStart_ + 1].Base})[0];
-        else
-            mutTpl_[1] = TemplatePosition{mut.Base, idx, 1.0, 0.0, 0.0, 0.0};
-    } else if (mut.Type == MutationType::DELETION) {
-        // if there's a predecessor, fill it
-        if (mutStart_ > 0) {
-            if (mutStart_ + 1 < tpl_.size())
-                mutTpl_[0] =
-                    cfg_->Populate({tpl_[mutStart_ - 1].Base, tpl_[mutStart_ + 1].Base})[0];
-            else
-                mutTpl_[0] = TemplatePosition{
-                    tpl_[mutStart_ - 1].Base, tpl_[mutStart_ - 1].Idx, 1.0, 0.0, 0.0, 0.0};
-        }
-
-        // if there's a successor, the params for the mutant position
-        //   are equiv to the next position in the original tpl
-        if (mutStart_ + 1 < tpl_.size()) mutTpl_[1] = tpl_[mutStart_ + 1];
-    } else
-        throw std::invalid_argument(
-            "invalid mutation type! must be DELETION, INSERTION, or "
-            "SUBSTITUTION");
-
-    mutOff_ = mut.LengthDiff();
-    mutated_ = true;
-
-    // Either the length is 0 or an operation had been applied
-    assert(Length() == 0 ||
-           ((*this)[Length() - 1].Match == 1.0 && (*this)[Length() - 1].Branch == 0.0 &&
-            (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0));
-
-    return Mutation(mut.Type, mutStart_, mut.Base);
-}
-
-void Template::Reset()
-{
-    mutOff_ = 0;
-    mutated_ = false;
+    return boost::make_optional(MutatedTemplate(*this, mut));
 }
 
 bool Template::ApplyMutation(const Mutation& mut)
 {
-    if (mutated_)
-        throw std::runtime_error(
-            "cannot ApplyMutation to an already mutated Template, call Reset first");
-
     const uint8_t idx = detail::TranslationTable[static_cast<uint8_t>(mut.Base)];
     if (mut.Type != MutationType::DELETION && idx > 3)
         throw std::invalid_argument("invalid character in template!");
@@ -371,61 +323,14 @@ finish:
     return mutApplied;
 }
 
-VirtualTemplate::VirtualTemplate(const Template& master, const size_t start, const size_t end,
-                                 const bool pinStart, const bool pinEnd)
-    : AbstractTemplate(start, end, pinStart, pinEnd), master_(master)
-{
-    assert(!pinStart_ || start_ == 0);
-    assert(!pinEnd_ || end_ == master_.tpl_.size());
-}
+size_t Template::Length() const { return tpl_.size(); }
 
-bool VirtualTemplate::ApplyMutation(const Mutation& mut)
-{
-    assert(!pinStart_ || start_ == 0);
-    const bool mutApplied = AbstractTemplate::ApplyMutation(mut);
-    assert(!pinStart_ || start_ == 0);
-    return mutApplied;
-}
+const TemplatePosition& Template::operator[](size_t i) const { return tpl_[i]; }
 
-size_t Template::Length() const { return tpl_.size() + mutOff_; }
-
-size_t VirtualTemplate::Length() const
-{
-    if (IsMutated()) return end_ - start_ + master_.mutOff_;
-
-    return end_ - start_;
-}
-
-// inline function impls
-bool AbstractTemplate::InRange(const size_t start, const size_t end) const
-{
-    if ((pinStart_ || start_ < end) && (pinEnd_ || start < end_)) return true;
-    return false;
-}
-
-const TemplatePosition& Template::operator[](size_t i) const
-{
-    // if no mutation, or everything up to the base before mutStart_, just return
-    // what we have
-    if (!IsMutated() || i + 1 < mutStart_) return tpl_[i];
-
-    // if we're beyond the mutation position, take the appropriate base
-    else if (i > mutStart_)
-        return tpl_[i - mutOff_];
-
-    // otherwise if we're the base before mutStart_, 0, else 1 of our mutated tpl
-    // params
-    return mutTpl_[i == mutStart_];
-}
-
-bool Template::IsMutated() const { return mutated_; }
-
-std::unique_ptr<AbstractRecursor> Template::CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                           const PacBio::Data::MappedRead& mr,
+std::unique_ptr<AbstractRecursor> Template::CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                            double scoreDiff) const
 {
-    return cfg_->CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
-                                scoreDiff);
+    return cfg_->CreateRecursor(mr, scoreDiff);
 }
 double Template::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                        MomentType moment) const
@@ -433,33 +338,135 @@ double Template::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr
     return cfg_->ExpectedLLForEmission(move, prev, curr, moment);
 }
 
-const TemplatePosition& VirtualTemplate::operator[](const size_t i) const
+//
+// MutatedTemplate Function Definitions
+//
+
+MutatedTemplate::MutatedTemplate(const Template& master, const Mutation& mut)
+    : AbstractTemplate(master.start_, master.end_, master.pinStart_, master.pinEnd_)
+    , master_(master)
+    , mut_(mut)
 {
-    if (master_.IsMutated() && !pinStart_ && master_.mutEnd_ <= start_)
-        return master_[start_ + i + master_.mutOff_];
-    return master_[start_ + i];
+    // Sanity check the input arguments and calculate the relative position of our mutation
+    assert(!pinStart_ || start_ == 0);
+    assert(!pinEnd_ || end_ - start_ == master_.tpl_.size());
+    mutStart_ = mut.Start() - master_.start_;
+    mutEnd_ = mut.End() - master_.start_;
+
+    // Out-of-range idx values should be caught before construction in Template::Mutate()
+    const uint8_t idx = detail::TranslationTable[static_cast<uint8_t>(mut.Base)];
+
+    // Depending on the MutationType, fill out the 2-base MutTpl_ with the model parameters for
+    // the base where the mutation occurs and (if possible) the base that succeeds it to account
+    // for the context change caused by the mutation
+    //
+    // All mutations below are described as Before(B), Position(P), or After(A) with Mutated(M)
+    // for the new nucleotide, such that the pre-mutation template can be read as "B-P-A".  Since
+    // the parameters of all bases are induced by the context of the preceeding base, the context
+    // of the targeted position is "B-P", and the context of the successor base is "P-A".
+    if (mut.Type == MutationType::INSERTION) {
+        // For Insertions the new sequence is "B-M-P-A", the mutation context is now "B-M" and
+        // the context of the successor position is "M-P"
+        if (mutStart_ > 0)
+            mutTpl_[0] = master_.cfg_->Populate({master_.tpl_[mutStart_ - 1].Base, mut.Base})[0];
+
+        if (mutStart_ < master_.tpl_.size())
+            mutTpl_[1] = master_.cfg_->Populate({mut.Base, master_.tpl_[mutStart_].Base})[0];
+        else
+            mutTpl_[1] = TemplatePosition{mut.Base, idx, 1.0, 0.0, 0.0, 0.0};
+    } else if (mut.Type == MutationType::SUBSTITUTION) {
+        // For Substitutions the new sequence is "B-M-A", the mutation context is now "B-M" and
+        // the context of the successor position is "M-A"
+        if (mutStart_ > 0)
+            mutTpl_[0] = master_.cfg_->Populate({master_.tpl_[mutStart_ - 1].Base, mut.Base})[0];
+
+        if (mutStart_ + 1 < master_.tpl_.size())
+            mutTpl_[1] = master_.cfg_->Populate({mut.Base, master_.tpl_[mutStart_ + 1].Base})[0];
+        else
+            mutTpl_[1] = TemplatePosition{mut.Base, idx, 1.0, 0.0, 0.0, 0.0};
+    } else if (mut.Type == MutationType::DELETION) {
+        // For Deletions the new sequence is "B-A", the mutational context is now "B-A" and
+        // the context of the successor position is whatever "A"s context was previously
+        if (mutStart_ > 0) {
+            if (mutStart_ + 1 < master_.tpl_.size())
+                mutTpl_[0] = master_.cfg_->Populate(
+                    {master_.tpl_[mutStart_ - 1].Base, master_.tpl_[mutStart_ + 1].Base})[0];
+            else
+                mutTpl_[0] = TemplatePosition{master.tpl_[mutStart_ - 1].Base,
+                                              master.tpl_[mutStart_ - 1].Idx,
+                                              1.0,
+                                              0.0,
+                                              0.0,
+                                              0.0};
+        }
+
+        // if there's a successor, the params for the mutant position
+        //   are equiv to the next position in the original tpl
+        if (mutStart_ + 1 < master_.tpl_.size()) mutTpl_[1] = master_.tpl_[mutStart_ + 1];
+    } else
+        throw std::invalid_argument(
+            "invalid mutation type! must be DELETION, INSERTION, or "
+            "SUBSTITUTION");
+
+    mutOff_ = mut.LengthDiff();
+
+    assert(Length() == 0 ||
+           ((*this)[Length() - 1].Match == 1.0 && (*this)[Length() - 1].Branch == 0.0 &&
+            (*this)[Length() - 1].Stick == 0.0 && (*this)[Length() - 1].Deletion == 0.0));
 }
 
-bool VirtualTemplate::IsMutated() const
+bool MutatedTemplate::ApplyMutation(const Mutation& mut)
 {
-    return master_.IsMutated() && InRange(master_.mutStart_, master_.mutEnd_);
+    assert(!pinStart_ || start_ == 0);
+    const bool mutApplied = AbstractTemplate::ApplyMutation(mut);
+    assert(!pinStart_ || start_ == 0);
+    return mutApplied;
 }
 
-boost::optional<Mutation> VirtualTemplate::Mutate(const Mutation& mut)
+size_t MutatedTemplate::Length() const { return end_ - start_ + mutOff_; }
+
+size_t MutatedTemplate::MutationStart() const { return mutStart_; }
+
+size_t MutatedTemplate::MutationEnd() const
 {
-    if (!master_.IsMutated()) throw std::runtime_error("virtual template badness");
-    if (!InRange(mut.Start(), mut.End())) return boost::optional<Mutation>(boost::none);
-    return boost::optional<Mutation>(Mutation(mut.Type, mut.Start() - start_, mut.Base));
+    if (mut_.Type == MutationType::INSERTION || mut_.Type == MutationType::ANY_INSERTION)
+        return mutStart_;
+
+    // if (mut_.Type == MutationType::SUBSTITUTION ||
+    //     mut_.Type == MutationType::ANY_SUBSTITUTION ||
+    //     mut_.Type == MutationType::DELETION)
+    return mutStart_ + 1;
 }
 
-std::unique_ptr<AbstractRecursor> VirtualTemplate::CreateRecursor(
-    std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
-    double scoreDiff) const
+int MutatedTemplate::LengthDiff() const { return mut_.LengthDiff(); }
+
+const TemplatePosition& MutatedTemplate::operator[](const size_t i) const
 {
-    return master_.CreateRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
-                                  scoreDiff);
+    // For everything up to the base before mutStart_, just return what we have
+    if (i + 1 < mutStart_) return master_.tpl_[i];
+
+    // if we're beyond the mutation position, we have to adjust for any change in
+    // template length caused by the mutation before returning
+    else if (i > mutStart_)
+        return master_.tpl_[i - mutOff_];
+
+    // otherwise if we're the base before mutStart_, 0, else 1 of our mutated tpl
+    // params
+    return mutTpl_[i == mutStart_];
 }
-double VirtualTemplate::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+
+boost::optional<MutatedTemplate> MutatedTemplate::Mutate(const Mutation& mut)
+{
+    return boost::none;
+}
+
+std::unique_ptr<AbstractRecursor> MutatedTemplate::CreateRecursor(
+    const PacBio::Data::MappedRead& mr, double scoreDiff) const
+{
+    return master_.CreateRecursor(mr, scoreDiff);
+}
+
+double MutatedTemplate::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                               MomentType moment) const
 {
     return master_.ExpectedLLForEmission(move, prev, curr, moment);

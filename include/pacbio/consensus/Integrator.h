@@ -51,16 +51,16 @@
 namespace PacBio {
 namespace Consensus {
 
-/// The MULTI-molecular integrator holds those Evaluators, whose MappedReads
-/// belong to the same genomic region, but do not share the same template.
-class MultiMolecularIntegrator : public AbstractIntegrator
+/// The Integrator holds a collection of Evaluators whose MappedReads belonging
+/// to the same genomic region or amplicon
+class Integrator : public AbstractIntegrator
 {
 public:
-    /// \brief Initialize the MultiMolecularIntegrator.
+    /// \brief Initialize the Integrator.
     ///
     /// \param tpl    The draft template as a string
-    /// \param cfg    The configuration used to initialize the AbstractIntegrator.
-    MultiMolecularIntegrator(const std::string& tpl, const IntegratorConfig& cfg);
+    /// \param cfg    The configuration used to initialize the Integrator.
+    Integrator(const std::string& tpl, const IntegratorConfig& cfg);
 
     size_t TemplateLength() const override;
 
@@ -82,7 +82,7 @@ protected:
     std::string revTpl_;
 
 private:
-    friend struct std::hash<MultiMolecularIntegrator>;
+    friend struct std::hash<Integrator>;
 };
 
 }  // namespace Consensus

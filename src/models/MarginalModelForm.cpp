@@ -68,8 +68,7 @@ class MarginalModel : public ModelConfig
 {
 public:
     MarginalModel(const MarginalModelCreator* params, const SNR& snr);
-    std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                     const MappedRead& mr, double scoreDiff) const;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const;
@@ -81,8 +80,8 @@ private:
 class MarginalRecursor : public Recursor<MarginalRecursor>
 {
 public:
-    MarginalRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                     double scoreDiff, double counterWeight, const MarginalModelCreator* params);
+    MarginalRecursor(const MappedRead& mr, double scoreDiff, double counterWeight,
+                     const MarginalModelCreator* params);
 
     static std::vector<uint8_t> EncodeRead(const MappedRead& read);
     double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
@@ -119,8 +118,8 @@ MarginalModel::MarginalModel(const MarginalModelCreator* params, const SNR& snr)
 {
 }
 
-std::unique_ptr<AbstractRecursor> MarginalModel::CreateRecursor(
-    std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
+std::unique_ptr<AbstractRecursor> MarginalModel::CreateRecursor(const MappedRead& mr,
+                                                                double scoreDiff) const
 {
     const double counterWeight = CounterWeight(
         [this](size_t ctx, MoveType m) {
@@ -137,8 +136,7 @@ std::unique_ptr<AbstractRecursor> MarginalModel::CreateRecursor(
         CONTEXT_NUMBER);
 
     return std::unique_ptr<AbstractRecursor>(
-        new MarginalRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff,
-                             counterWeight, params_));
+        new MarginalRecursor(mr, scoreDiff, counterWeight, params_));
 }
 
 std::vector<TemplatePosition> MarginalModel::Populate(const std::string& tpl) const
@@ -188,10 +186,9 @@ double MarginalModel::ExpectedLLForEmission(const MoveType move, const uint8_t p
     return expectedLL;
 }
 
-MarginalRecursor::MarginalRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                                   double scoreDiff, double counterWeight,
+MarginalRecursor::MarginalRecursor(const MappedRead& mr, double scoreDiff, double counterWeight,
                                    const MarginalModelCreator* params)
-    : Recursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
+    : Recursor(mr, scoreDiff)
     , params_{params}
     , counterWeight_{counterWeight}
     , nLgCounterWeight_{-std::log(counterWeight_)}
