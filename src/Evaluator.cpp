@@ -71,7 +71,6 @@ Evaluator::Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& 
     try {
         impl_.reset(
             new EvaluatorImpl(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
-
         CheckZScore(minZScore, mr.Model);
     } catch (const StateError& e) {
         Status(e.WhatState());
@@ -92,7 +91,7 @@ Evaluator::~Evaluator() {}
 
 size_t Evaluator::Length() const
 {
-    if (IsValid()) return impl_->recursor_->tpl_->Length();
+    if (IsValid()) return impl_->tpl_->Length();
     return 0;
 }
 

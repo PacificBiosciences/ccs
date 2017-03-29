@@ -146,26 +146,29 @@ string ToString(const AbstractTemplate& tpl)
     return result;
 }
 
-void TemplateEquivalence(const size_t nsamp, const size_t nvirt, const size_t len = 100)
+void TemplateEquivalence(const size_t nSamples, const size_t nReads, const size_t len = 100)
 {
     std::random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<size_t> randIdx(0, len - 1);
     bernoulli_distribution randPin(0.5);
-    bernoulli_distribution randSpanning(0.33);
+    bernoulli_distribution randNonSpanning(0.33);
 
-    for (size_t i = 0; i < nsamp; ++i) {
-        const string tpl = RandomDNA(len, &gen);
-        Template master(tpl, ModelFactory::Create(mdl, snr));
+    for (size_t i = 0; i < nSamples; ++i) {
+        const string tpl = RandomDNA(len, &gen);               // "Reference" sequence
+        Template master(tpl, ModelFactory::Create(mdl, snr));  // "Reference" template object
         EXPECT_EQ(tpl, ToString(master));
-        vector<tuple<size_t, size_t, bool, bool>> coords;
-        vector<VirtualTemplate> vtpls;
-        vector<Template> rtpls;
-        for (size_t j = 0; j < nvirt; ++j) {
+
+        // Generate a random mixture of spanning and non-spanning reads,
+        //  as well as pinned and non-pinned reads for testing
+        vector<tuple<size_t, size_t, bool, bool>> coords;  // "Read" coordinates
+        vector<Template> rtpls;                            // "Read" templates
+        for (size_t j = 0; j < nReads; ++j) {
             int start = 0;
             int end = len;
-            // roughly 33% of the time having a spanning read
-            if (randSpanning(gen)) {
+            // Roughly 33% of the time having a non-spanning read and pick
+            //  start and end positions at random (minimum 2bp)
+            if (randNonSpanning(gen)) {
                 do {
                     start = randIdx(gen);
                     end = randIdx(gen);
@@ -173,78 +176,106 @@ void TemplateEquivalence(const size_t nsamp, const size_t nvirt, const size_t le
                 if (end < start) swap(start, end);
                 ++end;  // increment b by one (end-exclusive)
             }
+            ASSERT_LT(start, end);
+
+            // Save both the resulting "read" template and it's positions
             const bool pinStart = (start == 0) ? randPin(gen) : false;
             const bool pinEnd = (end == static_cast<int>(len)) ? randPin(gen) : false;
-            ASSERT_LT(start, end);
             coords.emplace_back(make_tuple(start, end, pinStart, pinEnd));
-            vtpls.emplace_back(VirtualTemplate(master, start, end, pinStart, pinEnd));
-            const string vtpl = tpl.substr(start, end - start);
+            const string rtpl = tpl.substr(start, end - start);
             rtpls.emplace_back(
-                Template(vtpl, ModelFactory::Create(mdl, snr), start, end, pinStart, pinEnd));
-            EXPECT_EQ(vtpl, ToString(vtpls.back()));
-            EXPECT_EQ(end - start, vtpls.back().Length());
+                Template(rtpl, ModelFactory::Create(mdl, snr), start, end, pinStart, pinEnd));
+            EXPECT_EQ(end - start, rtpls.back().Length());
         }
+
         vector<Mutation> mutations = Mutations(tpl);
         for (const auto& mut : mutations) {
+
+            // Applying a mutation to a template with Mutate() should produce
+            //  the same string as the operation applied to the underlying string
             vector<Mutation> muts{mut};
-            const string app = ApplyMutations(tpl, &muts);
-            master.Mutate(mut);
-            EXPECT_EQ(app, ToString(master));
+            const string refMutStr = ApplyMutations(tpl, &muts);  // mutated "Reference" string
+            const auto& refMutTpl = master.Mutate(mut);           // mutated "Reference" template
+            EXPECT_EQ(refMutStr, ToString(*refMutTpl));
             {
-                Template mutated(app, ModelFactory::Create(mdl, snr));
-                EXPECT_EQ(mutated, master);
+                Template mutated(refMutStr, ModelFactory::Create(mdl, snr));
+                EXPECT_EQ(mutated, *refMutTpl);
             }
-            for (size_t j = 0; j < nvirt; ++j) {
+
+            // Applying a mutation to a "subread" Template with Mutate() should produce
+            //  the same string as the operation applied to the underlying string OR
+            //  boost::none if it's out of range
+            for (size_t j = 0; j < nReads; ++j) {
                 size_t start, end;
                 bool pinStart, pinEnd;
                 tie(start, end, pinStart, pinEnd) = coords[j];
-                const string vtpl = tpl.substr(start, end - start);
-                vector<Mutation> vmuts;
-                if ((pinStart || start < mut.End()) && (pinEnd || mut.Start() < end))
-                    vmuts.emplace_back(Mutation(mut.Type, mut.Start() - start, mut.Base));
-                const string vapp = ApplyMutations(vtpl, &vmuts);
-                vtpls[j].Mutate(mut);
-                rtpls[j].Mutate(mut);
-                EXPECT_EQ(vapp, ToString(rtpls[j]));
-                EXPECT_EQ(vapp, ToString(vtpls[j]));
-                if (vapp != ToString(vtpls[j])) {
-                    const size_t c =
-                        start + ((pinStart || mut.End() < start) ? mut.LengthDiff() : 0);
-                    const size_t d = end + ((pinEnd || mut.Start() < end) ? mut.LengthDiff() : 0);
-                    cerr << "mut:  " << mut << endl;
-                    if (!vmuts.empty()) cerr << "vmut: " << vmuts.back() << endl;
-                    cerr << "off:  " << mut.LengthDiff() << endl;
-                    cerr << "tpl:  " << tpl << endl;
-                    cerr << "s,e:  " << start << "," << end << endl;
-                    cerr << "ps,e: " << pinStart << "," << pinEnd << endl;
-                    cerr << "ms,e: " << mut.Start() << "," << mut.End() << endl;
-                    cerr << "app:  " << app << endl;
-                    cerr << "c,d:  " << c << "," << d << endl;
-                    cerr << "vtpl: " << vtpl << endl;
-                    cerr << "vapp: " << vapp << endl;
-                    // cerr << "sub:  " << app.substr(a + ((mut.Start() <= a) ? mut.LengthDiff() :
-                    // 0), vapp.length()) << endl;
-                    cerr << "vchl: " << ToString(vtpls[j]) << endl;
-                    cerr << "rchl: " << ToString(rtpls[j]) << endl;
-                    cerr << "vxxx: " << ToString(master).substr(c, d - c) << endl;
+                const string rStr = tpl.substr(start, end - start);  // "Read" string
+
+                vector<Mutation> rMuts;                  // "Read"-space mutations
+                const auto mTpl = rtpls[j].Mutate(mut);  // Mutated "Read" template
+                if (!mTpl) {  // If Mutate() returned None, assert that the mutation is out of range
+                    const bool isInRange =
+                        ((pinStart || start < mut.End()) && (pinEnd || mut.Start() < end));
+
+                    // Print a report if we fail to mutate the template, but are within range
+                    if (isInRange) {
+                        const size_t c =
+                            start + ((pinStart || mut.End() < start) ? mut.LengthDiff() : 0);
+                        const size_t d =
+                            end + ((pinEnd || mut.Start() < end) ? mut.LengthDiff() : 0);
+                        cerr << "Mut:          " << mut << endl;
+                        cerr << "Off:          " << mut.LengthDiff() << endl;
+                        cerr << "Ref:          " << tpl << endl;
+                        cerr << "Start,End:    " << start << "," << end << endl;
+                        cerr << "PinStart,End: " << pinStart << "," << pinEnd << endl;
+                        cerr << "MutStart,End: " << mut.Start() << "," << mut.End() << endl;
+                        cerr << "refMutStr:    " << refMutStr << endl;
+                        cerr << "c,d:          " << c << "," << d << endl;
+                        cerr << "refStr:       " << rStr << endl;
+                        cerr << "refTpl:       " << ToString(master).substr(c, d - c) << endl;
+                    }
+
+                    EXPECT_FALSE(isInRange);
+
+                } else {  // Otherwise it should be in-range of the "Read" template
+                    rMuts.emplace_back(Mutation(mut.Type, mut.Start() - start, mut.Base));
+                    const string mStr = ApplyMutations(rStr, &rMuts);  // Mutated "Read" string
+
+                    // Print a report if the mutated template isn't correct
+                    if (mStr != ToString(*mTpl)) {
+                        const size_t c =
+                            start + ((pinStart || mut.End() < start) ? mut.LengthDiff() : 0);
+                        const size_t d =
+                            end + ((pinEnd || mut.Start() < end) ? mut.LengthDiff() : 0);
+                        cerr << "Mut:          " << mut << endl;
+                        cerr << "Off:          " << mut.LengthDiff() << endl;
+                        cerr << "Ref:          " << tpl << endl;
+                        cerr << "Start,End:    " << start << "," << end << endl;
+                        cerr << "PinStart,End: " << pinStart << "," << pinEnd << endl;
+                        cerr << "MutStart,End: " << mut.Start() << "," << mut.End() << endl;
+                        cerr << "refMutStr:    " << refMutStr << endl;
+                        cerr << "c,d:          " << c << "," << d << endl;
+                        cerr << "refStr:       " << rStr << endl;
+                        cerr << "mutStr:       " << mStr << endl;
+                        cerr << "refTpl:       " << ToString(master).substr(c, d - c) << endl;
+                        cerr << "mutTpl:       " << ToString(*mTpl) << endl;
+                    }
+
+                    // Finally, we should be able to construct a template
+                    //  from the mutated string equivalent to Template::Mutate()
+                    const int off = rMuts.empty() ? 0 : rMuts.back().LengthDiff();
+                    EXPECT_EQ(end - start + off, mTpl->Length());
+                    {
+                        Template child(mStr, ModelFactory::Create(mdl, snr));
+                        EXPECT_EQ(child, *mTpl);
+                    }
                 }
-                const int off = vmuts.empty() ? 0 : vmuts.back().LengthDiff();
-                EXPECT_EQ(end - start + off, vtpls[j].Length());
-                EXPECT_EQ(end - start + off, rtpls[j].Length());
-                {
-                    Template child(vapp, ModelFactory::Create(mdl, snr));
-                    EXPECT_EQ(child, vtpls[j]);
-                    EXPECT_EQ(child, rtpls[j]);
-                }
-                vtpls[j].Reset();
-                rtpls[j].Reset();
             }
-            master.Reset();
         }
     }
 }
 
-TEST(TemplateTest, TestVirtualTemplateEquivalence)
+TEST(TemplateTest, TestMutatedTemplateEquivalence)
 {
 #if EXTENSIVE_TESTING
     const int numSamples = 1000;

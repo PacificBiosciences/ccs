@@ -50,7 +50,7 @@
 #include <boost/optional.hpp>
 
 #include <pacbio/ccs/ConsensusSettings.h>
-#include <pacbio/consensus/MonoMolecularIntegrator.h>
+#include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Polish.h>
 #include <pacbio/data/State.h>
 #include <pacbio/data/StrandType.h>
@@ -469,8 +469,7 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                     try {
                         // setup the arrow integrator
                         IntegratorConfig cfg(settings.MinZScore);
-                        MonoMolecularIntegrator ai(poaConsensus, cfg, chunk.SignalToNoise,
-                                                   chunk.Chemistry);
+                        Integrator ai(poaConsensus, cfg);
                         const size_t nReads = readKeys.size();
                         size_t nPasses = 0, nDropped = 0;
 

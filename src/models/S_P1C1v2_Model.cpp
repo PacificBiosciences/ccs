@@ -70,8 +70,7 @@ public:
     static std::set<std::string> Chemistries() { return {"S/P1-C1.2", "S/P1-C1.3", "S/P2-C2"}; }
     static ModelForm Form() { return ModelForm::PWSNR; }
     S_P1C1v2_Model(const SNR& snr);
-    std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                     const MappedRead& mr, double scoreDiff) const;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const;
@@ -88,8 +87,7 @@ REGISTER_MODEL_IMPL(S_P1C1v2_Model);
 class S_P1C1v2_Recursor : public Recursor<S_P1C1v2_Recursor>
 {
 public:
-    S_P1C1v2_Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                      double scoreDiff, double counterWeight);
+    S_P1C1v2_Recursor(const MappedRead& mr, double scoreDiff, double counterWeight);
     static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
     inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
     virtual double UndoCounterWeights(size_t nEmissions) const;
@@ -313,8 +311,8 @@ S_P1C1v2_Model::S_P1C1v2_Model(const SNR& snr) : snr_(snr)
     }
 }
 
-std::unique_ptr<AbstractRecursor> S_P1C1v2_Model::CreateRecursor(
-    std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
+std::unique_ptr<AbstractRecursor> S_P1C1v2_Model::CreateRecursor(const MappedRead& mr,
+                                                                 double scoreDiff) const
 {
     const double counterWeight = CounterWeight(
         [this](size_t ctx, MoveType m) { return ctxTrans_[ctx][static_cast<uint8_t>(m)]; },
@@ -328,8 +326,7 @@ std::unique_ptr<AbstractRecursor> S_P1C1v2_Model::CreateRecursor(
         },
         CONTEXT_NUMBER);
 
-    return std::unique_ptr<AbstractRecursor>(new S_P1C1v2_Recursor(
-        std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff, counterWeight));
+    return std::unique_ptr<AbstractRecursor>(new S_P1C1v2_Recursor(mr, scoreDiff, counterWeight));
 }
 
 std::vector<TemplatePosition> S_P1C1v2_Model::Populate(const std::string& tpl) const
@@ -371,10 +368,8 @@ double S_P1C1v2_Model::ExpectedLLForEmission(const MoveType move, const uint8_t 
                                       [static_cast<uint8_t>(moment)];
 }
 
-S_P1C1v2_Recursor::S_P1C1v2_Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                                     double scoreDiff, double counterWeight)
-    : Recursor<S_P1C1v2_Recursor>(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
-                                  scoreDiff)
+S_P1C1v2_Recursor::S_P1C1v2_Recursor(const MappedRead& mr, double scoreDiff, double counterWeight)
+    : Recursor<S_P1C1v2_Recursor>(mr, scoreDiff)
     , counterWeight_{counterWeight}
     , nLgCounterWeight_{-std::log(counterWeight_)}
 {

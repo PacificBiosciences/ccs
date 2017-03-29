@@ -84,8 +84,8 @@ echo "## Unanimity tests"
 echo "## CC2 version test"
 python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
 
-echo "## Test CC2 via GC"
-( cd _rev_deps/GenomicConsensus && make check )
+#echo "## Test CC2 via GC"
+#( cd _rev_deps/GenomicConsensus && make check )
 
 set +u
 deactivate

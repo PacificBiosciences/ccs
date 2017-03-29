@@ -48,8 +48,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/ModelSelection.h>
-#include <pacbio/consensus/MonoMolecularIntegrator.h>
 #include <pacbio/data/Read.h>
 #include <pacbio/data/State.h>
 
@@ -140,12 +140,12 @@ TEST(LoadModelsTest, Directory)
 //   disabled until S_P1C1Beta is fixed
 #if 0
     {
-        MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P1-C1/beta::Marginal::Compiled");
+        Integrator ai1(longTpl, cfg);
         EXPECT_EQ(State::VALID,
                   ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1/beta::Marginal::Compiled", longPws),
                                          StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
-        MonoMolecularIntegrator ai2(longTpl, cfg, snr, "S/P1-C1/beta::Marginal::FromFile");
+        Integrator ai2(longTpl, cfg);
         EXPECT_EQ(State::VALID,
                   ai2.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1/beta::Marginal::FromFile", longPws),
                                          StrandType::FORWARD, 0, longTpl.length(), true, true)));
@@ -156,12 +156,12 @@ TEST(LoadModelsTest, Directory)
 
     // test identity between S/P1-C1.1 and S/P1-C1.1::PwSnrA (loaded)
     {
-        MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P1-C1.1::PwSnrA::Compiled");
+        Integrator ai1(longTpl, cfg);
         EXPECT_EQ(State::VALID, ai1.AddRead(MappedRead(
                                     MkRead(longRead, snr, "S/P1-C1.1::PwSnrA::Compiled", longPws),
                                     StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
-        MonoMolecularIntegrator ai2(longTpl, cfg, snr, "S/P1-C1.1::PwSnrA::FromFile");
+        Integrator ai2(longTpl, cfg);
         EXPECT_EQ(State::VALID, ai2.AddRead(MappedRead(
                                     MkRead(longRead, snr, "S/P1-C1.1::PwSnrA::FromFile", longPws),
                                     StrandType::FORWARD, 0, longTpl.length(), true, true)));
@@ -171,12 +171,12 @@ TEST(LoadModelsTest, Directory)
 
     // test identity between S/P1-C1.2 and S/P1-C1.2::PwSnr
     {
-        MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P1-C1.2::PwSnr::Compiled");
+        Integrator ai1(longTpl, cfg);
         EXPECT_EQ(State::VALID, ai1.AddRead(MappedRead(
                                     MkRead(longRead, snr, "S/P1-C1.2::PwSnr::Compiled", longPws),
                                     StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
-        MonoMolecularIntegrator ai2(longTpl, cfg, snr, "S/P1-C1.2::PwSnr::FromFile");
+        Integrator ai2(longTpl, cfg);
         EXPECT_EQ(State::VALID, ai2.AddRead(MappedRead(
                                     MkRead(longRead, snr, "S/P1-C1.2::PwSnr::FromFile", longPws),
                                     StrandType::FORWARD, 0, longTpl.length(), true, true)));
@@ -186,12 +186,12 @@ TEST(LoadModelsTest, Directory)
 
     // test identity between S/P1-C1.2 and S/P1-C1.2::PwSnr
     {
-        MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P2-C2::PwSnr::Compiled");
+        Integrator ai1(longTpl, cfg);
         EXPECT_EQ(State::VALID,
                   ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P2-C2::PwSnr::Compiled", longPws),
                                          StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
-        MonoMolecularIntegrator ai2(longTpl, cfg, snr, "S/P1-C1.2::PwSnr::FromFile");
+        Integrator ai2(longTpl, cfg);
         EXPECT_EQ(State::VALID, ai2.AddRead(MappedRead(
                                     MkRead(longRead, snr, "S/P1-C1.2::PwSnr::FromFile", longPws),
                                     StrandType::FORWARD, 0, longTpl.length(), true, true)));
@@ -228,7 +228,7 @@ TEST(LoadModelsTest, ModelTiming)
                                            "S/P1-C1.1::PwSnrA::FromFile",
                                            "S/P1-C1.2::PwSnr::FromFile"};
     for (const auto mdl : mdls) {
-        MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
+        Integrator ai(longTpl, cfg);
         const auto stime = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < nsamp; ++i)
             EXPECT_EQ(State::VALID,
@@ -245,14 +245,14 @@ TEST(LoadModelsTest, ModelTiming)
 
 TEST(LoadModelsTest, ModelOverride)
 {
-    MonoMolecularIntegrator ai1(longTpl, cfg, snr, "S/P1-C1.2");
+    Integrator ai1(longTpl, cfg);
     EXPECT_EQ(State::VALID,
               ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1.2", longPws),
                                      StrandType::FORWARD, 0, longTpl.length(), true, true)));
 
     ASSERT_TRUE(OverrideModel("S/P1-C1.2"));
 
-    MonoMolecularIntegrator ai2(longTpl, cfg, snr, "S/P1-C1.1");
+    Integrator ai2(longTpl, cfg);
     EXPECT_EQ(State::VALID,
               ai2.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1.1", longPws),
                                      StrandType::FORWARD, 0, longTpl.length(), true, true)));

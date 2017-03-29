@@ -74,8 +74,7 @@ public:
     /// \brief Construct a Recursor from a Template and a MappedRead.
     /// The scoreDiff here is passed in negative logScale and converted
     /// to the appropriate divisor.
-    Recursor(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
-             double scoreDiff = 12.5);
+    Recursor(const PacBio::Data::MappedRead& mr, double scoreDiff = 12.5);
 
     /// \brief Fill the alpha and beta matrices.
     ///
@@ -84,7 +83,7 @@ public:
     /// identical, refilling back-and-forth if necessary.
     ///
     /// Returns the number of flip flop events (refilling events).
-    size_t FillAlphaBeta(M& alpha, M& beta, double tol) const;
+    size_t FillAlphaBeta(const AbstractTemplate& tpl, M& alpha, M& beta, double tol) const;
 
     /// \brief Fill in the alpha matrix.
     ///
@@ -117,7 +116,7 @@ public:
     ///              "bands" for the banded algorithm used. This is typically
     ///              the beta matrix if we are "repopulating" the matrix.
     /// \param alpha The matrix to be filled.
-    void FillAlpha(const M& guide, M& alpha) const;
+    void FillAlpha(const AbstractTemplate& tpl, const M& guide, M& alpha) const;
 
     /// \brief Fill the Beta matrix.
     /// That is the backwards half of the forward-backward algorithm.
@@ -137,12 +136,12 @@ public:
     /// \param M    the guide matrix for banding (this needs more documentation)
     /// \param beta The Beta matrix, stored as either a DenseMatrix or a
     ///             SparseMatrix.
-    void FillBeta(const M& guide, M& beta) const;
+    void FillBeta(const AbstractTemplate& tpl, const M& guide, M& beta) const;
 
     /// \brief Calculate the recursion score by "linking" partial alpha and/or
     ///        beta matrices.
-    double LinkAlphaBeta(const M& alpha, size_t alphaColumn, const M& beta, size_t betaColumn,
-                         size_t absoluteColumn) const;
+    double LinkAlphaBeta(const AbstractTemplate& tpl, const M& alpha, size_t alphaColumn,
+                         const M& beta, size_t betaColumn, size_t absoluteColumn) const;
 
     /// This method extends the Alpha matrix into a temporary matrix given by
     /// ext. It extends the region [beginColumn, beginColumn + numExtColumns)
@@ -151,7 +150,8 @@ public:
     /// \param beginColumn   The column where extension should start
     /// \param ext           The matrix to be extended
     /// \param numExtColumns The number of columns to be extended
-    void ExtendAlpha(const M& alpha, size_t beginColumn, M& ext, size_t numExtColumns = 2) const;
+    void ExtendAlpha(const AbstractTemplate& tpl, const M& alpha, size_t beginColumn, M& ext,
+                     size_t numExtColumns = 2) const;
 
     /// This method extends the Beta matrix into a temporary matrix given by ext.
     ///
@@ -159,7 +159,8 @@ public:
     /// \param endColumn  The right-hand side where extension should start
     /// \param ext        The matrix to be extended
     /// \param lengthDiff The length difference of the mutation
-    void ExtendBeta(const M& beta, size_t endColumn, M& ext, int lengthDiff = 0) const;
+    void ExtendBeta(const AbstractTemplate& tpl, const M& beta, size_t endColumn, M& ext,
+                    int lengthDiff = 0) const;
 
 private:
     std::pair<size_t, size_t> RowRange(size_t j, const M& matrix) const;
@@ -201,7 +202,7 @@ inline double Combine(const double a, const double b) { return a + b; }
 }  // namespace anonymous
 
 template <typename Derived>
-void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
+void Recursor<Derived>::FillAlpha(const AbstractTemplate& tpl, const M& guide, M& alpha) const
 {
     // We are pinning, so should never go all the way to the end of the
     // read/template
@@ -209,7 +210,7 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
     // so the match in (1,1) corresponds to a pairing between
     // Model[0]/Outcome[0]
     size_t I = read_.Length();
-    size_t J = tpl_->Length();
+    size_t J = tpl.Length();
 
     assert(alpha.Rows() == I + 1 && alpha.Columns() == J + 1);
     assert(guide.IsNull() || (guide.Rows() == alpha.Rows() && guide.Columns() == alpha.Columns()));
@@ -228,7 +229,7 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
     {
         // Load up the transition parameters for this context
 
-        auto currTransProbs = (*tpl_)[j - 1];
+        auto currTransProbs = tpl[j - 1];
         auto currTplBase = currTransProbs.Idx;
         this->RangeGuide(j, guide, alpha, &hintBeginRow, &hintEndRow);
 
@@ -238,7 +239,7 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
         double score = 0.0;
         alpha.StartEditingColumn(j, hintBeginRow, hintEndRow);
 
-        auto nextTplBase = (*tpl_)[j].Idx;
+        auto nextTplBase = tpl[j].Idx;
 
         size_t beginRow = hintBeginRow, endRow;
         // Recursively calculate [Probability in last state] * [Probability
@@ -317,8 +318,8 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
      * search for the term EDGE_CONDITION to find a comment with more
      * information */
     {
-        auto currTplBase = (*tpl_)[J - 1].Idx;
-        assert(J < 2 || prevTplBase == (*tpl_)[J - 2].Idx);
+        auto currTplBase = tpl[J - 1].Idx;
+        assert(J < 2 || prevTplBase == tpl[J - 2].Idx);
         // end in the homopolymer state for now.
         auto likelihood = alpha(I - 1, J - 1) *
                           static_cast<const Derived*>(this)->EmissionPr(
@@ -330,10 +331,10 @@ void Recursor<Derived>::FillAlpha(const M& guide, M& alpha) const
 }
 
 template <typename Derived>
-void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
+void Recursor<Derived>::FillBeta(const AbstractTemplate& tpl, const M& guide, M& beta) const
 {
     size_t I = read_.Length();
-    size_t J = tpl_->Length();
+    size_t J = tpl.Length();
 
     assert(beta.Rows() == I + 1 && beta.Columns() == J + 1);
     assert(guide.IsNull() || (guide.Rows() == beta.Rows() && guide.Columns() == beta.Columns()));
@@ -349,9 +350,9 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
     // Recursively calculate [Probability transition to next state] *
     // [Probability of emission at that state] * [Probability from that state]
     for (size_t j = J - 1; j > 0; --j) {
-        const auto nextTplPos = (*tpl_)[j];
+        const auto nextTplPos = tpl[j];
         const auto nextTplBase = nextTplPos.Idx;
-        const auto currTransProbs = (*tpl_)[j - 1];
+        const auto currTransProbs = tpl[j - 1];
 
         this->RangeGuide(j, guide, beta, &hintBeginRow, &hintEndRow);
 
@@ -431,7 +432,7 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
     {
         beta.StartEditingColumn(0, 0, 1);
         auto match_emission_prob = static_cast<const Derived*>(this)->EmissionPr(
-            MoveType::MATCH, emissions_[0], kDefaultBase, (*tpl_)[0].Idx);
+            MoveType::MATCH, emissions_[0], kDefaultBase, tpl[0].Idx);
         beta.Set(0, 0, match_emission_prob * beta(1, 1));
         beta.FinishEditingColumn<false>(0, 0, 1);
     }
@@ -446,13 +447,14 @@ void Recursor<Derived>::FillBeta(const M& guide, M& beta) const
 /// read; columns alphaColumn - 1 and alphaColumn - 2 of alpha
 /// will be read.
 template <typename Derived>
-double Recursor<Derived>::LinkAlphaBeta(const M& alpha, size_t alphaColumn, const M& beta,
-                                        size_t betaColumn, size_t absoluteColumn) const
+double Recursor<Derived>::LinkAlphaBeta(const AbstractTemplate& tpl, const M& alpha,
+                                        size_t alphaColumn, const M& beta, size_t betaColumn,
+                                        size_t absoluteColumn) const
 {
     const size_t I = read_.Length();
 
     assert(alphaColumn > 1 && absoluteColumn > 1);
-    assert(absoluteColumn <= tpl_->Length());
+    assert(absoluteColumn <= tpl.Length());
 
     size_t usedBegin, usedEnd;
     std::tie(usedBegin, usedEnd) =
@@ -461,8 +463,8 @@ double Recursor<Derived>::LinkAlphaBeta(const M& alpha, size_t alphaColumn, cons
 
     double v = 0.0, thisMoveScore;
 
-    const auto currTplParams = (*tpl_)[absoluteColumn - 1];
-    const auto prevTplParams = (*tpl_)[absoluteColumn - 2];
+    const auto currTplParams = tpl[absoluteColumn - 1];
+    const auto prevTplParams = tpl[absoluteColumn - 2];
 
     for (size_t i = usedBegin; i < usedEnd; i++) {
         if (i < I) {
@@ -492,8 +494,8 @@ double Recursor<Derived>::LinkAlphaBeta(const M& alpha, size_t alphaColumn, cons
 /// start/end rows in the banding are determined by evaluating neighbors of
 /// each position.
 template <typename Derived>
-void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
-                                    size_t numExtColumns) const
+void Recursor<Derived>::ExtendAlpha(const AbstractTemplate& tpl, const M& alpha, size_t beginColumn,
+                                    M& ext, size_t numExtColumns) const
 {
     assert(numExtColumns >= 2);  // We have to fill at least one
     assert(alpha.Rows() == read_.Length() + 1 &&
@@ -501,12 +503,12 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
 
     // The new template may not be the same length as the old template.
     // Just make sure that we have anough room to fill out the extend buffer
-    assert(beginColumn + 1 < tpl_->Length() + 1);
+    assert(beginColumn + 1 < tpl.Length() + 1);
     assert(ext.Columns() >= numExtColumns);
     assert(beginColumn >= 2);
     // Due to pinning at the end, moves are only possible if less than these
     // positions.
-    size_t maxLeftMovePossible = tpl_->Length();
+    size_t maxLeftMovePossible = tpl.Length();
     size_t maxDownMovePossible = read_.Length();
 
     // completely fill the rectangle bounded by the min and max
@@ -524,15 +526,15 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
         double score = 0.0;
         double max_score = score;
         // Grab values that will be useful for the whole column
-        auto currTplParams = (*tpl_)[j - 1];
+        auto currTplParams = tpl[j - 1];
         auto currTplBase = currTplParams.Idx;
         TemplatePosition prevTplParams = kDefaultTplPos;
         if (j > 1) {
-            prevTplParams = (*tpl_)[j - 2];
+            prevTplParams = tpl[j - 2];
         }
         uint8_t nextTplBase = -1;  // This value is never being used, but it silences notorious gcc
         if (j != maxLeftMovePossible) {
-            nextTplBase = (*tpl_)[j].Idx;
+            nextTplBase = tpl[j].Idx;
         }
 
         for (i = beginRow; i < endRow; i++) {
@@ -604,10 +606,11 @@ void Recursor<Derived>::ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
 /// bases and parameters are now indexed according the the "virtual" template
 /// to which mutations have been applied.
 template <typename Derived>
-void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int lengthDiff) const
+void Recursor<Derived>::ExtendBeta(const AbstractTemplate& tpl, const M& beta, size_t lastColumn,
+                                   M& ext, int lengthDiff) const
 {
     size_t I = read_.Length();
-    size_t J = tpl_->Length();
+    size_t J = tpl.Length();
 
     // How far back do we have to go until we are at the zero (first) column?
     // we always go all the way back.
@@ -646,11 +649,11 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
         ext.StartEditingColumn(extCol, beginRow, endRow);
 
         // Load up useful values referenced throughout the column.
-        auto nextTplParams = (*tpl_)[jp];
+        auto nextTplParams = tpl[jp];
         auto nextTplBase = nextTplParams.Idx;
 
         TemplatePosition currTplParams = kDefaultTplPos;
-        if (jp > 0) currTplParams = (*tpl_)[jp - 1];
+        if (jp > 0) currTplParams = tpl[jp - 1];
         double max_score = 0.0;
 
         for (int i = endRow - 1; i >= beginRow; i--) {
@@ -702,30 +705,29 @@ void Recursor<Derived>::ExtendBeta(const M& beta, size_t lastColumn, M& ext, int
         ext.StartEditingColumn(0, 0, 1);
         const double match_trans_prob = (lastExtColumn == 0) ? beta(1, lastColumn + 1) : ext(1, 1);
         const double match_emission_prob = static_cast<const Derived*>(this)->EmissionPr(
-            MoveType::MATCH, emissions_[0], kDefaultBase, (*tpl_)[0].Idx);
+            MoveType::MATCH, emissions_[0], kDefaultBase, tpl[0].Idx);
         ext.Set(0, 0, match_trans_prob * match_emission_prob);
         ext.FinishEditingColumn<false>(0, 0, 1);
     }
 }
 
 template <typename Derived>
-Recursor<Derived>::Recursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                            const PacBio::Data::MappedRead& mr, const double scoreDiff)
-    : AbstractRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
-    , emissions_{Derived::EncodeRead(read_)}
+Recursor<Derived>::Recursor(const PacBio::Data::MappedRead& mr, const double scoreDiff)
+    : AbstractRecursor(mr, scoreDiff), emissions_{Derived::EncodeRead(read_)}
 {
 }
 
 template <typename Derived>
-size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b, const double tol) const
+size_t Recursor<Derived>::FillAlphaBeta(const AbstractTemplate& tpl, M& a, M& b,
+                                        const double tol) const
 {
-    if (tpl_->Length() == 0) throw std::runtime_error("template length is 0, invalid state!");
+    if (tpl.Length() == 0) throw std::runtime_error("template length is 0, invalid state!");
 
-    FillAlpha(M::Null(), a);
-    FillBeta(a, b);
+    FillAlpha(tpl, M::Null(), a);
+    FillBeta(tpl, a, b);
 
     size_t I = read_.Length();
-    size_t J = tpl_->Length();
+    size_t J = tpl.Length();
     int flipflops = 0;
     size_t maxSize =
         std::max(100ul, static_cast<size_t>(0.5 + REBANDING_THRESHOLD * (I + 1) * (J + 1)));
@@ -733,9 +735,9 @@ size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b, const double tol) const
     // if we use too much space, do at least one more round
     // to take advantage of rebanding
     if (a.UsedEntries() >= maxSize || b.UsedEntries() >= maxSize) {
-        FillAlpha(b, a);
-        FillBeta(a, b);
-        FillAlpha(b, a);
+        FillAlpha(tpl, b, a);
+        FillBeta(tpl, a, b);
+        FillAlpha(tpl, b, a);
         flipflops += 3;
     }
 
@@ -748,9 +750,9 @@ size_t Recursor<Derived>::FillAlphaBeta(M& a, M& b, const double tol) const
         if (std::abs(1.0 - alphaV / betaV) <= tol) break;
 
         if (flipflops % 2 == 0)
-            FillAlpha(b, a);
+            FillAlpha(tpl, b, a);
         else
-            FillBeta(a, b);
+            FillBeta(tpl, a, b);
 
         ++flipflops;
     }

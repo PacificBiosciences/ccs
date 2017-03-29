@@ -44,8 +44,7 @@
 #include <string>
 #include <vector>
 
-#include <pacbio/consensus/MonoMolecularIntegrator.h>
-#include <pacbio/consensus/MultiMolecularIntegrator.h>
+#include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Mutation.h>
 #include <pacbio/data/Read.h>
 
@@ -72,21 +71,10 @@ using namespace PacBio::Consensus;  // NOLINT
 
 using ::testing::UnorderedElementsAreArray;
 
-TEST(MutationEnumerationTest, TestAllMutationsMono)
+TEST(MutationEnumerationTest, TestAllMutations)
 {
     string tpl = "GAATC";
-    MonoMolecularIntegrator ai(tpl, IntegratorConfig(), SNR(4, 4, 4, 4), "P6-C4");
-    vector<Mutation> result = Mutations(ai);
-    // 3 insertions, 3 substitutions, and 1 deletion per base
-    //   and +4 for terminal insertions (1 beginning, 3 end)
-    //   and -1 for the homopolymer AA deletion
-    EXPECT_EQ(7 * tpl.length() + 4 - 1, result.size());
-}
-
-TEST(MutationEnumerationTest, TestAllMutationsMulti)
-{
-    string tpl = "GAATC";
-    MultiMolecularIntegrator ai(tpl, IntegratorConfig());
+    Integrator ai(tpl, IntegratorConfig());
     vector<Mutation> result = Mutations(ai);
     EXPECT_EQ(7 * tpl.length() + 4 - 1, result.size());
 }
@@ -94,7 +82,7 @@ TEST(MutationEnumerationTest, TestAllMutationsMulti)
 TEST(MutationEnumerationTest, TestNearbyMutations)
 {
     string tpl = "GAATT";
-    MonoMolecularIntegrator ai(tpl, IntegratorConfig(), SNR(4, 4, 4, 4), "P6-C4");
+    Integrator ai(tpl, IntegratorConfig());
 
     vector<Mutation> centers = {Mutation(MutationType::SUBSTITUTION, 2, 'T')};
     vector<Mutation> result = NearbyMutations(&centers, &centers, ai, 1);

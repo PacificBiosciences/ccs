@@ -48,8 +48,7 @@
 #include <tuple>
 #include <vector>
 
-#include <pacbio/consensus/MonoMolecularIntegrator.h>
-#include <pacbio/consensus/MultiMolecularIntegrator.h>
+#include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Mutation.h>
 #include <pacbio/data/Sequence.h>
 
@@ -122,7 +121,7 @@ TEST(IntegratorTest, TestLongTemplate)
     // TODO: Write a test for a longer molecule
     const string mdl = P6C4;
     vector<uint8_t> pws(longRead.length(), avgPw);
-    MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
+    Integrator ai(longTpl, cfg);
     EXPECT_EQ(State::VALID,
               ai.AddRead(MappedRead(MkRead(longRead, snr, mdl, pws), StrandType::FORWARD, 0,
                                     longTpl.length(), true, true)));
@@ -133,7 +132,7 @@ void TestTiming(const string& mdl)
 {
     const vector<uint8_t> pws(longRead.length(), avgPw);
     const size_t nsamp = 5000;
-    MonoMolecularIntegrator ai(longTpl, cfg, snr, mdl);
+    Integrator ai(longTpl, cfg);
     const auto stime = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < nsamp; ++i)
         EXPECT_EQ(State::VALID,
@@ -297,44 +296,25 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
     // EXPECT_LT(nerror, ntests / 1000);
 }
 
-void MonoEquivalence(const string& mdl)
+void IntegratorEquivalence(const string& mdl)
 {
-    auto makeMono = [mdl](const string& tpl) {
-        return MonoMolecularIntegrator(tpl, cfg, snr, mdl);
-    };
-    auto monoRead = [](MonoMolecularIntegrator& ai, const MappedRead& mr) {
-        return ai.AddRead(mr);
-    };
-    MutationEquivalence(numSamples, 2, makeMono, monoRead, mdl);
-    MutationEquivalence(numSamples, 1, makeMono, monoRead, mdl);
-    MutationEquivalence(numSamples, 0, makeMono, monoRead, mdl);
-}
-
-TEST(IntegratorTest, TestMonoMutationEquivalenceP6C4) { MonoEquivalence(P6C4); }
-TEST(IntegratorTest, TestMonoMutationEquivalenceSP1C1) { MonoEquivalence(SP1C1); }
-TEST(IntegratorTest, TestMonoMutationEquivalenceSP1C1v2) { MonoEquivalence(SP1C1v2); }
-void MultiEquivalence(const string& mdl)
-{
-    auto makeMulti = [](const string& tpl) { return MultiMolecularIntegrator(tpl, cfg); };
-    auto multiRead = [](MultiMolecularIntegrator& ai, const MappedRead& mr) {
-        return ai.AddRead(mr);
-    };
+    auto makeMulti = [](const string& tpl) { return Integrator(tpl, cfg); };
+    auto multiRead = [](Integrator& ai, const MappedRead& mr) { return ai.AddRead(mr); };
     MutationEquivalence(numSamples, 2, makeMulti, multiRead, mdl);
     MutationEquivalence(numSamples, 1, makeMulti, multiRead, mdl);
     MutationEquivalence(numSamples, 0, makeMulti, multiRead, mdl);
 }
 
-TEST(IntegratorTest, TestMultiMutationEquivalenceP6C4) { MultiEquivalence(P6C4); }
-TEST(IntegratorTest, TestMultiMutationEquivalenceSP1C1) { MultiEquivalence(SP1C1); }
-TEST(IntegratorTest, TestMultiMutationEquivalenceSP1C1v2) { MultiEquivalence(SP1C1v2); }
-// TODO(lhepler): test multi/mono equivalence
-// TODO(lhepler): test multiple mutation testing mono and multi
+TEST(IntegratorTest, TestIntegratorEquivalenceP6C4) { IntegratorEquivalence(P6C4); }
+TEST(IntegratorTest, TestIntegratorEquivalenceSP1C1) { IntegratorEquivalence(SP1C1); }
+TEST(IntegratorTest, TestIntegratorEquivalenceSP1C1v2) { IntegratorEquivalence(SP1C1v2); }
+// TODO(lhepler): test multiple mutation testing
 
 TEST(IntegratorTest, TestP6C4NoCovAgainstCSharpModel)
 {
     const string tpl = "ACGTCGT";
     auto mdl = P6C4;
-    MultiMolecularIntegrator ai(tpl, cfg);
+    Integrator ai(tpl, cfg);
 
     const string readSeq = "ACGTACGT";
     const vector<uint8_t> pws(readSeq.length(), avgPw);
@@ -342,6 +322,7 @@ TEST(IntegratorTest, TestP6C4NoCovAgainstCSharpModel)
               ai.AddRead(MappedRead(MkRead("ACGTACGT", snr, mdl, pws), StrandType::FORWARD, 0,
                                     tpl.length(), true, true)));
     auto score = [&ai](Mutation&& mut) { return ai.LL(mut) - ai.LL(); };
+
     EXPECT_NEAR(-4.74517984808494, ai.LL(), prec);
     EXPECT_NEAR(4.00250386364592, score(Mutation(MutationType::INSERTION, 4, 'A')), prec);
     EXPECT_NEAR(-5.19526526492876, score(Mutation(MutationType::SUBSTITUTION, 2, 'C')), prec);
@@ -357,7 +338,7 @@ TEST(IntegratorTest, TestFailAddRead)
     const string tpl = "A";
     const vector<uint8_t> pws(tpl.length(), avgPw);
     auto mdl = P6C4;
-    MultiMolecularIntegrator ai(tpl, cfg);
+    Integrator ai(tpl, cfg);
 
     EXPECT_EQ(State::TEMPLATE_TOO_SMALL,
               ai.AddRead(MappedRead(MkRead(tpl, snr, mdl, pws), StrandType::FORWARD, 0,
@@ -369,7 +350,7 @@ TEST(IntegratorTest, TestSuccessAddRead)
     const string tpl = "AA";
     const vector<uint8_t> pws(tpl.length(), avgPw);
     const auto mdl = P6C4;
-    MultiMolecularIntegrator ai(tpl, cfg);
+    Integrator ai(tpl, cfg);
 
     EXPECT_EQ(State::VALID, ai.AddRead(MappedRead(MkRead(tpl, snr, mdl, pws), StrandType::FORWARD,
                                                   0, tpl.length(), true, true)));
