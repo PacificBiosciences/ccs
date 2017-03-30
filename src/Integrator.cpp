@@ -38,7 +38,7 @@
 #include <limits>
 #include <utility>
 
-#include <pacbio/consensus/MultiMolecularIntegrator.h>
+#include <pacbio/consensus/Integrator.h>
 #include <pacbio/data/Sequence.h>
 
 #include "ModelFactory.h"
@@ -49,13 +49,12 @@ using namespace PacBio::Exception;
 namespace PacBio {
 namespace Consensus {
 
-MultiMolecularIntegrator::MultiMolecularIntegrator(const std::string& tpl,
-                                                   const IntegratorConfig& cfg)
+Integrator::Integrator(const std::string& tpl, const IntegratorConfig& cfg)
     : AbstractIntegrator(cfg), fwdTpl_{tpl}, revTpl_{::PacBio::Data::ReverseComplement(tpl)}
 {
 }
 
-State MultiMolecularIntegrator::AddRead(const PacBio::Data::MappedRead& read)
+State Integrator::AddRead(const PacBio::Data::MappedRead& read)
 {
     try {
         return AbstractIntegrator::AddRead(GetTemplate(read), read);
@@ -64,13 +63,13 @@ State MultiMolecularIntegrator::AddRead(const PacBio::Data::MappedRead& read)
     }
 }
 
-size_t MultiMolecularIntegrator::TemplateLength() const { return fwdTpl_.length(); }
+size_t Integrator::TemplateLength() const { return fwdTpl_.length(); }
 
-char MultiMolecularIntegrator::operator[](const size_t i) const { return fwdTpl_[i]; }
+char Integrator::operator[](const size_t i) const { return fwdTpl_[i]; }
 
-MultiMolecularIntegrator::operator std::string() const { return fwdTpl_; }
+Integrator::operator std::string() const { return fwdTpl_; }
 
-void MultiMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)
+void Integrator::ApplyMutation(const Mutation& fwdMut)
 {
     const Mutation revMut(ReverseComplement(fwdMut));
 
@@ -91,7 +90,7 @@ void MultiMolecularIntegrator::ApplyMutation(const Mutation& fwdMut)
     assert(fwdTpl_ == ::PacBio::Data::ReverseComplement(revTpl_));
 }
 
-void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
+void Integrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
 {
     std::vector<Mutation> revMuts;
 
@@ -112,8 +111,7 @@ void MultiMolecularIntegrator::ApplyMutations(std::vector<Mutation>* fwdMuts)
     assert(fwdTpl_ == ::PacBio::Data::ReverseComplement(revTpl_));
 }
 
-std::unique_ptr<AbstractTemplate> MultiMolecularIntegrator::GetTemplate(
-    const PacBio::Data::MappedRead& read)
+std::unique_ptr<AbstractTemplate> Integrator::GetTemplate(const PacBio::Data::MappedRead& read)
 {
     const size_t len = read.TemplateEnd - read.TemplateStart;
 

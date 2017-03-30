@@ -55,12 +55,11 @@ add_library(cc2 STATIC
     EasyReadScorer.cpp
     Evaluator.cpp
     EvaluatorImpl.cpp
+    Integrator.cpp
     ModelConfig.cpp
     ModelFactory.cpp
     ModelFormFactory.cpp
     ModelSelection.cpp
-    MonoMolecularIntegrator.cpp
-    MultiMolecularIntegrator.cpp
     Mutation.cpp
     Polish.cpp
     Read.cpp

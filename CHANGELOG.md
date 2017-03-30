@@ -1,5 +1,17 @@
 # UNANIMITY - CHANGELOG
 
+## [3.0.0]
+
+### Refactored
+ - MultiMolecularIntegrator renamed to just Integrator
+ - MonoMolecularIntegrator removed, all integrators now accept multiple molecules
+ - VirtualTemplate removed, as without MonoMolecular it is no longer needed
+ - MutatedTemplate added as a View object over some const template
+ - Template::Mutate() now returns a MutatedTemplate instead of modifying the Template
+ - Template was promoted from a member of Recursor to a member of EvaluatorImpl
+ - Recursor refactored to take a template as an argument in most functions
+ - Existing model files updated to match the new parent Recursor class
+
 ## [2.1.0]
 
 ### Added

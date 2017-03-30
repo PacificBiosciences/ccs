@@ -53,9 +53,13 @@ namespace PacBio {
 namespace Consensus {
 
 // fwd decl
+class MutatedTemplate;
 class AbstractRecursor;
 class ScaledMatrix;
 
+// AbstractTemplate defines the API for representing some provisional
+// template or consensus, which need to enable both adding data to
+// and updating the underlying sequence
 class AbstractTemplate
 {
 public:
@@ -66,27 +70,21 @@ public:
 
     operator std::string() const;
 
-    // virtual mutations (for mutation testing purposes)
-    virtual bool IsMutated() const = 0;
-    virtual boost::optional<Mutation> Mutate(const Mutation& m) = 0;
-    virtual void Reset() = 0;
+    // Get a View over the Template (for mutation testing purposes)
+    virtual boost::optional<MutatedTemplate> Mutate(const Mutation& m) = 0;
 
     // actually apply mutations
     virtual bool ApplyMutation(const Mutation& mut);
     virtual bool ApplyMutations(std::vector<Mutation>* muts);
 
     // access model configuration
-    virtual std::unique_ptr<AbstractRecursor> CreateRecursor(
-        std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
-        double scoreDiff) const = 0;
+    virtual std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
+                                                             double scoreDiff) const = 0;
 
     virtual double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                          MomentType moment) const = 0;
 
     std::pair<double, double> NormalParameters() const;
-
-    // a sad but necessary release valve for MonoMolecularIntegrator Length()
-    size_t TrueLength() const;
 
 protected:
     AbstractTemplate(size_t start, size_t end, bool pinStart, bool pinEnd);
@@ -104,6 +102,8 @@ private:
 
 std::ostream& operator<<(std::ostream&, const AbstractTemplate&);
 
+// Represent a Template sequence as induced by some particular configuration
+// of chemistry and model training
 class Template : public AbstractTemplate
 {
 public:
@@ -114,14 +114,11 @@ public:
     size_t Length() const override;
     const TemplatePosition& operator[](size_t i) const override;
 
-    bool IsMutated() const override;
-    boost::optional<Mutation> Mutate(const Mutation& mut) override;
-    void Reset() override;
+    boost::optional<MutatedTemplate> Mutate(const Mutation& m) override;
 
     bool ApplyMutation(const Mutation& mut) override;
 
-    std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                     const PacBio::Data::MappedRead& mr,
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                      double scoreDiff) const override;
 
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
@@ -130,30 +127,29 @@ public:
 private:
     std::unique_ptr<ModelConfig> cfg_;
     std::vector<TemplatePosition> tpl_;
-    bool mutated_;
-    size_t mutStart_;
-    size_t mutEnd_;
-    int mutOff_;
-    TemplatePosition mutTpl_[2];
 
-    friend class VirtualTemplate;
+    friend class MutatedTemplate;
 };
 
-class VirtualTemplate : public AbstractTemplate
+// A View projected from some template, allowing for the analysis of a
+// hypothetical mutation without modifying the underlying Template,
+// which can now be kept const
+class MutatedTemplate : public AbstractTemplate
 {
 public:
-    VirtualTemplate(const Template& master, size_t start, size_t end, bool pinStart, bool pinEnd);
+    MutatedTemplate(const Template& master, const Mutation& m);
 
     size_t Length() const override;
+    MutationType Type() const;
+    size_t MutationStart() const;
+    size_t MutationEnd() const;
+    int LengthDiff() const;
     const TemplatePosition& operator[](size_t i) const override;
 
-    bool IsMutated() const override;
-    boost::optional<Mutation> Mutate(const Mutation&) override;
-    void Reset() override {}
+    boost::optional<MutatedTemplate> Mutate(const Mutation& m) override;
     bool ApplyMutation(const Mutation& mut) override;
 
-    std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                     const PacBio::Data::MappedRead& mr,
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                      double scoreDiff) const override;
 
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
@@ -161,6 +157,12 @@ public:
 
 private:
     Template const& master_;
+    Mutation const& mut_;
+    size_t mutStart_;
+    size_t mutEnd_;
+    int mutOff_;
+    TemplatePosition mutTpl_[2];  // mutTpl_[0] == the params for the context ending at the mutation
+    // mutTpl_[1] == the params for the context starting at the mutation
 };
 
 // this needs to be here because the unique_ptr deleter for AbstractRecursor must know its size
@@ -170,21 +172,21 @@ protected:
     typedef ScaledMatrix M;
 
 public:
-    AbstractRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
-                     double scoreDiff);
+    AbstractRecursor(const PacBio::Data::MappedRead& mr, double scoreDiff);
     virtual ~AbstractRecursor() {}
-    virtual size_t FillAlphaBeta(M& alpha, M& beta, double tol) const = 0;
-    virtual void FillAlpha(const M& guide, M& alpha) const = 0;
-    virtual void FillBeta(const M& guide, M& beta) const = 0;
-    virtual double LinkAlphaBeta(const M& alpha, size_t alphaColumn, const M& beta,
-                                 size_t betaColumn, size_t absoluteColumn) const = 0;
-    virtual void ExtendAlpha(const M& alpha, size_t beginColumn, M& ext,
-                             size_t numExtColumns = 2) const = 0;
-    virtual void ExtendBeta(const M& beta, size_t endColumn, M& ext, int lengthDiff = 0) const = 0;
+    virtual size_t FillAlphaBeta(const AbstractTemplate& tpl, M& alpha, M& beta,
+                                 double tol) const = 0;
+    virtual void FillAlpha(const AbstractTemplate& tpl, const M& guide, M& alpha) const = 0;
+    virtual void FillBeta(const AbstractTemplate& tpl, const M& guide, M& beta) const = 0;
+    virtual double LinkAlphaBeta(const AbstractTemplate& tpl, const M& alpha, size_t alphaColumn,
+                                 const M& beta, size_t betaColumn, size_t absoluteColumn) const = 0;
+    virtual void ExtendAlpha(const AbstractTemplate& tpl, const M& alpha, size_t beginColumn,
+                             M& ext, size_t numExtColumns = 2) const = 0;
+    virtual void ExtendBeta(const AbstractTemplate& tpl, const M& beta, size_t endColumn, M& ext,
+                            int lengthDiff = 0) const = 0;
     virtual double UndoCounterWeights(size_t nEmissions) const = 0;
 
 public:
-    std::unique_ptr<AbstractTemplate> tpl_;
     PacBio::Data::MappedRead read_;
 
 protected:

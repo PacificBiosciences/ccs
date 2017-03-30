@@ -62,8 +62,7 @@ public:
     static std::set<std::string> Chemistries() { return {"P6-C4"}; }
     static ModelForm Form() { return ModelForm::SNR; }
     P6C4NoCovModel(const SNR& snr);
-    std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                     const MappedRead& mr, double scoreDiff) const;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const;
@@ -79,8 +78,7 @@ REGISTER_MODEL_IMPL(P6C4NoCovModel);
 class P6C4NoCovRecursor : public Recursor<P6C4NoCovRecursor>
 {
 public:
-    P6C4NoCovRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                      double scoreDiff, double counterWeight);
+    P6C4NoCovRecursor(const MappedRead& mr, double scoreDiff, double counterWeight);
     static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
     inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
     virtual double UndoCounterWeights(size_t nEmissions) const;
@@ -189,8 +187,8 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
     return result;
 }
 
-std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(
-    std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff) const
+std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(const MappedRead& mr,
+                                                                 double scoreDiff) const
 {
     const double counterWeight = CounterWeight(
         [this](size_t ctx, MoveType m) {
@@ -209,8 +207,7 @@ std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(
         },
         8);
 
-    return std::unique_ptr<AbstractRecursor>(new P6C4NoCovRecursor(
-        std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff, counterWeight));
+    return std::unique_ptr<AbstractRecursor>(new P6C4NoCovRecursor(mr, scoreDiff, counterWeight));
 }
 
 double P6C4NoCovModel::ExpectedLLForEmission(const MoveType move, const uint8_t prev,
@@ -237,10 +234,8 @@ double P6C4NoCovModel::ExpectedLLForEmission(const MoveType move, const uint8_t 
     throw std::invalid_argument("invalid move!");
 }
 
-P6C4NoCovRecursor::P6C4NoCovRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                                     double scoreDiff, double counterWeight)
-    : Recursor<P6C4NoCovRecursor>(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr,
-                                  scoreDiff)
+P6C4NoCovRecursor::P6C4NoCovRecursor(const MappedRead& mr, double scoreDiff, double counterWeight)
+    : Recursor<P6C4NoCovRecursor>(mr, scoreDiff)
     , counterWeight_{counterWeight}
     , nLgCounterWeight_{-std::log(counterWeight_)}
 {

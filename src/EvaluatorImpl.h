@@ -83,6 +83,7 @@ private:
     void Recalculate();
 
 private:
+    std::unique_ptr<AbstractTemplate> tpl_;
     std::unique_ptr<AbstractRecursor>
         recursor_;  // TODO: does this need to be a pointer?  is it always non-null?
                     // are we making it a UP just so we can do a fwd decl and still have

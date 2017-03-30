@@ -1,17 +1,13 @@
 
 %{
 #include <pacbio/consensus/AbstractIntegrator.h>
-#include <pacbio/consensus/MonoMolecularIntegrator.h>
-#include <pacbio/consensus/MultiMolecularIntegrator.h>
+#include <pacbio/consensus/Integrator.h>
 %}
 
-%feature("notabstract") PacBio::Consensus::MonoMolecularIntegrator;
-%feature("notabstract") PacBio::Consensus::MultiMolecularIntegrator;
+%feature("notabstract") PacBio::Consensus::Integrator;
 
 py_tp_str(PacBio::Consensus::AbstractIntegrator);
-py_tp_str(PacBio::Consensus::MonoMolecularIntegrator);
-py_tp_str(PacBio::Consensus::MultiMolecularIntegrator);
+py_tp_str(PacBio::Consensus::Integrator);
 
 %include <pacbio/consensus/AbstractIntegrator.h>
-%include <pacbio/consensus/MonoMolecularIntegrator.h>
-%include <pacbio/consensus/MultiMolecularIntegrator.h>
+%include <pacbio/consensus/Integrator.h>

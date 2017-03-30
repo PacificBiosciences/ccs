@@ -73,8 +73,7 @@ class SnrModel : public ModelConfig
 {
 public:
     SnrModel(const SnrModelCreator* params, const SNR& snr);
-    std::unique_ptr<AbstractRecursor> CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                     const MappedRead& mr, double scoreDiff) const;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const;
@@ -88,8 +87,8 @@ private:
 class SnrRecursor : public Recursor<SnrRecursor>
 {
 public:
-    SnrRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr, double scoreDiff,
-                double counterWeight, const SnrModelCreator* params);
+    SnrRecursor(const MappedRead& mr, double scoreDiff, double counterWeight,
+                const SnrModelCreator* params);
 
     static std::vector<uint8_t> EncodeRead(const MappedRead& read);
     double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
@@ -148,8 +147,7 @@ SnrModel::SnrModel(const SnrModelCreator* params, const SNR& snr) : params_{para
     }
 }
 
-std::unique_ptr<AbstractRecursor> SnrModel::CreateRecursor(std::unique_ptr<AbstractTemplate>&& tpl,
-                                                           const MappedRead& mr,
+std::unique_ptr<AbstractRecursor> SnrModel::CreateRecursor(const MappedRead& mr,
                                                            double scoreDiff) const
 {
     const double counterWeight = CounterWeight(
@@ -170,8 +168,7 @@ std::unique_ptr<AbstractRecursor> SnrModel::CreateRecursor(std::unique_ptr<Abstr
         CONTEXT_NUMBER);
 
     return std::unique_ptr<AbstractRecursor>(
-        new SnrRecursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff,
-                        counterWeight, params_));
+        new SnrRecursor(mr, scoreDiff, counterWeight, params_));
 }
 
 std::vector<TemplatePosition> SnrModel::Populate(const std::string& tpl) const
@@ -229,9 +226,9 @@ double SnrModel::ExpectedLLForEmission(const MoveType move, const uint8_t prev, 
     throw std::invalid_argument("invalid move!");
 }
 
-SnrRecursor::SnrRecursor(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
-                         double scoreDiff, double counterWeight, const SnrModelCreator* params)
-    : Recursor(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff)
+SnrRecursor::SnrRecursor(const MappedRead& mr, double scoreDiff, double counterWeight,
+                         const SnrModelCreator* params)
+    : Recursor(mr, scoreDiff)
     , params_{params}
     , counterWeight_{counterWeight}
     , nLgCounterWeight_{-std::log(counterWeight_)}
