@@ -76,7 +76,7 @@ void LoadBundleModels()
 {
     static bool updatesLoaded = false;
     if (!updatesLoaded) {
-        const char* pth = getenv("PB_CHEMISTRY_BUNDLE_DIR");
+        const char* pth = getenv("SMRT_CHEMISTRY_BUNDLE_DIR");
         if (pth != nullptr && pth[0] != '\0') {
             if (!LoadModelsFromDirectory(std::string(pth) + "/arrow", ModelOrigin::BUNDLED, true))
                 throw Exception::ModelError(
