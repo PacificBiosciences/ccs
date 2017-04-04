@@ -35,6 +35,7 @@
 
 // Author: Lance Hepler
 
+#include <mutex>
 #include <set>
 #include <string>
 #include <vector>
@@ -90,6 +91,8 @@ bool LoadModelFromFile(const std::string& path, const ModelOrigin origin)
 boost::optional<size_t> LoadModelsFromDirectory(const std::string& dirPath,
                                                 const ModelOrigin origin, const bool strict)
 {
+    static std::mutex m;
+
     struct stat st;
     if (stat(dirPath.c_str(), &st) != 0) return boost::none;
     if (!S_ISDIR(st.st_mode)) return boost::none;
@@ -97,28 +100,32 @@ boost::optional<size_t> LoadModelsFromDirectory(const std::string& dirPath,
     DIR* dp = opendir(dirPath.c_str());
     if (dp == nullptr) return boost::none;
 
-    // iterate through .json files in directory,
-    //   loading any into ModelFactory
-    bool ret = true;
     size_t nModels = 0, dot;
-    struct dirent* ep;
-    while ((ep = readdir(dp)) != nullptr) {
-        std::string path = dirPath + '/' + ep->d_name;
-        if ((dot = path.find_last_of('.')) == std::string::npos || path.substr(dot) != ".json")
-            continue;
-        if (!(ret &= (stat(path.c_str(), &st) == 0))) break;
-        if (S_ISREG(st.st_mode)) {
-            if ((ret &= LoadModelFromFile(path, origin))) {
-                ++nModels;
-            } else if (strict) {
-                closedir(dp);
-                return boost::none;
-            } else
-                break;
-        }
-    }
+    {  // Lock down this block to prevent multiple calls to readdir()
+        std::lock_guard<std::mutex> lock(m);
 
-    closedir(dp);
+        // iterate through .json files in directory,
+        //   loading any into ModelFactory
+        bool ret = true;
+        struct dirent* ep;
+        while ((ep = readdir(dp)) != nullptr) {
+            std::string path = dirPath + '/' + ep->d_name;
+            if ((dot = path.find_last_of('.')) == std::string::npos || path.substr(dot) != ".json")
+                continue;
+            if (!(ret &= (stat(path.c_str(), &st) == 0))) break;
+            if (S_ISREG(st.st_mode)) {
+                if ((ret &= LoadModelFromFile(path, origin))) {
+                    ++nModels;
+                } else if (strict) {
+                    closedir(dp);
+                    return boost::none;
+                } else
+                    break;
+            }
+        }
+
+        closedir(dp);
+    }  // End of lock_guard block
 
     return boost::make_optional(nModels);
 }
