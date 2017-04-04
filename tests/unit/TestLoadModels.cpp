@@ -202,7 +202,7 @@ TEST(LoadModelsTest, Directory)
 
 TEST(LoadModelsTest, UpdateBundle)
 {
-    const char* varname = "PB_CHEMISTRY_BUNDLE_DIR";
+    const char* varname = "SMRT_CHEMISTRY_BUNDLE_DIR";
     EXPECT_EQ(0, setenv(varname, tests::DataDir.c_str(), 0));
 
     std::set<std::string> chems = SupportedModels();

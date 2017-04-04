@@ -11,6 +11,7 @@
  - Template was promoted from a member of Recursor to a member of EvaluatorImpl
  - Recursor refactored to take a template as an argument in most functions
  - Existing model files updated to match the new parent Recursor class
+ - s/PB_CHEMISTRY_BUNDLE_DIR/SMRT_CHEMISTRY_BUNDLE_DIR/g
 
 ## [2.1.0]
 
