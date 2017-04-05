@@ -377,7 +377,7 @@ static int Runner(const PacBio::CLI::Results& args)
     const string& wlSpec = settings.WlSpec;
     try {
         if (!wlSpec.empty()) whitelist = Whitelist(wlSpec);
-    } catch (...) {
+    } catch (const std::exception& e) {
         PBLOG_FATAL << "option --zmws: invalid specification: '" + wlSpec + "'";
         exit(EXIT_FAILURE);
     }
