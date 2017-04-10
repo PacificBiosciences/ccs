@@ -49,7 +49,7 @@ set -u
 
 echo "## Install pip modules"
 pip install --upgrade pip
-pip install numpy cython h5py pysam cram nose jsonschema avro
+pip install numpy cython h5py pysam cram nose jsonschema avro pytest
 ( cd _deps/pbcommand && pip install --no-deps . )
 ( cd _deps/pbcore && pip install --no-deps . )
 
