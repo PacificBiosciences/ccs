@@ -45,7 +45,7 @@ namespace PacBio {
 namespace Consensus {
 
 // forward declaration
-class AbstractIntegrator;
+class Integrator;
 
 struct PolishConfig
 {
@@ -66,11 +66,12 @@ struct RepeatConfig
 };
 
 /// Given an AbstractIntegrator and a PolishConfig,
+/// Given an Integrator and a PolishConfig,
 /// iteratively polish the template,
 /// and return meta information about the procedure.
 ///
-/// The template will be polished within the AbstractIntegrator.
-PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
+/// The template will be polished within the Integrator.
+PolishResult Polish(Integrator* ai, const PolishConfig& cfg);
 
 PolishResult PolishRepeats(AbstractIntegrator* ai, const RepeatConfig& cfg);
 
@@ -84,14 +85,14 @@ struct QualityValues
 };
 
 /// Generates phred qualities of the current template.
-std::vector<int> ConsensusQualities(AbstractIntegrator& ai);
+std::vector<int> ConsensusQualities(Integrator& ai);
 
 /// Generates individual and compound phred qualities of the current template.
-QualityValues ConsensusQVs(AbstractIntegrator& ai);
+QualityValues ConsensusQVs(Integrator& ai);
 
 /// Returns a list of all possible mutations that can be applied to the template
 /// of the provided integrator.
-std::vector<Mutation> Mutations(const AbstractIntegrator& ai);
+std::vector<Mutation> Mutations(const Integrator& ai);
 
 /// Returns a list of all possible repeat mutations of the template
 /// of the provided integrator

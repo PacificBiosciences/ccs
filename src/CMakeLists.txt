@@ -50,7 +50,6 @@ add_library(cc2 STATIC
     ${UNY_MATRIX_CPP}
     ${UNY_MODELS_CPP}
     ${UNY_POA_CPP}
-    AbstractIntegrator.cpp
     Coverage.cpp
     EasyReadScorer.cpp
     Evaluator.cpp
