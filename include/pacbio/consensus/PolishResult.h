@@ -37,6 +37,8 @@
 
 #include <vector>
 
+#include <stddef.h>
+
 namespace PacBio {
 namespace Consensus {
 
