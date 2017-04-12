@@ -541,7 +541,11 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                         const auto zScores = ai.ZScores();
 
                         // find consensus!!
-                        const PolishResult polishResult = Polish(&ai, PolishConfig());
+                        PolishResult polishResult = Polish(&ai, PolishConfig());
+
+                        if (settings.PolishRepeats > 1)
+                            polishResult = polishResult +
+                                           PolishRepeats(&ai, RepeatConfig(settings.PolishRepeats));
 
                         if (!polishResult.hasConverged) {
                             result.NonConvergent += 1;

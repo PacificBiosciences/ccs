@@ -71,7 +71,7 @@ public:
     operator std::string() const;
 
     // Get a View over the Template (for mutation testing purposes)
-    virtual boost::optional<MutatedTemplate> Mutate(const Mutation& m) = 0;
+    boost::optional<MutatedTemplate> Mutate(const Mutation& m);
 
     // actually apply mutations
     virtual bool ApplyMutation(const Mutation& mut);
@@ -91,6 +91,8 @@ protected:
 
     bool InRange(size_t start, size_t end) const;
 
+    virtual const ModelConfig& Config() const = 0;
+
     size_t start_;
     size_t end_;
     bool pinStart_;
@@ -98,6 +100,8 @@ protected:
 
 private:
     std::pair<double, double> SiteNormalParameters(size_t i) const;
+
+    friend class MutatedTemplate;
 };
 
 std::ostream& operator<<(std::ostream&, const AbstractTemplate&);
@@ -107,14 +111,12 @@ std::ostream& operator<<(std::ostream&, const AbstractTemplate&);
 class Template : public AbstractTemplate
 {
 public:
+    Template(Template&&) = default;
     Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg);
     Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg, size_t start, size_t end,
              bool pinStart, bool pinEnd);
-
     size_t Length() const override;
     const TemplatePosition& operator[](size_t i) const override;
-
-    boost::optional<MutatedTemplate> Mutate(const Mutation& m) override;
 
     bool ApplyMutation(const Mutation& mut) override;
 
@@ -124,11 +126,12 @@ public:
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const override;
 
+protected:
+    const ModelConfig& Config() const override { return *cfg_; }
+
 private:
     std::unique_ptr<ModelConfig> cfg_;
     std::vector<TemplatePosition> tpl_;
-
-    friend class MutatedTemplate;
 };
 
 // A View projected from some template, allowing for the analysis of a
@@ -137,7 +140,10 @@ private:
 class MutatedTemplate : public AbstractTemplate
 {
 public:
-    MutatedTemplate(const Template& master, const Mutation& m);
+    MutatedTemplate(const AbstractTemplate& master, const Mutation& m);
+
+    MutatedTemplate(const MutatedTemplate&) = default;
+    MutatedTemplate(MutatedTemplate&&) = default;
 
     size_t Length() const override;
     MutationType Type() const;
@@ -146,7 +152,6 @@ public:
     int LengthDiff() const;
     const TemplatePosition& operator[](size_t i) const override;
 
-    boost::optional<MutatedTemplate> Mutate(const Mutation& m) override;
     bool ApplyMutation(const Mutation& mut) override;
 
     std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
@@ -155,14 +160,15 @@ public:
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const override;
 
+protected:
+    const ModelConfig& Config() const override { return master_.Config(); }
+
 private:
-    Template const& master_;
-    Mutation const& mut_;
-    size_t mutStart_;
-    size_t mutEnd_;
-    int mutOff_;
-    TemplatePosition mutTpl_[2];  // mutTpl_[0] == the params for the context ending at the mutation
-    // mutTpl_[1] == the params for the context starting at the mutation
+    const AbstractTemplate& master_;
+    const Mutation mut_;
+    const size_t mutStart_;
+    const int mutOff_;
+    std::vector<TemplatePosition> mutTpl_;  // params for the context start at the mutation
 };
 
 // this needs to be here because the unique_ptr deleter for AbstractRecursor must know its size
@@ -188,9 +194,7 @@ public:
 
 public:
     PacBio::Data::MappedRead read_;
-
-protected:
-    double scoreDiff_;  // reciprocal of "natural scale"
+    const double scoreDiff_;  // reciprocal of "natural scale"
 };
 
 }  // namespace Consensus

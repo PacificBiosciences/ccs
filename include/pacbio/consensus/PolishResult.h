@@ -60,5 +60,7 @@ struct PolishResult
     // Maximal number of flip flop events
     std::vector<int> maxNumFlipFlops;
 };
+
+PolishResult operator+(const PolishResult& lhs, const PolishResult& rhs);
 }
 }  // ::PacBio::Consensus

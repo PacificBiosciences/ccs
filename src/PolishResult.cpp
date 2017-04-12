@@ -33,69 +33,30 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#pragma once
-
-#include <tuple>
-#include <vector>
-
-#include <pacbio/consensus/Mutation.h>
 #include <pacbio/consensus/PolishResult.h>
 
 namespace PacBio {
 namespace Consensus {
 
-// forward declaration
-class AbstractIntegrator;
-
-struct PolishConfig
+PolishResult operator+(const PolishResult& lhs, const PolishResult& rhs)
 {
-    size_t MaximumIterations;
-    size_t MutationSeparation;
-    size_t MutationNeighborhood;
-
-    PolishConfig(size_t iterations = 40, size_t separation = 10, size_t neighborhood = 20);
-};
-
-struct RepeatConfig
-{
-    size_t MaxRepeatSize;
-    size_t MinElements;
-
-    RepeatConfig(size_t maxRepeatSize = 3, size_t minElements = 3);
-};
-
-/// Given an AbstractIntegrator and a PolishConfig,
-/// iteratively polish the template,
-/// and return meta information about the procedure.
-///
-/// The template will be polished within the AbstractIntegrator.
-PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
-
-PolishResult PolishRepeats(AbstractIntegrator* ai, const RepeatConfig& cfg,
-                           size_t maxIterations = 40);
-
-/// Struct that contains vectors for the base-wise individual and compound QVs.
-struct QualityValues
-{
-    std::vector<int> Qualities;
-    std::vector<int> DeletionQVs;
-    std::vector<int> InsertionQVs;
-    std::vector<int> SubstitutionQVs;
-};
-
-/// Generates phred qualities of the current template.
-std::vector<int> ConsensusQualities(AbstractIntegrator& ai);
-
-/// Generates individual and compound phred qualities of the current template.
-QualityValues ConsensusQVs(AbstractIntegrator& ai);
-
-/// Returns a list of all possible mutations that can be applied to the template
-/// of the provided integrator.
-std::vector<Mutation> Mutations(const AbstractIntegrator& ai);
-
-/// Returns a list of all possible repeat mutations of the template
-/// of the provided integrator
-std::vector<Mutation> RepeatMutations(const AbstractIntegrator& ai, const RepeatConfig& cfg);
-
-}  // namespace Consensus
-}  // namespace PacBio
+    PolishResult result;
+    result.hasConverged = lhs.hasConverged && rhs.hasConverged;
+    result.mutationsTested = lhs.mutationsTested + rhs.mutationsTested;
+    result.mutationsApplied = lhs.mutationsApplied + rhs.mutationsApplied;
+    result.maxAlphaPopulated.insert(result.maxAlphaPopulated.end(), lhs.maxAlphaPopulated.begin(),
+                                    lhs.maxAlphaPopulated.end());
+    result.maxBetaPopulated.insert(result.maxBetaPopulated.end(), lhs.maxBetaPopulated.begin(),
+                                   lhs.maxBetaPopulated.end());
+    result.maxNumFlipFlops.insert(result.maxNumFlipFlops.end(), lhs.maxNumFlipFlops.begin(),
+                                  lhs.maxNumFlipFlops.end());
+    result.maxAlphaPopulated.insert(result.maxAlphaPopulated.end(), rhs.maxAlphaPopulated.begin(),
+                                    rhs.maxAlphaPopulated.end());
+    result.maxBetaPopulated.insert(result.maxBetaPopulated.end(), rhs.maxBetaPopulated.begin(),
+                                   rhs.maxBetaPopulated.end());
+    result.maxNumFlipFlops.insert(result.maxNumFlipFlops.end(), rhs.maxNumFlipFlops.begin(),
+                                  rhs.maxNumFlipFlops.end());
+    return result;
+}
+}
+}  // ::PacBio::Consensus

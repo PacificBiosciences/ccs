@@ -46,6 +46,7 @@
 
 #include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Mutation.h>
+#include <pacbio/consensus/Polish.h>
 #include <pacbio/data/Read.h>
 
 using std::string;
@@ -59,8 +60,6 @@ namespace PacBio {
 namespace Consensus {
 
 vector<Mutation> Mutations(const AbstractIntegrator& ai, const size_t start, const size_t end);
-
-vector<Mutation> Mutations(const AbstractIntegrator& ai);
 
 vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* centers,
                                  const AbstractIntegrator& ai, const size_t neighborhood);
@@ -79,19 +78,43 @@ TEST(MutationEnumerationTest, TestAllMutations)
     EXPECT_EQ(7 * tpl.length() + 4 - 1, result.size());
 }
 
+TEST(MutationEnumerationTest, TestDiRepeatMutations)
+{
+    string tpl = "ACGTATATATACATATATTGCA";
+    Integrator ai(tpl, IntegratorConfig());
+    vector<Mutation> result = RepeatMutations(ai, RepeatConfig());
+    ASSERT_EQ(4, result.size());
+    EXPECT_EQ(Mutation::Insertion(3, "TA"), result[0]);
+    EXPECT_EQ(Mutation::Deletion(3, 2), result[1]);
+    EXPECT_EQ(Mutation::Insertion(12, "AT"), result[2]);
+    EXPECT_EQ(Mutation::Deletion(12, 2), result[3]);
+}
+
+TEST(MutationEnumerationTest, TestTriRepeatMutations)
+{
+    string tpl = "ACGTCAGCAGCAGGAGGAGGTGCA";
+    Integrator ai(tpl, IntegratorConfig());
+    vector<Mutation> result = RepeatMutations(ai, RepeatConfig());
+    ASSERT_EQ(4, result.size());
+    EXPECT_EQ(Mutation::Insertion(4, "CAG"), result[0]);
+    EXPECT_EQ(Mutation::Deletion(4, 3), result[1]);
+    EXPECT_EQ(Mutation::Insertion(11, "AGG"), result[2]);
+    EXPECT_EQ(Mutation::Deletion(11, 3), result[3]);
+}
+
 TEST(MutationEnumerationTest, TestNearbyMutations)
 {
     string tpl = "GAATT";
     Integrator ai(tpl, IntegratorConfig());
 
-    vector<Mutation> centers = {Mutation(MutationType::SUBSTITUTION, 2, 'T')};
+    vector<Mutation> centers = {Mutation::Substitution(2, 'T')};
     vector<Mutation> result = NearbyMutations(&centers, &centers, ai, 1);
     // 7 for each of ATT,
     //   and +3 for terminal insertions (end)
     //   and -1 for hompolymer TT deletion
     EXPECT_EQ(7 * 3 + 3 - 1, result.size());
 
-    centers.back() = Mutation(MutationType::SUBSTITUTION, 1, 'T');
+    centers.back() = Mutation::Substitution(1, 'T');
 
     result = NearbyMutations(&centers, &centers, ai, 1);
     // 7 for each of ATT,
@@ -104,7 +127,7 @@ TEST(MutationEnumerationTest, TestNearbyMutations)
     //   and +3 for terminal insertions (not T, because it's not the first)
     EXPECT_EQ(7 * 4 + 4 - 1, result.size());
 
-    centers.push_back(Mutation(MutationType::SUBSTITUTION, 3, 'G'));
+    centers.push_back(Mutation::Substitution(3, 'G'));
     result = NearbyMutations(&centers, &centers, ai, 2);
     vector<Mutation> expected = Mutations(ai);
     EXPECT_EQ(expected.size(), result.size());

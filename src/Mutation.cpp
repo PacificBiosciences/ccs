@@ -43,45 +43,63 @@
 namespace PacBio {
 namespace Consensus {
 
-Mutation::Mutation(MutationType type, size_t start, char base)
-    : Base{base}, Type{type}, start_{start}
+Mutation Mutation::Deletion(size_t start, size_t length)
 {
-    assert(Type == MutationType::DELETION || Type == MutationType::ANY_INSERTION ||
-           Type == MutationType::ANY_SUBSTITUTION || Base == 'A' || Base == 'C' || Base == 'G' ||
-           Base == 'T');
+    return Mutation(MutationType::DELETION, start, length);
 }
 
-bool Mutation::IsDeletion() const { return Type == MutationType::DELETION; }
-bool Mutation::IsInsertion() const { return Type == MutationType::INSERTION; }
-bool Mutation::IsSubstitution() const { return Type == MutationType::SUBSTITUTION; }
-bool Mutation::IsAnyInsertion() const { return Type == MutationType::ANY_INSERTION; }
-bool Mutation::IsAnySubstitution() const { return Type == MutationType::ANY_SUBSTITUTION; }
-
-size_t Mutation::Start() const { return start_; }
-
-size_t Mutation::End() const
+Mutation Mutation::Insertion(size_t start, const char base)
 {
-    if (Type == MutationType::INSERTION || Type == MutationType::ANY_INSERTION) return start_;
-
-    // if (Type == MutationType::SUBSTITUTION ||
-    //     Type == MutationType::ANY_SUBSTITUTION ||
-    //     Type == MutationType::DELETION)
-    return start_ + 1;
+    return Mutation(MutationType::INSERTION, start, base);
 }
 
-int Mutation::LengthDiff() const
+Mutation Mutation::Insertion(size_t start, const std::string& bases)
 {
-    if (Type == MutationType::SUBSTITUTION || Type == MutationType::ANY_SUBSTITUTION) return 0;
-
-    if (Type == MutationType::INSERTION || Type == MutationType::ANY_INSERTION) return 1;
-
-    // Type == deletion
-    return -1;
+    return Mutation(MutationType::INSERTION, start, bases);
 }
 
-bool Mutation::operator==(const Mutation& other) const
+Mutation Mutation::Insertion(size_t start, std::string&& bases)
 {
-    return Type == other.Type && Base == other.Base && start_ == other.start_;
+    return Mutation(MutationType::INSERTION, start, std::forward<std::string>(bases));
+}
+
+Mutation Mutation::Substitution(size_t start, const char base)
+{
+    return Mutation(MutationType::SUBSTITUTION, start, base);
+}
+
+Mutation Mutation::Substitution(size_t start, const std::string& bases)
+{
+    return Mutation(MutationType::SUBSTITUTION, start, bases);
+}
+
+Mutation Mutation::Substitution(size_t start, std::string&& bases)
+{
+    return Mutation(MutationType::SUBSTITUTION, start, std::forward<std::string>(bases));
+}
+
+boost::optional<Mutation> Mutation::Translate(size_t start, size_t length) const
+{
+    // if the mutation end is before our start, or our end
+    //   is less than the mutation start, we don't overlap the mutation:
+    //   template:       [---)
+    //   mutation:   [---)
+    //   mutation:           [---)
+    if (End() + IsInsertion() < start || (start + length + IsInsertion()) <= Start())
+        return boost::none;
+    // what remains is now one of three/five possibilities each:
+    //   template:     [-------)
+    //   mutation:   [---)-------)
+    //   mutation:       [---)---)
+    //   mutation:           [---)
+    //   start = max ^ ^
+    //   end =           min ^ ^
+    const size_t newStart = std::max(Start(), start);
+    const size_t newLen = std::min(End(), start + length) - newStart;
+    if (IsInsertion()) return Mutation::Insertion(newStart - start, Bases());
+    if (newLen == 0) return boost::none;
+    if (IsDeletion()) return Mutation::Deletion(newStart - start, newLen);
+    return Mutation::Substitution(newStart - start, Bases().substr(newStart - Start(), newLen));
 }
 
 Mutation::operator std::string() const
@@ -92,6 +110,38 @@ Mutation::operator std::string() const
 }
 
 ScoredMutation Mutation::WithScore(double score) const { return ScoredMutation(*this, score); }
+
+Mutation::Mutation(const MutationType type, const size_t start, const size_t length)
+    : bases_(), type_{type}, start_{start}, length_{length}
+{
+    assert(type == MutationType::DELETION);
+}
+
+Mutation::Mutation(const MutationType type, const size_t start, const char base)
+    : bases_(1, base)
+    , type_{type}
+    , start_{start}
+    , length_{(type_ == MutationType::INSERTION) ? size_t(0) : size_t(1)}
+{
+}
+
+Mutation::Mutation(const MutationType type, const size_t start, const std::string& bases)
+    : bases_{bases}
+    , type_{type}
+    , start_{start}
+    , length_{(type_ == MutationType::INSERTION) ? size_t(0) : bases_.length()}
+{
+    assert(bases_.length() > 0);
+}
+
+Mutation::Mutation(const MutationType type, const size_t start, std::string&& bases)
+    : bases_{std::forward<std::string>(bases)}
+    , type_{type}
+    , start_{start}
+    , length_{(type == MutationType::INSERTION) ? size_t(0) : bases_.length()}
+{
+    assert(bases_.length() > 0);
+}
 
 ScoredMutation::ScoredMutation(const Mutation& mut, double score) : Mutation(mut), Score{score} {}
 
@@ -108,12 +158,6 @@ std::ostream& operator<<(std::ostream& out, const MutationType type)
         case MutationType::SUBSTITUTION:
             out << "SUBSTITUTION";
             break;
-        case MutationType::ANY_INSERTION:
-            out << "ANY_INSERTION";
-            break;
-        case MutationType::ANY_SUBSTITUTION:
-            out << "ANY_SUBSTITUTION";
-            break;
         default:
             throw std::invalid_argument("invalid MutationType");
     }
@@ -122,7 +166,12 @@ std::ostream& operator<<(std::ostream& out, const MutationType type)
 
 std::ostream& operator<<(std::ostream& out, const Mutation& mut)
 {
-    return out << "Mutation(" << mut.Type << ", " << mut.Start() << ", '" << mut.Base << "')";
+    if (mut.IsDeletion())
+        return out << "Mutation::Deletion(" << mut.Start() << ", " << mut.Length() << ')';
+    else if (mut.IsInsertion())
+        return out << "Mutation::Insertion(" << mut.Start() << ", \"" << mut.Bases() << "\")";
+    // mut.IsSubstitution()
+    return out << "Mutation::Substitution(" << mut.Start() << ", \"" << mut.Bases() << "\")";
 }
 
 std::ostream& operator<<(std::ostream& out, const ScoredMutation& smut)
@@ -141,12 +190,10 @@ std::string ApplyMutations(const std::string& oldTpl, std::vector<Mutation>* con
     std::string newTpl(oldTpl);
 
     for (it = muts->crbegin(); it != muts->crend(); ++it) {
-        if (it->IsDeletion())
-            newTpl.erase(newTpl.begin() + it->Start());
-        else if (it->IsInsertion())
-            newTpl.insert(newTpl.begin() + it->Start(), it->Base);
-        else if (it->IsSubstitution())
-            newTpl[it->Start()] = it->Base;
+        if (it->IsInsertion())
+            newTpl.insert(it->Start(), it->Bases());
+        else
+            newTpl.replace(it->Start(), it->Length(), it->Bases());
     }
 
     return newTpl;

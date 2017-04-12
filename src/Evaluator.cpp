@@ -109,20 +109,33 @@ std::string Evaluator::ReadName() const
 
 double Evaluator::LL(const Mutation& mut)
 {
-    if (IsValid()) {
-        double ll = impl_->LL(mut);
+    double ll;
 
-        // If the mutation of interest caused a corner-case failure,
-        // release this Evaluator and report this issue via an exception.
-        if (std::isinf(ll)) {
-            const std::string name = ReadName();
-            Invalidate();
-            throw InvalidEvaluatorException("negative inf in mutation testing: '" + name + "'");
-        }
+    if (!IsValid())
+        return NEG_DBL_INF;
 
-        return ll;
+    else if (mut.EditDistance() > 1) {
+        boost::optional<MutatedTemplate> mutTpl = impl_->tpl_->Mutate(mut);
+        if (!mutTpl) return NEG_DBL_INF;
+        std::unique_ptr<AbstractTemplate> newTpl(new MutatedTemplate(std::move(*mutTpl)));
+        EvaluatorImpl tmp(std::move(newTpl), impl_->recursor_->read_, impl_->recursor_->scoreDiff_);
+        ll = tmp.LL();
     }
-    return NEG_DBL_INF;
+
+    // single-base mutation
+    else {
+        ll = impl_->LL(mut);
+    }
+
+    // If the mutation of interest caused a corner-case failure,
+    // release this Evaluator and report this issue via an exception.
+    if (std::isinf(ll)) {
+        const std::string name = ReadName();
+        Invalidate();
+        throw InvalidEvaluatorException("negative inf in mutation testing: '" + name + "'");
+    }
+
+    return ll;
 }
 
 double Evaluator::LL() const

@@ -98,6 +98,13 @@ const PlainOption Polish{
     "Emit high-accuracy CCS sequences polished using the Arrow algorithm",
     CLI::Option::BoolType(true)
 };
+const PlainOption PolishRepeats{
+    "polish_repeats",
+    { "polishRepeats" },
+    "Polish Repeats",
+    "Polish repeats of 2 to N bases of 3 or more elements.",
+    CLI::Option::IntType(0)
+};
 const PlainOption MinReadScore{
     "min_read_score",
     { "minReadScore" },
@@ -198,6 +205,7 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
                     : static_cast<float>(options[OptionNames::MinZScore]))
     , ModelPath(std::forward<std::string>(options[OptionNames::ModelPath]))
     , ModelSpec(std::forward<std::string>(options[OptionNames::ModelSpec]))
+    , PolishRepeats(options[OptionNames::PolishRepeats])
     , ReportFile(std::forward<std::string>(options[OptionNames::ReportFile]))
     , RichQVs(options[OptionNames::RichQVs])
     , WlSpec(std::forward<std::string>(options[OptionNames::Zmws]))
@@ -263,6 +271,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
         OptionNames::ByStrand,
         OptionNames::NoPolish,
         OptionNames::Polish,
+        OptionNames::PolishRepeats,
         OptionNames::RichQVs,
         OptionNames::ReportFile,
         OptionNames::ModelPath,

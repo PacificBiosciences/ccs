@@ -89,7 +89,8 @@ Data::State AbstractIntegrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
 
     if (read.Length() < 2) throw std::invalid_argument("read span < 2!");
 
-    evals_.emplace_back(Evaluator(std::move(tpl), read, cfg_.MinZScore, cfg_.ScoreDiff));
+    evals_.emplace_back(Evaluator(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), read,
+                                  cfg_.MinZScore, cfg_.ScoreDiff));
     return evals_.back().Status();
 }
 
@@ -220,7 +221,13 @@ const AbstractMatrix& AbstractIntegrator::Beta(size_t idx) const { return evals_
 
 Mutation AbstractIntegrator::ReverseComplement(const Mutation& mut) const
 {
-    return Mutation(mut.Type, TemplateLength() - mut.End(), Complement(mut.Base));
+    size_t newStart = TemplateLength() - mut.End();
+    if (mut.IsDeletion())
+        return Mutation::Deletion(newStart, mut.Length());
+    else if (mut.IsInsertion())
+        return Mutation::Insertion(newStart, ::PacBio::Data::ReverseComplement(mut.Bases()));
+    // IsSubstitution
+    return Mutation::Substitution(newStart, ::PacBio::Data::ReverseComplement(mut.Bases()));
 }
 
 }  // namespace Consensus

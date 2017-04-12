@@ -62,6 +62,7 @@ add_library(cc2 STATIC
     ModelSelection.cpp
     Mutation.cpp
     Polish.cpp
+    PolishResult.cpp
     Read.cpp
     Recursor.cpp
     Sequence.cpp
