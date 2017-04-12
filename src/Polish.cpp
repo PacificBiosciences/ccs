@@ -65,8 +65,11 @@ PolishConfig::PolishConfig(const size_t iterations, const size_t separation,
 {
 }
 
-RepeatConfig::RepeatConfig(const size_t repeatSize, const size_t elementCount, const size_t iterations)
-    : MaximumRepeatSize{repeatSize}, MinimumElementCount{elementCount}, MaximumIterations{iterations}
+RepeatConfig::RepeatConfig(const size_t repeatSize, const size_t elementCount,
+                           const size_t iterations)
+    : MaximumRepeatSize{repeatSize}
+    , MinimumElementCount{elementCount}
+    , MaximumIterations{iterations}
 {
 }
 
