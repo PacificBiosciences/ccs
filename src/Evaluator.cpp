@@ -111,9 +111,11 @@ double Evaluator::LL(const Mutation& mut)
 {
     double ll;
 
-    if (!IsValid())
+    if (!IsValid()) {
         return NEG_DBL_INF;
+    }
 
+    // for multi-base mutations, invoke the entire machinery
     else if (mut.EditDistance() > 1) {
         boost::optional<MutatedTemplate> mutTpl = impl_->tpl_->Mutate(mut);
         if (!mutTpl) return NEG_DBL_INF;
@@ -122,7 +124,7 @@ double Evaluator::LL(const Mutation& mut)
         ll = tmp.LL();
     }
 
-    // single-base mutation
+    // single-base mutations employ the alpha-beta stitching
     else {
         ll = impl_->LL(mut);
     }

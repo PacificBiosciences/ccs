@@ -58,10 +58,11 @@ struct PolishConfig
 
 struct RepeatConfig
 {
-    size_t MaxRepeatSize;
-    size_t MinElements;
+    size_t MaximumRepeatSize;
+    size_t MinimumElementCount;
+    size_t MaximumIterations;
 
-    RepeatConfig(size_t maxRepeatSize = 3, size_t minElements = 3);
+    RepeatConfig(size_t repeatSize = 3, size_t elementCount = 3, size_t iterations = 40);
 };
 
 /// Given an AbstractIntegrator and a PolishConfig,
@@ -71,8 +72,7 @@ struct RepeatConfig
 /// The template will be polished within the AbstractIntegrator.
 PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg);
 
-PolishResult PolishRepeats(AbstractIntegrator* ai, const RepeatConfig& cfg,
-                           size_t maxIterations = 40);
+PolishResult PolishRepeats(AbstractIntegrator* ai, const RepeatConfig& cfg);
 
 /// Struct that contains vectors for the base-wise individual and compound QVs.
 struct QualityValues

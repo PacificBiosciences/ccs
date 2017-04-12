@@ -100,13 +100,15 @@ public:
     const std::string& Bases() const { return bases_; }
     MutationType Type() const { return type_; }
 
+    /// Projects the Mutation from its original coordinates into the coordinate region
+    /// defined by (start, length). If the mutation is outside this region, return none.
     boost::optional<Mutation> Translate(size_t start, size_t length) const;
 
     virtual bool operator==(const Mutation& other) const
     {
         if (Type() != other.Type() || Start() != other.Start()) return false;
         if (IsDeletion()) return Length() == other.Length();
-        // IsInsertion() || IsSubstitution()
+        // insertion or substitution
         return Bases() == other.Bases();
     }
 
@@ -120,7 +122,7 @@ public:
     {
         // perform a lexicographic sort on End, Start, IsDeletion
         //   Deletions override everybody, so they get applied last,
-        //   which implies -> Fact: false < true -> !IsDeletion
+        //   which implies, because false < true, use of !IsDeletion
         const auto l = std::make_tuple(lhs.End(), lhs.Start(), !lhs.IsDeletion());
         const auto r = std::make_tuple(rhs.End(), rhs.Start(), !rhs.IsDeletion());
         return l < r;

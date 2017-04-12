@@ -65,8 +65,8 @@ PolishConfig::PolishConfig(const size_t iterations, const size_t separation,
 {
 }
 
-RepeatConfig::RepeatConfig(const size_t maxRepeatSize, const size_t minElements)
-    : MaxRepeatSize{maxRepeatSize}, MinElements{minElements}
+RepeatConfig::RepeatConfig(const size_t repeatSize, const size_t elementCount, const size_t iterations)
+    : MaximumRepeatSize{repeatSize}, MinimumElementCount{elementCount}, MaximumIterations{iterations}
 {
 }
 
@@ -122,11 +122,11 @@ vector<Mutation> Mutations(const AbstractIntegrator& ai)
 void RepeatMutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const RepeatConfig& cfg,
                      const size_t start, const size_t end)
 {
-    if (cfg.MaxRepeatSize < 2 || cfg.MinElements <= 0) return;
+    if (cfg.MaximumRepeatSize < 2 || cfg.MinimumElementCount <= 0) return;
 
     const string tpl(ai);
 
-    for (size_t repeatSize = 2; repeatSize <= cfg.MaxRepeatSize; ++repeatSize) {
+    for (size_t repeatSize = 2; repeatSize <= cfg.MaximumRepeatSize; ++repeatSize) {
         for (size_t i = start; i + repeatSize <= end;) {
             size_t nElem = 1;
 
@@ -137,7 +137,7 @@ void RepeatMutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const
                     break;
             }
 
-            if (nElem >= cfg.MinElements) {
+            if (nElem >= cfg.MinimumElementCount) {
                 muts->emplace_back(Mutation::Insertion(i, tpl.substr(i, repeatSize)));
                 muts->emplace_back(Mutation::Deletion(i, repeatSize));
             }
@@ -338,8 +338,7 @@ PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
     return result;
 }
 
-PolishResult PolishRepeats(AbstractIntegrator* const ai, const RepeatConfig& cfg,
-                           const size_t maxIters)
+PolishResult PolishRepeats(AbstractIntegrator* const ai, const RepeatConfig& cfg)
 {
     PolishResult result;
 
@@ -349,7 +348,7 @@ PolishResult PolishRepeats(AbstractIntegrator* const ai, const RepeatConfig& cfg
         result.maxNumFlipFlops.emplace_back(ai->MaxNumFlipFlops());
     };
 
-    for (size_t i = 0; i < maxIters; ++i) {
+    for (size_t i = 0; i < cfg.MaximumIterations; ++i) {
         const vector<Mutation> muts = RepeatMutations(*ai, cfg);
         boost::optional<ScoredMutation> bestMut = boost::none;
         size_t mutationsTested = 0;
