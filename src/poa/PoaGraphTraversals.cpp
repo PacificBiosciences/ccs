@@ -381,7 +381,7 @@ vector<ScoredMutation>* PoaGraphImpl::findPossibleVariants(
         // the consensus sequence.
         if (children.find(bestPath_[i + 2]) != children.end()) {
             float score = -vertexInfoMap_[bestPath_[i + 1]].Score;
-            variants->push_back(Mutation(MutationType::DELETION, i + 1, '-').WithScore(score));
+            variants->push_back(Mutation::Deletion(i + 1, 1).WithScore(score));
         }
 
         // Look for a child node that connects immediately back to i + 1.
@@ -414,8 +414,7 @@ vector<ScoredMutation>* PoaGraphImpl::findPossibleVariants(
 
         if (bestInsertVertex != null_vertex) {
             char base = vertexInfoMap_[bestInsertVertex].Base;
-            variants->push_back(
-                Mutation(MutationType::INSERTION, i + 1, base).WithScore(bestInsertScore));
+            variants->push_back(Mutation::Insertion(i + 1, base).WithScore(bestInsertScore));
         }
 
         // Look for a child node not in the consensus that connects immediately
@@ -449,8 +448,7 @@ vector<ScoredMutation>* PoaGraphImpl::findPossibleVariants(
             // score
             // difference, no?
             char base = vertexInfoMap_[bestMismatchVertex].Base;
-            variants->push_back(
-                Mutation(MutationType::SUBSTITUTION, i + 1, base).WithScore(bestMismatchScore));
+            variants->push_back(Mutation::Substitution(i + 1, base).WithScore(bestMismatchScore));
         }
     }
     return variants;

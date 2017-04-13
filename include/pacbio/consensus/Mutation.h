@@ -35,6 +35,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
@@ -42,49 +43,76 @@
 #include <tuple>
 #include <vector>
 
+#include <boost/numeric/conversion/cast.hpp>
+#include <boost/optional.hpp>
+
 namespace PacBio {
 namespace Consensus {
 
-/// Enum with all possible mutation types
+// fwd decls
+class ScoredMutation;
+
 enum struct MutationType : uint8_t
 {
     DELETION,
     INSERTION,
-    SUBSTITUTION,
-    ANY_INSERTION,
-    ANY_SUBSTITUTION
+    SUBSTITUTION
 };
 
-// forward decl
-class ScoredMutation;
-
-/// Encapsulates the type of the mutation, the start position, and an
-/// alternative base.
+/// the region position and length, and any alternative bases,
+/// and the score too if it comes to that
 class Mutation
 {
 public:
-    char Base;
-    MutationType Type;
+    Mutation(const Mutation&) = default;
+    Mutation(Mutation&&) = default;
 
-    Mutation(MutationType type, size_t start, char base = '-');
+    Mutation& operator=(const Mutation&) = default;
+    Mutation& operator=(Mutation&&) = default;
 
-    // TODO(lhepler): do we *really* need these?
-    bool IsDeletion() const;
-    bool IsInsertion() const;
-    bool IsSubstitution() const;
-    bool IsAnyInsertion() const;
-    bool IsAnySubstitution() const;
+    // named constructors
+    static Mutation Deletion(size_t start, size_t length);
+    static Mutation Insertion(size_t start, char base);
+    static Mutation Insertion(size_t start, const std::string& bases);
+    static Mutation Insertion(size_t start, std::string&& bases);
+    static Mutation Substitution(size_t start, char base);
+    static Mutation Substitution(size_t start, const std::string& bases);
+    static Mutation Substitution(size_t start, std::string&& bases);
 
-    size_t Start() const;
-    /// Returns the end position of the mutation that is start + 1,
-    /// except for insertions.
-    size_t End() const;
+    bool IsDeletion() const { return Type() == MutationType::DELETION; };
+    bool IsInsertion() const { return Type() == MutationType::INSERTION; }
+    bool IsSubstitution() const { return Type() == MutationType::SUBSTITUTION; }
+
+    virtual bool IsScored() const { return false; }
+
+    size_t Start() const { return start_; }
+    size_t End() const { return start_ + length_; }
+    size_t Length() const { return length_; }
 
     /// Returns the length difference introduced by this mutation.
-    int LengthDiff() const;
+    int LengthDiff() const
+    {
+        return boost::numeric_cast<int>(Bases().size()) - boost::numeric_cast<int>(length_);
+    };
 
-    bool operator==(const Mutation& other) const;
-    operator std::string() const;
+    size_t EditDistance() const { return std::max(Bases().size(), length_); }
+
+    const std::string& Bases() const { return bases_; }
+    MutationType Type() const { return type_; }
+
+    /// Projects the Mutation from its original coordinates into the coordinate region
+    /// defined by (start, length). If the mutation is outside this region, return none.
+    boost::optional<Mutation> Translate(size_t start, size_t length) const;
+
+    virtual bool operator==(const Mutation& other) const
+    {
+        if (Type() != other.Type() || Start() != other.Start()) return false;
+        if (IsDeletion()) return Length() == other.Length();
+        // insertion or substitution
+        return Bases() == other.Bases();
+    }
+
+    virtual operator std::string() const;
 
     /// Uses this and the provided score to create and return a ScoredMutation.
     ScoredMutation WithScore(double score) const;
@@ -93,19 +121,42 @@ public:
     static bool SiteComparer(const Mutation& lhs, const Mutation& rhs)
     {
         // perform a lexicographic sort on End, Start, IsDeletion
-        const auto l = std::make_tuple(lhs.End(), lhs.Start(), lhs.IsDeletion());
-        const auto r = std::make_tuple(rhs.End(), rhs.Start(), rhs.IsDeletion());
+        //   Deletions override everybody, so they get applied last,
+        //   which implies, because false < true, use of !IsDeletion
+        const auto l = std::make_tuple(lhs.End(), lhs.Start(), !lhs.IsDeletion());
+        const auto r = std::make_tuple(rhs.End(), rhs.Start(), !rhs.IsDeletion());
         return l < r;
     }
 
 private:
+    std::string bases_;
+    MutationType type_;
     size_t start_;
+    size_t length_;
+
+    Mutation(MutationType type, size_t start, size_t length);
+    Mutation(MutationType type, size_t start, const std::string& bases);
+    Mutation(MutationType type, size_t start, std::string&& bases);
+    Mutation(MutationType type, size_t start, char);
 };
 
 class ScoredMutation : public Mutation
 {
 public:
     double Score;
+
+    ScoredMutation(const ScoredMutation&) = default;
+    ScoredMutation(ScoredMutation&&) = default;
+
+    ScoredMutation& operator=(const ScoredMutation&) = default;
+    ScoredMutation& operator=(ScoredMutation&&) = default;
+
+    virtual bool IsScored() const override { return true; }
+    virtual bool operator==(const ScoredMutation& other) const
+    {
+        return Score == other.Score && static_cast<const Mutation&>(*this) == other;
+    }
+    virtual bool operator==(const Mutation& other) const override { return false; }
 
     static bool ScoreComparer(const ScoredMutation& lhs, const ScoredMutation& rhs)
     {
@@ -124,6 +175,5 @@ std::ostream& operator<<(std::ostream& out, const Mutation& mut);
 std::ostream& operator<<(std::ostream& out, const ScoredMutation& smut);
 
 std::string ApplyMutations(const std::string& tpl, std::vector<Mutation>* muts);
-
-}  // namespace Consensus
-}  // namespace PacBio
+}
+}  // ::PacBio::Consensus
