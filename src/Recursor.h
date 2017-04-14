@@ -48,6 +48,14 @@
 
 #include "matrix/ScaledMatrix.h"
 
+// "Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird.
+//  Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein."
+//                      Friedrich Nietzsche, Jenseits von Gut und Böse, Aphorismus #146
+//
+// "He who fights with monsters should be careful lest he thereby become a monster.
+//  And if thou gaze long into an abyss, the abyss will also gaze into thee."
+//                      Friedrich Nietzsche, Beyond Good and Evil, Aphorism #146
+
 namespace PacBio {
 namespace Consensus {
 

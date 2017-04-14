@@ -62,7 +62,6 @@ void SubreadResultCounter::AddResult(State result)
             break;
         default:
             throw std::runtime_error("Unexpected State");
-            break;
     }
 }
 

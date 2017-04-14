@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eo pipefail
 
 echo "## Fetch submodules"
 source /mnt/software/Modules/current/init/bash
@@ -10,4 +10,12 @@ module load git
 # submodules.  Override the remote here.
 git remote set-url origin ssh://git@bitbucket.nanofluidics.com:7999/sat/unanimity.git
 
-git submodule update --init --remote
+#git submodule update --init --remote
+
+echo "BRANCH NAME: ${BRANCH_NAME}"
+SUBMODULE_BRANCH="develop"
+if [ "${BRANCH_NAME}" == "master" ]; then
+  SUBMODULE_BRANCH="master"
+fi
+echo "CHECKING OUT ${SUBMODULE_BRANCH}"
+git submodule foreach git pull origin ${SUBMODULE_BRANCH}
