@@ -43,6 +43,11 @@ namespace Data {
 
 SNR::SNR(const double a, const double c, const double g, const double t) : A(a), C(c), G(g), T(t) {}
 
+SNR::SNR(const std::vector<float>& snrs) : A(snrs[0]), C(snrs[1]), G(snrs[2]), T(snrs[3])
+{
+    assert(snrs.size() == 4);
+}
+
 SNR::SNR(const std::vector<double>& snrs) : A(snrs[0]), C(snrs[1]), G(snrs[2]), T(snrs[3])
 {
     assert(snrs.size() == 4);
