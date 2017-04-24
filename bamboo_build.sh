@@ -1,2 +1,2 @@
 #!/bin/bash
-bash -xe scripts/ci/build.sh $@
+grep -v submodule scripts/ci/build.sh|bash -e
