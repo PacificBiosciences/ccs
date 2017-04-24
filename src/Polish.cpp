@@ -73,8 +73,7 @@ RepeatConfig::RepeatConfig(const size_t repeatSize, const size_t elementCount,
 {
 }
 
-void Mutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const size_t start,
-               const size_t end)
+void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start, const size_t end)
 {
     constexpr auto bases = "ACGT";
     constexpr size_t nbases = 4;
@@ -119,7 +118,7 @@ vector<Mutation> Mutations(const Integrator& ai, const size_t start, const size_
 
 vector<Mutation> Mutations(const Integrator& ai) { return Mutations(ai, 0, ai.TemplateLength()); }
 
-void RepeatMutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const RepeatConfig& cfg,
+void RepeatMutations(vector<Mutation>* muts, const Integrator& ai, const RepeatConfig& cfg,
                      const size_t start, const size_t end)
 {
     if (cfg.MaximumRepeatSize < 2 || cfg.MinimumElementCount <= 0) return;
@@ -152,15 +151,15 @@ void RepeatMutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const
     sort(muts->begin(), muts->end(), Mutation::SiteComparer);
 }
 
-vector<Mutation> RepeatMutations(const AbstractIntegrator& ai, const RepeatConfig& cfg,
-                                 const size_t start, const size_t end)
+vector<Mutation> RepeatMutations(const Integrator& ai, const RepeatConfig& cfg, const size_t start,
+                                 const size_t end)
 {
     vector<Mutation> muts;
     RepeatMutations(&muts, ai, cfg, start, end);
     return muts;
 }
 
-vector<Mutation> RepeatMutations(const AbstractIntegrator& ai, const RepeatConfig& cfg)
+vector<Mutation> RepeatMutations(const Integrator& ai, const RepeatConfig& cfg)
 {
     return RepeatMutations(ai, cfg, 0, ai.TemplateLength());
 }
@@ -338,11 +337,11 @@ PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
     return result;
 }
 
-PolishResult PolishRepeats(AbstractIntegrator* const ai, const RepeatConfig& cfg)
+PolishResult PolishRepeats(Integrator* const ai, const RepeatConfig& cfg)
 {
     PolishResult result;
 
-    const auto diagnostics = [&result](AbstractIntegrator* ai) {
+    const auto diagnostics = [&result](Integrator* ai) {
         result.maxAlphaPopulated.emplace_back(ai->MaxAlphaPopulated());
         result.maxBetaPopulated.emplace_back(ai->MaxBetaPopulated());
         result.maxNumFlipFlops.emplace_back(ai->MaxNumFlipFlops());

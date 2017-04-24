@@ -65,7 +65,6 @@ struct RepeatConfig
     RepeatConfig(size_t repeatSize = 3, size_t elementCount = 3, size_t iterations = 40);
 };
 
-/// Given an AbstractIntegrator and a PolishConfig,
 /// Given an Integrator and a PolishConfig,
 /// iteratively polish the template,
 /// and return meta information about the procedure.
@@ -73,7 +72,7 @@ struct RepeatConfig
 /// The template will be polished within the Integrator.
 PolishResult Polish(Integrator* ai, const PolishConfig& cfg);
 
-PolishResult PolishRepeats(AbstractIntegrator* ai, const RepeatConfig& cfg);
+PolishResult PolishRepeats(Integrator* ai, const RepeatConfig& cfg);
 
 /// Struct that contains vectors for the base-wise individual and compound QVs.
 struct QualityValues
@@ -96,7 +95,7 @@ std::vector<Mutation> Mutations(const Integrator& ai);
 
 /// Returns a list of all possible repeat mutations of the template
 /// of the provided integrator
-std::vector<Mutation> RepeatMutations(const AbstractIntegrator& ai, const RepeatConfig& cfg);
+std::vector<Mutation> RepeatMutations(const Integrator& ai, const RepeatConfig& cfg);
 
 }  // namespace Consensus
 }  // namespace PacBio

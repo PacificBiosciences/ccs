@@ -225,7 +225,13 @@ const AbstractMatrix& Integrator::Beta(size_t idx) const { return evals_[idx].Be
 
 Mutation Integrator::ReverseComplement(const Mutation& mut) const
 {
-    return Mutation(mut.Type, TemplateLength() - mut.End(), Complement(mut.Base));
+    size_t newStart = TemplateLength() - mut.End();
+    if (mut.IsDeletion())
+        return Mutation::Deletion(newStart, mut.Length());
+    else if (mut.IsInsertion())
+        return Mutation::Insertion(newStart, ::PacBio::Data::ReverseComplement(mut.Bases()));
+    // IsSubstitution
+    return Mutation::Substitution(newStart, ::PacBio::Data::ReverseComplement(mut.Bases()));
 }
 
 State Integrator::AddRead(const PacBio::Data::MappedRead& read)
