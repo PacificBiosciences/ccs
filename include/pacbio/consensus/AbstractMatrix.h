@@ -35,7 +35,7 @@
 
 #pragma once
 
-#include <stdio.h>
+#include <stddef.h>
 
 namespace PacBio {
 namespace Consensus {
