@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,36 +33,30 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#pragma once
-
-#include <vector>
-
-#include <stddef.h>
+#include <pacbio/consensus/PolishResult.h>
 
 namespace PacBio {
 namespace Consensus {
 
-/// This struct contains the results of AbstractIntegrator::Polish()
-struct PolishResult
+PolishResult operator+(const PolishResult& lhs, const PolishResult& rhs)
 {
-    // Did Polish() converge?
-    bool hasConverged = false;
-    // How many mutations have been tested?
-    size_t mutationsTested = 0;
-    // How many mutations have been actually applied?
-    size_t mutationsApplied = 0;
-
-    // For each iteration in Polish(), get the max of all Evaluators to
-    // diagnose the worst performing one.
-    //
-    // Maximal ratio of populated alpha cells
-    std::vector<float> maxAlphaPopulated;
-    // Maximal ratio of populated beta cells
-    std::vector<float> maxBetaPopulated;
-    // Maximal number of flip flop events
-    std::vector<int> maxNumFlipFlops;
-};
-
-PolishResult operator+(const PolishResult& lhs, const PolishResult& rhs);
+    PolishResult result;
+    result.hasConverged = lhs.hasConverged && rhs.hasConverged;
+    result.mutationsTested = lhs.mutationsTested + rhs.mutationsTested;
+    result.mutationsApplied = lhs.mutationsApplied + rhs.mutationsApplied;
+    result.maxAlphaPopulated.insert(result.maxAlphaPopulated.end(), lhs.maxAlphaPopulated.begin(),
+                                    lhs.maxAlphaPopulated.end());
+    result.maxBetaPopulated.insert(result.maxBetaPopulated.end(), lhs.maxBetaPopulated.begin(),
+                                   lhs.maxBetaPopulated.end());
+    result.maxNumFlipFlops.insert(result.maxNumFlipFlops.end(), lhs.maxNumFlipFlops.begin(),
+                                  lhs.maxNumFlipFlops.end());
+    result.maxAlphaPopulated.insert(result.maxAlphaPopulated.end(), rhs.maxAlphaPopulated.begin(),
+                                    rhs.maxAlphaPopulated.end());
+    result.maxBetaPopulated.insert(result.maxBetaPopulated.end(), rhs.maxBetaPopulated.begin(),
+                                   rhs.maxBetaPopulated.end());
+    result.maxNumFlipFlops.insert(result.maxNumFlipFlops.end(), rhs.maxNumFlipFlops.begin(),
+                                  rhs.maxNumFlipFlops.end());
+    return result;
+}
 }
 }  // ::PacBio::Consensus

@@ -70,6 +70,7 @@ struct ConsensusSettings
     std::string ModelPath;
     std::string ModelSpec;
     bool NoPolish;
+    size_t PolishRepeats;
     size_t NThreads;
     bool PbIndex;
     std::string ReportFile;

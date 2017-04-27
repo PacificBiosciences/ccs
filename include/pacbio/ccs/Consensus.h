@@ -94,9 +94,8 @@ struct ReadType
     std::vector<uint8_t> PulseWidth;
     LocalContextFlags Flags;
     Accuracy ReadAccuracy;
-    // TODO (move SNR and Chemistry here, eventually)
-    // SNR SignalToNoise;
-    // std::string Chemistry;
+    SNR SignalToNoise;
+    std::string Chemistry;
 };
 
 template <typename TId, typename TRead>
@@ -104,8 +103,6 @@ struct ChunkType
 {
     TId Id;
     std::vector<TRead> Reads;
-    SNR SignalToNoise;
-    std::string Chemistry;
     boost::optional<std::tuple<int16_t, int16_t, uint8_t>> Barcodes;
 };
 
@@ -121,8 +118,8 @@ struct ConsensusType
     double AvgZScore;
     std::vector<double> ZScores;
     std::vector<int32_t> StatusCounts;
-    SNR SignalToNoise;
     float ElapsedMilliseconds;
+    boost::optional<SNR> SignalToNoise;
     boost::optional<std::tuple<int16_t, int16_t, uint8_t>> Barcodes;
 };
 
@@ -227,7 +224,10 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
         // if the median exists, then this filters stuff,
         //   otherwise it's twice the longest read and is always true
 
-        if (read.ReadAccuracy < settings.MinReadScore) {
+        if (read.SignalToNoise.Minimum() < settings.MinSNR) {
+            resultCounter->ZMWBelowMinSNR += 1;
+            results.emplace_back(nullptr);
+        } else if (read.ReadAccuracy < settings.MinReadScore) {
             resultCounter->BelowMinQual += 1;
             results.emplace_back(nullptr);
         } else if (read.Seq.length() < maxLen) {
@@ -266,9 +266,7 @@ std::vector<const TRead*> FilterReads(const std::vector<TRead>& reads,
 }
 
 template <typename TRead>
-boost::optional<MappedRead> ExtractMappedRead(const TRead& read, const PacBio::Data::SNR& snr,
-                                              const std::string& chem,
-                                              const PoaAlignmentSummary& summary,
+boost::optional<MappedRead> ExtractMappedRead(const TRead& read, const PoaAlignmentSummary& summary,
                                               const size_t poaLength,
                                               const ConsensusSettings& settings,
                                               SubreadResultCounter* resultCounter)
@@ -301,6 +299,9 @@ boost::optional<MappedRead> ExtractMappedRead(const TRead& read, const PacBio::D
         PBLOG_DEBUG << "Skipping read " << read.Id << ", too long (>" << settings.MaxLength << ')';
         return boost::none;
     }
+
+    const SNR& snr = read.SignalToNoise;
+    const std::string& chem = read.Chemistry;
 
     MappedRead mappedRead(
         Read(read.Id, read.Seq.substr(readStart, readEnd - readStart),
@@ -391,9 +392,12 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
         Timer timer;
 
         // Do read level SNR filtering first
-        auto& snr = chunk.SignalToNoise;
-        auto minSNR = std::min(std::min(snr.A, snr.C), std::min(snr.G, snr.T));
-        if (minSNR < settings.MinSNR) {
+        size_t readsBelowMinSNR = 0;
+        for (const auto& read : chunk.Reads) {
+            if (read.SignalToNoise.Minimum() < settings.MinSNR) readsBelowMinSNR++;
+        }
+        // Only if all reads are below the MinSNR cutoff is this a PoorSNR
+        if (readsBelowMinSNR == chunk.Reads.size()) {
             result.SubreadCounter.ZMWBelowMinSNR += chunk.Reads.size();
             result.PoorSNR += 1;
             return result;
@@ -458,7 +462,8 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                 result.emplace_back(ConsensusType{
                     PolishResult(), chunk.Id, boost::none, poaConsensus, qvs, nPasses, 0, 0,
                     std::vector<double>(1), result.SubreadCounter.ReturnCountsAsArray(),
-                    chunk.SignalToNoise, timer.ElapsedMilliseconds(), chunk.Barcodes});
+                    timer.ElapsedMilliseconds(), boost::make_optional(chunk.Reads[0].SignalToNoise),
+                    chunk.Barcodes});
             } else {
                 const auto mkConsensus = [&](const boost::optional<StrandType> strand) {
                     // give this consensus attempt a name we can refer to
@@ -478,8 +483,7 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                             // skip unadded reads
                             if (readKeys[i] < 0) continue;
 
-                            if (auto mr = ExtractMappedRead(*reads[i], chunk.SignalToNoise,
-                                                            chunk.Chemistry, summaries[readKeys[i]],
+                            if (auto mr = ExtractMappedRead(*reads[i], summaries[readKeys[i]],
                                                             poaConsensus.length(), settings,
                                                             &result.SubreadCounter)) {
                                 // skip reads not belonging to this strand, if we're --byStrand
@@ -572,8 +576,9 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                         result.emplace_back(ConsensusType{
                             polishResult, chunk.Id, strand, std::string(ai), std::move(qvs),
                             nPasses, predAcc, zAvg, zScores,
-                            result.SubreadCounter.ReturnCountsAsArray(), chunk.SignalToNoise,
-                            timer.ElapsedMilliseconds(), chunk.Barcodes});
+                            result.SubreadCounter.ReturnCountsAsArray(),
+                            timer.ElapsedMilliseconds(),
+                            boost::make_optional(chunk.Reads[0].SignalToNoise), chunk.Barcodes});
                     } catch (const std::exception& e) {
                         result.ExceptionThrown += 1;
                         PBLOG_ERROR << "Skipping " << chunkName << ", caught exception: '"

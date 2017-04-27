@@ -28,8 +28,8 @@ pip install --no-deps git+https://github.com/PacificBiosciences/pbcore.git
 # pip install jinja2 networkx xmlbuilder requests fabric
 # pip install --no-deps git+https://github.com/PacificBiosciences/pbsmrtpipe.git
 
-echo "## Fetch unanimity submodules"
-( git submodule update --init --remote )
+#echo "## Fetch unanimity submodules"
+#( git submodule update --init --remote )
 
 echo "# BUILD"
 echo "## Create build directory "

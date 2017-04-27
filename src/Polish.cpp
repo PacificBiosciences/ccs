@@ -65,6 +65,14 @@ PolishConfig::PolishConfig(const size_t iterations, const size_t separation,
 {
 }
 
+RepeatConfig::RepeatConfig(const size_t repeatSize, const size_t elementCount,
+                           const size_t iterations)
+    : MaximumRepeatSize{repeatSize}
+    , MinimumElementCount{elementCount}
+    , MaximumIterations{iterations}
+{
+}
+
 void Mutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const size_t start,
                const size_t end)
 {
@@ -83,16 +91,14 @@ void Mutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const size_
         for (size_t j = 0; j < nbases; ++j) {
             // if it's not a homopolymer insertion, or it's the first base of
             // one..
-            if (bases[j] != last)
-                muts->emplace_back(Mutation(MutationType::INSERTION, i, bases[j]));
+            if (bases[j] != last) muts->emplace_back(Mutation::Insertion(i, bases[j]));
         }
 
         // if we're the first in the homopolymer, we can delete
-        if (curr != last) muts->emplace_back(Mutation(MutationType::DELETION, i));
+        if (curr != last) muts->emplace_back(Mutation::Deletion(i, 1));
 
         for (size_t j = 0; j < nbases; ++j) {
-            if (bases[j] != curr)
-                muts->emplace_back(Mutation(MutationType::SUBSTITUTION, i, bases[j]));
+            if (bases[j] != curr) muts->emplace_back(Mutation::Substitution(i, bases[j]));
         }
 
         last = curr;
@@ -101,7 +107,7 @@ void Mutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const size_
     // if we are at the end, make sure we're not performing a terminal
     // homopolymer insertion
     for (size_t j = 0; j < nbases; ++j)
-        if (bases[j] != last) muts->emplace_back(Mutation(MutationType::INSERTION, end, bases[j]));
+        if (bases[j] != last) muts->emplace_back(Mutation::Insertion(end, bases[j]));
 }
 
 vector<Mutation> Mutations(const AbstractIntegrator& ai, const size_t start, const size_t end)
@@ -114,6 +120,52 @@ vector<Mutation> Mutations(const AbstractIntegrator& ai, const size_t start, con
 vector<Mutation> Mutations(const AbstractIntegrator& ai)
 {
     return Mutations(ai, 0, ai.TemplateLength());
+}
+
+void RepeatMutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const RepeatConfig& cfg,
+                     const size_t start, const size_t end)
+{
+    if (cfg.MaximumRepeatSize < 2 || cfg.MinimumElementCount <= 0) return;
+
+    const string tpl(ai);
+
+    for (size_t repeatSize = 2; repeatSize <= cfg.MaximumRepeatSize; ++repeatSize) {
+        for (size_t i = start; i + repeatSize <= end;) {
+            size_t nElem = 1;
+
+            for (size_t j = i + repeatSize; j + repeatSize <= end; j += repeatSize) {
+                if (tpl.compare(j, repeatSize, tpl, i, repeatSize) == 0)
+                    ++nElem;
+                else
+                    break;
+            }
+
+            if (nElem >= cfg.MinimumElementCount) {
+                muts->emplace_back(Mutation::Insertion(i, tpl.substr(i, repeatSize)));
+                muts->emplace_back(Mutation::Deletion(i, repeatSize));
+            }
+
+            if (nElem > 1)
+                i += repeatSize * (nElem - 1) + 1;
+            else
+                ++i;
+        }
+    }
+
+    sort(muts->begin(), muts->end(), Mutation::SiteComparer);
+}
+
+vector<Mutation> RepeatMutations(const AbstractIntegrator& ai, const RepeatConfig& cfg,
+                                 const size_t start, const size_t end)
+{
+    vector<Mutation> muts;
+    RepeatMutations(&muts, ai, cfg, start, end);
+    return muts;
+}
+
+vector<Mutation> RepeatMutations(const AbstractIntegrator& ai, const RepeatConfig& cfg)
+{
+    return RepeatMutations(ai, cfg, 0, ai.TemplateLength());
 }
 
 vector<Mutation> BestMutations(list<ScoredMutation>* scoredMuts, const size_t separation)
@@ -193,7 +245,7 @@ vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* ce
     return result;
 }
 
-PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
+PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
 {
     vector<Mutation> muts = Mutations(*ai);
     hash<string> hashFn;
@@ -289,6 +341,55 @@ PolishResult Polish(AbstractIntegrator* ai, const PolishConfig& cfg)
     return result;
 }
 
+PolishResult PolishRepeats(AbstractIntegrator* const ai, const RepeatConfig& cfg)
+{
+    PolishResult result;
+
+    const auto diagnostics = [&result](AbstractIntegrator* ai) {
+        result.maxAlphaPopulated.emplace_back(ai->MaxAlphaPopulated());
+        result.maxBetaPopulated.emplace_back(ai->MaxBetaPopulated());
+        result.maxNumFlipFlops.emplace_back(ai->MaxNumFlipFlops());
+    };
+
+    for (size_t i = 0; i < cfg.MaximumIterations; ++i) {
+        const vector<Mutation> muts = RepeatMutations(*ai, cfg);
+        boost::optional<ScoredMutation> bestMut = boost::none;
+        size_t mutationsTested = 0;
+        bool hasNewInvalidEvaluator = false;
+
+        // if an Evaluator exception occurs, restart
+        do {
+            const double LL = ai->LL();
+            hasNewInvalidEvaluator = false;
+            try {
+                for (const auto& mut : muts) {
+                    const double ll = ai->LL(mut);
+                    if (ll > LL && (!bestMut || bestMut->Score < ll)) bestMut = mut.WithScore(ll);
+                }
+            } catch (const Exception::InvalidEvaluatorException& e) {
+                PBLOG_INFO << e.what();
+                hasNewInvalidEvaluator = true;
+                bestMut = boost::none;
+                mutationsTested = 0;
+            }
+        } while (hasNewInvalidEvaluator);
+
+        result.mutationsTested += mutationsTested;
+
+        if (!bestMut) {
+            result.hasConverged = true;
+            break;
+        }
+
+        std::vector<Mutation> mut = {Mutation(*bestMut)};
+        ai->ApplyMutations(&mut);
+        ++result.mutationsApplied;
+        diagnostics(ai);
+    }
+
+    return result;
+}
+
 namespace {  // anonymous
 
 int ProbabilityToQV(double probability)
@@ -377,9 +478,9 @@ QualityValues ConsensusQVs(AbstractIntegrator& ai)
             qualScoreSum += expScore;
             if (m.IsDeletion())
                 delScoreSum += expScore;
-            else if (m.IsInsertion())
+            else if (m.Start() == m.End())
                 insScoreSum += expScore;
-            else if (m.IsSubstitution())
+            else
                 subScoreSum += expScore;
         }
         quals.emplace_back(ScoreSumToQV(qualScoreSum));

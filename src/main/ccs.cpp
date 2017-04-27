@@ -138,9 +138,7 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         if (ccs.Strand && *(ccs.Strand) == StrandType::FORWARD) name << "/fwd";
         if (ccs.Strand && *(ccs.Strand) == StrandType::REVERSE) name << "/rev";
 
-        vector<float> snr = {
-            static_cast<float>(ccs.SignalToNoise.A), static_cast<float>(ccs.SignalToNoise.C),
-            static_cast<float>(ccs.SignalToNoise.G), static_cast<float>(ccs.SignalToNoise.T)};
+        vector<float> snr = *ccs.SignalToNoise;
 
         tags["RG"] = MakeReadGroupId(*(ccs.Id.MovieName), "CCS");
         tags["zm"] = static_cast<int32_t>(ccs.Id.HoleNumber);
@@ -530,7 +528,6 @@ static int Runner(const PacBio::CLI::Results& args)
                 chunk.reset(new vector<Chunk>());
             }
             holeNumber = read.HoleNumber();
-            auto snr = read.SignalToNoise();
 
             // barcodes
             if (read.HasBarcodes() && read.HasBarcodeQuality()) {
@@ -546,10 +543,8 @@ static int Runner(const PacBio::CLI::Results& args)
                 skipZmw = true;
             else {
                 skipZmw = false;
-                string chem(modelSpec.empty() ? read.ReadGroup().SequencingChemistry() : modelSpec);
-                chunk->emplace_back(Chunk{ReadId(movieNames[movieName], *holeNumber),
-                                          vector<Subread>(), SNR(snr[0], snr[1], snr[2], snr[3]),
-                                          move(chem), barcodes});
+                chunk->emplace_back(
+                    Chunk{ReadId(movieNames[movieName], *holeNumber), vector<Subread>(), barcodes});
             }
         }
 
@@ -576,10 +571,12 @@ static int Runner(const PacBio::CLI::Results& args)
         else
             pw = vector<uint8_t>(read.Sequence().length(), 0);
 
-        chunk->back().Reads.emplace_back(Subread{
-            ReadId(movieNames[movieName], *holeNumber,
-                   Interval(read.QueryStart(), read.QueryEnd())),
-            read.Sequence(), move(ipd), move(pw), read.LocalContextFlags(), read.ReadAccuracy()});
+        string chem(modelSpec.empty() ? read.ReadGroup().SequencingChemistry() : modelSpec);
+        chunk->back().Reads.emplace_back(
+            Subread{ReadId(movieNames[movieName], *holeNumber,
+                           Interval(read.QueryStart(), read.QueryEnd())),
+                    read.Sequence(), move(ipd), move(pw), read.LocalContextFlags(),
+                    read.ReadAccuracy(), SNR(read.SignalToNoise()), move(chem)});
     }
 
     // run the remaining tasks

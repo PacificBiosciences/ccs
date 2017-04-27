@@ -121,17 +121,8 @@ double EvaluatorImpl::LL(const Mutation& mut)
 
     if (!atBegin && !atEnd) {
         const size_t extendLength = 2;
-        size_t extendStartCol;
+        const size_t extendStartCol = mutTpl->MutationStart() - mut.IsDeletion();
 
-        if (mut.Type == MutationType::DELETION) {
-            // Future thought: If we revise the semantic of Extra,
-            // we can remove the extend and just link alpha and
-            // beta directly.
-            extendStartCol = mutTpl->MutationStart() - 1;
-        } else {
-            extendStartCol = mutTpl->MutationStart();
-            assert(extendLength <= EXTEND_BUFFER_COLUMNS);
-        }
         extendBuffer_.SetDirection(ScaledMatrix::FORWARD);
         recursor_->ExtendAlpha(*mutTpl, alpha_, extendStartCol, extendBuffer_, extendLength);
         score = recursor_->LinkAlphaBeta(*mutTpl, extendBuffer_, extendLength, beta_, betaLinkCol,

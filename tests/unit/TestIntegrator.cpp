@@ -50,6 +50,7 @@
 
 #include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Mutation.h>
+#include <pacbio/consensus/Polish.h>
 #include <pacbio/data/Sequence.h>
 
 #include "Mutations.h"
@@ -310,6 +311,78 @@ TEST(IntegratorTest, TestIntegratorEquivalenceSP1C1) { IntegratorEquivalence(SP1
 TEST(IntegratorTest, TestIntegratorEquivalenceSP1C1v2) { IntegratorEquivalence(SP1C1v2); }
 // TODO(lhepler): test multiple mutation testing
 
+TEST(IntegratorTest, TestIntegratorEquivalenceDiTriRepeats)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    const size_t nmut = 2;
+    const string mdl = "S/P2-C2";
+
+    //                      1  2  3  41 2 3 4
+    const string tpl = "ACGTCAGCAGCAGCAGAGAGAGTGCA";
+    Integrator ai(tpl, cfg);
+    const auto mutations = RepeatMutations(ai, RepeatConfig());
+    EXPECT_EQ(4, mutations.size());
+
+    size_t nerror = 0;
+
+    for (const auto& mut : mutations) {
+        string read;
+        StrandType strand;
+        vector<Mutation> muts{mut};
+        const string app = ApplyMutations(tpl, &muts);
+        std::tie(read, strand) = Mutate(app, nmut, &gen);
+        const vector<uint8_t> pws = RandomPW(read.length(), &gen);
+
+        Integrator ai1(tpl, cfg);
+        const auto arr1 = ai1.AddRead(
+            MappedRead(MkRead(read, snr, mdl, pws), strand, 0, tpl.length(), true, true));
+        EXPECT_EQ(State::VALID, arr1);
+        if (arr1 != State::VALID) {
+            std::cerr << std::endl << "!! alpha/beta mismatch:" << std::endl;
+            std::cerr << "  " << tpl.length() << ", " << tpl << std::endl;
+            std::cerr << "  " << read.length() << ", " << read << std::endl;
+        }
+
+        Integrator ai2(app, cfg);
+        const auto arr2 = ai2.AddRead(
+            MappedRead(MkRead(read, snr, mdl, pws), strand, 0, app.length(), true, true));
+        EXPECT_EQ(State::VALID, arr2);
+        if (arr2 != State::VALID) {
+            std::cerr << std::endl << "!! alpha/beta mismatch:" << std::endl;
+            std::cerr << "  " << app.length() << ", " << app << std::endl;
+            std::cerr << "  " << read.length() << ", " << read << std::endl;
+        }
+
+        const double exp = ai2.LL();
+        const double obs1 = ai1.LL(mut);
+        EXPECT_EQ(string(ai1), tpl);
+        ai1.ApplyMutations(&muts);
+        const double obs2 = ai1.LL();
+        EXPECT_EQ(string(ai1), app);
+        EXPECT_EQ(string(ai2), app);
+        const double diff1 = std::abs(1.0 - obs1 / exp);
+        const double diff2 = std::abs(1.0 - obs2 / exp);
+        if (diff1 >= prec || diff2 >= prec) {
+            std::cerr << std::endl
+                      << "!! intolerable difference: exp: " << exp << ", obs1: " << obs1
+                      << ", obs2: " << obs2 << std::endl;
+            std::cerr << "  " << mut << std::endl;
+            std::cerr << "  " << tpl.length() << ", " << tpl << std::endl;
+            std::cerr << "  " << app.length() << ", " << app << std::endl;
+            std::cerr << "  " << ai1.TemplateLength() << ", " << string(ai1) << std::endl;
+            std::stringstream result;
+            std::copy(pws.begin(), pws.end(), std::ostream_iterator<int>(result, " "));
+            std::cerr << "  " << read.length() << ", " << read << " - " << result.str()
+                      << std::endl;
+
+            ++nerror;
+        }
+    }
+
+    EXPECT_EQ(0, nerror);
+}
+
 TEST(IntegratorTest, TestP6C4NoCovAgainstCSharpModel)
 {
     const string tpl = "ACGTCGT";
@@ -324,13 +397,13 @@ TEST(IntegratorTest, TestP6C4NoCovAgainstCSharpModel)
     auto score = [&ai](Mutation&& mut) { return ai.LL(mut) - ai.LL(); };
 
     EXPECT_NEAR(-4.74517984808494, ai.LL(), prec);
-    EXPECT_NEAR(4.00250386364592, score(Mutation(MutationType::INSERTION, 4, 'A')), prec);
-    EXPECT_NEAR(-5.19526526492876, score(Mutation(MutationType::SUBSTITUTION, 2, 'C')), prec);
-    EXPECT_NEAR(-4.33430539094949, score(Mutation(MutationType::DELETION, 4)), prec);
-    EXPECT_NEAR(-9.70299447206563, score(Mutation(MutationType::DELETION, 6)), prec);
-    EXPECT_NEAR(-10.5597017942167, score(Mutation(MutationType::DELETION, 0)), prec);
-    EXPECT_NEAR(-0.166992912601578, score(Mutation(MutationType::SUBSTITUTION, 4, 'A')), prec);
-    EXPECT_NEAR(-1.60697112438296, score(Mutation(MutationType::INSERTION, 4, 'G')), prec);
+    EXPECT_NEAR(4.002503863645920, score(Mutation::Insertion(4, 'A')), prec);
+    EXPECT_NEAR(-5.19526526492876, score(Mutation::Substitution(2, 'C')), prec);
+    EXPECT_NEAR(-4.33430539094949, score(Mutation::Deletion(4, 1)), prec);
+    EXPECT_NEAR(-9.70299447206563, score(Mutation::Deletion(6, 1)), prec);
+    EXPECT_NEAR(-10.5597017942167, score(Mutation::Deletion(0, 1)), prec);
+    EXPECT_NEAR(-0.16699291260157, score(Mutation::Substitution(4, 'A')), prec);
+    EXPECT_NEAR(-1.60697112438296, score(Mutation::Insertion(4, 'G')), prec);
 }
 
 TEST(IntegratorTest, TestFailAddRead)

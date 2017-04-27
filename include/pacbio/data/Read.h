@@ -56,6 +56,14 @@ struct SNR
 
     SNR(double a, double c, double g, double t);
     SNR(const std::vector<double>& snrs);
+    SNR(const std::vector<float>& snrs);
+
+    operator std::vector<float>() const
+    {
+        std::vector<float> snr = {static_cast<float>(A), static_cast<float>(C),
+                                  static_cast<float>(G), static_cast<float>(T)};
+        return snr;
+    }
 
     inline double operator[](const size_t i) const
     {
@@ -72,6 +80,8 @@ struct SNR
     }
 
     inline bool operator!=(const SNR& other) const { return !(*this == other); }
+
+    inline double Minimum(void) const { return std::min(std::min(A, C), std::min(G, T)); }
 };
 
 SNR ClampSNR(const SNR& val, const SNR& min, const SNR& max);

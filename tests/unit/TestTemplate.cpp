@@ -71,23 +71,19 @@ bool operator==(const TemplatePosition& lhs, const TemplatePosition& rhs)
 }
 
 bool operator!=(const TemplatePosition& lhs, const TemplatePosition& rhs) { return !(lhs == rhs); }
+
 bool operator==(const AbstractTemplate& lhs, const AbstractTemplate& rhs)
 {
     if (lhs.Length() != rhs.Length()) return false;
 
-    const size_t len = lhs.Length();
-
     // do not test the last base, can vary
-    for (size_t i = 0; i + 1 < len; ++i)
+    for (size_t i = 0; i < lhs.Length(); ++i)
         if (lhs[i] != rhs[i]) return false;
-
-    // check the last base
-    if (len > 0 && lhs[len - 1].Base != rhs[len - 1].Base) return false;
 
     return true;
 }
-
 bool operator!=(const AbstractTemplate& lhs, const AbstractTemplate& rhs) { return !(lhs == rhs); }
+
 #if 0
 ostream& operator<<(ostream& os, const AbstractTemplate& tpl)
 {
@@ -113,28 +109,24 @@ string ApplyMutations(const string& tpl, vector<Mutation>&& muts)
 
 TEST(TemplateTest, ApplyMutations)
 {
-    constexpr auto INS = MutationType::INSERTION;
-    constexpr auto DEL = MutationType::DELETION;
-    constexpr auto SUB = MutationType::SUBSTITUTION;
-
     // insertion
-    EXPECT_EQ("ACGT", ApplyMutations("CGT", {Mutation(INS, 0, 'A')}));
-    EXPECT_EQ("ACGT", ApplyMutations("AGT", {Mutation(INS, 1, 'C')}));
-    EXPECT_EQ("ACGT", ApplyMutations("ACT", {Mutation(INS, 2, 'G')}));
-    EXPECT_EQ("ACGT", ApplyMutations("ACG", {Mutation(INS, 3, 'T')}));
+    EXPECT_EQ("ACGT", ApplyMutations("CGT", {Mutation::Insertion(0, 'A')}));
+    EXPECT_EQ("ACGT", ApplyMutations("AGT", {Mutation::Insertion(1, 'C')}));
+    EXPECT_EQ("ACGT", ApplyMutations("ACT", {Mutation::Insertion(2, 'G')}));
+    EXPECT_EQ("ACGT", ApplyMutations("ACG", {Mutation::Insertion(3, 'T')}));
 
     // substitution
-    EXPECT_EQ("ACGT", ApplyMutations("XCGT", {Mutation(SUB, 0, 'A')}));
-    EXPECT_EQ("ACGT", ApplyMutations("AXGT", {Mutation(SUB, 1, 'C')}));
-    EXPECT_EQ("ACGT", ApplyMutations("ACXT", {Mutation(SUB, 2, 'G')}));
-    EXPECT_EQ("ACGT", ApplyMutations("ACGX", {Mutation(SUB, 3, 'T')}));
+    EXPECT_EQ("ACGT", ApplyMutations("XCGT", {Mutation::Substitution(0, 'A')}));
+    EXPECT_EQ("ACGT", ApplyMutations("AXGT", {Mutation::Substitution(1, 'C')}));
+    EXPECT_EQ("ACGT", ApplyMutations("ACXT", {Mutation::Substitution(2, 'G')}));
+    EXPECT_EQ("ACGT", ApplyMutations("ACGX", {Mutation::Substitution(3, 'T')}));
 
     // deletion
-    EXPECT_EQ("ACGT", ApplyMutations("XACGT", {Mutation(DEL, 0)}));
-    EXPECT_EQ("ACGT", ApplyMutations("AXCGT", {Mutation(DEL, 1)}));
-    EXPECT_EQ("ACGT", ApplyMutations("ACXGT", {Mutation(DEL, 2)}));
-    EXPECT_EQ("ACGT", ApplyMutations("ACGXT", {Mutation(DEL, 3)}));
-    EXPECT_EQ("ACGT", ApplyMutations("ACGTX", {Mutation(DEL, 4)}));
+    EXPECT_EQ("ACGT", ApplyMutations("XACGT", {Mutation::Deletion(0, 1)}));
+    EXPECT_EQ("ACGT", ApplyMutations("AXCGT", {Mutation::Deletion(1, 1)}));
+    EXPECT_EQ("ACGT", ApplyMutations("ACXGT", {Mutation::Deletion(2, 1)}));
+    EXPECT_EQ("ACGT", ApplyMutations("ACGXT", {Mutation::Deletion(3, 1)}));
+    EXPECT_EQ("ACGT", ApplyMutations("ACGTX", {Mutation::Deletion(4, 1)}));
 }
 
 string ToString(const AbstractTemplate& tpl)
@@ -195,11 +187,15 @@ void TemplateEquivalence(const size_t nSamples, const size_t nReads, const size_
             //  the same string as the operation applied to the underlying string
             vector<Mutation> muts{mut};
             const string refMutStr = ApplyMutations(tpl, &muts);  // mutated "Reference" string
-            const auto& refMutTpl = master.Mutate(mut);           // mutated "Reference" template
+            const auto refMutTpl = master.Mutate(mut);            // mutated "Reference" template
+            EXPECT_TRUE(bool(refMutTpl));
             EXPECT_EQ(refMutStr, ToString(*refMutTpl));
             {
-                Template mutated(refMutStr, ModelFactory::Create(mdl, snr));
+                const Template mutated(refMutStr, ModelFactory::Create(mdl, snr));
+                Template applied(tpl, ModelFactory::Create(mdl, snr));
+                applied.ApplyMutations(&muts);
                 EXPECT_EQ(mutated, *refMutTpl);
+                EXPECT_EQ(mutated, applied);
             }
 
             // Applying a mutation to a "subread" Template with Mutate() should produce
@@ -211,7 +207,6 @@ void TemplateEquivalence(const size_t nSamples, const size_t nReads, const size_
                 tie(start, end, pinStart, pinEnd) = coords[j];
                 const string rStr = tpl.substr(start, end - start);  // "Read" string
 
-                vector<Mutation> rMuts;                  // "Read"-space mutations
                 const auto mTpl = rtpls[j].Mutate(mut);  // Mutated "Read" template
                 if (!mTpl) {  // If Mutate() returned None, assert that the mutation is out of range
                     const bool isInRange =
@@ -238,7 +233,9 @@ void TemplateEquivalence(const size_t nSamples, const size_t nReads, const size_
                     EXPECT_FALSE(isInRange);
 
                 } else {  // Otherwise it should be in-range of the "Read" template
-                    rMuts.emplace_back(Mutation(mut.Type, mut.Start() - start, mut.Base));
+                    const auto rMut = mut.Translate(start, end - start);
+                    EXPECT_TRUE(bool(rMut));
+                    vector<Mutation> rMuts{*rMut};                     // "Read"-space mutations
                     const string mStr = ApplyMutations(rStr, &rMuts);  // Mutated "Read" string
 
                     // Print a report if the mutated template isn't correct
@@ -263,11 +260,14 @@ void TemplateEquivalence(const size_t nSamples, const size_t nReads, const size_
 
                     // Finally, we should be able to construct a template
                     //  from the mutated string equivalent to Template::Mutate()
-                    const int off = rMuts.empty() ? 0 : rMuts.back().LengthDiff();
+                    const int off = rMut->LengthDiff();
                     EXPECT_EQ(end - start + off, mTpl->Length());
                     {
                         Template child(mStr, ModelFactory::Create(mdl, snr));
+                        Template applied(rStr, ModelFactory::Create(mdl, snr));
+                        applied.ApplyMutations(&rMuts);
                         EXPECT_EQ(child, *mTpl);
+                        EXPECT_EQ(child, applied);
                     }
                 }
             }
@@ -297,10 +297,10 @@ TEST(TemplateTest, TestPinning)
         Template master(tpl, ModelFactory::Create(mdl, snr), 0, len, true, true);
         EXPECT_EQ(len, master.Length());
         EXPECT_EQ(tpl, ToString(master));
-        master.ApplyMutation(Mutation(MutationType::INSERTION, len, 'A'));
+        master.ApplyMutation(Mutation::Insertion(len, 'A'));
         EXPECT_EQ(len + 1, master.Length());
         EXPECT_EQ(tpl + A, ToString(master));
-        master.ApplyMutation(Mutation(MutationType::INSERTION, 0, 'A'));
+        master.ApplyMutation(Mutation::Insertion(0, 'A'));
         EXPECT_EQ(len + 2, master.Length());
         EXPECT_EQ(A + tpl + A, ToString(master));
     }
@@ -309,11 +309,11 @@ TEST(TemplateTest, TestPinning)
         Template master(tpl, ModelFactory::Create(mdl, snr), 0, len, false, true);
         EXPECT_EQ(len, master.Length());
         EXPECT_EQ(tpl, ToString(master));
-        master.ApplyMutation(Mutation(MutationType::INSERTION, 0, 'A'));
+        master.ApplyMutation(Mutation::Insertion(0, 'A'));
         EXPECT_EQ(len, master.Length());
         EXPECT_EQ(tpl, ToString(master));
         // the coords are now 1..6, so a new terminal mutation is at len+1
-        master.ApplyMutation(Mutation(MutationType::INSERTION, len + 1, 'A'));
+        master.ApplyMutation(Mutation::Insertion(len + 1, 'A'));
         EXPECT_EQ(len + 1, master.Length());
         EXPECT_EQ(tpl + A, ToString(master));
     }
@@ -322,10 +322,10 @@ TEST(TemplateTest, TestPinning)
         Template master(tpl, ModelFactory::Create(mdl, snr), 0, len, true, false);
         EXPECT_EQ(len, master.Length());
         EXPECT_EQ(tpl, ToString(master));
-        master.ApplyMutation(Mutation(MutationType::INSERTION, len, 'A'));
+        master.ApplyMutation(Mutation::Insertion(len, 'A'));
         EXPECT_EQ(len, master.Length());
         EXPECT_EQ(tpl, ToString(master));
-        master.ApplyMutation(Mutation(MutationType::INSERTION, 0, 'A'));
+        master.ApplyMutation(Mutation::Insertion(0, 'A'));
         EXPECT_EQ(len + 1, master.Length());
         EXPECT_EQ(A + tpl, ToString(master));
     }
@@ -334,10 +334,10 @@ TEST(TemplateTest, TestPinning)
         Template master(tpl, ModelFactory::Create(mdl, snr), 0, len, false, false);
         EXPECT_EQ(len, master.Length());
         EXPECT_EQ(tpl, ToString(master));
-        master.ApplyMutation(Mutation(MutationType::INSERTION, len, 'A'));
+        master.ApplyMutation(Mutation::Insertion(len, 'A'));
         EXPECT_EQ(len, master.Length());
         EXPECT_EQ(tpl, ToString(master));
-        master.ApplyMutation(Mutation(MutationType::INSERTION, 0, 'A'));
+        master.ApplyMutation(Mutation::Insertion(0, 'A'));
         EXPECT_EQ(len, master.Length());
         EXPECT_EQ(tpl, ToString(master));
     }
@@ -347,7 +347,7 @@ TEST(TemplateTest, NullTemplate)
 {
     const string tpl = "ACGT";
     const size_t len = tpl.length();
-    const Mutation mut(MutationType::DELETION, 0, '-');
+    const Mutation mut = Mutation::Deletion(0, 1);
 
     ASSERT_THROW(Template("A", ModelFactory::Create(mdl, snr), 0, 1, true, true), TemplateTooSmall);
 
