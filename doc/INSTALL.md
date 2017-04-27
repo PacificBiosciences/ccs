@@ -15,6 +15,9 @@ automates dependency fetching/resolution:
   make pbccs
   ```
 
+# make: *** No rule to make target 'pbccs'.  Stop.
+
+
 ### All tools: manually
 
 Building from scratch requires system-wide installed boost (>=1.58.0), 
