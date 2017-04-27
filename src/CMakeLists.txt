@@ -123,3 +123,7 @@ set(UNY_LIBRARIES
 if (UNY_build_bin)
     create_exe(ccs)
 endif()
+
+if (UNY_build_chimera)
+    create_exe(ChimeraLabeler)
+endif()
