@@ -86,16 +86,16 @@ PacBio::Data::Cigar BandedGlobalAlignBlock::Align(const char* target, const size
     using PacBio::Data::CigarOperation;
     using PacBio::Data::CigarOperationType;
 
+    Cigar cigar;
+
     // ensure horizontal sequence length is >= vertical
     // (simplifies band calculations)
     const size_t qLen = seed.EndPositionV() - seed.BeginPositionV();
     const size_t tLen = seed.EndPositionH() - seed.BeginPositionH();
     if (qLen == 0) {
-        PacBio::Data::Cigar cigar;
         cigar.emplace_back(CigarOperationType::DELETION, tLen);
         return cigar;
     } else if (tLen == 0) {
-        PacBio::Data::Cigar cigar;
         cigar.emplace_back(CigarOperationType::INSERTION, tLen);
         return cigar;
     }
@@ -154,7 +154,6 @@ PacBio::Data::Cigar BandedGlobalAlignBlock::Align(const char* target, const size
         (matchScores_.at(backtraceStartIdx) >= gapScores_.at(backtraceStartIdx) ? MATCH_MATRIX
                                                                                 : GAP_MATRIX);
     size_t iPrev, jPrev, matPrev;
-    Cigar cigar;
 
     // if not beginning at bottom right)
     if (i < seq1Len) {
