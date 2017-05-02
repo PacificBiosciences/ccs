@@ -604,7 +604,7 @@ BandedChainAlignment BandedChainAlignerImpl::Align(const char* target, const siz
     return Result();
 }
 
-void BandedChainAlignerImpl::AlignGapBlockImpl(const size_t hLength, const size_t vLength)
+void BandedChainAlignerImpl::AlignGapBlock(const size_t hLength, const size_t vLength)
 {
     // do 'standard' DP align
     auto cigar = gapBlock_.Align(sequences_.target + gapBlockBeginH_, hLength,
@@ -618,14 +618,14 @@ void BandedChainAlignerImpl::AlignGapBlock(const PacBio::Align::Seed& nextSeed)
 {
     const size_t hLength = nextSeed.BeginPositionH() - gapBlockBeginH_;
     const size_t vLength = nextSeed.BeginPositionV() - gapBlockBeginV_;
-    AlignGapBlockImpl(hLength, vLength);
+    AlignGapBlock(hLength, vLength);
 }
 
 void BandedChainAlignerImpl::AlignLastGapBlock(void)
 {
     const size_t hLength = sequences_.targetLen - gapBlockBeginH_;
     const size_t vLength = sequences_.queryLen - gapBlockBeginV_;
-    AlignGapBlockImpl(hLength, vLength);
+    AlignGapBlock(hLength, vLength);
 }
 
 void BandedChainAlignerImpl::AlignSeedBlock(const PacBio::Align::Seed& seed)

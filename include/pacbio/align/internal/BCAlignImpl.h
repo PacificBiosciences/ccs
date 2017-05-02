@@ -72,7 +72,7 @@ private:
     };
 
     void AlignGapBlock(const PacBio::Align::Seed& nextSeed);
-    void AlignGapBlockImpl(const size_t hLength, const size_t vLength);
+    void AlignGapBlock(const size_t hLength, const size_t vLength);
     void AlignLastGapBlock(void);
 
     void AlignSeedBlock(const PacBio::Align::Seed& seed);
