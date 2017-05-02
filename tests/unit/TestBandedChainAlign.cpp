@@ -35,7 +35,6 @@
 
 // Author: Derek Barnett
 
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <pacbio/align/BandedChainAlignment.h>
