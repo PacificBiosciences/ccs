@@ -60,7 +60,7 @@ public:
                                const size_t queryLen,
                                const std::vector<PacBio::Align::Seed>& seeds);
 
-    void StitchCigars(PacBio::BAM::Cigar* global, PacBio::BAM::Cigar&& local);
+    void StitchCigars(PacBio::Data::Cigar* global, PacBio::Data::Cigar&& local);
 
 private:
     struct Sequences
@@ -89,7 +89,7 @@ private:
 
     StandardGlobalAlignBlock gapBlock_;
     BandedGlobalAlignBlock seedBlock_;
-    PacBio::BAM::Cigar globalCigar_;
+    PacBio::Data::Cigar globalCigar_;
     int64_t globalScore_;
     size_t gapBlockBeginH_;
     size_t gapBlockBeginV_;

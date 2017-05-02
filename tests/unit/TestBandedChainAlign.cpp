@@ -254,7 +254,7 @@ TEST(BandedGlobalAlignBlockTest, Align)
 
 TEST(BandedAligner, CigarStitching)
 {
-    using Cigar = PacBio::BAM::Cigar;
+    using Cigar = PacBio::Data::Cigar;
     using Config = PacBio::Align::BandedChainAlignConfig;
     using Aligner = PacBio::Align::Internal::BandedChainAlignerImpl;
 

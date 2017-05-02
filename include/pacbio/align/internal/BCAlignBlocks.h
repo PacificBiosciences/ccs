@@ -46,8 +46,7 @@
 #include <vector>
 
 #include <pbcopper/align/Seed.h>
-
-#include <pbbam/Cigar.h>
+#include <pbcopper/data/Cigar.h>
 
 #include <pacbio/align/BandedChainAlignment.h>
 
@@ -93,8 +92,8 @@ public:
     /// \param seed     hit region
     /// \return
     ///
-    PacBio::BAM::Cigar Align(const char* target, const size_t tLen, const char* query,
-                             const size_t qLen, PacBio::Align::Seed seed);
+    PacBio::Data::Cigar Align(const char* target, const size_t tLen, const char* query,
+                              const size_t qLen, PacBio::Align::Seed seed);
 
 private:
     std::pair<size_t, size_t> BacktraceStart(const size_t tLen, const size_t qLen) const;
@@ -160,8 +159,8 @@ public:
     /// \param qLen
     /// \return
     ///
-    PacBio::BAM::Cigar Align(const char* target, const size_t tLem, const char* query,
-                             const size_t qLen);
+    PacBio::Data::Cigar Align(const char* target, const size_t tLem, const char* query,
+                              const size_t qLen);
 
 private:
     std::pair<size_t, size_t> BacktraceStart(const size_t tLen, const size_t qLen) const;

@@ -61,7 +61,7 @@ static inline float score(const char t, const char q, const BandedChainAlignConf
     return (t == q ? config.matchScore_ : config.mismatchPenalty_);
 }
 
-static inline void addCigarOp(PacBio::BAM::Cigar* cigar, const PacBio::BAM::CigarOperationType op)
+static inline void addCigarOp(PacBio::Data::Cigar* cigar, const PacBio::Data::CigarOperationType op)
 {
     if (cigar->empty())
         cigar->emplace_back(op, 1);
@@ -78,24 +78,24 @@ static inline void addCigarOp(PacBio::BAM::Cigar* cigar, const PacBio::BAM::Ciga
 // BandedGlobalAlignBlock
 // ------------------------
 
-PacBio::BAM::Cigar BandedGlobalAlignBlock::Align(const char* target, const size_t /*targetLen*/,
-                                                 const char* query, const size_t /*queryLen*/,
-                                                 PacBio::Align::Seed seed)
+PacBio::Data::Cigar BandedGlobalAlignBlock::Align(const char* target, const size_t /*targetLen*/,
+                                                  const char* query, const size_t /*queryLen*/,
+                                                  PacBio::Align::Seed seed)
 {
-    using PacBio::BAM::Cigar;
-    using PacBio::BAM::CigarOperation;
-    using PacBio::BAM::CigarOperationType;
+    using PacBio::Data::Cigar;
+    using PacBio::Data::CigarOperation;
+    using PacBio::Data::CigarOperationType;
 
     // ensure horizontal sequence length is >= vertical
     // (simplifies band calculations)
     const size_t qLen = seed.EndPositionV() - seed.BeginPositionV();
     const size_t tLen = seed.EndPositionH() - seed.BeginPositionH();
     if (qLen == 0) {
-        PacBio::BAM::Cigar cigar;
+        PacBio::Data::Cigar cigar;
         cigar.emplace_back(CigarOperationType::DELETION, tLen);
         return cigar;
     } else if (tLen == 0) {
-        PacBio::BAM::Cigar cigar;
+        PacBio::Data::Cigar cigar;
         cigar.emplace_back(CigarOperationType::INSERTION, tLen);
         return cigar;
     }
@@ -357,12 +357,12 @@ void BandedGlobalAlignBlock::InitScores(const size_t tLen, const size_t qLen, co
 // StandardGlobalAlignBlock
 // --------------------------
 
-PacBio::BAM::Cigar StandardGlobalAlignBlock::Align(const char* target, const size_t tLen,
-                                                   const char* query, const size_t qLen)
+PacBio::Data::Cigar StandardGlobalAlignBlock::Align(const char* target, const size_t tLen,
+                                                    const char* query, const size_t qLen)
 {
-    using PacBio::BAM::Cigar;
-    using PacBio::BAM::CigarOperation;
-    using PacBio::BAM::CigarOperationType;
+    using PacBio::Data::Cigar;
+    using PacBio::Data::CigarOperation;
+    using PacBio::Data::CigarOperationType;
 
     // Initialize space & scores
     Init(tLen, qLen);
@@ -640,7 +640,7 @@ void BandedChainAlignerImpl::AlignSeedBlock(const PacBio::Align::Seed& seed)
 
     // see if we ended with an indel, if so remove that and try re-aligning that
     // portion in the next alignment phase
-    using PacBio::BAM::CigarOperationType;
+    using PacBio::Data::CigarOperationType;
     size_t hOffset = 0;
     size_t vOffset = 0;
     const auto& lastOp = globalCigar_.back();
@@ -713,7 +713,7 @@ BandedChainAlignment BandedChainAlignerImpl::Result(void)
                                 sequences_.query, sequences_.queryLen, globalCigar_};
 }
 
-void BandedChainAlignerImpl::StitchCigars(PacBio::BAM::Cigar* global, PacBio::BAM::Cigar&& local)
+void BandedChainAlignerImpl::StitchCigars(PacBio::Data::Cigar* global, PacBio::Data::Cigar&& local)
 {
     assert(global);
 
@@ -748,10 +748,10 @@ void BandedChainAlignerImpl::StitchCigars(PacBio::BAM::Cigar* global, PacBio::BA
 
 BandedChainAlignment::BandedChainAlignment(const BandedChainAlignConfig& config,
                                            const std::string& target, const std::string& query,
-                                           const PacBio::BAM::Cigar& cigar)
+                                           const PacBio::Data::Cigar& cigar)
     : config_(config), target_{target}, query_{query}, cigar_{cigar}
 {
-    using PacBio::BAM::CigarOperationType;
+    using PacBio::Data::CigarOperationType;
 
     alignedTarget_.reserve(target_.size());
     alignedQuery_.reserve(query_.size());
@@ -795,7 +795,7 @@ BandedChainAlignment::BandedChainAlignment(const BandedChainAlignConfig& config,
 
 BandedChainAlignment::BandedChainAlignment(const BandedChainAlignConfig& config, const char* target,
                                            const size_t targetLen, const char* query,
-                                           const size_t queryLen, const PacBio::BAM::Cigar& cigar)
+                                           const size_t queryLen, const PacBio::Data::Cigar& cigar)
     : BandedChainAlignment(config, std::string{target, targetLen}, std::string{query, queryLen},
                            cigar)
 {
@@ -815,7 +815,7 @@ float BandedChainAlignment::Identity(void) const
 
 int64_t BandedChainAlignment::Score(void) const
 {
-    using PacBio::BAM::CigarOperationType;
+    using PacBio::Data::CigarOperationType;
 
     int64_t score = 0;
     const size_t numOps = cigar_.size();

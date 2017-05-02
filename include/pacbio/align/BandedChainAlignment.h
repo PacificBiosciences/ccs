@@ -45,8 +45,7 @@
 #include <vector>
 
 #include <pbcopper/align/Seed.h>
-
-#include <pbbam/Cigar.h>
+#include <pbcopper/data/Cigar.h>
 
 namespace PacBio {
 namespace Align {
@@ -79,15 +78,15 @@ public:
     std::string query_;
     std::string alignedTarget_;
     std::string alignedQuery_;
-    PacBio::BAM::Cigar cigar_;
+    PacBio::Data::Cigar cigar_;
 
 public:
     BandedChainAlignment(void) = default;
     BandedChainAlignment(const BandedChainAlignConfig& config, const std::string& target,
-                         const std::string& query, const PacBio::BAM::Cigar& cigar);
+                         const std::string& query, const PacBio::Data::Cigar& cigar);
     BandedChainAlignment(const BandedChainAlignConfig& config, const char* target,
                          const size_t targetLen, const char* query, const size_t queryLen,
-                         const PacBio::BAM::Cigar& cigar);
+                         const PacBio::Data::Cigar& cigar);
 
     BandedChainAlignment(const BandedChainAlignment&) = default;
     BandedChainAlignment& operator=(const BandedChainAlignment&) = default;
