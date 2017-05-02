@@ -68,7 +68,7 @@ static inline void addCigarOp(PacBio::Data::Cigar* cigar, const PacBio::Data::Ci
     else {
         auto& lastOp = cigar->back();
         if (lastOp.Type() == op)
-            lastOp.Length(lastOp.Length() + 1);  // extend cuurent CIGAR op length
+            lastOp.Length(lastOp.Length() + 1);  // extend current CIGAR op length
         else
             cigar->emplace_back(op, 1);
     }
