@@ -113,7 +113,7 @@ inline string QVsToASCII(const vector<int>& qvs)
 }
 
 void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results& counts,
-                     const bool richQVs, Results&& results)
+                     const ConsensusSettings& settings, Results&& results)
 {
     counts += results;
 
@@ -147,7 +147,7 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["sn"] = snr;
 
         // deletion, insertion, and substitution QVs
-        if (richQVs) {
+        if (settings.RichQVs) {
             tags["dq"] = QVsToASCII(ccs.QVs.DeletionQVs);
             tags["iq"] = QVsToASCII(ccs.QVs.InsertionQVs);
             tags["sq"] = QVsToASCII(ccs.QVs.SubstitutionQVs);
@@ -177,6 +177,8 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
         tags["ap"] = ccs.polishResult.maxAlphaPopulated;
         tags["bp"] = ccs.polishResult.maxBetaPopulated;
         tags["ff"] = ccs.polishResult.maxNumFlipFlops;
+#else
+        if (settings.ZmwTimings) tags["ms"] = ccs.ElapsedMilliseconds;
 #endif
 
         record.Name(name.str())
@@ -192,10 +194,10 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
 }
 
 Results BamWriterThread(WorkQueue<Results>& queue, unique_ptr<BamWriter>&& ccsBam,
-                        unique_ptr<PbiBuilder>&& ccsPbi, const bool richQVs)
+                        unique_ptr<PbiBuilder>&& ccsPbi, const ConsensusSettings& settings)
 {
     Results counts;
-    while (queue.ConsumeWith(WriteBamRecords, ref(*ccsBam), ref(ccsPbi), ref(counts), richQVs))
+    while (queue.ConsumeWith(WriteBamRecords, ref(*ccsBam), ref(ccsPbi), ref(counts), settings))
         ;
     return counts;
 }
@@ -477,7 +479,7 @@ static int Runner(const PacBio::CLI::Results& args)
         const string pbiFileName = outputFile + ".pbi";
         unique_ptr<PbiBuilder> ccsPbi(new PbiBuilder(pbiFileName));
         writer = async(launch::async, BamWriterThread, ref(workQueue), move(ccsBam), move(ccsPbi),
-                       settings.RichQVs);
+                       settings);
 
         // Always generate pbi file
         FileIndex pbi("PacBio.Index.PacBioIndex", pbiFileName);

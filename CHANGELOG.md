@@ -1,5 +1,11 @@
 # UNANIMITY - CHANGELOG
 
+## [3.1.0]
+
+### Changed
+ - Per ZMW timings are default on in DIAGNOSTICS mode or available via hidden
+   option --zmwTimings. Output is BAM tag ms
+
 ## [3.0.0]
 
 ### Refactored
