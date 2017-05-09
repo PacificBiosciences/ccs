@@ -271,7 +271,7 @@ std::pair<size_t, size_t> BandedGlobalAlignBlock::BacktraceStart(const size_t tL
 
 size_t BandedGlobalAlignBlock::IndexFor(const size_t i, const size_t j) const
 {
-    // if in matrix 
+    // if in matrix
     if (i != std::string::npos && j != std::string::npos) {
         const auto& e = lookup_.at(i);
         // return array index for (i,j) if in-band
@@ -572,6 +572,10 @@ BandedChainAlignment BandedChainAlignerImpl::Align(const char* target, const siz
     const auto band = config_.bandExtend_;
     auto it = FirstAnchorSeed(mergedSeeds, band);
     const auto itEnd = LastAnchorSeed(it, mergedSeeds, targetLen, queryLen, band);
+
+    // "trivially true" given the implementations of seed-finding methods,
+    // but keeping these as a sanity check for main loop preconditions
+    assert(it != mergedSeeds.cend());
     assert(itEnd != mergedSeeds.cend());
 
     // align any leading gap & first seed
@@ -580,7 +584,7 @@ BandedChainAlignment BandedChainAlignerImpl::Align(const char* target, const siz
     AlignSeedBlock(firstSeed);
 
     // if no more seeds
-    if (mergedSeeds.size() == 1 || (it == itEnd && itEnd == mergedSeeds.cend())) {
+    if (mergedSeeds.size() == 1) {
         const auto& seed = *it;
         if (seed.EndPositionH() + band < targetLen || seed.EndPositionV() + band < queryLen) {
             AlignLastGapBlock();
