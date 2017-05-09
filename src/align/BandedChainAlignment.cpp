@@ -272,13 +272,14 @@ std::pair<size_t, size_t> BandedGlobalAlignBlock::BacktraceStart(const size_t tL
 
 size_t BandedGlobalAlignBlock::IndexFor(const size_t i, const size_t j) const
 {
-    // determing array index for (i,j) if in-band
-    if (i != std::string::npos) {
+    // if in matrix 
+    if (i != std::string::npos && j != std::string::npos) {
         const auto& e = lookup_.at(i);
+        // return array index for (i,j) if in-band
         if (j >= e.jBegin_ && j <= e.jEnd_) return e.arrayStart_ + (j - e.jBegin_);
     }
 
-    // (i,j) out of band
+    // (i,j) either out of matrix bounds, or out-of-band
     return std::string::npos;
 }
 
