@@ -197,7 +197,7 @@ TEST(BandedGlobalAlignBlockTest, Basic)
     Config config = Config::Default();
     config.bandExtend_ = 2;
     Block block{config};
-    const auto cigar = block.Align(t, tLen, q, qLen, seed);
+    const auto cigar = block.Align(t, q, seed);
     const auto align = Alignment{config, t, tLen, q, qLen, cigar};
 
     EXPECT_EQ("8=", cigar.ToStdString());
@@ -222,7 +222,7 @@ TEST(BandedGlobalAlignBlockTest, Align)
         const size_t qLen = 4;
         const Seed seed{0, 0, 6, 4};
 
-        const auto cigar = block.Align(t, tLen, q, qLen, seed);
+        const auto cigar = block.Align(t, q, seed);
         const auto align = Alignment{config, t, tLen, q, qLen, cigar};
 
         // ATAGAT
@@ -238,7 +238,7 @@ TEST(BandedGlobalAlignBlockTest, Align)
         const size_t qLen = 16;
         const Seed seed{0, 0, 14, 16};  // no offset
 
-        const auto cigar = block.Align(t, tLen, q, qLen, seed);
+        const auto cigar = block.Align(t, q, seed);
         const auto align = Alignment{config, t, tLen, q, qLen, cigar};
 
         // Expected:

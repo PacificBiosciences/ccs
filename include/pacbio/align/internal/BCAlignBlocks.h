@@ -86,14 +86,11 @@ public:
     /// gap-penalties
     ///
     /// \param target   target sequence
-    /// \param tLen     target sequence length
     /// \param query    query sequence
-    /// \param qLen     query sequence length
     /// \param seed     hit region
     /// \return
     ///
-    PacBio::Data::Cigar Align(const char* target, const size_t tLen, const char* query,
-                              const size_t qLen, PacBio::Align::Seed seed);
+    PacBio::Data::Cigar Align(const char* target, const char* query, PacBio::Align::Seed seed);
 
 private:
     std::pair<size_t, size_t> BacktraceStart(const size_t tLen, const size_t qLen) const;

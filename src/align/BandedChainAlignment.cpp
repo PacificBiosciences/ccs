@@ -78,8 +78,7 @@ static inline void addCigarOp(PacBio::Data::Cigar* cigar, const PacBio::Data::Ci
 // BandedGlobalAlignBlock
 // ------------------------
 
-PacBio::Data::Cigar BandedGlobalAlignBlock::Align(const char* target, const size_t /*targetLen*/,
-                                                  const char* query, const size_t /*queryLen*/,
+PacBio::Data::Cigar BandedGlobalAlignBlock::Align(const char* target, const char* query,
                                                   PacBio::Align::Seed seed)
 {
     using PacBio::Data::Cigar;
@@ -632,8 +631,7 @@ void BandedChainAlignerImpl::AlignLastGapBlock(void)
 void BandedChainAlignerImpl::AlignSeedBlock(const PacBio::Align::Seed& seed)
 {
     // do seed-guided, banded align
-    auto cigar = seedBlock_.Align(sequences_.target, sequences_.targetLen, sequences_.query,
-                                  sequences_.queryLen, seed);
+    auto cigar = seedBlock_.Align(sequences_.target, sequences_.query, seed);
 
     // incorporate alignment into total result
     StitchCigars(&globalCigar_, std::move(cigar));
