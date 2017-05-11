@@ -515,41 +515,20 @@ using SeedsConstIter = SeedVector::const_iterator;
 
 static SeedsConstIter FirstAnchorSeed(const SeedVector& seeds, const size_t band)
 {
-    auto it = seeds.cbegin();
-    auto itEnd = seeds.cend();
-    --itEnd;
-    while (it != itEnd) {
-        ++it;
-        const auto& seed = *(it);
-        if (seed.BeginPositionH() - band <= 0)
-            continue;
-        else if (seed.BeginPositionV() - band <= 0)
-            continue;
-        else {
-            assert(it != seeds.cbegin());
-            return --it;
-        }
-    }
-    return it;
+    return std::find_if(seeds.cbegin(), seeds.cend(), [band](const PacBio::Align::Seed& seed) {
+        return seed.BeginPositionH() >= band && seed.BeginPositionV() >= band;
+    });
 }
 
-static SeedsConstIter LastAnchorSeed(const SeedsConstIter& itBeg, const SeedVector& seeds,
-                                     const size_t tLen, const size_t qLen, const size_t band)
+static SeedsConstIter LastAnchorSeed(const SeedVector& seeds, const size_t tLen, const size_t qLen,
+                                     const size_t band)
 {
-    auto it = seeds.cend();
-    --it;
-    while (it != itBeg) {
-        --it;
-        const auto& seed = *(it);
-        if (seed.EndPositionH() + band >= tLen)
-            continue;
-        else if (seed.EndPositionV() + band >= qLen)
-            continue;
-        else {
-            return it;
-        }
-    }
-    return it;
+    return std::find_if(seeds.crbegin(), seeds.crend(),
+                        [tLen, qLen, band](const PacBio::Align::Seed& seed) {
+                            return seed.EndPositionH() + band < tLen &&
+                                   seed.EndPositionV() + band < qLen;
+                        })
+        .base();  // convert reverse_iterator -> iterator
 }
 
 BandedChainAlignerImpl::BandedChainAlignerImpl(const BandedChainAlignConfig& config)
@@ -561,50 +540,26 @@ BandedChainAlignment BandedChainAlignerImpl::Align(const char* target, const siz
                                                    const char* query, const size_t queryLen,
                                                    const std::vector<PacBio::Align::Seed>& seeds)
 {
-    if (seeds.empty()) return BandedChainAlignment{};  // empty alignment
+    // return empty alignment on empty seeds
+    if (seeds.empty()) return BandedChainAlignment{};
 
+    // reset state & store input sequence info
     Initialize(target, targetLen, query, queryLen);
 
-    // merge seeds
+    // step through merged seeds (all overlaps collapsed)
+    //   1 - align gap region before current seed, and then
+    //   2 - align current seed
     const auto mergedSeeds = MergeSeeds(seeds);
-
-    // find first/last seeds in chain (band-boundaries aware)
     const auto band = config_.bandExtend_;
     auto it = FirstAnchorSeed(mergedSeeds, band);
-    const auto itEnd = LastAnchorSeed(it, mergedSeeds, targetLen, queryLen, band);
-
-    // "trivially true" given the implementations of seed-finding methods,
-    // but keeping these as a sanity check for main loop preconditions
-    assert(it != mergedSeeds.cend());
-    assert(itEnd != mergedSeeds.cend());
-
-    // align any leading gap & first seed
-    const auto& firstSeed = *it;
-    AlignGapBlock(firstSeed);
-    AlignSeedBlock(firstSeed);
-
-    // if no more seeds
-    if (mergedSeeds.size() == 1) {
-        const auto& seed = *it;
-        if (seed.EndPositionH() + band < targetLen || seed.EndPositionV() + band < queryLen) {
-            AlignLastGapBlock();
-        }
-        return Result();
-    }
-
-    // align alternating unguided & seed-guided blocks
-    while (it != itEnd) {
-        ++it;
+    const auto end = LastAnchorSeed(mergedSeeds, targetLen, queryLen, band);
+    for (; it != end; ++it) {
         AlignGapBlock(*it);
         AlignSeedBlock(*it);
     }
 
-    // align last seed (with any gap block before/after) & return alignment
-    ++it;
-    AlignGapBlock(*it);
-    AlignSeedBlock(*it);
+    // finally align last gap region after last seed & return result
     AlignLastGapBlock();
-
     return Result();
 }
 
