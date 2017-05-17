@@ -305,16 +305,25 @@ private:
             size_t maxParent = 0;
 
             // iterate over each non-Chimeric sequence
-            for (size_t i = 0; i < nonChimeras_.size(); ++i) {
+            for (size_t j = 0; j < nonChimeras_.size(); ++j) {
                 // Fill out the alignment with the current parents
-                const auto& query = nonChimeras_[i];
-                const auto al = PacBio::Align::LocalAlign(target, query, alignConfig);
-                score = al.Score();
+                const auto& query = nonChimeras_[j];
+
+                // The underlying SSW impl finds a region in Seq2 to which to align Seq1.
+                // This leads to banding problems and can crash if Seq2 is large or
+                // repetitve, so we need to use the smaller sequence as Seq2 to avoid this.
+                if (target.size() > query.size()) {
+                    const auto al = PacBio::Align::LocalAlign(target, query, alignConfig);
+                    score = al.Score();
+                } else {
+                    const auto al = PacBio::Align::LocalAlign(query, target, alignConfig);
+                    score = al.Score();
+                }
 
                 // If the current parent is better than the best, keep it
                 if (score > maxScore) {
                     maxScore = score;
-                    maxParent = i;
+                    maxParent = j;
                 }
             }
 
