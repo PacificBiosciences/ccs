@@ -81,6 +81,7 @@ const SNR snr(10, 7, 5, 11);
 const string P6C4 = "P6-C4";
 const string SP1C1 = "S/P1-C1.1";
 const string SP1C1v2 = "S/P1-C1.2";
+const string SP2C2v5 = "S/P2-C2/5.0";
 
 const string longTpl =
     "GGGCGGCGACCTCGCGGGTTTTCGCTATTTATGAAAATTTTCCGGTTTAAGGCGTTTCCGTTCTTCTTCGTCAT"
@@ -175,6 +176,16 @@ TEST(IntegratorTest, TestLongTemplateTimingSP1C1v2)
 #endif
 {
     TestTiming(SP1C1v2);
+}
+
+// disable this test under debug builds (which are not fast enough to pass these timings)
+#ifndef NDEBUG
+TEST(IntegratorTest, DISABLED_TestLongTemplateTimingSP2C2v5)
+#else
+TEST(IntegratorTest, TestLongTemplateTimingSP2C2v5)
+#endif
+{
+    TestTiming(SP2C2v5);
 }
 #endif
 
@@ -309,6 +320,7 @@ void IntegratorEquivalence(const string& mdl)
 TEST(IntegratorTest, TestIntegratorEquivalenceP6C4) { IntegratorEquivalence(P6C4); }
 TEST(IntegratorTest, TestIntegratorEquivalenceSP1C1) { IntegratorEquivalence(SP1C1); }
 TEST(IntegratorTest, TestIntegratorEquivalenceSP1C1v2) { IntegratorEquivalence(SP1C1v2); }
+TEST(IntegratorTest, TestIntegratorEquivalenceSP2C2v5) { IntegratorEquivalence(SP2C2v5); }
 // TODO(lhepler): test multiple mutation testing
 
 TEST(IntegratorTest, TestIntegratorEquivalenceDiTriRepeats)
