@@ -291,7 +291,10 @@ private:
         const size_t chunkSize = sequence.size() / chunks;
 
         // Re-used alignment scoring scheme
-        const PacBio::Align::LocalAlignConfig alignConfig{2, 5, 3, 3};
+        // TODO: Fix/Replace crashing SSW impl and revert/re-optimize the alignment params
+        //const PacBio::Align::LocalAlignConfig alignConfig{2, 5, 3, 3};
+        const PacBio::Align::LocalAlignConfig alignConfig =
+            PacBio::Align::LocalAlignConfig::Default();
 
         // Iterate over each chunk, aligning it to all possible parents
         for (size_t i = 0; i < chunks; ++i) {
