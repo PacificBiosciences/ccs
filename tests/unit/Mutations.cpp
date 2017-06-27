@@ -40,7 +40,7 @@ std::vector<PacBio::Consensus::Mutation> Mutations(const std::string& tpl, const
 {
     using namespace PacBio::Consensus;
 
-    constexpr auto bases = "ACGT";
+    constexpr static char bases[] = "ACGT";
 
     std::vector<Mutation> result;
 

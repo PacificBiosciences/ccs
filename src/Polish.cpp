@@ -75,7 +75,7 @@ RepeatConfig::RepeatConfig(const size_t repeatSize, const size_t elementCount,
 
 void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start, const size_t end)
 {
-    constexpr auto bases = "ACGT";
+    constexpr static char bases[] = "ACGT";
     constexpr size_t nbases = 4;
 
     if (start == end) return;
