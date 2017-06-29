@@ -328,6 +328,8 @@ void EvaluatorImpl::MaskIntervals(const size_t radius, const double maxErrRate)
                 throw std::runtime_error("unknown value in Transcript");
         }
     }
+    // terminal insertions
+    if (!errsBySite.empty()) errsBySite.back() += nErr;
 
     if (errsBySite.size() != tpl_->Length()) throw std::runtime_error("|errsBySite| != |tpl|");
 
