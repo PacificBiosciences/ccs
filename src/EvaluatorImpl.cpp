@@ -42,11 +42,13 @@
 #include <boost/optional.hpp>
 
 #include <pacbio/align/LinearAlignment.h>
+#include <pacbio/exception/InvalidEvaluatorException.h>
 
 #include "EvaluatorImpl.h"
 #include "matrix/BasicDenseMatrix.h"
 
 using namespace PacBio::Data;
+using namespace PacBio::Exception;
 
 namespace PacBio {
 namespace Consensus {
@@ -299,6 +301,10 @@ void EvaluatorImpl::MaskIntervals(const size_t radius, const double maxErrRate)
             aln->Justify(LRType::LEFT);
         else if (strand == StrandType::REVERSE)
             aln->Justify(LRType::RIGHT);
+        else if (strand == StrandType::UNMAPPED)
+            throw InvalidEvaluatorException("Unmapped read in interval masking");
+        else
+            throw std::runtime_error("Unknown StrandType");
         return aln;
     };
 
