@@ -47,40 +47,7 @@
 
 namespace PacBio {
 namespace Align {
-
-using namespace PacBio::Data;
-
-std::string PairwiseAlignment::Target() const { return target_; }
-
-std::string PairwiseAlignment::Query() const { return query_; }
-
-float PairwiseAlignment::Accuracy() const { return ((float)(Matches())) / Length(); }
-
-std::string PairwiseAlignment::Transcript() const { return transcript_; }
-
-int PairwiseAlignment::Matches() const
-{
-    return std::count(transcript_.begin(), transcript_.end(), 'M');
-}
-
-int PairwiseAlignment::Errors() const { return Length() - Matches(); }
-
-int PairwiseAlignment::Mismatches() const
-{
-    return std::count(transcript_.begin(), transcript_.end(), 'R');
-}
-
-int PairwiseAlignment::Insertions() const
-{
-    return std::count(transcript_.begin(), transcript_.end(), 'I');
-}
-
-int PairwiseAlignment::Deletions() const
-{
-    return std::count(transcript_.begin(), transcript_.end(), 'D');
-}
-
-namespace {
+namespace internal {
 
 bool Rewrite2L(std::string* target, std::string* query, std::string* transcript, const size_t i)
 {
@@ -193,10 +160,44 @@ bool Rewrite3R(std::string* target, std::string* query, std::string* transcript,
     }
     return false;
 }
+}  // PacBio::Align::internal
+
+using namespace PacBio::Data;
+
+std::string PairwiseAlignment::Target() const { return target_; }
+
+std::string PairwiseAlignment::Query() const { return query_; }
+
+float PairwiseAlignment::Accuracy() const { return ((float)(Matches())) / Length(); }
+
+std::string PairwiseAlignment::Transcript() const { return transcript_; }
+
+int PairwiseAlignment::Matches() const
+{
+    return std::count(transcript_.begin(), transcript_.end(), 'M');
+}
+
+int PairwiseAlignment::Errors() const { return Length() - Matches(); }
+
+int PairwiseAlignment::Mismatches() const
+{
+    return std::count(transcript_.begin(), transcript_.end(), 'R');
+}
+
+int PairwiseAlignment::Insertions() const
+{
+    return std::count(transcript_.begin(), transcript_.end(), 'I');
+}
+
+int PairwiseAlignment::Deletions() const
+{
+    return std::count(transcript_.begin(), transcript_.end(), 'D');
 }
 
 void PairwiseAlignment::Justify(const LRType lr)
 {
+    using namespace PacBio::Align::internal;
+
     const size_t L = Length();
 
     if (L < 2) return;

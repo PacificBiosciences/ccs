@@ -43,6 +43,18 @@
 #include <pacbio/align/LocalAlignment.h>
 #include <pacbio/align/PairwiseAlignment.h>
 
+// fwd declarations
+namespace PacBio {
+namespace Align {
+namespace internal {
+bool Rewrite2L(std::string* target, std::string* query, std::string* transcript, size_t i);
+bool Rewrite3L(std::string* target, std::string* query, std::string* transcript, size_t i);
+bool Rewrite2R(std::string* target, std::string* query, std::string* transcript, size_t i);
+bool Rewrite3R(std::string* target, std::string* query, std::string* transcript, size_t i);
+}
+}
+}
+
 using namespace PacBio::Align;  // NOLINT
 using ::testing::ElementsAreArray;
 
@@ -131,6 +143,216 @@ TEST(PairwiseAlignmentTests, TargetPositionsInQueryTest)
 }
 
 // ---------------- Alignment justification tests ----------------------
+
+TEST(PairwiseAlignmentTests, Rewriting)
+{
+    using namespace PacBio::Align::internal;
+
+    std::string t, q, x;
+    // Rewrite2L
+    {
+        t = "ACCT";
+        q = "ACCT";
+        x = "MMMM";
+        EXPECT_FALSE(Rewrite2L(&t, &q, &x, 1));
+        EXPECT_EQ("ACCT", t);
+        EXPECT_EQ("ACCT", q);
+        EXPECT_EQ("MMMM", x);
+
+        t = "ACGT";
+        q = "AC-T";
+        x = "MMDM";
+        EXPECT_FALSE(Rewrite2L(&t, &q, &x, 1));
+        EXPECT_EQ("ACGT", t);
+        EXPECT_EQ("AC-T", q);
+        EXPECT_EQ("MMDM", x);
+
+        t = "ACCT";
+        q = "A-CT";
+        x = "MDMM";
+        EXPECT_FALSE(Rewrite2L(&t, &q, &x, 1));
+        EXPECT_EQ("ACCT", t);
+        EXPECT_EQ("A-CT", q);
+        EXPECT_EQ("MDMM", x);
+
+        t = "A-CT";
+        q = "ACCT";
+        x = "MIMM";
+        EXPECT_FALSE(Rewrite2L(&t, &q, &x, 1));
+        EXPECT_EQ("A-CT", t);
+        EXPECT_EQ("ACCT", q);
+        EXPECT_EQ("MIMM", x);
+
+        t = "ACCT";
+        q = "AC-T";
+        x = "MMDM";
+        EXPECT_TRUE(Rewrite2L(&t, &q, &x, 1));
+        EXPECT_EQ("ACCT", t);
+        EXPECT_EQ("A-CT", q);
+        EXPECT_EQ("MDMM", x);
+
+        t = "AC-T";
+        q = "ACCT";
+        x = "MMIM";
+        EXPECT_TRUE(Rewrite2L(&t, &q, &x, 1));
+        EXPECT_EQ("A-CT", t);
+        EXPECT_EQ("ACCT", q);
+        EXPECT_EQ("MIMM", x);
+    }
+
+    // Rewrite3L
+    {
+        t = "ACGCT";
+        q = "ACGCT";
+        x = "MMMMM";
+        EXPECT_FALSE(Rewrite3L(&t, &q, &x, 1));
+        EXPECT_EQ("ACGCT", t);
+        EXPECT_EQ("ACGCT", q);
+        EXPECT_EQ("MMMMM", x);
+
+        t = "ACGGT";
+        q = "AC--T";
+        x = "MMDDM";
+        EXPECT_FALSE(Rewrite3L(&t, &q, &x, 1));
+        EXPECT_EQ("ACGGT", t);
+        EXPECT_EQ("AC--T", q);
+        EXPECT_EQ("MMDDM", x);
+
+        t = "ACGCT";
+        q = "A--CT";
+        x = "MDDMM";
+        EXPECT_FALSE(Rewrite3L(&t, &q, &x, 1));
+        EXPECT_EQ("ACGCT", t);
+        EXPECT_EQ("A--CT", q);
+        EXPECT_EQ("MDDMM", x);
+
+        t = "A--CT";
+        q = "ACGCT";
+        x = "MIIMM";
+        EXPECT_FALSE(Rewrite3L(&t, &q, &x, 1));
+        EXPECT_EQ("A--CT", t);
+        EXPECT_EQ("ACGCT", q);
+        EXPECT_EQ("MIIMM", x);
+
+        t = "ACGCT";
+        q = "AC--T";
+        x = "MMDDM";
+        EXPECT_TRUE(Rewrite3L(&t, &q, &x, 1));
+        EXPECT_EQ("ACGCT", t);
+        EXPECT_EQ("A--CT", q);
+        EXPECT_EQ("MDDMM", x);
+
+        t = "AC--T";
+        q = "ACGCT";
+        x = "MMIIM";
+        EXPECT_TRUE(Rewrite3L(&t, &q, &x, 1));
+        EXPECT_EQ("A--CT", t);
+        EXPECT_EQ("ACGCT", q);
+        EXPECT_EQ("MIIMM", x);
+    }
+
+    // Rewrite2R
+    {
+        t = "ACCT";
+        q = "ACCT";
+        x = "MMMM";
+        EXPECT_FALSE(Rewrite2R(&t, &q, &x, 1));
+        EXPECT_EQ("ACCT", t);
+        EXPECT_EQ("ACCT", q);
+        EXPECT_EQ("MMMM", x);
+
+        t = "ACGT";
+        q = "AC-T";
+        x = "MMDM";
+        EXPECT_FALSE(Rewrite2R(&t, &q, &x, 1));
+        EXPECT_EQ("ACGT", t);
+        EXPECT_EQ("AC-T", q);
+        EXPECT_EQ("MMDM", x);
+
+        t = "ACCT";
+        q = "AC-T";
+        x = "MMDM";
+        EXPECT_FALSE(Rewrite2R(&t, &q, &x, 1));
+        EXPECT_EQ("ACCT", t);
+        EXPECT_EQ("AC-T", q);
+        EXPECT_EQ("MMDM", x);
+
+        t = "AC-T";
+        q = "ACCT";
+        x = "MMIM";
+        EXPECT_FALSE(Rewrite2R(&t, &q, &x, 1));
+        EXPECT_EQ("AC-T", t);
+        EXPECT_EQ("ACCT", q);
+        EXPECT_EQ("MMIM", x);
+
+        t = "ACCT";
+        q = "A-CT";
+        x = "MDMM";
+        EXPECT_TRUE(Rewrite2R(&t, &q, &x, 1));
+        EXPECT_EQ("ACCT", t);
+        EXPECT_EQ("AC-T", q);
+        EXPECT_EQ("MMDM", x);
+
+        t = "A-CT";
+        q = "ACCT";
+        x = "MIMM";
+        EXPECT_TRUE(Rewrite2R(&t, &q, &x, 1));
+        EXPECT_EQ("AC-T", t);
+        EXPECT_EQ("ACCT", q);
+        EXPECT_EQ("MMIM", x);
+    }
+
+    // Rewrite3R
+    {
+        t = "ACGCT";
+        q = "ACGCT";
+        x = "MMMMM";
+        EXPECT_FALSE(Rewrite3R(&t, &q, &x, 1));
+        EXPECT_EQ("ACGCT", t);
+        EXPECT_EQ("ACGCT", q);
+        EXPECT_EQ("MMMMM", x);
+
+        t = "ACGGT";
+        q = "AC--T";
+        x = "MMDDM";
+        EXPECT_FALSE(Rewrite3R(&t, &q, &x, 1));
+        EXPECT_EQ("ACGGT", t);
+        EXPECT_EQ("AC--T", q);
+        EXPECT_EQ("MMDDM", x);
+
+        t = "ACGCT";
+        q = "AC--T";
+        x = "MMDDM";
+        EXPECT_FALSE(Rewrite3R(&t, &q, &x, 1));
+        EXPECT_EQ("ACGCT", t);
+        EXPECT_EQ("AC--T", q);
+        EXPECT_EQ("MMDDM", x);
+
+        t = "AC--T";
+        q = "ACGCT";
+        x = "MMIIM";
+        EXPECT_FALSE(Rewrite3R(&t, &q, &x, 1));
+        EXPECT_EQ("AC--T", t);
+        EXPECT_EQ("ACGCT", q);
+        EXPECT_EQ("MMIIM", x);
+
+        t = "ACGCT";
+        q = "A--CT";
+        x = "MDDMM";
+        EXPECT_TRUE(Rewrite3R(&t, &q, &x, 1));
+        EXPECT_EQ("ACGCT", t);
+        EXPECT_EQ("AC--T", q);
+        EXPECT_EQ("MMDDM", x);
+
+        t = "A--CT";
+        q = "ACGCT";
+        x = "MIIMM";
+        EXPECT_TRUE(Rewrite3R(&t, &q, &x, 1));
+        EXPECT_EQ("AC--T", t);
+        EXPECT_EQ("ACGCT", q);
+        EXPECT_EQ("MMIIM", x);
+    }
+}
 
 TEST(PairwiseAlignmentTests, JustifyTest)
 {
