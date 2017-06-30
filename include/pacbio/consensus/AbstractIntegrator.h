@@ -84,6 +84,9 @@ public:
     std::vector<double> ZScores() const;
 
     std::vector<std::pair<double, double>> NormalParameters() const;
+    /// Masks intervals of the template for each read where the observed error rate is
+    /// greater than maxErrRate in 1+2*radius template bases
+    void MaskIntervals(size_t radius, double maxErrRate);
 
     virtual void ApplyMutation(const Mutation& mut) = 0;
     virtual void ApplyMutations(std::vector<Mutation>* muts) = 0;

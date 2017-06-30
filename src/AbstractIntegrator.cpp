@@ -203,6 +203,12 @@ std::vector<std::pair<double, double>> AbstractIntegrator::NormalParameters() co
         [](const Evaluator& eval) { return eval.NormalParameters(); });
 }
 
+void AbstractIntegrator::MaskIntervals(const size_t radius, const double maxErrRate)
+{
+    for (auto& eval : evals_)
+        if (eval) eval.MaskIntervals(radius, maxErrRate);
+}
+
 std::vector<Data::State> AbstractIntegrator::States() const
 {
     return TransformEvaluators<Data::State>([](const Evaluator& eval) { return eval.Status(); });

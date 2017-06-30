@@ -54,12 +54,14 @@ namespace std
     %template(IntVector) std::vector<int>;
     %template(StringVector) std::vector<string>;
     %template(Uint8Vector) std::vector<uint8_t>;
+    %template(DoubleVectorVector) std::vector<std::vector<double>>;
 
     %apply const vector<double>& {vector<double>*};
     %apply const vector<pair<int, int> >& {vector<pair<int, int> >*};
     %apply const vector<int>& {vector<int>*};
     %apply const vector<string>& {vector<string>*};
     %apply const vector<uint8_t>& {vector<uint8_t>*};
+    %apply const vector<vector<double>>& {vector<vector<double>>*};
 }
 
 %define py_tp_str(cls)
