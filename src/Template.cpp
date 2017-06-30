@@ -341,6 +341,7 @@ double Template::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr
 // MutatedTemplate Function Definitions
 //
 
+// TODO(lhepler): this is most certainly busted for a deletion at 0 w/o pinStart_
 MutatedTemplate::MutatedTemplate(const AbstractTemplate& master, const Mutation& mut)
     : AbstractTemplate(master.start_, master.end_, master.pinStart_, master.pinEnd_)
     , master_{master}
@@ -400,6 +401,8 @@ bool MutatedTemplate::ApplyMutation(const Mutation& mut)
 }
 
 size_t MutatedTemplate::Length() const { return end_ - start_ + mutOff_; }
+
+MutationType MutatedTemplate::Type() const { return mut_.Type(); }
 
 size_t MutatedTemplate::MutationStart() const { return mut_.Start(); }
 

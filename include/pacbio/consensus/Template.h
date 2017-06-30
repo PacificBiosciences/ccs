@@ -65,6 +65,7 @@ class AbstractTemplate
 public:
     virtual ~AbstractTemplate();
 
+    size_t Start() const { return start_; }
     virtual size_t Length() const = 0;
     virtual const TemplatePosition& operator[](size_t i) const = 0;
 
