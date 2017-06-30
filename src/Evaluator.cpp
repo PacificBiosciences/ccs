@@ -158,6 +158,11 @@ double Evaluator::ZScore() const
     return NEG_DBL_INF;
 }
 
+void Evaluator::MaskIntervals(const size_t radius, const double maxErrRate)
+{
+    if (IsValid()) return impl_->MaskIntervals(radius, maxErrRate);
+}
+
 int Evaluator::NumFlipFlops() const
 {
     if (IsValid()) return impl_->NumFlipFlops();

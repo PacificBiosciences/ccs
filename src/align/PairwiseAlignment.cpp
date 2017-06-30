@@ -47,6 +47,120 @@
 
 namespace PacBio {
 namespace Align {
+namespace internal {
+
+bool Rewrite2L(std::string* target, std::string* query, std::string* transcript, const size_t i)
+{
+    char& t0 = target->at(i);
+    char& t1 = target->at(i + 1);
+    char& q0 = query->at(i);
+    char& q1 = query->at(i + 1);
+    char& x0 = transcript->at(i);
+    char& x1 = transcript->at(i + 1);
+
+    // t: XX    XX
+    //    |* -> *|
+    // q: X-    -X
+    if (q1 == '-' && t0 == t1 && t1 == q0) {
+        std::swap(q0, q1);
+        std::swap(x0, x1);
+        return true;
+    }
+    // t: X-    -X
+    //    |* -> *|
+    // q: XX    XX
+    else if (t1 == '-' && q0 == q1 && q1 == t0) {
+        std::swap(t0, t1);
+        std::swap(x0, x1);
+        return true;
+    }
+    return false;
+}
+
+bool Rewrite3L(std::string* target, std::string* query, std::string* transcript, const size_t i)
+{
+    char& t0 = target->at(i);
+    char& t2 = target->at(i + 2);
+    char& q0 = query->at(i);
+    char& q2 = query->at(i + 2);
+    char& x0 = transcript->at(i);
+    char& x2 = transcript->at(i + 2);
+
+    // t: X--    --X
+    //    |** -> **|
+    // q: XYX    XYX
+    if (t0 == q2 && transcript->substr(i, 3) == "MII") {
+        std::swap(t0, t2);
+        std::swap(x0, x2);
+        return true;
+    }
+    // t: XYX    XYX
+    //    |** -> **|
+    // q: X--    --X
+    else if (q0 == t2 && transcript->substr(i, 3) == "MDD") {
+        std::swap(q0, q2);
+        std::swap(x0, x2);
+        return true;
+    }
+    return false;
+}
+
+bool Rewrite2R(std::string* target, std::string* query, std::string* transcript, const size_t i)
+{
+    char& t0 = target->at(i);
+    char& t1 = target->at(i + 1);
+    char& q0 = query->at(i);
+    char& q1 = query->at(i + 1);
+    char& x0 = transcript->at(i);
+    char& x1 = transcript->at(i + 1);
+
+    // t: XX    XX
+    //    *| -> |*
+    // q: -X    X-
+    if (q0 == '-' && t0 == t1 && t1 == q1) {
+        std::swap(q0, q1);
+        std::swap(x0, x1);
+        return true;
+    }
+    // t: -X    X-
+    //    *| -> |*
+    // q: XX    XX
+    else if (t0 == '-' && q0 == q1 && q1 == t1) {
+        std::swap(t0, t1);
+        std::swap(x0, x1);
+        return true;
+    }
+    return false;
+}
+
+bool Rewrite3R(std::string* target, std::string* query, std::string* transcript, const size_t i)
+{
+    char& t0 = target->at(i);
+    char& t2 = target->at(i + 2);
+    char& q0 = query->at(i);
+    char& q2 = query->at(i + 2);
+    char& x0 = transcript->at(i);
+    char& x2 = transcript->at(i + 2);
+
+    // t: --X    X--
+    //    **| -> |**
+    // q: XYX    XYX
+    if (q0 == t2 && transcript->substr(i, 3) == "IIM") {
+        std::swap(t0, t2);
+        std::swap(x0, x2);
+        return true;
+    }
+    // t: XYX    XYX
+    //    **| -> |**
+    // q: --X    X--
+    else if (t0 == q2 && transcript->substr(i, 3) == "DDM") {
+        std::swap(q0, q2);
+        std::swap(x0, x2);
+        return true;
+    }
+    return false;
+}
+}  // PacBio::Align::internal
 
 using namespace PacBio::Data;
 
@@ -78,6 +192,33 @@ int PairwiseAlignment::Insertions() const
 int PairwiseAlignment::Deletions() const
 {
     return std::count(transcript_.begin(), transcript_.end(), 'D');
+}
+
+void PairwiseAlignment::Justify(const LRType lr)
+{
+    using namespace PacBio::Align::internal;
+
+    const size_t L = Length();
+
+    if (L < 2) return;
+
+    while (true) {
+        bool goAgain = false;
+        if (lr == LRType::LEFT) {
+            goAgain |= Rewrite2L(&target_, &query_, &transcript_, L - 2);
+            for (size_t i = L - 2; i > 0; --i) {
+                goAgain |= Rewrite2L(&target_, &query_, &transcript_, i - 1);
+                goAgain |= Rewrite3L(&target_, &query_, &transcript_, i - 1);
+            }
+        } else {
+            for (size_t i = 0; i < L - 2; ++i) {
+                goAgain |= Rewrite2R(&target_, &query_, &transcript_, i);
+                goAgain |= Rewrite3R(&target_, &query_, &transcript_, i);
+            }
+            goAgain |= Rewrite2R(&target_, &query_, &transcript_, L - 2);
+        }
+        if (!goAgain) break;
+    }
 }
 
 int PairwiseAlignment::Length() const { return target_.length(); }

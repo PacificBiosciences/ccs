@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,71 +33,55 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#pragma once
+// Author: Lance Hepler
 
-#include <memory>
-#include <utility>
-#include <vector>
-
-#include <pacbio/consensus/Evaluator.h>
 #include <pacbio/consensus/IntervalMask.h>
-#include <pacbio/consensus/MatrixViewConvention.h>
-#include <pacbio/consensus/Template.h>
-#include <pacbio/data/Read.h>
-
-#include "Recursor.h"
-#include "matrix/ScaledMatrix.h"
 
 namespace PacBio {
 namespace Consensus {
+namespace {
 
-class EvaluatorImpl
+size_t SafeAdd(size_t a, int b)
 {
-public:
-    EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const PacBio::Data::MappedRead& mr,
-                  double scoreDiff = 12.5);
+    if (b < 0 && static_cast<size_t>(-b) >= a) return static_cast<size_t>(0);
+    return a + b;
+}
+}
 
-    std::string ReadName() const;
+bool IntervalMask::Contains(const Mutation& mut)
+{
+    if (mut.Type() == MutationType::INSERTION)
+        return IntervalTree::Contains(mut.End()) &&
+               (mut.End() == 0 || IntervalTree::Contains(mut.End() - 1));
+    return IntervalTree::Contains(mut.Start());
+}
 
-    double LL(const Mutation& mut);
-    double LL() const;
-
-    // Interval masking methods
-    void MaskIntervals(size_t radius, double maxErrRate);
-
-    // TODO: Comments are nice!  Explain what this is about---ZScore calculation?
-    std::pair<double, double> NormalParameters() const;
-
-    double ZScore() const;
-
-    bool ApplyMutation(const Mutation& mut);
-    bool ApplyMutations(std::vector<Mutation>* muts);
-
-    int NumFlipFlops() const { return numFlipFlops_; }
-
-public:
-    const AbstractMatrix& Alpha() const;
-    const AbstractMatrix& Beta() const;
-
-public:
-    const AbstractMatrix* AlphaView(MatrixViewConvention c) const;
-    const AbstractMatrix* BetaView(MatrixViewConvention c) const;
-
-private:
-    void Recalculate();
-
-private:
-    std::unique_ptr<AbstractTemplate> tpl_;
-    std::unique_ptr<AbstractRecursor> recursor_;
-    IntervalMask mask_;
-    ScaledMatrix alpha_;
-    ScaledMatrix beta_;
-    ScaledMatrix extendBuffer_;
-
-    int numFlipFlops_;
-
-    friend class Evaluator;
-};
-
-}  // namespace Consensus
-}  // namespace PacBio
+void IntervalMask::Mutate(const std::vector<Mutation>& muts)
+{
+    if (muts.empty()) return;
+    // iterate through each interval in the mask, and:
+    //   1) deplete mutations (if any) to the left of the interval, updating offL
+    //   2) deplete mutations (if any) within the interval, updating offR
+    //   3) add the interval to the new mask, upating (L, R) w/ offL and offR respectively
+    IntervalMask newMask;
+    auto m = muts.begin();
+    int offL = 0;
+    for (auto ab = begin(); ab != end(); ++ab) {
+        //   if the mutation's right is before the interval's left, update offL
+        for (; m != muts.end() && m->End() <= ab->Left(); ++m)
+            offL += m->LengthDiff();
+        int offR = offL;
+        // if the mutation's left is within the interval, then update offR
+        for (; m != muts.end() && ab->Contains(m->Start()); ++m)
+            offR += m->LengthDiff();
+        size_t l = SafeAdd(ab->Left(), offL);
+        size_t r = SafeAdd(ab->Right(), offR);
+        // if the interval has a span, add it
+        if (l < r) newMask.Insert({l, r});
+        // offR is the new offL
+        offL = offR;
+    }
+    (*this) = std::move(newMask);
+}
+}
+}

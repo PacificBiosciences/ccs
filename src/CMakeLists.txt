@@ -56,6 +56,7 @@ add_library(cc2 STATIC
     Evaluator.cpp
     EvaluatorImpl.cpp
     Integrator.cpp
+    IntervalMask.cpp
     ModelConfig.cpp
     ModelFactory.cpp
     ModelFormFactory.cpp

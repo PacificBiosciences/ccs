@@ -125,6 +125,8 @@ public:
     /// Returns {-INF, -INF} if deactivated.
     std::pair<double, double> NormalParameters() const;
 
+    void MaskIntervals(size_t radius, double maxErrRate);
+
     /// Returns the ZScore of this Evaluator's LL, given all Evaluators of
     /// the template.
     /// Returns -INF if deactivated.
