@@ -123,6 +123,7 @@ class MyBuildExt(build_ext):
     def build_extension(self, ext):
         destDir = os.path.dirname(self.get_ext_fullpath(ext.name))
         thisDir = os.path.dirname(os.path.realpath(__file__))
+        os.environ['CCACHE_BASEDIR'] = thisDir
         try:
             os.makedirs(self.build_temp)
             os.makedirs(destDir)

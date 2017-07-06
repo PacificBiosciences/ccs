@@ -2,9 +2,9 @@
 # CMake build script for the UNANIMITY library
 ##############################################
 
+cmake_minimum_required(VERSION 3.2)
 cmake_policy(SET CMP0048 NEW)
 project(UNANIMITY VERSION 3.0.0 LANGUAGES CXX C)
-cmake_minimum_required(VERSION 3.2)
 
 set(ROOT_PROJECT_NAME ${PROJECT_NAME} CACHE STRING "root project name")
 

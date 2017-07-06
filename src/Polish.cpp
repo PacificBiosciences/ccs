@@ -48,7 +48,7 @@
 
 #include <pbcopper/logging/Logging.h>
 
-#include <pacbio/consensus/AbstractIntegrator.h>
+#include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Polish.h>
 #include <pacbio/exception/InvalidEvaluatorException.h>
 
@@ -73,10 +73,9 @@ RepeatConfig::RepeatConfig(const size_t repeatSize, const size_t elementCount,
 {
 }
 
-void Mutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const size_t start,
-               const size_t end)
+void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start, const size_t end)
 {
-    constexpr auto bases = "ACGT";
+    constexpr static char bases[] = "ACGT";
     constexpr size_t nbases = 4;
 
     if (start == end) return;
@@ -110,19 +109,16 @@ void Mutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const size_
         if (bases[j] != last) muts->emplace_back(Mutation::Insertion(end, bases[j]));
 }
 
-vector<Mutation> Mutations(const AbstractIntegrator& ai, const size_t start, const size_t end)
+vector<Mutation> Mutations(const Integrator& ai, const size_t start, const size_t end)
 {
     vector<Mutation> muts;
     Mutations(&muts, ai, start, end);
     return muts;
 }
 
-vector<Mutation> Mutations(const AbstractIntegrator& ai)
-{
-    return Mutations(ai, 0, ai.TemplateLength());
-}
+vector<Mutation> Mutations(const Integrator& ai) { return Mutations(ai, 0, ai.TemplateLength()); }
 
-void RepeatMutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const RepeatConfig& cfg,
+void RepeatMutations(vector<Mutation>* muts, const Integrator& ai, const RepeatConfig& cfg,
                      const size_t start, const size_t end)
 {
     if (cfg.MaximumRepeatSize < 2 || cfg.MinimumElementCount <= 0) return;
@@ -155,15 +151,15 @@ void RepeatMutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const
     sort(muts->begin(), muts->end(), Mutation::SiteComparer);
 }
 
-vector<Mutation> RepeatMutations(const AbstractIntegrator& ai, const RepeatConfig& cfg,
-                                 const size_t start, const size_t end)
+vector<Mutation> RepeatMutations(const Integrator& ai, const RepeatConfig& cfg, const size_t start,
+                                 const size_t end)
 {
     vector<Mutation> muts;
     RepeatMutations(&muts, ai, cfg, start, end);
     return muts;
 }
 
-vector<Mutation> RepeatMutations(const AbstractIntegrator& ai, const RepeatConfig& cfg)
+vector<Mutation> RepeatMutations(const Integrator& ai, const RepeatConfig& cfg)
 {
     return RepeatMutations(ai, cfg, 0, ai.TemplateLength());
 }
@@ -192,7 +188,7 @@ vector<Mutation> BestMutations(list<ScoredMutation>* scoredMuts, const size_t se
 }
 
 vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* centers,
-                                 const AbstractIntegrator& ai, const size_t neighborhood)
+                                 const Integrator& ai, const size_t neighborhood)
 {
     const size_t len = ai.TemplateLength();
     const auto clamp = [len](const int i) { return max(0, min<int>(len, i)); };
@@ -245,7 +241,7 @@ vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* ce
     return result;
 }
 
-PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
+PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
 {
     vector<Mutation> muts = Mutations(*ai);
     hash<string> hashFn;
@@ -299,7 +295,7 @@ PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
 
         const size_t newTpl = hashFn(ApplyMutations(*ai, &muts));
 
-        const auto diagnostics = [&result](AbstractIntegrator* ai) {
+        const auto diagnostics = [&result](Integrator* ai) {
             result.maxAlphaPopulated.emplace_back(ai->MaxAlphaPopulated());
             result.maxBetaPopulated.emplace_back(ai->MaxBetaPopulated());
             result.maxNumFlipFlops.emplace_back(ai->MaxNumFlipFlops());
@@ -341,11 +337,11 @@ PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
     return result;
 }
 
-PolishResult PolishRepeats(AbstractIntegrator* const ai, const RepeatConfig& cfg)
+PolishResult PolishRepeats(Integrator* const ai, const RepeatConfig& cfg)
 {
     PolishResult result;
 
-    const auto diagnostics = [&result](AbstractIntegrator* ai) {
+    const auto diagnostics = [&result](Integrator* ai) {
         result.maxAlphaPopulated.emplace_back(ai->MaxAlphaPopulated());
         result.maxBetaPopulated.emplace_back(ai->MaxBetaPopulated());
         result.maxNumFlipFlops.emplace_back(ai->MaxNumFlipFlops());
@@ -409,7 +405,7 @@ inline int ScoreSumToQV(const double scoreSum)
 
 }  // anonymous namespace
 
-vector<int> ConsensusQualities(AbstractIntegrator& ai)
+vector<int> ConsensusQualities(Integrator& ai)
 {
     vector<int> quals;
     quals.reserve(ai.TemplateLength());
@@ -442,7 +438,7 @@ vector<int> ConsensusQualities(AbstractIntegrator& ai)
     return quals;
 }
 
-QualityValues ConsensusQVs(AbstractIntegrator& ai)
+QualityValues ConsensusQVs(Integrator& ai)
 {
     const size_t len = ai.TemplateLength();
     vector<int> quals, delQVs, insQVs, subQVs;

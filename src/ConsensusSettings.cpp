@@ -184,6 +184,15 @@ const PlainOption ModelSpec{
     "Name of chemistry or model to use, overriding default selection.",
     CLI::Option::StringType("")
 };
+const PlainOption ZmwTimings{
+    "zmw_timings",
+    { "zmwTimings" },
+    "Measure ZMW Timings",
+    "Measure individual ZMW wall clock timings.",
+    CLI::Option::BoolType(),
+    JSON::Json(nullptr),
+    CLI::OptionFlags::HIDE_FROM_HELP
+};
 // clang-format on
 }  // namespace OptionNames
 
@@ -199,7 +208,6 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
     , MinPredictedAccuracy(options[OptionNames::MinPredictedAccuracy])
     , MinReadScore(options[OptionNames::MinReadScore])
     , MinSNR(options[OptionNames::MinSnr])
-
     , MinZScore(options[OptionNames::MinZScore] == nullptr
                     ? NAN
                     : static_cast<float>(options[OptionNames::MinZScore]))
@@ -209,6 +217,7 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
     , ReportFile(std::forward<std::string>(options[OptionNames::ReportFile]))
     , RichQVs(options[OptionNames::RichQVs])
     , WlSpec(std::forward<std::string>(options[OptionNames::Zmws]))
+    , ZmwTimings(options[OptionNames::ZmwTimings])
 {
     // N.B. If the user somehow specifies both polish and noPolish, noPolish wins.
     // Unfortunately there's no sensible way to check for this condition and error out.
@@ -277,7 +286,8 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
         OptionNames::ModelPath,
         OptionNames::ModelSpec,
         OptionNames::NumThreads,
-        OptionNames::LogFile
+        OptionNames::LogFile,
+        OptionNames::ZmwTimings
     });
 
     const std::string id = "pbccs.tasks.ccs";
