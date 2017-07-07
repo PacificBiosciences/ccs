@@ -54,7 +54,7 @@ namespace Consensus {
 namespace {
 
 template <typename T>
-inline T clip(const T val, const T range[2])
+inline T clip(const T val, const T (&range)[2])
 {
     return std::max(range[0], std::min(val, range[1]));
 }
