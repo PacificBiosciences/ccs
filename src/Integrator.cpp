@@ -74,10 +74,6 @@ Integrator::Integrator(const std::string& tpl, const IntegratorConfig& cfg)
 {
 }
 
-Integrator::Integrator(Integrator&& ai) : cfg_{ai.cfg_}, evals_{std::move(ai.evals_)} {}
-
-Integrator::~Integrator() {}
-
 Data::State Integrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
                                 const Data::MappedRead& read)
 {
