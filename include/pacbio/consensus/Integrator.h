@@ -74,10 +74,10 @@ public:
     /// \param cfg    The configuration used to initialize the Integrator.
     Integrator(const std::string& tpl, const IntegratorConfig& cfg);
 
-    Integrator(Integrator&&);
+    Integrator(Integrator&&) = default;
 
 public:
-    virtual ~Integrator();
+    virtual ~Integrator() = default;
 
     virtual size_t TemplateLength() const;
 
