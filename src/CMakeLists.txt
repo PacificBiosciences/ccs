@@ -110,7 +110,7 @@ set(UNY_LIBRARIES
     cc2
     ${POST_LINK}
     unanimity
-    ${ZLIB_LIBRARIES}
+    ${ZLIB_LDFLAGS}
     ${HTSLIB_LIBRARIES}
     ${PacBioBAM_LIBRARIES}
     ${pbcopper_LIBRARIES}

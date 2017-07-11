@@ -13,6 +13,7 @@ echo "#############################"
 echo "# LOAD MODULES"
 source /mnt/software/Modules/current/init/bash
 module load git gcc/4.9.2 python/2.7.9 cmake cram swig ccache virtualenv zlib/1.2.5 ninja boost
+unset PKG_CONFIG_LIST
 
 echo "#############################"
 echo "# EXTERNAL DEPENDENCIES"
