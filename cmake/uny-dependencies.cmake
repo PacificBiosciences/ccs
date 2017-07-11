@@ -31,6 +31,9 @@ if (NOT PYTHON_SWIG)
     # ZLIB
     find_package( PkgConfig REQUIRED )
     pkg_check_modules( ZLIB REQUIRED zlib )
+    if (NOT ZLIB_INCLUDE_DIRS OR NOT ZLIB_LIBRARIES)
+        find_package(ZLIB REQUIRED)
+    endif()
 
     # pbbam
     if (NOT PacBioBAM_INCLUDE_DIRS OR
