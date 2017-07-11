@@ -29,9 +29,7 @@ if (NOT PYTHON_SWIG)
     endif()
 
     # ZLIB
-    if (ZLIB_INCLUDE_DIRS OR ZLIB_LIBRARIES)
-      find_package(ZLIB REQUIRED)
-    else()
+    if (NOT ZLIB_INCLUDE_DIRS OR NOT ZLIB_LIBRARIES)
       find_package(PkgConfig REQUIRED)
       pkg_check_modules(ZLIB zlib)
     endif()
