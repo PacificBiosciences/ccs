@@ -105,35 +105,20 @@ target_include_directories(unanimity
     PUBLIC ${UNY_INCLUDE_DIRS}
 )
 
-if(NOT ZLIB_LIBRARIES)
-    set(UNY_LIBRARIES
-        ${PRE_LINK}
-        cc2
-        ${POST_LINK}
-        unanimity
-        ${ZLIB_LDFLAGS}
-        ${HTSLIB_LIBRARIES}
-        ${PacBioBAM_LIBRARIES}
-        ${pbcopper_LIBRARIES}
-        CACHE INTERNAL
-        "${PROJECT_NAME}: Libraries"
-        FORCE
-    )
-else()
-    set(UNY_LIBRARIES
-        ${PRE_LINK}
-        cc2
-        ${POST_LINK}
-        unanimity
-        ${ZLIB_LIBRARIES}
-        ${HTSLIB_LIBRARIES}
-        ${PacBioBAM_LIBRARIES}
-        ${pbcopper_LIBRARIES}
-        CACHE INTERNAL
-        "${PROJECT_NAME}: Libraries"
-        FORCE
-    )
-endif()
+set(UNY_LIBRARIES
+    ${PRE_LINK}
+    cc2
+    ${POST_LINK}
+    unanimity
+    ${ZLIB_LDFLAGS}
+    ${ZLIB_LIBRARIES}
+    ${HTSLIB_LIBRARIES}
+    ${PacBioBAM_LIBRARIES}
+    ${pbcopper_LIBRARIES}
+    CACHE INTERNAL
+    "${PROJECT_NAME}: Libraries"
+    FORCE
+)
 
 # add executables
 if (UNY_build_bin)
