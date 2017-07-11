@@ -119,7 +119,7 @@ if(NOT ZLIB_LIBRARIES)
         "${PROJECT_NAME}: Libraries"
         FORCE
     )
-else
+else()
     set(UNY_LIBRARIES
         ${PRE_LINK}
         cc2
