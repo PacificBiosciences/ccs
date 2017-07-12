@@ -111,7 +111,6 @@ set(UNY_LIBRARIES
     ${POST_LINK}
     unanimity
     ${ZLIB_LDFLAGS}
-    ${ZLIB_LIBRARIES}
     ${HTSLIB_LIBRARIES}
     ${PacBioBAM_LIBRARIES}
     ${pbcopper_LIBRARIES}
