@@ -33,7 +33,7 @@ if (NOT PYTHON_SWIG)
         find_package(PkgConfig REQUIRED)
         pkg_check_modules(ZLIB zlib)
     else()
-        set(ZLIB_LDFLAGS "ZLIB_LIBRARIES")
+        set(ZLIB_LDFLAGS ${ZLIB_LIBRARIES})
     endif()
 
     # pbbam
