@@ -70,13 +70,14 @@ class SnrModel : public ModelConfig
 {
 public:
     SnrModel(const SnrModelCreator* params, const SNR& snr);
-    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
-    std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(std::default_random_engine* const rng,
-                                                              const std::string& tpl,
-                                                              const std::string& readname) const;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr,
+                                                     double scoreDiff) const override;
+    std::vector<TemplatePosition> Populate(const std::string& tpl) const override;
+    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
+        std::default_random_engine* const rng, const std::string& tpl,
+        const std::string& readname) const override;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                 MomentType moment) const;
+                                 MomentType moment) const override;
     friend class SnrInitializeModel;
 
 private:
@@ -113,7 +114,7 @@ class SnrModelCreator : public ModelCreator
 public:
     static ModelForm Form() { return ModelForm::SNR; }
     SnrModelCreator(const boost::property_tree::ptree& pt);
-    virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
+    virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const override
     {
         return std::unique_ptr<ModelConfig>(new SnrModel(this, snr));
     };
