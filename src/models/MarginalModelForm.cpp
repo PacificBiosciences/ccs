@@ -38,6 +38,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <random>
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
@@ -48,7 +49,9 @@
 #include "../ModelFactory.h"
 #include "../ModelFormFactory.h"
 #include "../Recursor.h"
+#include "../Simulator.h"
 #include "CounterWeight.h"
+#include "HelperFunctions.h"
 
 using namespace PacBio::Data;
 
@@ -61,6 +64,11 @@ using MalformedModelFile = PacBio::Exception::MalformedModelFile;
 constexpr size_t CONTEXT_NUMBER = 8;
 constexpr size_t OUTCOME_NUMBER = 4;
 
+constexpr double snrRanges[2][4] = {
+    {0, 0, 0, 0},     // minimum
+    {20, 19, 20, 20}  // maximum
+};
+
 // fwd decl
 class MarginalModelCreator;
 
@@ -70,6 +78,9 @@ public:
     MarginalModel(const MarginalModelCreator* params, const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
+    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(std::default_random_engine* const rng,
+                                                              const std::string& tpl,
+                                                              const std::string& readname) const;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const;
 
@@ -98,6 +109,8 @@ class MarginalModelCreator : public ModelCreator
     REGISTER_MODELFORM(MarginalModelCreator);
     friend class MarginalModel;
     friend class MarginalRecursor;
+    friend double MarginalEmissionPr(const MarginalModelCreator& params, MoveType move,
+                                     uint8_t emission, uint8_t prev, uint8_t curr);
 
 public:
     static ModelForm Form() { return ModelForm::MARGINAL; }
@@ -201,20 +214,24 @@ std::vector<uint8_t> MarginalRecursor::EncodeRead(const MappedRead& read)
     result.reserve(read.Length());
 
     for (const char bp : read.Seq) {
-        const uint8_t em = detail::TranslationTable[static_cast<uint8_t>(bp)];
-        if (em > 3) throw std::invalid_argument("invalid character in read!");
-        result.emplace_back(em);
+        result.emplace_back(EncodeBase(bp));
     }
 
     return result;
 }
 
-double MarginalRecursor::EmissionPr(MoveType move, uint8_t emission, uint8_t prev,
-                                    uint8_t curr) const
+inline double MarginalEmissionPr(const MarginalModelCreator& params, const MoveType move,
+                                 const uint8_t emission, const uint8_t prev, const uint8_t curr)
 {
     assert(move != MoveType::DELETION);
     const uint8_t ctx = ((prev == curr) << 2) | curr;
-    return params_->emissionPmf_[static_cast<uint8_t>(move)][ctx][emission] * counterWeight_;
+    return params.emissionPmf_[static_cast<uint8_t>(move)][ctx][emission];
+}
+
+double MarginalRecursor::EmissionPr(const MoveType move, const uint8_t emission, const uint8_t prev,
+                                    const uint8_t curr) const
+{
+    return MarginalEmissionPr(*params_, move, emission, prev, curr) * counterWeight_;
 }
 
 double MarginalRecursor::UndoCounterWeights(const size_t nEmissions) const
@@ -233,6 +250,72 @@ MarginalModelCreator::MarginalModelCreator(const boost::property_tree::ptree& pt
     } catch (boost::property_tree::ptree_error&) {
         throw MalformedModelFile();
     }
+}
+
+class MarginalModelInitializeModel
+{
+public:
+    MarginalModelInitializeModel(const MarginalModel& model) : model_(model) {}
+
+    inline std::pair<Data::SNR, std::vector<TemplatePosition>> operator()(
+        std::default_random_engine* const rng, const std::string& tpl)
+    {
+        Data::SNR snrs{0, 0, 0, 0};
+        for (uint8_t i = 0; i < 4; ++i) {
+            snrs[i] =
+                std::uniform_real_distribution<double>{snrRanges[0][i], snrRanges[1][i]}(*rng);
+        }
+
+        std::vector<TemplatePosition> transModel = model_.Populate(tpl);
+
+        return {snrs, transModel};
+    }
+
+private:
+    const MarginalModel& model_;
+};
+
+class MarginalModelGenerateReadData
+{
+public:
+    MarginalModelGenerateReadData(const MarginalModelCreator& params) : params_(params) {}
+
+    BaseData operator()(std::default_random_engine* const rng, const MoveType state,
+                        const uint8_t prev, const uint8_t curr)
+    {
+        constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+
+        // distribution is arbitrary at the moment, as
+        // PW and IPD are not a covariates of the consensus HMM
+        std::uniform_int_distribution<uint8_t> pwDistrib{1, 3};
+        std::uniform_int_distribution<uint8_t> ipdDistrib{1, 5};
+
+        std::array<double, 4> baseDist;
+        for (size_t i = 0; i < 4; ++i) {
+            baseDist[i] = MarginalEmissionPr(params_, state, i, prev, curr);
+        }
+
+        std::discrete_distribution<uint8_t> baseDistrib(baseDist.cbegin(), baseDist.cend());
+
+        const char newBase = bases[baseDistrib(*rng)];
+        const uint8_t newPw = pwDistrib(*rng);
+        const uint8_t newIpd = ipdDistrib(*rng);
+
+        return {newBase, newPw, newIpd};
+    }
+
+private:
+    const MarginalModelCreator& params_;
+};
+
+std::pair<Data::Read, std::vector<MoveType>> MarginalModel::SimulateRead(
+    std::default_random_engine* const rng, const std::string& tpl,
+    const std::string& readname) const
+{
+    const MarginalModelInitializeModel init(*this);
+    const MarginalModelGenerateReadData generateData(*params_);
+
+    return SimulateReadImpl(rng, tpl, readname, init, generateData);
 }
 
 }  // namespace anonymous
