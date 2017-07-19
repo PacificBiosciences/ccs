@@ -58,6 +58,8 @@ struct SNR
     SNR(const std::vector<double>& snrs);
     SNR(const std::vector<float>& snrs);
 
+    SNR(const double (&snrs)[4]) : A{snrs[0]}, C{snrs[1]}, G{snrs[2]}, T{snrs[3]} {}
+
     operator std::vector<float>() const
     {
         std::vector<float> snr = {static_cast<float>(A), static_cast<float>(C),
