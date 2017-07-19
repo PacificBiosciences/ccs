@@ -17,6 +17,7 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 option(UNY_build_bin     "Build binaries." ON)
 option(UNY_build_tests   "Build UNANIMITY's unit tests." ON)
 option(UNY_build_chimera "Build UNANMITIY's stand-alone chimera labeler." OFF)
+option(UNY_build_sim     "Build UNANMITIY's (sub)read simulator." OFF)
 option(UNY_inc_coverage  "Include UNANIMITY's coverage script." OFF)
 option(UNY_use_ccache    "Build UNANIMITY using ccache, if available." ON)
 

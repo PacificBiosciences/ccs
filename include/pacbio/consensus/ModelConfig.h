@@ -40,9 +40,12 @@
 #include <map>
 #include <memory>
 #include <ostream>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include <pacbio/data/Read.h>
 
 namespace PacBio {
 
@@ -95,6 +98,9 @@ public:
     virtual std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                              double scoreDiff) const = 0;
     virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
+    virtual std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
+        std::default_random_engine* const rng, const std::string& tpl,
+        const std::string& readname) const = 0;
     virtual double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                          MomentType moment) const = 0;
 };
