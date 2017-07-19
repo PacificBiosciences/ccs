@@ -36,6 +36,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <random>
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
@@ -43,7 +44,9 @@
 
 #include "../ModelFactory.h"
 #include "../Recursor.h"
+#include "../Simulator.h"
 #include "CounterWeight.h"
+#include "HelperFunctions.h"
 
 using namespace PacBio::Data;
 
@@ -64,6 +67,10 @@ public:
     P6C4NoCovModel(const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
+    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(std::default_random_engine* const rng,
+                                                              const std::string& tpl,
+                                                              const std::string& readname) const;
+
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const;
 
@@ -126,11 +133,15 @@ double P6C4NoCovParams[4][2][3][4] = {
       {4.21031404956015, -0.347546363361823, 0.0293839179303896, -0.000893802212450644},
       {2.33143889851302, -0.586068444099136, 0.040044954697795, -0.000957298861394191}}}};
 
+constexpr double snrRanges[2][4] = {
+    {0, 0, 0, 0},     // minimum
+    {20, 19, 20, 20}  // maximum
+};
 // For P6-C4 we cap SNR at 20.0 (19.0 for C); as the training set only went that
 // high; extrapolation beyond this cap goes haywire because of the higher-order
 // terms in the regression model.  See bug 31423.
 P6C4NoCovModel::P6C4NoCovModel(const SNR& snr)
-    : snr_(ClampSNR(snr, SNR(0, 0, 0, 0), SNR(20, 19, 20, 20)))
+    : snr_(ClampSNR(snr, SNR{snrRanges[0]}, SNR{snrRanges[1]}))
 {
     for (size_t bp = 0; bp < 4; ++bp) {
         for (const bool hp : {false, true}) {
@@ -244,35 +255,87 @@ P6C4NoCovRecursor::P6C4NoCovRecursor(const MappedRead& mr, double scoreDiff, dou
 std::vector<uint8_t> P6C4NoCovRecursor::EncodeRead(const MappedRead& read)
 {
     std::vector<uint8_t> result;
+    result.reserve(read.Length());
 
     for (const char bp : read.Seq) {
-        const uint8_t em = detail::TranslationTable[static_cast<uint8_t>(bp)];
-        if (em > 3) throw std::invalid_argument("invalid character in read!");
-        result.emplace_back(em);
+        result.emplace_back(EncodeBase(bp));
     }
 
     return result;
 }
 
-double P6C4NoCovRecursor::EmissionPr(MoveType move, const uint8_t emission, const uint8_t prev,
-                                     const uint8_t curr) const
+inline double P6C4NoCovEmissionPr(const MoveType move, const uint8_t emission, const uint8_t prev,
+                                  const uint8_t curr)
 {
     assert(move != MoveType::DELETION);
 
     // probability of a mismatch
-    constexpr double tbl[3][2] = {
+    constexpr static double tbl[3][2] = {
         // 0 (match), 1 (mismatch)
         {kInvEps, kEps / 3.0},  // MATCH
         {1.0, 0.0},             // BRANCH
         {0.0, 1.0 / 3.0}        // STICK
     };
 
-    return tbl[static_cast<uint8_t>(move)][curr != emission] * counterWeight_;
+    return tbl[static_cast<uint8_t>(move)][curr != emission];
+}
+
+double P6C4NoCovRecursor::EmissionPr(const MoveType move, const uint8_t emission,
+                                     const uint8_t prev, const uint8_t curr) const
+{
+    return P6C4NoCovEmissionPr(move, emission, prev, curr) * counterWeight_;
 }
 
 double P6C4NoCovRecursor::UndoCounterWeights(const size_t nEmissions) const
 {
     return nLgCounterWeight_ * nEmissions;
+}
+
+inline std::pair<Data::SNR, std::vector<TemplatePosition>> P6C4NoCovModel_InitialiseModel(
+    std::default_random_engine* const rng, const std::string& tpl)
+{
+    Data::SNR snrs{0, 0, 0, 0};
+    for (uint8_t i = 0; i < 4; ++i) {
+        snrs[i] = std::uniform_real_distribution<double>{snrRanges[0][i], snrRanges[1][i]}(*rng);
+    }
+
+    const P6C4NoCovModel model{snrs};
+    std::vector<TemplatePosition> transModel = model.Populate(tpl);
+
+    return {snrs, transModel};
+}
+
+BaseData P6C4NoCovModel_GenerateReadData(std::default_random_engine* const rng,
+                                         const MoveType state, const uint8_t prev,
+                                         const uint8_t curr)
+{
+    constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+
+    // distribution is arbitrary at the moment, as
+    // PW and IPD are not a covariates of the consensus HMM
+    std::uniform_int_distribution<uint8_t> pwDistrib{1, 3};
+    std::uniform_int_distribution<uint8_t> ipdDistrib{1, 5};
+
+    std::array<double, 4> baseDist;
+    for (size_t i = 0; i < 4; ++i) {
+        baseDist[i] = P6C4NoCovEmissionPr(state, i, prev, curr);
+    }
+
+    std::discrete_distribution<uint8_t> baseDistrib(baseDist.cbegin(), baseDist.cend());
+
+    const char newBase = bases[baseDistrib(*rng)];
+    const uint8_t newPw = pwDistrib(*rng);
+    const uint8_t newIpd = ipdDistrib(*rng);
+
+    return {newBase, newPw, newIpd};
+}
+
+std::pair<Data::Read, std::vector<MoveType>> P6C4NoCovModel::SimulateRead(
+    std::default_random_engine* const rng, const std::string& tpl,
+    const std::string& readname) const
+{
+    return SimulateReadImpl(rng, tpl, readname, P6C4NoCovModel_InitialiseModel,
+                            P6C4NoCovModel_GenerateReadData);
 }
 
 }  // namespace anonymous
