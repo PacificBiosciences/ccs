@@ -127,3 +127,7 @@ endif()
 if (UNY_build_chimera)
     create_exe(ChimeraLabeler)
 endif()
+
+if (UNY_build_sim)
+    create_exe(ccs_sim)
+endif()

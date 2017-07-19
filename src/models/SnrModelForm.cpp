@@ -38,6 +38,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <random>
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
@@ -48,7 +49,9 @@
 #include "../ModelFactory.h"
 #include "../ModelFormFactory.h"
 #include "../Recursor.h"
+#include "../Simulator.h"
 #include "CounterWeight.h"
+#include "HelperFunctions.h"
 
 using namespace PacBio::Data;
 
@@ -57,12 +60,6 @@ namespace Consensus {
 namespace {
 
 using MalformedModelFile = PacBio::Exception::MalformedModelFile;
-
-template <typename T>
-inline T clip(const T val, const T (&range)[2])
-{
-    return std::max(range[0], std::min(val, range[1]));
-}
 
 constexpr size_t CONTEXT_NUMBER = 8;
 
@@ -75,8 +72,12 @@ public:
     SnrModel(const SnrModelCreator* params, const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
+    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(std::default_random_engine* const rng,
+                                                              const std::string& tpl,
+                                                              const std::string& readname) const;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const;
+    friend class SnrInitializeModel;
 
 private:
     const SnrModelCreator* params_;
@@ -105,6 +106,9 @@ class SnrModelCreator : public ModelCreator
     REGISTER_MODELFORM(SnrModelCreator);
     friend class SnrModel;
     friend class SnrRecursor;
+    friend class SnrInitializeModel;
+    friend double SnrEmissionPr(const SnrModelCreator& params, MoveType move, uint8_t emission,
+                                uint8_t prev, uint8_t curr);
 
 public:
     static ModelForm Form() { return ModelForm::SNR; }
@@ -241,19 +245,23 @@ std::vector<uint8_t> SnrRecursor::EncodeRead(const MappedRead& read)
     result.reserve(read.Length());
 
     for (const char bp : read.Seq) {
-        const uint8_t em = detail::TranslationTable[static_cast<uint8_t>(bp)];
-        if (em > 3) throw std::invalid_argument("invalid character in read!");
-        result.emplace_back(em);
+        result.emplace_back(EncodeBase(bp));
     }
 
     return result;
 }
 
-double SnrRecursor::EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const
+double SnrEmissionPr(const SnrModelCreator& params, const MoveType move, const uint8_t emission,
+                     const uint8_t prev, const uint8_t curr)
 {
     assert(move != MoveType::DELETION);
+    return params.emissionPmf_[static_cast<uint8_t>(move)][curr != emission];
+}
 
-    return params_->emissionPmf_[static_cast<uint8_t>(move)][curr != emission] * counterWeight_;
+double SnrRecursor::EmissionPr(const MoveType move, const uint8_t emission, const uint8_t prev,
+                               const uint8_t curr) const
+{
+    return SnrEmissionPr(*params_, move, emission, prev, curr) * counterWeight_;
 }
 
 double SnrRecursor::UndoCounterWeights(const size_t nEmissions) const
@@ -275,6 +283,72 @@ SnrModelCreator::SnrModelCreator(const boost::property_tree::ptree& pt)
     } catch (boost::property_tree::ptree_error&) {
         throw MalformedModelFile();
     }
+}
+
+class SnrInitializeModel
+{
+public:
+    SnrInitializeModel(const SnrModel& model) : model_(model) {}
+
+    inline std::pair<Data::SNR, std::vector<TemplatePosition>> operator()(
+        std::default_random_engine* const rng, const std::string& tpl)
+    {
+        Data::SNR snrs{0, 0, 0, 0};
+        for (uint8_t i = 0; i < 4; ++i) {
+            snrs[i] = std::uniform_real_distribution<double>{
+                model_.params_->snrRanges_[i][0], model_.params_->snrRanges_[i][1]}(*rng);
+        }
+
+        std::vector<TemplatePosition> transModel = model_.Populate(tpl);
+
+        return {snrs, transModel};
+    }
+
+private:
+    const SnrModel& model_;
+};
+
+class SnrGenerateReadData
+{
+public:
+    SnrGenerateReadData(const SnrModelCreator& params) : params_(params) {}
+
+    BaseData operator()(std::default_random_engine* const rng, const MoveType state,
+                        const uint8_t prev, const uint8_t curr)
+    {
+        constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+
+        // distribution is arbitrary at the moment, as
+        // PW and IPD are not a covariates of the consensus HMM
+        std::uniform_int_distribution<uint8_t> pwDistrib{1, 3};
+        std::uniform_int_distribution<uint8_t> ipdDistrib{1, 5};
+
+        std::array<double, 4> baseDist;
+        for (size_t i = 0; i < 4; ++i) {
+            baseDist[i] = SnrEmissionPr(params_, state, i, prev, curr);
+        }
+
+        std::discrete_distribution<uint8_t> baseDistrib(baseDist.cbegin(), baseDist.cend());
+
+        const char newBase = bases[baseDistrib(*rng)];
+        const uint8_t newPw = pwDistrib(*rng);
+        const uint8_t newIpd = ipdDistrib(*rng);
+
+        return {newBase, newPw, newIpd};
+    }
+
+private:
+    const SnrModelCreator& params_;
+};
+
+std::pair<Data::Read, std::vector<MoveType>> SnrModel::SimulateRead(
+    std::default_random_engine* const rng, const std::string& tpl,
+    const std::string& readname) const
+{
+    const SnrInitializeModel init(*this);
+    const SnrGenerateReadData generateData(*params_);
+
+    return SimulateReadImpl(rng, tpl, readname, init, generateData);
 }
 
 }  // namespace anonymous

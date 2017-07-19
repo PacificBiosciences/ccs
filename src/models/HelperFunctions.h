@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,77 +33,59 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+// Author: Lance Hepler
+
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
-#include <map>
-#include <memory>
-#include <ostream>
-#include <random>
 #include <stdexcept>
-#include <string>
-#include <vector>
+#include <utility>
 
+#include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/data/Read.h>
 
 namespace PacBio {
+namespace Consensus {
+namespace {
 
-namespace Data {
-struct MappedRead;
-struct SNR;
+template <typename T>
+inline T clip(const T val, const T (&range)[2])
+{
+    return std::max(range[0], std::min(val, range[1]));
 }
 
-namespace Consensus {
-namespace detail {
-
-extern uint8_t TranslationTable[256];
-
-}  // namespace detail
-
-// fwd decl
-class AbstractRecursor;
-class AbstractTemplate;
-
-struct TemplatePosition
+inline uint8_t EncodeBase(const char base)
 {
-    char Base;
-    uint8_t Idx;
-    double Match;
-    double Branch;
-    double Stick;
-    double Deletion;
-};
+    const uint8_t em = detail::TranslationTable[static_cast<uint8_t>(base)];
+    if (em > 3U) throw std::invalid_argument("invalid character in read!");
+    return em;
+}
 
-std::ostream& operator<<(std::ostream&, const TemplatePosition&);
-
-enum struct MoveType : uint8_t
+inline uint8_t EncodeBase(const char base, const uint8_t raw_pw)
 {
-    MATCH = 0,
-    BRANCH = 1,
-    STICK = 2,
-    DELETION = 3  // never used for covariate
-};
+    if (raw_pw < 1U) throw std::runtime_error("invalid PulseWidth in read!");
+    const uint8_t pw = std::min(2, raw_pw - 1);
+    const uint8_t bp = detail::TranslationTable[static_cast<uint8_t>(base)];
+    if (bp > 3U) throw std::invalid_argument("invalid character in read!");
+    const uint8_t em = (pw << 2) | bp;
+    if (em > 11U) throw std::runtime_error("read encoding error!");
+    return em;
+}
 
-enum struct MomentType : uint8_t
+// first: base
+// second: pw
+inline std::pair<char, uint8_t> DecodeEmission(const uint8_t em)
 {
-    FIRST = 0,
-    SECOND = 1
-};
+    constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+    if (em > 11U) throw std::runtime_error("encoded emission value is invalid!");
+    const uint8_t base = em & 3;
+    const uint8_t pw = (em >> 2) + 1;
+    if (pw > 3U) throw std::runtime_error("invalid generated PulseWidth!");
+    return {bases[base], pw};
+}
 
-class ModelConfig
-{
-public:
-    virtual ~ModelConfig() {}
-    virtual std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
-                                                             double scoreDiff) const = 0;
-    virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
-    virtual std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
-        std::default_random_engine* const rng, const std::string& tpl,
-        const std::string& readname) const = 0;
-    virtual double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                         MomentType moment) const = 0;
-};
-
+}  // namespace anonymous
 }  // namespace Consensus
 }  // namespace PacBio

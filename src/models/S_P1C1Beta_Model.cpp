@@ -36,6 +36,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <random>
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
@@ -43,7 +44,9 @@
 
 #include "../ModelFactory.h"
 #include "../Recursor.h"
+#include "../Simulator.h"
 #include "CounterWeight.h"
+#include "HelperFunctions.h"
 
 using namespace PacBio::Data;
 
@@ -61,6 +64,9 @@ public:
     S_P1C1Beta_Model(const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
+    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(std::default_random_engine* const rng,
+                                                              const std::string& tpl,
+                                                              const std::string& readname) const;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const;
 
@@ -81,6 +87,11 @@ public:
 private:
     double counterWeight_;
     double nLgCounterWeight_;
+};
+
+constexpr double snrRanges[2][4] = {
+    {4.0, 4.0, 4.0, 4.0},         // minimum
+    {10.65, 10.65, 10.65, 10.65}  // maximum
 };
 
 constexpr double emissionPmf[3][8][4] = {
@@ -130,7 +141,11 @@ constexpr double transProbs[8][4] = {
     {0.879087800, 0.022178294, 0.057073518, 0.041660389}   // NT
 };
 
-S_P1C1Beta_Model::S_P1C1Beta_Model(const SNR& snr) : snr_(snr) {}
+S_P1C1Beta_Model::S_P1C1Beta_Model(const SNR& snr)
+    : snr_(ClampSNR(snr, SNR{snrRanges[0]}, SNR{snrRanges[1]}))
+{
+}
+
 std::vector<TemplatePosition> S_P1C1Beta_Model::Populate(const std::string& tpl) const
 {
     std::vector<TemplatePosition> result;
@@ -206,30 +221,82 @@ S_P1C1Beta_Recursor::S_P1C1Beta_Recursor(const MappedRead& mr, double scoreDiff,
 std::vector<uint8_t> S_P1C1Beta_Recursor::EncodeRead(const MappedRead& read)
 {
     std::vector<uint8_t> result;
+    result.reserve(read.Length());
 
     for (const char bp : read.Seq) {
-        const uint8_t em = detail::TranslationTable[static_cast<uint8_t>(bp)];
-        if (em > 3) throw std::invalid_argument("invalid character in read!");
-        result.emplace_back(em);
+        result.emplace_back(EncodeBase(bp));
     }
 
     return result;
 }
 
-double S_P1C1Beta_Recursor::EmissionPr(MoveType move, const uint8_t emission, const uint8_t prev,
-                                       const uint8_t curr) const
+inline double S_P1C1Beta_EmissionPr(const MoveType move, const uint8_t emission, const uint8_t prev,
+                                    const uint8_t curr)
 {
     assert(move != MoveType::DELETION);
-    const uint8_t hpAdd = prev == curr ? 0 : 4;
+    const uint8_t hpAdd = (prev == curr ? 0 : 4);
     // Which row do we want?
     const uint8_t row = curr + hpAdd;
-    return emissionPmf[static_cast<uint8_t>(move)][row][emission] * counterWeight_;
+    return emissionPmf[static_cast<uint8_t>(move)][row][emission];
+}
+
+double S_P1C1Beta_Recursor::EmissionPr(const MoveType move, const uint8_t emission,
+                                       const uint8_t prev, const uint8_t curr) const
+{
+    return S_P1C1Beta_EmissionPr(move, emission, prev, curr) * counterWeight_;
 }
 
 double S_P1C1Beta_Recursor::UndoCounterWeights(const size_t nEmissions) const
 {
     return nLgCounterWeight_ * nEmissions;
 }
+
+inline std::pair<Data::SNR, std::vector<TemplatePosition>> S_P1C1Beta_InitialiseModel(
+    std::default_random_engine* const rng, const std::string& tpl)
+{
+    Data::SNR snrs{0, 0, 0, 0};
+    for (uint8_t i = 0; i < 4; ++i) {
+        snrs[i] = std::uniform_real_distribution<double>{snrRanges[0][i], snrRanges[1][i]}(*rng);
+    }
+
+    const S_P1C1Beta_Model model{snrs};
+    std::vector<TemplatePosition> transModel = model.Populate(tpl);
+
+    return {snrs, transModel};
+}
+
+BaseData S_P1C1Beta_GenerateReadData(std::default_random_engine* const rng, const MoveType state,
+                                     const uint8_t prev, const uint8_t curr)
+{
+    constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+
+    // distribution is arbitrary at the moment, as
+    // PW and IPD are not a covariates of the consensus HMM
+    std::uniform_int_distribution<uint8_t> pwDistrib{1, 3};
+    std::uniform_int_distribution<uint8_t> ipdDistrib{1, 5};
+
+    std::array<double, 4> baseDist;
+    for (size_t i = 0; i < 4; ++i) {
+        baseDist[i] = S_P1C1Beta_EmissionPr(state, i, prev, curr);
+    }
+
+    std::discrete_distribution<uint8_t> baseDistrib(baseDist.cbegin(), baseDist.cend());
+
+    const char newBase = bases[baseDistrib(*rng)];
+    const uint8_t newPw = pwDistrib(*rng);
+    const uint8_t newIpd = ipdDistrib(*rng);
+
+    return {newBase, newPw, newIpd};
+}
+
+std::pair<Data::Read, std::vector<MoveType>> S_P1C1Beta_Model::SimulateRead(
+    std::default_random_engine* const rng, const std::string& tpl,
+    const std::string& readname) const
+{
+    return SimulateReadImpl(rng, tpl, readname, S_P1C1Beta_InitialiseModel,
+                            S_P1C1Beta_GenerateReadData);
+}
+
 }  // namespace anonymous
 }  // namespace Consensus
 }  // namespace PacBio

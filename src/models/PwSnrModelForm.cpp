@@ -38,6 +38,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <random>
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
@@ -48,7 +49,9 @@
 #include "../ModelFactory.h"
 #include "../ModelFormFactory.h"
 #include "../Recursor.h"
+#include "../Simulator.h"
 #include "CounterWeight.h"
+#include "HelperFunctions.h"
 
 using namespace PacBio::Data;
 
@@ -57,12 +60,6 @@ namespace Consensus {
 namespace {
 
 using MalformedModelFile = PacBio::Exception::MalformedModelFile;
-
-template <typename T>
-inline T clip(const T val, const T (&range)[2])
-{
-    return std::max(range[0], std::min(val, range[1]));
-}
 
 constexpr size_t OUTCOME_NUMBER = 12;
 constexpr size_t CONTEXT_NUMBER = 16;
@@ -76,8 +73,13 @@ public:
     PwSnrModel(const PwSnrModelCreator* params, const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const;
+    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(std::default_random_engine* const rng,
+                                                              const std::string& tpl,
+                                                              const std::string& readname) const;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
                                  MomentType moment) const;
+
+    friend class PwSnrInitializeModel;
 
 private:
     double CalculateExpectedLLForEmission(const size_t move, const uint8_t row,
@@ -110,6 +112,9 @@ class PwSnrModelCreator : public ModelCreator
     REGISTER_MODELFORM(PwSnrModelCreator);
     friend class PwSnrModel;
     friend class PwSnrRecursor;
+    friend class PwSnrInitializeModel;
+    friend double PwSnrEmissionPr(const PwSnrModelCreator& params, MoveType move, uint8_t emission,
+                                  uint8_t prev, uint8_t curr);
 
 public:
     static ModelForm Form() { return ModelForm::PWSNR; }
@@ -242,27 +247,27 @@ PwSnrRecursor::PwSnrRecursor(const MappedRead& mr, double scoreDiff, double coun
 std::vector<uint8_t> PwSnrRecursor::EncodeRead(const MappedRead& read)
 {
     std::vector<uint8_t> result;
-
     result.reserve(read.Length());
 
     for (size_t i = 0; i < read.Length(); ++i) {
-        if (read.PulseWidth[i] < 1U) throw std::runtime_error("invalid PulseWidth in read!");
-        const uint8_t pw = std::min(2, read.PulseWidth[i] - 1);
-        const uint8_t bp = detail::TranslationTable[static_cast<uint8_t>(read.Seq[i])];
-        if (bp > 3) throw std::invalid_argument("invalid character in read!");
-        const uint8_t em = (pw << 2) | bp;
-        if (em > 11) throw std::runtime_error("read encoding error!");
-        result.emplace_back(em);
+        result.emplace_back(EncodeBase(read.Seq[i], read.PulseWidth[i]));
     }
 
     return result;
 }
 
-double PwSnrRecursor::EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const
+inline double PwSnrEmissionPr(const PwSnrModelCreator& params, const MoveType move,
+                              const uint8_t emission, const uint8_t prev, const uint8_t curr)
 {
     assert(move != MoveType::DELETION);
     const uint8_t row = (prev << 2) | curr;
-    return params_->emissionPmf_[static_cast<uint8_t>(move)][row][emission] * counterWeight_;
+    return params.emissionPmf_[static_cast<uint8_t>(move)][row][emission];
+}
+
+double PwSnrRecursor::EmissionPr(const MoveType move, const uint8_t emission, const uint8_t prev,
+                                 const uint8_t curr) const
+{
+    return PwSnrEmissionPr(*params_, move, emission, prev, curr) * counterWeight_;
 }
 
 double PwSnrRecursor::UndoCounterWeights(const size_t nEmissions) const
@@ -282,6 +287,71 @@ PwSnrModelCreator::PwSnrModelCreator(const boost::property_tree::ptree& pt)
     } catch (boost::property_tree::ptree_error&) {
         throw MalformedModelFile();
     }
+}
+
+class PwSnrInitializeModel
+{
+public:
+    PwSnrInitializeModel(const PwSnrModel& model) : model_(model) {}
+
+    inline std::pair<Data::SNR, std::vector<TemplatePosition>> operator()(
+        std::default_random_engine* const rng, const std::string& tpl)
+    {
+        Data::SNR snrs{0, 0, 0, 0};
+        for (uint8_t i = 0; i < 4; ++i) {
+            snrs[i] = std::uniform_real_distribution<double>{
+                model_.params_->snrRanges_[i][0], model_.params_->snrRanges_[i][1]}(*rng);
+        }
+
+        std::vector<TemplatePosition> transModel = model_.Populate(tpl);
+
+        return {snrs, transModel};
+    }
+
+private:
+    const PwSnrModel& model_;
+};
+
+class PwSnrGenerateReadData
+{
+public:
+    PwSnrGenerateReadData(const PwSnrModelCreator& params) : params_(params) {}
+
+    BaseData operator()(std::default_random_engine* const rng, const MoveType state,
+                        const uint8_t prev, const uint8_t curr)
+    {
+        constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+
+        // distribution is arbitrary at the moment, as
+        // IPD is not a covariate of the consensus HMM
+        std::uniform_int_distribution<uint8_t> ipdDistrib(1, 5);
+
+        std::array<double, OUTCOME_NUMBER> emissionDist;
+        for (size_t i = 0; i < OUTCOME_NUMBER; ++i) {
+            emissionDist[i] = PwSnrEmissionPr(params_, state, i, prev, curr);
+        }
+
+        std::discrete_distribution<uint8_t> outcomeDistrib(emissionDist.cbegin(),
+                                                           emissionDist.cend());
+
+        const uint8_t event = outcomeDistrib(*rng);
+        const std::pair<char, uint8_t> outcome = DecodeEmission(event);
+
+        return {outcome.first, outcome.second, ipdDistrib(*rng)};
+    }
+
+private:
+    const PwSnrModelCreator& params_;
+};
+
+std::pair<Data::Read, std::vector<MoveType>> PwSnrModel::SimulateRead(
+    std::default_random_engine* const rng, const std::string& tpl,
+    const std::string& readname) const
+{
+    const PwSnrInitializeModel init(*this);
+    const PwSnrGenerateReadData generateData(*params_);
+
+    return SimulateReadImpl(rng, tpl, readname, init, generateData);
 }
 
 }  // namespace anonymous
