@@ -65,13 +65,19 @@ struct SNR
         return snr;
     }
 
-    inline double operator[](const size_t i) const
+    inline const double& operator[](const size_t i) const
     {
         if (i == 0) return A;
         if (i == 1) return C;
         if (i == 2) return G;
         if (i == 3) return T;
         throw std::invalid_argument("SNR out of bounds!");
+    }
+
+    inline double& operator[](const size_t i)
+    {
+        // casting away const when underlying object is non-const, is well-defined
+        return const_cast<double&>(static_cast<const SNR&>(*this)[i]);
     }
 
     inline bool operator==(const SNR& other) const
