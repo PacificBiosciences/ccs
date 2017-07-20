@@ -67,13 +67,14 @@ public:
     static std::set<std::string> Chemistries() { return {"S/P1-C1.2", "S/P1-C1.3", "S/P2-C2"}; }
     static ModelForm Form() { return ModelForm::PWSNR; }
     S_P1C1v2_Model(const SNR& snr);
-    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
-    std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(std::default_random_engine* const rng,
-                                                              const std::string& tpl,
-                                                              const std::string& readname) const;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr,
+                                                     double scoreDiff) const override;
+    std::vector<TemplatePosition> Populate(const std::string& tpl) const override;
+    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
+        std::default_random_engine* const rng, const std::string& tpl,
+        const std::string& readname) const override;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                 MomentType moment) const;
+                                 MomentType moment) const override;
 
 private:
     SNR snr_;

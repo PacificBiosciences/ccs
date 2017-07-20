@@ -69,8 +69,7 @@ Evaluator::Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& 
     : impl_{nullptr}, curState_{State::VALID}
 {
     try {
-        impl_.reset(
-            new EvaluatorImpl(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
+        impl_.reset(new EvaluatorImpl(std::move(tpl), mr, scoreDiff));
         CheckZScore(minZScore, mr.Model);
     } catch (const StateError& e) {
         Status(e.WhatState());

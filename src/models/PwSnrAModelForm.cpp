@@ -71,13 +71,14 @@ class PwSnrAModel : public ModelConfig
 {
 public:
     PwSnrAModel(const PwSnrAModelCreator* params, const SNR& snr);
-    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
-    std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(std::default_random_engine* const rng,
-                                                              const std::string& tpl,
-                                                              const std::string& readname) const;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr,
+                                                     double scoreDiff) const override;
+    std::vector<TemplatePosition> Populate(const std::string& tpl) const override;
+    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
+        std::default_random_engine* const rng, const std::string& tpl,
+        const std::string& readname) const override;
     double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                 MomentType moment) const;
+                                 MomentType moment) const override;
 
     friend class PwSnrAInitializeModel;
 
@@ -119,7 +120,7 @@ class PwSnrAModelCreator : public ModelCreator
 public:
     static ModelForm Form() { return ModelForm::PWSNRA; }
     PwSnrAModelCreator(const boost::property_tree::ptree& pt);
-    virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
+    virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const override
     {
         return std::unique_ptr<ModelConfig>(new PwSnrAModel(this, snr));
     };

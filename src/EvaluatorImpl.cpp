@@ -99,7 +99,7 @@ void WriteMatrix(const ScaledMatrix& mat)
 
 EvaluatorImpl::EvaluatorImpl(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& mr,
                              const double scoreDiff)
-    : tpl_{std::forward<std::unique_ptr<AbstractTemplate>>(tpl)}
+    : tpl_{std::move(tpl)}
     , recursor_{tpl_->CreateRecursor(mr, scoreDiff)}
     , alpha_(mr.Length() + 1, tpl_->Length() + 1, ScaledMatrix::FORWARD)
     , beta_(mr.Length() + 1, tpl_->Length() + 1, ScaledMatrix::REVERSE)

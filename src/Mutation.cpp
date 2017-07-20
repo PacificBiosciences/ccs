@@ -60,7 +60,7 @@ Mutation Mutation::Insertion(size_t start, const std::string& bases)
 
 Mutation Mutation::Insertion(size_t start, std::string&& bases)
 {
-    return Mutation(MutationType::INSERTION, start, std::forward<std::string>(bases));
+    return Mutation(MutationType::INSERTION, start, std::move(bases));
 }
 
 Mutation Mutation::Substitution(size_t start, const char base)
@@ -75,7 +75,7 @@ Mutation Mutation::Substitution(size_t start, const std::string& bases)
 
 Mutation Mutation::Substitution(size_t start, std::string&& bases)
 {
-    return Mutation(MutationType::SUBSTITUTION, start, std::forward<std::string>(bases));
+    return Mutation(MutationType::SUBSTITUTION, start, std::move(bases));
 }
 
 boost::optional<Mutation> Mutation::Translate(size_t start, size_t length) const
@@ -135,7 +135,7 @@ Mutation::Mutation(const MutationType type, const size_t start, const std::strin
 }
 
 Mutation::Mutation(const MutationType type, const size_t start, std::string&& bases)
-    : bases_{std::forward<std::string>(bases)}
+    : bases_{std::move(bases)}
     , type_{type}
     , start_{start}
     , length_{(type == MutationType::INSERTION) ? size_t(0) : bases_.length()}

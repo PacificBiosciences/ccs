@@ -112,9 +112,7 @@ std::unique_ptr<ModelConfig> ModelFactory::Create(const PacBio::Data::Read& read
 
 bool ModelFactory::Register(const ModelName& name, std::unique_ptr<ModelCreator>&& ctor)
 {
-    return CreatorTable()
-        .insert(std::make_pair(name, std::forward<std::unique_ptr<ModelCreator>>(ctor)))
-        .second;
+    return CreatorTable().emplace(name, std::move(ctor)).second;
 }
 
 boost::optional<std::string> ModelFactory::Resolve(const std::string& name)
