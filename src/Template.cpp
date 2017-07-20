@@ -242,14 +242,14 @@ std::ostream& operator<<(std::ostream& os, const AbstractTemplate& tpl)
 // (Concrete) Template Function Definitions
 //
 Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg)
-    : Template(tpl, std::forward<std::unique_ptr<ModelConfig>>(cfg), 0, tpl.length(), true, true)
+    : Template(tpl, std::move(cfg), 0, tpl.length(), true, true)
 {
 }
 
 Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg, const size_t start,
                    const size_t end, const bool pinStart, const bool pinEnd)
     : AbstractTemplate(start, end, pinStart, pinEnd)
-    , cfg_(std::forward<std::unique_ptr<ModelConfig>>(cfg))
+    , cfg_(std::move(cfg))
     , tpl_{cfg_->Populate(tpl)}
 {
     assert(end_ - start_ == tpl_.size());
