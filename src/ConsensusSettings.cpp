@@ -70,6 +70,13 @@ const PlainOption MinPredictedAccuracy{
     "Minimum predicted accuracy in [0, 1].",
     CLI::Option::FloatType(0.9)
 };
+const PlainOption MinIdentity{
+    "min_identity",
+    { "minIdentity" },
+    "Minimum Identity",
+    "Minimum identity to the POA to use a subread. 0 disables this filter.",
+    CLI::Option::FloatType(0.82)
+};
 const PlainOption MinZScore{
     "min_zscore",
     { "minZScore" },
@@ -208,6 +215,7 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
     , MinPredictedAccuracy(options[OptionNames::MinPredictedAccuracy])
     , MinReadScore(options[OptionNames::MinReadScore])
     , MinSNR(options[OptionNames::MinSnr])
+    , MinIdentity(options[OptionNames::MinIdentity])
     , MinZScore(options[OptionNames::MinZScore] == nullptr
                     ? NAN
                     : static_cast<float>(options[OptionNames::MinZScore]))
@@ -273,6 +281,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
         OptionNames::MinLength,
         OptionNames::MinPasses,
         OptionNames::MinPredictedAccuracy,
+        OptionNames::MinIdentity,
         OptionNames::MinZScore,
         OptionNames::MaxDropFraction,
         OptionNames::MinSnr,
@@ -298,6 +307,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     tcTask.AddOption(OptionNames::MinLength);
     tcTask.AddOption(OptionNames::MinPasses);
     tcTask.AddOption(OptionNames::MinPredictedAccuracy);
+    tcTask.AddOption(OptionNames::MinIdentity);
     tcTask.AddOption(OptionNames::MinZScore);
     tcTask.AddOption(OptionNames::MaxDropFraction);
     tcTask.AddOption(OptionNames::Polish);

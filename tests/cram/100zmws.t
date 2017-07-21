@@ -1,7 +1,7 @@
 
 Test ccs on 100 zmws from the lexogen-SIRV dataset
 
-  $ $__PBTEST_CCS_EXE --minZScore -100 --maxDropFraction 0.8 $TESTDIR/../data/100zmws.bam test.fq
+  $ $__PBTEST_CCS_EXE --minIdentity 0 --minZScore -100 --maxDropFraction 0.8 $TESTDIR/../data/100zmws.bam test.fq
   >|> \d{8} \d{2}:\d{2}:\d{2}\.\d{3} -|- ERROR      -|- ConsensusQVs -|- [0-9,a-f,x]+|| -|- In Polish::ConsensusQVs(ai): negative inf in mutation testing: 'm150825_055401_42161_c100844482550000001823159012311525_s1_p0/2772/23243_25347' (re)
 
   $ grep -c ^@ test.fq

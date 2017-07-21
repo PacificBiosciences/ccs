@@ -1,7 +1,7 @@
 
 Test ccs on 100 zmws from the lexogen-SIRV dataset, using --byStrand
 
-  $ $__PBTEST_CCS_EXE --minZScore -100 --maxDropFraction 0.8 --byStrand $TESTDIR/../data/100zmws.bam test.fq
+  $ $__PBTEST_CCS_EXE --minIdentity 0 --minZScore -100 --maxDropFraction 0.8 --byStrand $TESTDIR/../data/100zmws.bam test.fq
 
   $ grep -c ^+$ test.fq
   200
