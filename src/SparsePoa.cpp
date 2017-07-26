@@ -35,6 +35,7 @@
 
 // Author: Lance Hepler
 
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -172,6 +173,7 @@ std::shared_ptr<const PoaConsensus> SparsePoa::FindConsensus(
             size_t readS = 0, readE = 0;
             size_t cssS = 0, cssE = 0;
             bool foundStart = false;
+            size_t nErr = 0;
 
             const std::vector<Vertex>& readPath = readPaths_[readId];
 
@@ -186,6 +188,8 @@ std::shared_ptr<const PoaConsensus> SparsePoa::FindConsensus(
 
                     cssE = cssPosition[v] + 1;
                     readE = readPos + 1;
+                } else {
+                    nErr += 1;
                 }
             }
 
@@ -196,6 +200,7 @@ std::shared_ptr<const PoaConsensus> SparsePoa::FindConsensus(
             summary.ReverseComplementedRead = reverseComplemented_[readId];
             summary.ExtentOnRead = readExtent;
             summary.ExtentOnConsensus = cssExtent;
+            summary.AlignmentIdentity = std::max(0.0f, 1.0f - 1.0f * nErr / cssPosition.size());
 
             (*summaries).push_back(summary);
         }

@@ -54,6 +54,7 @@ public:
     int32_t FilteredBySize;
     int32_t ZMWBelowMinSNR;
     int32_t ZMWNotEnoughSubReads;
+    int32_t PoorIdentity;
     int32_t PoorZScore;
     int32_t Other;
 

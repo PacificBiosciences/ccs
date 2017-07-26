@@ -482,6 +482,13 @@ ResultType<ConsensusType> Consensus(std::unique_ptr<std::vector<TChunk>>& chunks
                         for (size_t i = 0; i < nReads; ++i) {
                             // skip unadded reads
                             if (readKeys[i] < 0) continue;
+                            // skip reads that are not sufficiently similar
+                            if (summaries[readKeys[i]].AlignmentIdentity < settings.MinIdentity) {
+                                result.SubreadCounter.PoorIdentity += 1;
+                                PBLOG_DEBUG << "Skipping read " << reads[i]->Id
+                                            << ", poor identity";
+                                continue;
+                            }
 
                             if (auto mr = ExtractMappedRead(*reads[i], summaries[readKeys[i]],
                                                             poaConsensus.length(), settings,

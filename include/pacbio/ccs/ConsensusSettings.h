@@ -66,6 +66,7 @@ struct ConsensusSettings
     double MinPredictedAccuracy;
     double MinReadScore;
     double MinSNR;
+    double MinIdentity;
     double MinZScore;
     std::string ModelPath;
     std::string ModelSpec;
