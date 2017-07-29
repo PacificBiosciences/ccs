@@ -32,7 +32,6 @@ set(UNY_INCLUDE_DIRS
     ${UNY_IncludeDir}
     ${CMAKE_BINARY_DIR}/generated
     ${Boost_INCLUDE_DIRS}
-    ${ZLIB_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
     ${SEQAN_INCLUDE_DIRS}
     ${CPPOPTPARSE_IncludeDir}

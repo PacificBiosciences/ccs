@@ -66,7 +66,7 @@ echo "## Build source"
 ( cd build &&\
   rm -rf * &&\
   cmake -DCMAKE_BUILD_TYPE=ReleaseWithAssert -GNinja .. )
-( cd build && ninja )
+( cd build && sed -i -e 's@/-I/mnt/software@/ -I/mnt/software@g' build.ninja && ninja )
 
 echo "## pip install CC2"
 CMAKE_BUILD_TYPE=ReleaseWithAssert CMAKE_COMMAND=cmake VERBOSE=1 pip install --verbose --upgrade --no-deps .
