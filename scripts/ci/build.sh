@@ -12,7 +12,7 @@ GetBBRepo () {
 echo "#############################"
 echo "# LOAD MODULES"
 source /mnt/software/Modules/current/init/bash
-module load git gcc/4.9.2 python/2.7.9 cmake cram swig ccache virtualenv zlib/1.2.5 ninja boost
+module load git gcc/4.9.2 python/2.7.9 cmake cram swig ccache virtualenv zlib/1.2.5 ninja boost htslib
 unset PKG_CONFIG_LIST
 
 echo "#############################"
@@ -66,7 +66,7 @@ echo "## Build source"
 ( cd build &&\
   rm -rf * &&\
   cmake -DCMAKE_BUILD_TYPE=ReleaseWithAssert -GNinja .. )
-( cd build && ninja )
+( cd build && sed -i -e 's@/-I/mnt/software@/ -I/mnt/software@g' build.ninja && ninja )
 
 echo "## pip install CC2"
 CMAKE_BUILD_TYPE=ReleaseWithAssert CMAKE_COMMAND=cmake VERBOSE=1 pip install --verbose --upgrade --no-deps .
