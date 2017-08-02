@@ -256,7 +256,6 @@ size_t ConsensusSettings::ThreadCount(int n)
 PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& description,
                                                     const std::string& version)
 {
-    using Option = PacBio::CLI::Option;
     using Task = PacBio::CLI::ToolContract::Task;
 
     PacBio::CLI::Interface i{"ccs", description, version};
