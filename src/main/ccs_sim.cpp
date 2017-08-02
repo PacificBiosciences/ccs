@@ -111,7 +111,8 @@ static Cigar ConvertStatePathToCigar(int32_t* const startPos,
     bool foundStart = false;
     int32_t posOnTpl = 0, posOnRead = 0, editDistance = 0;
 
-    CigarOperationType newType, curType = CigarOperationType::UNKNOWN_OP;
+    CigarOperationType newType{CigarOperationType::UNKNOWN_OP};
+    CigarOperationType curType{CigarOperationType::UNKNOWN_OP};
     uint32_t curLength = 0;
 
     for (const auto& state : statePath) {
