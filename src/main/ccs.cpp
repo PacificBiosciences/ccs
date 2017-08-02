@@ -524,7 +524,7 @@ static int Runner(const PacBio::CLI::Results& args)
             movieNames[movieName] = make_shared<string>(movieName);
 
         // check if we've started a new ZMW
-        if (!holeNumber || *holeNumber != read.HoleNumber()) {
+        if ((!holeNumber) || (holeNumber.value() != read.HoleNumber())) {
             if (chunk && chunk->size() >= settings.ChunkSize) {
                 workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
                 chunk.reset(new vector<Chunk>());
