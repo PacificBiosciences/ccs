@@ -37,28 +37,14 @@
 
 #pragma once
 
-#include <algorithm>
 #include <string>
-
-#include "GitHash.h"
 
 namespace PacBio {
 namespace {
-constexpr char   UnyVersion[]    = "@UNANIMITY_VERSION@";
-constexpr char   UnyChangelog[]  = "${UNANIMITY_CHANGELOG}";
-constexpr size_t UnyVersionMajor = @UNANIMITY_VERSION_MAJOR@;
-constexpr size_t UnyVersionMinor = @UNANIMITY_VERSION_MINOR@;
-constexpr size_t UnyVersionPatch = @UNANIMITY_VERSION_PATCH@;
+constexpr char UnyGitSha1[] = "@UNANIMITY_GIT_SHA1@";
 }
 
-inline std::string UnanimityVersion()
-{ return UnyVersion; }
-
-inline std::string UnanimityChangelog()
-{
-    std::string changelog(UnyChangelog);
-    std::replace(changelog.begin(), changelog.end(), ';', '\n');
-    return changelog;
-}
+inline std::string UnanimityGitSha1()
+{ return UnyGitSha1; }
 
 } // ::PacBio

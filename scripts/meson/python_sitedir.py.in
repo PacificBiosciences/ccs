@@ -1,0 +1,24 @@
+import sys
+# Prefer sysconfig over distutils.sysconfig, for better compatibility
+# with python 3.x.  See automake bug#10227.
+try:
+    import sysconfig
+except ImportError:
+    can_use_sysconfig = False
+else:
+    can_use_sysconfig = True
+# Can't use sysconfig in CPython 2.7, since it's broken in virtualenvs:
+# <https://github.com/pypa/virtualenv/issues/118>
+try:
+    from platform import python_implementation
+    if python_implementation() == 'CPython' and sys.version[:3] == '2.7':
+        can_use_sysconfig = False
+except ImportError:
+    pass
+
+if can_use_sysconfig:
+    sitedir = sysconfig.get_path('purelib', vars={'base': '@PREFIX@'})
+else:
+    from distutils import sysconfig
+    sitedir = sysconfig.get_python_lib(0, 0, prefix='@PREFIX@')
+sys.stdout.write(sitedir)
