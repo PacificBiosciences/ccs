@@ -142,6 +142,18 @@ if get_option('enable-uny-build-sim')
   cpp_args : uny_warning_flags)
 endif
 
+# genomic_sim
+if get_option('enable-uny-build-sim')
+  executable(
+  'genomic_sim', [
+    'main/genomic_sim.cpp'],
+  dependencies : [uny_pbbam_dep],
+  include_directories : [uny_include_directories, uny_ccsw_header],
+  link_with : uny_cc2_lib_shared,
+  link_whole : uny_cc2_lib_static,
+  cpp_args : uny_warning_flags)
+endif
+
 ###################
 # dependency info #
 ###################

@@ -129,4 +129,5 @@ endif()
 
 if (UNY_build_sim)
     create_exe(ccs_sim)
+    create_exe(genomic_sim)
 endif()

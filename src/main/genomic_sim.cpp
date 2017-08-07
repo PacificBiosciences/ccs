@@ -33,18 +33,21 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: David Seifert
+// Author: David Seifert, Brett Bowman
 
 #include <iostream>
 #include <random>
 #include <string>
 #include <vector>
 
+#include <pbbam/../../src/SequenceUtils.h>
 #include <pbbam/BamReader.h>
 #include <pbbam/BamRecord.h>
 #include <pbbam/BamRecordBuilder.h>
 #include <pbbam/BamWriter.h>
 #include <pbbam/Cigar.h>
+#include <pbbam/FastaReader.h>
+#include <pbbam/MD5.h>
 #include <pbbam/ReadGroupInfo.h>
 #include <pbbam/TagCollection.h>
 
@@ -54,12 +57,13 @@
 #include "../Simulator.h"
 
 using namespace PacBio::BAM;
+using namespace PacBio::BAM::internal;
 using namespace PacBio::Consensus;
 using namespace PacBio::Data;
 
 // these strings are part of the BAM header, they CANNOT contain newlines
-const static std::string DESCRIPTION("Simulate (sub)reads from templates.");
-const static std::string APPNAME("ccs_sim");
+const static std::string DESCRIPTION("Simulate genomic (sub)reads from an aligned PacBio BAM.");
+const static std::string APPNAME("genomic_sim");
 
 namespace {  // anonymous
 inline PacBio::BAM::Cigar ConvertStatePathToCigar(const std::vector<MoveType>& statePath,
@@ -177,15 +181,29 @@ static BamHeader PrepareHeader(const std::string& cmdLine,
     return header;
 }
 
-static int SimulateReads(const std::string& inputFilename, const std::string& outputFilename,
-                         unsigned int seed = 42)
+static int SimulateGenomicReads(const std::string& referenceFilename,
+                                const std::string& inputFilename, const std::string& outputFilename,
+                                unsigned int seed = 42)
 {
+    std::vector<FastaSequence> references = FastaReader::ReadAll(referenceFilename);
+
     BamReader reader{inputFilename};
     BamRecord inputRecord;
 
-    BamHeader newHeader{PrepareHeader("ccs_sim", reader.Header().ReadGroups())};
+    BamHeader newHeader{PrepareHeader("genomic_sim", reader.Header().ReadGroups())};
     assert(newHeader.ReadGroups().size() == 1);
     const std::string newRg{newHeader.ReadGroups().front().Id()};
+
+    // Create RC'd refs and add our references to the new header
+    std::vector<FastaSequence> rcReferences;
+    std::vector<size_t> refSizes;
+    for (const auto& ref : references) {
+        refSizes.push_back(ref.Bases().size());
+        rcReferences.push_back(FastaSequence{ref.Name(), ReverseComplemented(ref.Bases())});
+        SequenceInfo si{ref.Name(), std::to_string(ref.Bases().size())};
+        si.Checksum(MD5Hash(ref.Bases()));
+        newHeader.AddSequence(si);
+    }
 
     std::vector<BamRecord> newRecords;
     std::default_random_engine rng{seed};
@@ -194,31 +212,53 @@ static int SimulateReads(const std::string& inputFilename, const std::string& ou
     while (reader.GetNext(inputRecord)) {
         ++zmw;
 
-        // 1. add old CCS as reference
-        const std::string ccsName{inputRecord.FullName()};
-        const std::string ccsSeq{inputRecord.Sequence(Orientation::GENOMIC)};
-        const ReadGroupInfo ccsRg{inputRecord.ReadGroup()};
+        // 1. Check that our reference is still valid
+        assert(static_cast<size_t>(inputRecord.ReferenceId()) < references.size());
+        assert(static_cast<size_t>(inputRecord.ReferenceEnd()) <=
+               references[inputRecord.ReferenceId()].Bases().size());
 
-        newHeader.AddSequence(SequenceInfo{ccsName, std::to_string(ccsSeq.length())});
-        const int32_t ccsId = newHeader.SequenceId(ccsName);
+        // 2. extract the region to be simulated
+        const int32_t refSpan = inputRecord.ReferenceEnd() - inputRecord.ReferenceStart();
+        const bool isRevStrand = inputRecord.AlignedStrand() == Strand::REVERSE;
+        std::string referenceSeq;
+        if (isRevStrand) {
+            const size_t refStart =
+                refSizes[inputRecord.ReferenceId()] - inputRecord.ReferenceEnd();
+            referenceSeq =
+                rcReferences[inputRecord.ReferenceId()].Bases().substr(refStart, refSpan);
+        } else {
+            referenceSeq = references[inputRecord.ReferenceId()].Bases().substr(
+                inputRecord.ReferenceStart(), refSpan);
+        }
 
-        // 2. simulate new read
-        std::unique_ptr<ModelConfig> currentModel =
-            ModelFactory::Create(ccsRg.SequencingChemistry(), {0, 0, 0, 0});
+        // 3. simulate the new read
+        std::unique_ptr<ModelConfig> currentModel = ModelFactory::Create(
+            inputRecord.ReadGroup().SequencingChemistry(), inputRecord.SignalToNoise());
         std::pair<Read, std::vector<MoveType>> rawRead =
-            currentModel->SimulateRead(&rng, ccsSeq, "");
+            currentModel->SimulateRead(&rng, referenceSeq, "");
 
-        // 3. prepare new subread
+        // 4. prepare new subread
         BamRecord newRecord{newHeader};
 
-        const Cigar newCigar{ConvertStatePathToCigar(rawRead.second, ccsSeq, rawRead.first.Seq)};
+        // 5. orient the sequence, cigar, ipd and pulse-width data
+        std::string newSeq = rawRead.first.Seq;
+        Cigar newCigar{ConvertStatePathToCigar(rawRead.second, referenceSeq, newSeq)};
+        std::vector<uint8_t> ipd(rawRead.first.IPD);
+        std::vector<uint8_t> pw(rawRead.first.PulseWidth);
+        if (isRevStrand) {
+            ReverseComplement(newSeq);
+            std::reverse(newCigar.begin(), newCigar.end());
+            std::reverse(ipd.begin(), ipd.end());
+            std::reverse(pw.begin(), pw.end());
+        }
 
+        // 5. fill out the read
         newRecord.ReadGroup(newRg)
-            .IPD(Frames::Decode(rawRead.first.IPD), FrameEncodingType::LOSSY)
+            .IPD(Frames::Decode(ipd), FrameEncodingType::LOSSY)
             .NumPasses(1)
-            .PulseWidth(Frames::Decode(rawRead.first.PulseWidth), FrameEncodingType::LOSSY)
+            .PulseWidth(Frames::Decode(pw), FrameEncodingType::LOSSY)
             .QueryStart(0)
-            .QueryEnd(rawRead.first.Seq.length())
+            .QueryEnd(newSeq.length())
             .ReadAccuracy(0.8)
             .SignalToNoise(rawRead.first.SignalToNoise)
             .HoleNumber(zmw)
@@ -231,9 +271,14 @@ static int SimulateReads(const std::string& inputFilename, const std::string& ou
             .MapQuality(254)
             .MatePosition(-1)
             .MateReferenceId(-1)
-            .ReferenceId(ccsId)
+            .Position(inputRecord.ReferenceStart())
+            .ReferenceId(inputRecord.ReferenceId())
             .SetMapped(true)
-            .SetSequenceAndQualities(rawRead.first.Seq);
+            .SetReverseStrand(isRevStrand)
+            .SetSequenceAndQualities(newSeq);
+
+        //  6. append the original read-name for record-keeping
+        newRecord.Impl().AddTag("fn", inputRecord.FullName());
 
         newRecords.push_back(newRecord);
     }
@@ -250,12 +295,13 @@ static int SimulateReads(const std::string& inputFilename, const std::string& ou
 // Entry point
 int main(int argc, char* argv[])
 {
-    // TODO(dseifert)
+    // TODO(bbowman)
     // Dispatch PacBio::CLI::Run on APPNAME for different commandline interfaces
-    if (argc == 3) {
-        return SimulateReads(argv[1], argv[2]);
+    if (argc == 4) {
+        return SimulateGenomicReads(argv[1], argv[2], argv[3]);
     } else {
-        std::cerr << "ccs_sim takes exactly two arguments: <input bam> <output bam>\n";
+        std::cerr << "genomic_sim takes exactly three arguments: <reference fasta> <input bam> "
+                     "<output bam>\n";
         exit(EXIT_FAILURE);
     }
 }
