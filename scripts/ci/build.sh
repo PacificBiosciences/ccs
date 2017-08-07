@@ -30,10 +30,10 @@ export CCACHE_BASEDIR=$PWD
 echo "#############################"
 echo "# EXTERNAL DEPENDENCIES"
 echo "## Create external dependency directory"
-if [ -d _deps ] ; then rm -rf _deps ; fi
+if [[ -d _deps ]] ; then rm -rf _deps ; fi
 mkdir _deps
 echo "## Create reverse external dependency directory"
-if [ -d _rev_deps ] ; then rm -rf _rev_deps ; fi
+if [[ -d _rev_deps ]] ; then rm -rf _rev_deps ; fi
 mkdir _rev_deps
 
 GetBBRepo sat GenomicConsensus _rev_deps
@@ -95,6 +95,7 @@ CMAKE_BUILD_TYPE=ReleaseWithAssert \
 CMAKE_COMMAND=cmake \
 VERBOSE=1 \
 $PIP install --user --no-index --verbose .
+ldd unyve/lib/python2.7/site-packages/_ConsensusCore2.so
 
 echo "## CC2 version test"
 python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
@@ -116,6 +117,7 @@ echo "## Install ConsensusCore"
   && echo dist/ConsensusCore-*.whl | \
      xargs $PIP install --user --verbose )
 rm unyve/bin/g++
+ldd unyve/lib/python2.7/site-packages/_ConsensusCore.so
 
 echo "## Install GC"
 $PIP install --user --no-index --verbose _rev_deps/GenomicConsensus
