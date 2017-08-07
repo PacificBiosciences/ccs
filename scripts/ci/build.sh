@@ -81,7 +81,7 @@ $PIP install --user -e _deps/pacbiotestdata
 echo "#############################"
 echo "# BUILD"
 echo "## Create build directory "
-if [ ! -d build ] ; then mkdir build ; fi
+if [[ ! -d build ]] ; then mkdir build ; fi
 
 echo "## Build source"
 ( cd build &&\
