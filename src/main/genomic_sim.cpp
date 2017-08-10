@@ -40,7 +40,6 @@
 #include <string>
 #include <vector>
 
-#include <pbbam/../../src/SequenceUtils.h>
 #include <pbbam/BamReader.h>
 #include <pbbam/BamRecord.h>
 #include <pbbam/BamRecordBuilder.h>
@@ -53,6 +52,7 @@
 
 #include <pacbio/Version.h>
 #include <pacbio/consensus/ModelConfig.h>
+#include <pacbio/data/Sequence.h>
 #include "../ModelFactory.h"
 #include "../Simulator.h"
 
@@ -199,7 +199,7 @@ static int SimulateGenomicReads(const std::string& referenceFilename,
     std::vector<size_t> refSizes;
     for (const auto& ref : references) {
         refSizes.push_back(ref.Bases().size());
-        rcReferences.push_back(FastaSequence{ref.Name(), ReverseComplemented(ref.Bases())});
+        rcReferences.push_back(FastaSequence{ref.Name(), ReverseComplement(ref.Bases())});
         SequenceInfo si{ref.Name(), std::to_string(ref.Bases().size())};
         si.Checksum(MD5Hash(ref.Bases()));
         newHeader.AddSequence(si);
@@ -246,7 +246,7 @@ static int SimulateGenomicReads(const std::string& referenceFilename,
         std::vector<uint8_t> ipd(rawRead.first.IPD);
         std::vector<uint8_t> pw(rawRead.first.PulseWidth);
         if (isRevStrand) {
-            ReverseComplement(newSeq);
+            newSeq = ReverseComplement(rawRead.first.Seq);
             std::reverse(newCigar.begin(), newCigar.end());
             std::reverse(ipd.begin(), ipd.end());
             std::reverse(pw.begin(), pw.end());
