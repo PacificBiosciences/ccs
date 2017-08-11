@@ -71,7 +71,7 @@
 #include <pacbio/io/Utility.h>
 #include <pacbio/parallel/WorkQueue.h>
 
-#include <pacbio/Version.h>
+#include <pacbio/UnanimityVersion.h>
 
 using namespace std;
 using namespace PacBio::BAM;

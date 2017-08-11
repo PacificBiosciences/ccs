@@ -50,7 +50,7 @@
 #include <pbbam/ReadGroupInfo.h>
 #include <pbbam/TagCollection.h>
 
-#include <pacbio/Version.h>
+#include <pacbio/UnanimityVersion.h>
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/data/Sequence.h>
 #include "../ModelFactory.h"
