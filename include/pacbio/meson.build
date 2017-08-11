@@ -11,13 +11,13 @@ uny_config.set('UNANIMITY_VERSION_MINOR', uny_minor_version)
 uny_config.set('UNANIMITY_VERSION_PATCH', uny_patch_version)
 
 configure_file(
-  input : 'Version.h.in',
-  output : 'Version.h',
+  input : 'UnanimityVersion.h.in',
+  output : 'UnanimityVersion.h',
   configuration : uny_config)
 
 # replace git commit id
 vcs_tag(
-  input : 'GitHash.h.in',
-  output : 'GitHash.h',
+  input : 'UnanimityGitHash.h.in',
+  output : 'UnanimityGitHash.h',
   command : ['git', 'describe', '--always', '--dirty=*'],
   replace_string : '@UNANIMITY_GIT_SHA1@')

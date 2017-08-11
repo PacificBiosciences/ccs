@@ -10,34 +10,6 @@ project(
   license : 'BSD-3',
   meson_version : '>= 0.41.1')
 
-################
-# dependencies #
-################
-
-# threads
-uny_thread_dep = dependency('threads', required : true)
-
-# boost
-uny_boost_dep = dependency('boost', required : true)
-
-# pbbam
-uny_pbbam_dep = dependency('pbbam', required : true)
-
-# pbcopper
-uny_pbcopper_dep = dependency('pbcopper', required : true)
-
-# zlib
-uny_zlib_dep = dependency('zlib', required : true)
-
-# seqan
-uny_seqan_dep = dependency('seqan-2', required : true)
-
-# cssw
-uny_ccsw_header = include_directories('third-party/cssw/')
-uny_ccsw_cpp_sources = files([
-  'third-party/cssw/ssw_cpp.cpp',
-  'third-party/cssw/ssw.c'])
-
 ############
 # CXXFLAGS #
 ############
@@ -71,6 +43,34 @@ foreach cflag: [
       uny_swig_warning_flags += cflag
     endif
 endforeach
+
+################
+# dependencies #
+################
+
+# threads
+uny_thread_dep = dependency('threads', required : true)
+
+# boost
+uny_boost_dep = dependency('boost', required : true)
+
+# pbbam
+uny_pbbam_dep = dependency('pbbam', fallback : ['pbbam', 'pbbam_dep'])
+
+# pbcopper
+uny_pbcopper_dep = dependency('pbcopper', fallback : ['pbcopper', 'pbcopper_dep'])
+
+# zlib
+uny_zlib_dep = dependency('zlib', required : true)
+
+# seqan
+uny_seqan_dep = dependency('seqan-2', required : true)
+
+# cssw
+uny_ccsw_header = include_directories('third-party/cssw/')
+uny_ccsw_cpp_sources = files([
+  'third-party/cssw/ssw_cpp.cpp',
+  'third-party/cssw/ssw.c'])
 
 ###########
 # headers #
@@ -143,3 +143,22 @@ uny_cram_test_data = files([
 uny_test_tool_contract = find_program('tests/python/test_tool_contract.py')
 
 subdir('tests')
+
+###################
+# dependency info #
+###################
+
+import('pkgconfig').generate(
+  libraries : uny_cc2_lib_impl,
+  version : meson.project_version(),
+  name : 'unanimity',
+  filebase : 'unanimity',
+  description : 'PacBio C++ library for calling circular consensus sequences')
+
+uny_dep = declare_dependency(
+  include_directories : uny_include_directories,
+  link_with : uny_cc2_lib_impl,
+  dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep, uny_seqan_dep],
+  version : meson.project_version(),
+  sources : uny_cc2_cpp_sources,
+  compile_args : uny_swig_warning_flags)

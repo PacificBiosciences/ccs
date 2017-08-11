@@ -1,6 +1,6 @@
 
 %{
-#include <pacbio/Version.h>
+#include <pacbio/UnanimityVersion.h>
 %}
 
 %pythoncode
@@ -8,4 +8,4 @@
 __version__ = UnanimityVersion()
 %}
 
-%include <pacbio/Version.h>
+%include <pacbio/UnanimityVersion.h>

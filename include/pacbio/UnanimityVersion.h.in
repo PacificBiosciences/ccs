@@ -40,7 +40,7 @@
 #include <algorithm>
 #include <string>
 
-#include "GitHash.h"
+#include "UnanimityGitHash.h"
 
 namespace PacBio {
 namespace {

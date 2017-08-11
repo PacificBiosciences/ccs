@@ -3,3 +3,9 @@
 /_deps
 /_rev_deps
 /unyve
+
+# Meson WrapDB stuff
+subprojects/packagecache/
+subprojects/googletest*
+subprojects/pbbam*
+subprojects/pbcopper*
