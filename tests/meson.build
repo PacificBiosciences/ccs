@@ -1,45 +1,24 @@
-uny_test_cpp_sources = [
-  'unit/ChimeraTest.cpp',
-  'unit/Mutations.cpp',
-  'unit/RandomDNA.cpp',
-  'unit/TestAlignment.cpp',
-  'unit/TestBandedChainAlign.cpp',
-  'unit/TestChemistry.cpp',
-  'unit/TestConsensus.cpp',
-  'unit/TestCoverage.cpp',
-  'unit/TestIntegrator.cpp',
-  'unit/TestInterval.cpp',
-  'unit/TestIntervalMask.cpp',
-  'unit/TestLoadModels.cpp',
-  'unit/TestMutationEnumerator.cpp',
-  'unit/TestPoaConsensus.cpp',
-  'unit/TestPolish.cpp',
-  'unit/TestSequence.cpp',
-  'unit/TestSparseAlign.cpp',
-  'unit/TestSparsePoa.cpp',
-  'unit/TestSparseVector.cpp',
-  'unit/TestTemplate.cpp',
-  'unit/TestUtility.cpp',
-  'unit/TestWhitelist.cpp'
-]
+subdir('unit')
 
 uny_TestData_h_config = configuration_data()
 uny_TestData_h_config.set('UNY_TestsDir', meson.current_source_dir())
 uny_TestData_h_config.set('CMAKE_BINARY_DIR', meson.current_build_dir())
-configure_file(input : 'unit/TestData.h.in', output : 'TestData.h', configuration : uny_TestData_h_config)
+uny_TestData_h = configure_file(
+  input : files('unit/TestData.h.in'),
+  output : 'TestData.h',
+  configuration : uny_TestData_h_config)
+uny_test_cpp_sources += uny_TestData_h
 
 # find GoogleTest and GoogleMock
-uny_gtest_dep = dependency('gtest', fallback : ['gtest', 'gtest_with_main_dep'])
-uny_gmock_dep = dependency('gmock', fallback : ['gtest', 'gmock_mainless_dep'])
+uny_gmock_main_dep = dependency('gmock_main', fallback : ['gtest', 'gmock_main_dep'])
 
 uny_test = executable(
   'uny_test',
-  [uny_test_cpp_sources],
+  uny_test_cpp_sources,
   dependencies : [
     uny_pbbam_dep,
     uny_pbcopper_dep,
-    uny_gtest_dep,
-    uny_gmock_dep,
+    uny_gmock_main_dep,
     uny_boost_dep,
     uny_seqan_dep],
   include_directories : uny_include_directories,
