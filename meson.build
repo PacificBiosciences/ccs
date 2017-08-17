@@ -88,7 +88,7 @@ subdir('src')
 # swig #
 ########
 
-if get_option('enable-uny-build-swig')
+if get_option('enable-build-swig')
   uny_python_interp = find_program(get_option('PYTHON'), required : true)
   uny_swig = find_program('swig', required : true)
 
@@ -128,21 +128,23 @@ endif
 # tests #
 #########
 
-uny_clang_formatter = find_program('tools/check-formatting')
-uny_cram_script = find_program('scripts/cram')
-uny_cram_test_data = files([
-  'tests/cram/0passes.t',
-  'tests/cram/100zmws.t',
-  'tests/cram/100zmws_byStrand.t',
-  'tests/cram/43385286.t',
-  'tests/cram/force.t',
-  'tests/cram/logfile.t',
-  'tests/cram/nozfilter.t',
-  'tests/cram/tiny.t',
-  'tests/cram/tiny_noPolish.t'])
-uny_test_tool_contract = find_program('tests/python/test_tool_contract.py')
+if get_option('enable-tests')
+  uny_clang_formatter = find_program('tools/check-formatting')
+  uny_cram_script = find_program('scripts/cram')
+  uny_cram_test_data = files([
+    'tests/cram/0passes.t',
+    'tests/cram/100zmws.t',
+    'tests/cram/100zmws_byStrand.t',
+    'tests/cram/43385286.t',
+    'tests/cram/force.t',
+    'tests/cram/logfile.t',
+    'tests/cram/nozfilter.t',
+    'tests/cram/tiny.t',
+    'tests/cram/tiny_noPolish.t'])
+  uny_test_tool_contract = find_program('tests/python/test_tool_contract.py')
 
-subdir('tests')
+  subdir('tests')
+endif
 
 ###################
 # dependency info #

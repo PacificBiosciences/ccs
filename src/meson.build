@@ -107,7 +107,7 @@ endif
 ###############
 
 # ccs
-if get_option('enable-uny-build-ccs')
+if get_option('enable-build-ccs')
   uny_ccs = executable(
   'ccs', [
     'main/ccs.cpp'],
@@ -119,7 +119,7 @@ if get_option('enable-uny-build-ccs')
 endif
 
 # ChimeraLabeler
-if get_option('enable-uny-build-chimera')
+if get_option('enable-build-chimera')
   executable(
   'ChimeraLabeler', [
     'main/ChimeraLabeler.cpp'],
@@ -131,7 +131,7 @@ if get_option('enable-uny-build-chimera')
 endif
 
 # ccs_sim
-if get_option('enable-uny-build-sim')
+if get_option('enable-build-sim')
   executable(
   'ccs_sim', [
     'main/ccs_sim.cpp'],
@@ -143,7 +143,7 @@ if get_option('enable-uny-build-sim')
 endif
 
 # genomic_sim
-if get_option('enable-uny-build-sim')
+if get_option('enable-build-sim')
   executable(
   'genomic_sim', [
     'main/genomic_sim.cpp'],
