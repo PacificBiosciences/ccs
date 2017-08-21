@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -35,30 +35,32 @@
 
 // Author: Armin Töpfer
 
-#pragma once
-
 #include <algorithm>
 #include <string>
+#include <tuple>
 
-#include "UnanimityGitHash.h"
+#include <pacbio/UnanimityVersion.h>
 
 namespace PacBio {
 namespace {
-constexpr char   UnyVersion[]    = "@UNANIMITY_VERSION@";
-constexpr char   UnyChangelog[]  = "${UNANIMITY_CHANGELOG}";
-constexpr size_t UnyVersionMajor = @UNANIMITY_VERSION_MAJOR@;
-constexpr size_t UnyVersionMinor = @UNANIMITY_VERSION_MINOR@;
-constexpr size_t UnyVersionPatch = @UNANIMITY_VERSION_PATCH@;
+constexpr char* UnyVersion    = "@UNANIMITY_VERSION@";
+constexpr char* UnyChangelog  = "${UNANIMITY_CHANGELOG}";
+constexpr int UnyVersionMajor = @UNANIMITY_VERSION_MAJOR@;
+constexpr int UnyVersionMinor = @UNANIMITY_VERSION_MINOR@;
+constexpr int UnyVersionPatch = @UNANIMITY_VERSION_PATCH@;
 }
 
-inline std::string UnanimityVersion()
-{ return UnyVersion; }
-
-inline std::string UnanimityChangelog()
+std::string UnanimityChangelog()
 {
     std::string changelog(UnyChangelog);
     std::replace(changelog.begin(), changelog.end(), ';', '\n');
     return changelog;
 }
 
-} // ::PacBio
+std::string UnanimityVersion()
+{ return UnyVersion; }
+
+std::tuple<int, int, int> UnanimityVersionTriple()
+{ return std::make_tuple(UnyVersionMajor, UnyVersionMinor, UnyVersionPatch); }
+
+}  // ::PacBio

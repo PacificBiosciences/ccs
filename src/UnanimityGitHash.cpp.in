@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -35,16 +35,14 @@
 
 // Author: Armin Töpfer
 
-#pragma once
-
-#include <string>
+#include <pacbio/UnanimityVersion.h>
 
 namespace PacBio {
 namespace {
-constexpr char UnyGitSha1[] = "@UNANIMITY_GIT_SHA1@";
+static constexpr char UnyGitSha1[] = "@UNANIMITY_GIT_SHA1@";
 }
 
-inline std::string UnanimityGitSha1()
+std::string UnanimityGitSha1()
 { return UnyGitSha1; }
 
-} // ::PacBio
+}  // ::PacBio

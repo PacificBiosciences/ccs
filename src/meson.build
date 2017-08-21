@@ -1,3 +1,28 @@
+################
+# version info #
+################
+uny_ver_arr = meson.project_version().split('.')
+uny_major_version = uny_ver_arr[0]
+uny_minor_version = uny_ver_arr[1]
+uny_patch_version = uny_ver_arr[2]
+
+uny_config = configuration_data()
+uny_config.set('UNANIMITY_VERSION', meson.project_version())
+uny_config.set('UNANIMITY_VERSION_MAJOR', uny_major_version)
+uny_config.set('UNANIMITY_VERSION_MINOR', uny_minor_version)
+uny_config.set('UNANIMITY_VERSION_PATCH', uny_patch_version)
+
+uny_version_sources = [
+  vcs_tag(
+    input : 'UnanimityGitHash.cpp.in',
+    output : 'UnanimityGitHash.cpp',
+    command : ['git', 'describe', '--always', '--dirty=*'],
+    replace_string : '@UNANIMITY_GIT_SHA1@'),
+  configure_file(
+    input : 'UnanimityVersion.cpp.in',
+    output : 'UnanimityVersion.cpp',
+    configuration : uny_config)]
+
 #############
 # libraries #
 #############
@@ -82,7 +107,8 @@ uny_cc2_cpp_sources = files([
 
   'ConsensusSettings.cpp',
   'LocalAlignment.cpp'])
-uny_cc2_cpp_sources += uny_ccsw_cpp_sources
+uny_cc2_cpp_sources += uny_version_sources
+uny_cc2_cpp_sources += uny_cssw_cpp_sources
 
 uny_cc2_lib_impl = library(
   'unanimity',
@@ -91,7 +117,7 @@ uny_cc2_lib_impl = library(
   soversion : 0,
   version : meson.project_version(),
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep, uny_seqan_dep],
-  include_directories : [uny_include_directories, uny_ccsw_header],
+  include_directories : [uny_include_directories, uny_cssw_header],
   cpp_args : uny_warning_flags)
 
 if get_option('default_library') == 'shared'
@@ -136,7 +162,7 @@ if get_option('enable-build-sim')
   'ccs_sim', [
     'main/ccs_sim.cpp'],
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep],
-  include_directories : [uny_include_directories, uny_ccsw_header],
+  include_directories : [uny_include_directories, uny_cssw_header],
   link_with : uny_cc2_lib_shared,
   link_whole : uny_cc2_lib_static,
   cpp_args : uny_warning_flags)
@@ -148,7 +174,7 @@ if get_option('enable-build-sim')
   'genomic_sim', [
     'main/genomic_sim.cpp'],
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep],
-  include_directories : [uny_include_directories, uny_ccsw_header],
+  include_directories : [uny_include_directories, uny_cssw_header],
   link_with : uny_cc2_lib_shared,
   link_whole : uny_cc2_lib_static,
   cpp_args : uny_warning_flags)

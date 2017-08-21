@@ -67,8 +67,8 @@ uny_zlib_dep = dependency('zlib', required : true)
 uny_seqan_dep = dependency('seqan-2', required : true)
 
 # cssw
-uny_ccsw_header = include_directories('third-party/cssw/')
-uny_ccsw_cpp_sources = files([
+uny_cssw_header = include_directories('third-party/cssw/')
+uny_cssw_cpp_sources = files([
   'third-party/cssw/ssw_cpp.cpp',
   'third-party/cssw/ssw.c'])
 
@@ -162,5 +162,4 @@ uny_dep = declare_dependency(
   link_with : uny_cc2_lib_impl,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep, uny_seqan_dep],
   version : meson.project_version(),
-  sources : uny_cc2_cpp_sources,
   compile_args : uny_swig_warning_flags)
