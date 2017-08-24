@@ -14,7 +14,7 @@ GetBBRepo () {
 echo "#############################"
 echo "# LOAD MODULES"
 type module >& /dev/null || . /mnt/software/Modules/current/init/bash
-module load gcc/4.9.2
+module load gcc/6.4.0
 module load ccache/3.3.4
 module load boost/1.60
 module load zlib/1.2.8
@@ -24,7 +24,9 @@ module load swig/3.0.5
 module load ninja
 if [[ $USER == "bamboo" ]]; then
   export CCACHE_DIR=/mnt/secondary/Share/tmp/bamboo.mobs.ccachedir
+  export CCACHE_TEMPDIR=/scratch/bamboo.ccache_tempdir
 fi
+export CCACHE_COMPILERCHECK='%compiler% -dumpversion'
 export CCACHE_BASEDIR=$PWD
 
 echo "#############################"
