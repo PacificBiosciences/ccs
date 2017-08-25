@@ -54,6 +54,7 @@ using namespace PacBio::Data;
 
 namespace PacBio {
 namespace Consensus {
+namespace S_P1C1v2 {
 namespace {
 
 constexpr size_t OUTCOME_NUMBER = 12;
@@ -453,5 +454,6 @@ std::pair<Data::Read, std::vector<MoveType>> S_P1C1v2_Model::SimulateRead(
 }
 
 }  // namespace anonymous
+}  // namespace S_P1C1v2
 }  // namespace Consensus
 }  // namespace PacBio

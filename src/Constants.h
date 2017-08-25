@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,20 +33,21 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Lance Hepler
+#pragma once
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
+#include <limits>
 
-#include <string>
+namespace PacBio {
+namespace Consensus {
 
-#include <pacbio/data/Sequence.h>
+namespace {
 
-using std::string;
+constexpr size_t EXTEND_BUFFER_COLUMNS = 8;
+constexpr int NEG_INT_INF = -std::numeric_limits<int>::infinity();
+constexpr double NEG_DBL_INF = -std::numeric_limits<double>::infinity();
+constexpr float NEG_FLOAT_INF = -std::numeric_limits<float>::infinity();
 
-using namespace PacBio::Data;  // NOLINT
+}  // anonymous namespace
 
-namespace SequenceTests {
-
-TEST(SequenceTest, ReverseComplement) { EXPECT_EQ("TACGAT", ReverseComplement("ATCGTA")); }
-}
+}  // namespace Consensus
+}  // namespace PacBio

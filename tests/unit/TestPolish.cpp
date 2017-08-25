@@ -51,7 +51,7 @@ using namespace std;
 using namespace PacBio::Consensus;  // NOLINT
 using namespace PacBio::Data;       // NOLINT
 
-namespace {
+namespace PolishTests {
 
 Read MkRead(const std::string& seq, const SNR& snr, const std::string& mdl)
 {
@@ -106,4 +106,4 @@ TEST(PolishTest, DiTriRepeat)
     EXPECT_TRUE(result.hasConverged);
     EXPECT_EQ(read, string(ai));
 }
-}
+}  // namespace PolishTests

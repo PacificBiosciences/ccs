@@ -193,17 +193,15 @@ seqan::Align<seqan::DnaString, seqan::ArrayGaps> SeedsToAlignment(
     const seqan::SeedSet<seqan::Seed<seqan::Simple>>& seeds, const TScoring& scoring,
     const TAlignConfig& config)
 {
-    using namespace seqan;
+    seqan::String<seqan::Seed<seqan::Simple>> chain;
+    chainSeedsGlobally(chain, seeds, seqan::SparseChaining());
 
-    String<Seed<Simple>> chain;
-    chainSeedsGlobally(chain, seeds, SparseChaining());
+    seqan::Align<seqan::DnaString, seqan::ArrayGaps> alignment;
+    seqan::resize(seqan::rows(alignment), 2);
+    seqan::assignSource(seqan::row(alignment, 0), seq1);
+    seqan::assignSource(seqan::row(alignment, 1), seq2);
 
-    seqan::Align<DnaString, ArrayGaps> alignment;
-    resize(rows(alignment), 2);
-    assignSource(row(alignment, 0), seq1);
-    assignSource(row(alignment, 1), seq2);
-
-    bandedChainAlignment(alignment, chain, scoring, config);
+    seqan::bandedChainAlignment(alignment, chain, scoring, config);
 
     return alignment;
 }

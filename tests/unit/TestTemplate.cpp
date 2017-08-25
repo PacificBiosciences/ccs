@@ -97,7 +97,7 @@ ostream& operator<<(ostream& os, const AbstractTemplate& tpl)
 }  // namespace Consensus
 }  // namespace PacBio
 
-namespace {
+namespace TemplateTests {
 
 const string mdl = "P6-C4";
 const SNR snr(10, 7, 5, 11);
@@ -366,4 +366,4 @@ TEST(TemplateTest, P6SiteNormalParameters)
     EXPECT_EQ(30.392545575324248, results.second);
 }
 
-}  // namespace anonymous
+}  // namespace TemplateTests

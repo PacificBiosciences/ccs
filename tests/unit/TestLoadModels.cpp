@@ -59,7 +59,7 @@ using namespace std;
 using namespace PacBio::Consensus;  // NOLINT
 using namespace PacBio::Data;       // NOLINT
 
-namespace {
+namespace LoadModelsTests {
 const SNR snr(10, 7, 5, 11);
 
 const string longTpl =
@@ -98,7 +98,7 @@ Read MkRead(const string& seq, const SNR& snr, const string& mdl, const vector<u
     vector<uint8_t> ipd(seq.length(), 0);
     return Read("NA", seq, ipd, pw, snr, mdl);
 }
-}
+}  // namespace LoadModelsTests
 
 TEST(LoadModelsTest, SupportedChemistries)
 {
@@ -141,15 +141,15 @@ TEST(LoadModelsTest, Directory)
 //   disabled until S_P1C1Beta is fixed
 #if 0
     {
-        Integrator ai1(longTpl, cfg);
+        Integrator ai1(LoadModelsTests::longTpl, LoadModelsTests::cfg);
         EXPECT_EQ(State::VALID,
-                  ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1/beta::Marginal::Compiled", longPws),
-                                         StrandType::FORWARD, 0, longTpl.length(), true, true)));
+                  ai1.AddRead(MappedRead(LoadModelsTests::MkRead(LoadModelsTests::longRead, snr, "S/P1-C1/beta::Marginal::Compiled", LoadModelsTests::longPws),
+                                         StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
-        Integrator ai2(longTpl, cfg);
+        Integrator ai2(LoadModelsTests::longTpl, LoadModelsTests::cfg);
         EXPECT_EQ(State::VALID,
-                  ai2.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1/beta::Marginal::FromFile", longPws),
-                                         StrandType::FORWARD, 0, longTpl.length(), true, true)));
+                  ai2.AddRead(MappedRead(LoadModelsTests::MkRead(LoadModelsTests::longRead, snr, "S/P1-C1/beta::Marginal::FromFile", LoadModelsTests::longPws),
+                                         StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
         EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
     }
@@ -157,60 +157,83 @@ TEST(LoadModelsTest, Directory)
 
     // test identity between S/P1-C1.1 and S/P1-C1.1::PwSnrA (loaded)
     {
-        Integrator ai1(longTpl, cfg);
-        EXPECT_EQ(State::VALID, ai1.AddRead(MappedRead(
-                                    MkRead(longRead, snr, "S/P1-C1.1::PwSnrA::Compiled", longPws),
-                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
+        Integrator ai1(LoadModelsTests::longTpl, LoadModelsTests::cfg);
+        EXPECT_EQ(
+            State::VALID,
+            ai1.AddRead(MappedRead(
+                LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                        "S/P1-C1.1::PwSnrA::Compiled", LoadModelsTests::longPws),
+                StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
-        Integrator ai2(longTpl, cfg);
-        EXPECT_EQ(State::VALID, ai2.AddRead(MappedRead(
-                                    MkRead(longRead, snr, "S/P1-C1.1::PwSnrA::FromFile", longPws),
-                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
-
-        EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
-    }
-
-    // test identity between S/P1-C1.2 and S/P1-C1.2::PwSnr
-    {
-        Integrator ai1(longTpl, cfg);
-        EXPECT_EQ(State::VALID, ai1.AddRead(MappedRead(
-                                    MkRead(longRead, snr, "S/P1-C1.2::PwSnr::Compiled", longPws),
-                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
-
-        Integrator ai2(longTpl, cfg);
-        EXPECT_EQ(State::VALID, ai2.AddRead(MappedRead(
-                                    MkRead(longRead, snr, "S/P1-C1.2::PwSnr::FromFile", longPws),
-                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
+        Integrator ai2(LoadModelsTests::longTpl, LoadModelsTests::cfg);
+        EXPECT_EQ(
+            State::VALID,
+            ai2.AddRead(MappedRead(
+                LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                        "S/P1-C1.1::PwSnrA::FromFile", LoadModelsTests::longPws),
+                StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
         EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
     }
 
     // test identity between S/P1-C1.2 and S/P1-C1.2::PwSnr
     {
-        Integrator ai1(longTpl, cfg);
+        Integrator ai1(LoadModelsTests::longTpl, LoadModelsTests::cfg);
+        EXPECT_EQ(
+            State::VALID,
+            ai1.AddRead(MappedRead(
+                LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                        "S/P1-C1.2::PwSnr::Compiled", LoadModelsTests::longPws),
+                StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
+
+        Integrator ai2(LoadModelsTests::longTpl, LoadModelsTests::cfg);
+        EXPECT_EQ(
+            State::VALID,
+            ai2.AddRead(MappedRead(
+                LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                        "S/P1-C1.2::PwSnr::FromFile", LoadModelsTests::longPws),
+                StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
+
+        EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
+    }
+
+    // test identity between S/P1-C1.2 and S/P1-C1.2::PwSnr
+    {
+        Integrator ai1(LoadModelsTests::longTpl, LoadModelsTests::cfg);
         EXPECT_EQ(State::VALID,
-                  ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P2-C2::PwSnr::Compiled", longPws),
-                                         StrandType::FORWARD, 0, longTpl.length(), true, true)));
+                  ai1.AddRead(MappedRead(
+                      LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                              "S/P2-C2::PwSnr::Compiled", LoadModelsTests::longPws),
+                      StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
-        Integrator ai2(longTpl, cfg);
-        EXPECT_EQ(State::VALID, ai2.AddRead(MappedRead(
-                                    MkRead(longRead, snr, "S/P1-C1.2::PwSnr::FromFile", longPws),
-                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
+        Integrator ai2(LoadModelsTests::longTpl, LoadModelsTests::cfg);
+        EXPECT_EQ(
+            State::VALID,
+            ai2.AddRead(MappedRead(
+                LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                        "S/P1-C1.2::PwSnr::FromFile", LoadModelsTests::longPws),
+                StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
         EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
     }
 
     // test identity between S/P2-C2/5.0 and S/P2-C2/5.0::PwSnr
     {
-        Integrator ai1(longTpl, cfg);
-        EXPECT_EQ(State::VALID, ai1.AddRead(MappedRead(
-                                    MkRead(longRead, snr, "S/P2-C2/5.0::PwSnr::Compiled", longPws),
-                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
+        Integrator ai1(LoadModelsTests::longTpl, LoadModelsTests::cfg);
+        EXPECT_EQ(
+            State::VALID,
+            ai1.AddRead(MappedRead(
+                LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                        "S/P2-C2/5.0::PwSnr::Compiled", LoadModelsTests::longPws),
+                StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
-        Integrator ai2(longTpl, cfg);
-        EXPECT_EQ(State::VALID, ai2.AddRead(MappedRead(
-                                    MkRead(longRead, snr, "S/P2-C2/5.0::PwSnr::FromFile", longPws),
-                                    StrandType::FORWARD, 0, longTpl.length(), true, true)));
+        Integrator ai2(LoadModelsTests::longTpl, LoadModelsTests::cfg);
+        EXPECT_EQ(
+            State::VALID,
+            ai2.AddRead(MappedRead(
+                LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                        "S/P2-C2/5.0::PwSnr::FromFile", LoadModelsTests::longPws),
+                StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
         EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
     }
@@ -244,12 +267,14 @@ TEST(LoadModelsTest, ModelTiming)
         "S/P1-C1/beta::Marginal::FromFile", "S/P1-C1.1::PwSnrA::FromFile",
         "S/P1-C1.2::PwSnr::FromFile", "S/P2-C2/5.0::PwSnr::FromFile"};
     for (const auto mdl : mdls) {
-        Integrator ai(longTpl, cfg);
+        Integrator ai(LoadModelsTests::longTpl, LoadModelsTests::cfg);
         const auto stime = std::chrono::high_resolution_clock::now();
         for (size_t i = 0; i < nsamp; ++i)
             EXPECT_EQ(State::VALID,
-                      ai.AddRead(MappedRead(MkRead(longRead, snr, mdl, longPws),
-                                            StrandType::FORWARD, 0, longTpl.length(), true, true)));
+                      ai.AddRead(MappedRead(
+                          LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                                  mdl, LoadModelsTests::longPws),
+                          StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
         const auto etime = std::chrono::high_resolution_clock::now();
         const auto duration =
             std::chrono::duration_cast<std::chrono::microseconds>(etime - stime).count();
@@ -261,17 +286,21 @@ TEST(LoadModelsTest, ModelTiming)
 
 TEST(LoadModelsTest, ModelOverride)
 {
-    Integrator ai1(longTpl, cfg);
+    Integrator ai1(LoadModelsTests::longTpl, LoadModelsTests::cfg);
     EXPECT_EQ(State::VALID,
-              ai1.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1.2", longPws),
-                                     StrandType::FORWARD, 0, longTpl.length(), true, true)));
+              ai1.AddRead(MappedRead(
+                  LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                          "S/P1-C1.2", LoadModelsTests::longPws),
+                  StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
     ASSERT_TRUE(OverrideModel("S/P1-C1.2"));
 
-    Integrator ai2(longTpl, cfg);
+    Integrator ai2(LoadModelsTests::longTpl, LoadModelsTests::cfg);
     EXPECT_EQ(State::VALID,
-              ai2.AddRead(MappedRead(MkRead(longRead, snr, "S/P1-C1.1", longPws),
-                                     StrandType::FORWARD, 0, longTpl.length(), true, true)));
+              ai2.AddRead(MappedRead(
+                  LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                          "S/P1-C1.1", LoadModelsTests::longPws),
+                  StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
     EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
 

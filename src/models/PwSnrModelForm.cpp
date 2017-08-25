@@ -57,6 +57,7 @@ using namespace PacBio::Data;
 
 namespace PacBio {
 namespace Consensus {
+namespace PwSnr {
 namespace {
 
 using MalformedModelFile = PacBio::Exception::MalformedModelFile;
@@ -356,5 +357,6 @@ std::pair<Data::Read, std::vector<MoveType>> PwSnrModel::SimulateRead(
 }
 
 }  // namespace anonymous
+}  // namespace PwSnr
 }  // namespace Consensus
 }  // namespace PacBio

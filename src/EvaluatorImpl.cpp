@@ -35,7 +35,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
 #include <utility>
 #include <vector>
 
@@ -44,6 +43,7 @@
 #include <pacbio/align/LinearAlignment.h>
 #include <pacbio/exception/InvalidEvaluatorException.h>
 
+#include "Constants.h"
 #include "EvaluatorImpl.h"
 #include "matrix/BasicDenseMatrix.h"
 
@@ -56,8 +56,6 @@ namespace {  // anonymous
 
 constexpr double ALPHA_BETA_MISMATCH_TOLERANCE = 0.001;
 constexpr double EARLY_ALPHA_BETA_MISMATCH_TOLERANCE = 0.0001;
-constexpr size_t EXTEND_BUFFER_COLUMNS = 8;
-constexpr double NEG_DBL_INF = -std::numeric_limits<double>::infinity();
 
 #if 0
 std::ostream& operator<<(std::ostream& out, const std::pair<size_t, size_t>& x)
