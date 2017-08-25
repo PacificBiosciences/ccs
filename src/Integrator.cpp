@@ -45,6 +45,7 @@
 #include <pacbio/data/Sequence.h>
 #include <pacbio/exception/InvalidEvaluatorException.h>
 
+#include "Constants.h"
 #include "ModelFactory.h"
 
 using namespace PacBio::Data;
@@ -52,14 +53,6 @@ using namespace PacBio::Exception;
 
 namespace PacBio {
 namespace Consensus {
-
-namespace {
-
-constexpr double NEG_DBL_INF = -std::numeric_limits<double>::infinity();
-constexpr int NEG_INT_INF = -std::numeric_limits<int>::infinity();
-constexpr float NEG_FLOAT_INF = -std::numeric_limits<float>::infinity();
-
-}  // anonymous namespace
 
 IntegratorConfig::IntegratorConfig(const double minZScore, const double scoreDiff)
     : MinZScore{minZScore}, ScoreDiff{scoreDiff}

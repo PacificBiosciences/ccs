@@ -57,6 +57,7 @@ using namespace PacBio::Data;
 
 namespace PacBio {
 namespace Consensus {
+namespace Marginal {
 namespace {
 
 using MalformedModelFile = PacBio::Exception::MalformedModelFile;
@@ -320,5 +321,6 @@ std::pair<Data::Read, std::vector<MoveType>> MarginalModel::SimulateRead(
 }
 
 }  // namespace anonymous
+}  // namespace Marginal
 }  // namespace Consensus
 }  // namespace PacBio

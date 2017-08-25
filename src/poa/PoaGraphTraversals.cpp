@@ -363,13 +363,14 @@ static boost::unordered_set<VD> parentVertices(VD v, const BoostGraph& g)
     return result;
 }
 
-vector<ScoredMutation>* PoaGraphImpl::findPossibleVariants(
+vector<PacBio::Consensus::ScoredMutation>* PoaGraphImpl::findPossibleVariants(
     const std::vector<Vertex>& bestPath) const
 {
     std::vector<VD> bestPath_ = internalizePath(bestPath);
 
     // Return value will be deallocated by PoaConsensus destructor.
-    vector<ScoredMutation>* variants = new vector<ScoredMutation>();
+    vector<PacBio::Consensus::ScoredMutation>* variants =
+        new vector<PacBio::Consensus::ScoredMutation>();
 
     for (int i = 2; i < (int)bestPath_.size() - 2; i++)  // NOLINT
     {

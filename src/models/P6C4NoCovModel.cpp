@@ -52,6 +52,7 @@ using namespace PacBio::Data;
 
 namespace PacBio {
 namespace Consensus {
+namespace P6C4NoCov {
 namespace {
 
 constexpr double kEps = 0.00505052456472967;
@@ -340,5 +341,6 @@ std::pair<Data::Read, std::vector<MoveType>> P6C4NoCovModel::SimulateRead(
 }
 
 }  // namespace anonymous
+}  // namespace P6C4NoCov
 }  // namespace Consensus
 }  // namespace PacBio

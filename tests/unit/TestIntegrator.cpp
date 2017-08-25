@@ -67,7 +67,7 @@ using namespace PacBio::Data;       // NOLINT
 
 using ::testing::UnorderedElementsAreArray;
 
-namespace {
+namespace IntegratorTests {
 
 #if EXTENSIVE_TESTING
 constexpr int numSamples = 333;
@@ -441,4 +441,4 @@ TEST(IntegratorTest, TestSuccessAddRead)
                                                   0, tpl.length(), true, true)));
 }
 
-}  // namespace anonymous
+}  // namespace IntegratorTests

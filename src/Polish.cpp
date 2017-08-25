@@ -244,7 +244,7 @@ vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* ce
 PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
 {
     vector<Mutation> muts = Mutations(*ai);
-    hash<string> hashFn;
+    std::hash<string> hashFn;
     size_t oldTpl = hashFn(*ai);
     set<size_t> history = {oldTpl};
 
@@ -485,7 +485,7 @@ QualityValues ConsensusQVs(Integrator& ai)
         subQVs.emplace_back(ScoreSumToQV(subScoreSum));
     }
     // TODO(lhepler): discuss InsQV being len + 1 to capture trailing insertion
-    return QualityValues{move(quals), move(delQVs), move(insQVs), move(subQVs)};
+    return QualityValues{std::move(quals), std::move(delQVs), std::move(insQVs), std::move(subQVs)};
 }
 
 }  // namespace Consensus

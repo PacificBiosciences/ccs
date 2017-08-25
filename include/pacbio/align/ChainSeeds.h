@@ -465,7 +465,7 @@ ChainSeedsImpl(std::priority_queue<ChainHit, std::vector<ChainHit>, ChainHitComp
             // or if its score is less than the fragment we're removing from consideration
             if (it == colSet.end() || zScore(*(it->Seed)) < zScore(*toRemove)) {
                 // insert the updated column, get successor
-                it = next(colSet.insert(col).first);
+                it = std::next(colSet.insert(col).first);
 
                 // keep removing columns long as the scores are less than
                 while (it != colSet.end() && zScore(*(it->Seed)) < zScore(*toRemove)) {

@@ -52,6 +52,7 @@ using namespace PacBio::Data;
 
 namespace PacBio {
 namespace Consensus {
+namespace S_P1C1Beta {
 namespace {
 
 class S_P1C1Beta_Model : public ModelConfig
@@ -299,5 +300,6 @@ std::pair<Data::Read, std::vector<MoveType>> S_P1C1Beta_Model::SimulateRead(
 }
 
 }  // namespace anonymous
+}  // namespace S_P1C1Beta
 }  // namespace Consensus
 }  // namespace PacBio
