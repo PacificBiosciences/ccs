@@ -2,6 +2,11 @@
 # headers #
 ###########
 
+# pacbio/
+install_headers([
+  'pacbio/UnanimityVersion.h'],
+  subdir : 'pacbio')
+
 # pacbio/align
 install_headers([
   'pacbio/align/AffineAlignment.h',
@@ -117,5 +122,3 @@ install_headers([
   subdir : 'pacbio/util')
 
 uny_include_directories = include_directories(['.', 'pacbio'])
-
-subdir('pacbio')

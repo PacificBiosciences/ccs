@@ -45,6 +45,8 @@ set(UNY_INCLUDE_DIRS
 
 # add subset of sources that only contains cc2
 add_library(cc2 STATIC
+    ${CMAKE_BINARY_DIR}/generated/UnanimityGitHash.cpp
+    ${CMAKE_BINARY_DIR}/generated/UnanimityVersion.cpp
     ${UNY_ALIGN_CPP}
     ${UNY_MATRIX_CPP}
     ${UNY_MODELS_CPP}
