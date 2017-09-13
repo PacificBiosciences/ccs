@@ -83,8 +83,25 @@ Data::State Integrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
 
 double Integrator::LL(const Mutation& fwdMut)
 {
-    const auto lls = LLs(fwdMut);
-    return std::accumulate(lls.cbegin(), lls.cend(), 0.0);
+    const Mutation revMut(ReverseComplement(fwdMut));
+    double ll = 0.0;
+    for (auto& e : evals_) {
+        // Skip invalid Evaluators
+        if (!e.IsValid()) continue;
+        switch (e.Strand()) {
+            case StrandType::FORWARD:
+                ll += e.LL(fwdMut);
+                break;
+            case StrandType::REVERSE:
+                ll += e.LL(revMut);
+                break;
+            case StrandType::UNMAPPED:
+                throw InvalidEvaluatorException("Unmapped read in mutation testing");
+            default:
+                throw std::runtime_error("Unknown StrandType");
+        }
+    }
+    return ll;
 }
 
 double Integrator::LL() const
@@ -97,16 +114,11 @@ double Integrator::LL() const
 std::vector<double> Integrator::LLs(const Mutation& fwdMut)
 {
     const Mutation revMut(ReverseComplement(fwdMut));
-
     // Compute individual LLs of each Evaluator
     std::vector<double> lls;
     lls.reserve(evals_.size());
     for (auto& e : evals_) {
-        // Ignore invalid Evaluators
-        if (!e.IsValid()) continue;
-
         double ll;
-
         switch (e.Strand()) {
             case StrandType::FORWARD:
                 ll = e.LL(fwdMut);
@@ -115,15 +127,13 @@ std::vector<double> Integrator::LLs(const Mutation& fwdMut)
                 ll = e.LL(revMut);
                 break;
             case StrandType::UNMAPPED:
-                // unmapped Evaluators should not be used
-                throw InvalidEvaluatorException("Unmapped read in mutation testing");
+                ll = NEG_DBL_INF;
+                break;
             default:
                 throw std::runtime_error("Unknown StrandType");
         }
-
         lls.emplace_back(ll);
     }
-
     return lls;
 }
 
