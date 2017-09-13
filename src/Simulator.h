@@ -97,14 +97,19 @@ std::pair<Data::Read, std::vector<MoveType>> SimulateReadImpl(std::default_rando
     const std::vector<TemplatePosition>& transModel = snrTransModel.second;
 
     size_t locus = 0;
-    while (locus < tpl.size() - 1) {
+    while (locus < tpl.size()) {
         const uint8_t prev = (locus ? transModel[locus - 1].Idx : 0);
         const uint8_t curr = transModel[locus].Idx;
 
-        // 1. generate new state
-        std::discrete_distribution<uint8_t> stateDistrib(&transModel[locus].Match,
-                                                         &transModel[locus].Deletion + 1);
-        state = static_cast<MoveType>(stateDistrib(*rng));
+        // the first base MUST be a match
+        if (locus == 0)
+            state = MoveType::MATCH;
+        else {
+            // 1. generate new state
+            std::discrete_distribution<uint8_t> stateDistrib(&transModel[locus - 1].Match,
+                                                             &transModel[locus - 1].Deletion + 1);
+            state = static_cast<MoveType>(stateDistrib(*rng));
+        }
         statePath.push_back(state);
 
         switch (state) {
