@@ -204,6 +204,7 @@ inline std::map<size_t, Seeds> FindSeeds(const PacBio::QGram::Index& index, cons
 inline Seeds FindSeeds(const size_t qGramSize, const std::string& seq1, const std::string& seq2,
                        const bool filterHomopolymers)
 {
+    if (seq2.length() < qGramSize) return Seeds{};
     const auto index = PacBio::QGram::Index{qGramSize, seq2};
     const auto multiSeeds = FindSeeds(index, seq1, filterHomopolymers);
     return (multiSeeds.empty() ? Seeds{} : multiSeeds.cbegin()->second);
