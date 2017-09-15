@@ -65,7 +65,7 @@ void CoverageInWindow(int tStartDim, int *tStart, int tEndDim, int *tEnd, int wi
     }
 }
 
-constexpr int CHUNK_SIZE = 10000;
+static constexpr const int CHUNK_SIZE = 10000;
 
 std::vector<std::pair<int, int>> CoveredIntervals(int minCoverage, int tStartDim, int *tStart,
                                                   int tEndDim, int *tEnd, int winStart, int winLen)

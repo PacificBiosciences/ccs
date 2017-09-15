@@ -43,11 +43,11 @@
 
 namespace PacBio {
 namespace {
-constexpr char* UnyVersion    = "@UNANIMITY_VERSION@";
-constexpr char* UnyChangelog  = "${UNANIMITY_CHANGELOG}";
-constexpr int UnyVersionMajor = @UNANIMITY_VERSION_MAJOR@;
-constexpr int UnyVersionMinor = @UNANIMITY_VERSION_MINOR@;
-constexpr int UnyVersionPatch = @UNANIMITY_VERSION_PATCH@;
+static constexpr const char UnyVersion[]   = "@UNANIMITY_VERSION@";
+static constexpr const char UnyChangelog[] = "${UNANIMITY_CHANGELOG}";
+static constexpr const int UnyVersionMajor = @UNANIMITY_VERSION_MAJOR@;
+static constexpr const int UnyVersionMinor = @UNANIMITY_VERSION_MINOR@;
+static constexpr const int UnyVersionPatch = @UNANIMITY_VERSION_PATCH@;
 }
 
 std::string UnanimityChangelog()

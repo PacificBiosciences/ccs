@@ -91,12 +91,12 @@ private:
     double nLgCounterWeight_;
 };
 
-constexpr double snrRanges[2][4] = {
+static constexpr const double snrRanges[2][4] = {
     {4.0, 4.0, 4.0, 4.0},         // minimum
     {10.65, 10.65, 10.65, 10.65}  // maximum
 };
 
-constexpr double emissionPmf[3][8][4] = {
+static constexpr const double emissionPmf[3][8][4] = {
     {
         // matchPmf
         {0.980417570, 0.011537479, 0.005804964, 0.002239987},  // AA
@@ -131,7 +131,7 @@ constexpr double emissionPmf[3][8][4] = {
         {0.446834358, 0.144605809, 0.408559833, 0.000000000}   // NT
     }};
 
-constexpr double transProbs[8][4] = {
+static constexpr const double transProbs[8][4] = {
     // Match, Branch, Stick, Delete
     {0.888913751, 0.021169653, 0.034937054, 0.054979542},  // AA
     {0.835822697, 0.036126801, 0.091992041, 0.036058461},  // CC
@@ -270,7 +270,7 @@ inline std::pair<Data::SNR, std::vector<TemplatePosition>> S_P1C1Beta_Initialise
 BaseData S_P1C1Beta_GenerateReadData(std::default_random_engine* const rng, const MoveType state,
                                      const uint8_t prev, const uint8_t curr)
 {
-    constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+    static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
 
     // distribution is arbitrary at the moment, as
     // PW and IPD are not a covariates of the consensus HMM

@@ -39,7 +39,7 @@
 
 namespace PacBio {
 namespace {
-static constexpr char UnyGitSha1[] = "@UNANIMITY_GIT_SHA1@";
+static constexpr const char UnyGitSha1[] = "@UNANIMITY_GIT_SHA1@";
 }
 
 std::string UnanimityGitSha1()

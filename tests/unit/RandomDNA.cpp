@@ -33,6 +33,8 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+#include <array>
+
 #include "RandomDNA.h"
 
 using namespace std;
@@ -49,7 +51,8 @@ constexpr double pulseWidthDist[50] = {
 
 string RandomDNA(const size_t n, mt19937* const gen)
 {
-    constexpr static char bases[] = "ACGT";
+    static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+
     string result(n, 'A');
     uniform_int_distribution<size_t> rand(0, 3);
 

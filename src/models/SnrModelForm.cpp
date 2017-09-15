@@ -62,7 +62,7 @@ namespace {
 
 using MalformedModelFile = PacBio::Exception::MalformedModelFile;
 
-constexpr size_t CONTEXT_NUMBER = 8;
+static constexpr const size_t CONTEXT_NUMBER = 8;
 
 // fwd decl
 class SnrModelCreator;
@@ -318,7 +318,7 @@ public:
     BaseData operator()(std::default_random_engine* const rng, const MoveType state,
                         const uint8_t prev, const uint8_t curr)
     {
-        constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+        static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
 
         // distribution is arbitrary at the moment, as
         // PW and IPD are not a covariates of the consensus HMM
