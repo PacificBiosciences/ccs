@@ -5,8 +5,8 @@
 [submodule "third-party/seqan"]
     path = third-party/seqan
     url = ../seqan.git
-    branch = master
+    branch = develop
 [submodule "third-party/pbcopper"]
     path = third-party/pbcopper
     url = ../pbcopper.git
-    branch = master
+    branch = develop
