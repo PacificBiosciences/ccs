@@ -57,8 +57,8 @@ namespace Consensus {
 namespace S_P2C2v5 {
 namespace {
 
-constexpr size_t OUTCOME_NUMBER = 12;
-constexpr size_t CONTEXT_NUMBER = 16;
+static constexpr const size_t OUTCOME_NUMBER = 12;
+static constexpr const size_t CONTEXT_NUMBER = 16;
 
 class S_P2C2v5_Model : public ModelConfig
 {
@@ -100,12 +100,12 @@ private:
     double nLgCounterWeight_;
 };
 
-constexpr double snrRanges[2][4] = {
+static constexpr const double snrRanges[2][4] = {
     {3.91070819, 7.37540293, 3.84641552, 6.27542830},  // minimum
     {8.06702614, 15.2471046, 7.02776623, 11.3469543}   // maximum
 };
 
-constexpr double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
+static constexpr const double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
     {// matchPmf
      {0, 0.000180313185, 0, 1.01091615e-06, 0.00352197085, 0.019010118, 7.33665722e-06,
       2.45437478e-05, 0.964232358, 0.012245689, 0.000606040406, 0.000170618772},
@@ -190,7 +190,7 @@ constexpr double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
      {0, 0.0059224117, 0, 0, 0.00934985504, 0.0356605899, 0.0149281548, 0, 0.269045679, 0.31090005,
       0.35419326, 0}}};
 
-constexpr double transProbs[CONTEXT_NUMBER][3][4] = {
+static constexpr const double transProbs[CONTEXT_NUMBER][3][4] = {
     {// AA
      {-4.59501616, -0.703891003, 0.13968334, -0.00910714009},
      {-0.835790459, -1.17248459, 0.124455964, -0.00401216571},
@@ -411,7 +411,7 @@ inline std::pair<Data::SNR, std::vector<TemplatePosition>> S_P2C2v5_InitialiseMo
 BaseData S_P2C2v5_GenerateReadData(std::default_random_engine* const rng, const MoveType state,
                                    const uint8_t prev, const uint8_t curr)
 {
-    constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+    static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
 
     // distribution is arbitrary at the moment, as
     // IPD is not a covariate of the consensus HMM

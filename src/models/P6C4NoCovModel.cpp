@@ -55,8 +55,8 @@ namespace Consensus {
 namespace P6C4NoCov {
 namespace {
 
-constexpr double kEps = 0.00505052456472967;
-constexpr double kInvEps = 1.0 - kEps;
+static constexpr const double kEps = 0.00505052456472967;
+static constexpr const double kInvEps = 1.0 - kEps;
 
 class P6C4NoCovModel : public ModelConfig
 {
@@ -135,7 +135,7 @@ double P6C4NoCovParams[4][2][3][4] = {
       {4.21031404956015, -0.347546363361823, 0.0293839179303896, -0.000893802212450644},
       {2.33143889851302, -0.586068444099136, 0.040044954697795, -0.000957298861394191}}}};
 
-constexpr double snrRanges[2][4] = {
+static constexpr const double snrRanges[2][4] = {
     {0, 0, 0, 0},     // minimum
     {20, 19, 20, 20}  // maximum
 };
@@ -228,8 +228,8 @@ double P6C4NoCovModel::ExpectedLLForEmission(const MoveType move, const uint8_t 
 {
     const double lgThird = -std::log(3.0);
     if (move == MoveType::MATCH) {
-        constexpr double probMatch = kInvEps;
-        constexpr double probMismatch = kEps;
+        static constexpr const double probMatch = kInvEps;
+        static constexpr const double probMismatch = kEps;
         const double lgMatch = std::log(probMatch);
         const double lgMismatch = lgThird + std::log(probMismatch);
         if (moment == MomentType::FIRST)
@@ -272,7 +272,7 @@ inline double P6C4NoCovEmissionPr(const MoveType move, const uint8_t emission, c
     assert(move != MoveType::DELETION);
 
     // probability of a mismatch
-    constexpr static double tbl[3][2] = {
+    static constexpr const double tbl[3][2] = {
         // 0 (match), 1 (mismatch)
         {kInvEps, kEps / 3.0},  // MATCH
         {1.0, 0.0},             // BRANCH
@@ -311,7 +311,7 @@ BaseData P6C4NoCovModel_GenerateReadData(std::default_random_engine* const rng,
                                          const MoveType state, const uint8_t prev,
                                          const uint8_t curr)
 {
-    constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+    static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
 
     // distribution is arbitrary at the moment, as
     // PW and IPD are not a covariates of the consensus HMM

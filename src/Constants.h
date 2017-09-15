@@ -42,10 +42,10 @@ namespace Consensus {
 
 namespace {
 
-constexpr size_t EXTEND_BUFFER_COLUMNS = 8;
-constexpr int NEG_INT_INF = -std::numeric_limits<int>::infinity();
-constexpr double NEG_DBL_INF = -std::numeric_limits<double>::infinity();
-constexpr float NEG_FLOAT_INF = -std::numeric_limits<float>::infinity();
+static constexpr const size_t EXTEND_BUFFER_COLUMNS = 8;
+static constexpr const int NEG_INT_INF = -std::numeric_limits<int>::infinity();
+static constexpr const double NEG_DBL_INF = -std::numeric_limits<double>::infinity();
+static constexpr const float NEG_FLOAT_INF = -std::numeric_limits<float>::infinity();
 
 }  // anonymous namespace
 

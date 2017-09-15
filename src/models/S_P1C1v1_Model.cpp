@@ -55,8 +55,8 @@ namespace Consensus {
 namespace S_P1C1v1 {
 namespace {
 
-constexpr size_t OUTCOME_NUMBER = 12;
-constexpr size_t CONTEXT_NUMBER = 16;
+static constexpr const size_t OUTCOME_NUMBER = 12;
+static constexpr const size_t CONTEXT_NUMBER = 16;
 
 class S_P1C1v1_Model : public ModelConfig
 {
@@ -97,12 +97,12 @@ private:
     double nLgCounterWeight_;
 };
 
-constexpr double snrRanges[2][4] = {
+static constexpr const double snrRanges[2][4] = {
     {4.0, 4.0, 4.0, 4.0},         // minimum
     {10.65, 10.65, 10.65, 10.65}  // maximum
 };
 
-constexpr double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
+static constexpr const double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
     {// matchPmf
      {0.0516695237, 0.000856759021, 0.000805765869, 6.40098033e-05, 0.0735681929, 0.000490647727,
       0.00171763848, 1.66588276e-05, 0.864949369, 0.00298262543, 0.0027926093, 6.28389773e-05},
@@ -205,7 +205,7 @@ constexpr double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
      {0.152511749, 0.0105044023, 0.228700197, 9.13331245e-05, 0.0553648837, 0.00620728656,
       0.191510525, 7.33906221e-05, 0.048230451, 0.0444486569, 0.261928846, 7.37812688e-05}}};
 
-constexpr double transProbs[16][3][4] = {
+static constexpr const double transProbs[16][3][4] = {
     // Fit for context:  AA
     {{-11.8402163277545, 4.12000773672109, -0.661725654820908, 0.0337357107347639},
      {-3.10509518253287, 0.275600076181856, -0.101980967380149, 0.00728037713082447},
@@ -429,7 +429,7 @@ inline std::pair<Data::SNR, std::vector<TemplatePosition>> S_P1C1v1_InitialiseMo
 BaseData S_P1C1v1_GenerateReadData(std::default_random_engine* const rng, const MoveType state,
                                    const uint8_t prev, const uint8_t curr)
 {
-    constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+    static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
 
     // distribution is arbitrary at the moment, as
     // IPD is not a covariate of the consensus HMM

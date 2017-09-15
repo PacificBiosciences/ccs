@@ -62,10 +62,10 @@ namespace {
 
 using MalformedModelFile = PacBio::Exception::MalformedModelFile;
 
-constexpr size_t CONTEXT_NUMBER = 8;
-constexpr size_t OUTCOME_NUMBER = 4;
+static constexpr const size_t CONTEXT_NUMBER = 8;
+static constexpr const size_t OUTCOME_NUMBER = 4;
 
-constexpr double snrRanges[2][4] = {
+static constexpr const double snrRanges[2][4] = {
     {0, 0, 0, 0},     // minimum
     {20, 19, 20, 20}  // maximum
 };
@@ -285,7 +285,7 @@ public:
     BaseData operator()(std::default_random_engine* const rng, const MoveType state,
                         const uint8_t prev, const uint8_t curr)
     {
-        constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+        static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
 
         // distribution is arbitrary at the moment, as
         // PW and IPD are not a covariates of the consensus HMM

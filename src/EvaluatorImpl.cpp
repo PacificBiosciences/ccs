@@ -54,8 +54,8 @@ namespace PacBio {
 namespace Consensus {
 namespace {  // anonymous
 
-constexpr double ALPHA_BETA_MISMATCH_TOLERANCE = 0.001;
-constexpr double EARLY_ALPHA_BETA_MISMATCH_TOLERANCE = 0.0001;
+static constexpr const double ALPHA_BETA_MISMATCH_TOLERANCE = 0.001;
+static constexpr const double EARLY_ALPHA_BETA_MISMATCH_TOLERANCE = 0.0001;
 
 #if 0
 std::ostream& operator<<(std::ostream& out, const std::pair<size_t, size_t>& x)

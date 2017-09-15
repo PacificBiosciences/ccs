@@ -189,11 +189,12 @@ typedef std::pair<size_t, size_t> Interval;
 
 // TODO(dalexander): put these into a RecursorConfig struct
 // TODO(anybody): Hmmm... not sure what the heck to do about these...
-constexpr int MAX_FLIP_FLOPS = 5;
-constexpr double REBANDING_THRESHOLD = 0.04;
+static constexpr const int MAX_FLIP_FLOPS = 5;
+static constexpr const double REBANDING_THRESHOLD = 0.04;
 
-constexpr uint8_t kDefaultBase = 0;  // corresponding to A, usually
-constexpr TemplatePosition kDefaultTplPos = TemplatePosition{'A', kDefaultBase, 1, 0, 0, 0};
+static constexpr const uint8_t kDefaultBase = 0;  // corresponding to A, usually
+static constexpr const TemplatePosition kDefaultTplPos =
+    TemplatePosition{'A', kDefaultBase, 1, 0, 0, 0};
 
 inline Interval RangeUnion(const Interval& range1, const Interval& range2)
 {

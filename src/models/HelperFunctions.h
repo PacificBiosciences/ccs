@@ -78,7 +78,7 @@ inline uint8_t EncodeBase(const char base, const uint8_t raw_pw)
 // second: pw
 inline std::pair<char, uint8_t> DecodeEmission(const uint8_t em)
 {
-    constexpr static std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
+    static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
     if (em > 11U) throw std::runtime_error("encoded emission value is invalid!");
     const uint8_t base = em & 3;
     const uint8_t pw = (em >> 2) + 1;
