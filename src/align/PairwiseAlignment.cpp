@@ -160,6 +160,37 @@ bool Rewrite3R(std::string* target, std::string* query, std::string* transcript,
     }
     return false;
 }
+
+size_t BisectRight(const std::vector<int> vec, const int val)
+{
+    size_t low = 0;
+    size_t high = vec.size();
+
+    while (low < high) {
+        size_t mid = (low + high) / 2;
+        if (val < vec[mid])
+            high = mid;
+        else
+            low = mid + 1;
+    }
+    return low;
+}
+
+size_t BisectLeft(const std::vector<int> vec, const int val)
+{
+    size_t low = 0;
+    size_t high = vec.size();
+
+    while (low < high) {
+        size_t mid = (low + high) / 2;
+        if (vec[mid] < val)
+            low = mid + 1;
+        else
+            high = mid;
+    }
+    return low;
+}
+
 }  // PacBio::Align::internal
 
 using namespace PacBio::Data;
@@ -167,6 +198,10 @@ using namespace PacBio::Data;
 std::string PairwiseAlignment::Target() const { return target_; }
 
 std::string PairwiseAlignment::Query() const { return query_; }
+
+size_t PairwiseAlignment::ReferenceStart() const { return refStart_; }
+
+size_t PairwiseAlignment::ReferenceEnd() const { return refEnd_; }
 
 float PairwiseAlignment::Accuracy() const { return ((float)(Matches())) / Length(); }
 
@@ -223,8 +258,13 @@ void PairwiseAlignment::Justify(const LRType lr)
 
 int PairwiseAlignment::Length() const { return target_.length(); }
 
-PairwiseAlignment::PairwiseAlignment(const std::string& target, const std::string& query)
-    : target_(target), query_(query), transcript_(target_.length(), 'Z')
+PairwiseAlignment::PairwiseAlignment(const std::string& target, const std::string& query,
+                                     const size_t refStart, const size_t refEnd)
+    : target_(target)
+    , query_(query)
+    , transcript_(target_.length(), 'Z')
+    , refStart_(refStart)
+    , refEnd_(refEnd)
 {
     if (target_.length() != query_.length()) {
         throw std::invalid_argument("target length must equal query length");
@@ -250,14 +290,58 @@ PairwiseAlignment::PairwiseAlignment(const std::string& target, const std::strin
     }
 }
 
+std::vector<int> PairwiseAlignment::TargetPositions() const
+{
+    std::vector<int> pos;
+    pos.reserve(transcript_.size());
+
+    int refPos = refStart_;
+    for (const char c : transcript_) {
+        if (c == 'M' || c == 'R' || c == 'D') {
+            pos.push_back(refPos);
+            refPos++;
+        } else if (c == 'I') {
+            pos.push_back(refPos);
+        } else {
+            throw std::runtime_error("unreachable");
+        }
+    }
+
+    assert(pos.size() == transcript_.size());
+    return pos;
+}
+
+PairwiseAlignment PairwiseAlignment::ClippedTo(const size_t refStart, const size_t refEnd)
+{
+    using namespace PacBio::Align::internal;
+
+    if (refStart >= refEnd || refStart >= ReferenceEnd() || refEnd <= ReferenceStart()) {
+        throw std::runtime_error("Clipping query does not overlap alignment");
+    }
+
+    const size_t clipRefStart = std::max(refStart, ReferenceStart());
+    const size_t clipRefEnd = std::min(refEnd, ReferenceEnd());
+
+    const std::vector<int> pos = TargetPositions();
+    size_t clipStart = BisectRight(pos, clipRefStart);
+    clipStart = clipStart > 0 ? clipStart - 1 : 0;
+    const size_t clipEnd = BisectLeft(pos, clipRefEnd);
+    const size_t clipLength = clipEnd - clipStart;
+
+    const std::string& clippedQuery = Query().substr(clipStart, clipLength);
+    const std::string& clippedTarget = Target().substr(clipStart, clipLength);
+
+    return PairwiseAlignment(clippedTarget, clippedQuery, clipRefStart, clipRefEnd);
+}
+
 PairwiseAlignment* Align(const std::string& target, const std::string& query, int* score,
                          AlignConfig config)
 {
     using boost::numeric::ublas::matrix;
 
     const AlignParams& params = config.Params;
-    if (config.Mode != AlignMode::GLOBAL) {
-        throw std::invalid_argument("Only AlignMode::GLOBAL alignment supported at present");
+    if (config.Mode != AlignMode::GLOBAL && config.Mode != AlignMode::SEMIGLOBAL) {
+        throw std::invalid_argument("Only GLOBAL and SEMIGLOBAL alignments supported at present");
     }
 
     int I = query.length();
@@ -268,8 +352,14 @@ PairwiseAlignment* Align(const std::string& target, const std::string& query, in
     for (int i = 1; i <= I; i++) {
         Score(i, 0) = i * params.Insert;
     }
-    for (int j = 1; j <= J; j++) {
-        Score(0, j) = j * params.Delete;
+    if (config.Mode == AlignMode::GLOBAL) {
+        for (int j = 1; j <= J; j++) {
+            Score(0, j) = j * params.Delete;
+        }
+    } else {
+        for (int j = 1; j <= J; j++) {
+            Score(0, j) = 0;
+        }
     }
     for (int i = 1; i <= I; i++) {
         for (int j = 1; j <= J; j++) {
@@ -282,10 +372,24 @@ PairwiseAlignment* Align(const std::string& target, const std::string& query, in
         *score = Score(I, J);
     }
 
+    // Find the alignment end coordinate in the reference
+    //  This is J if Global and the maximum scoring position if not
+    int maxJ = J;
+    if (config.Mode == AlignMode::SEMIGLOBAL) {
+        int maxScore = std::numeric_limits<int>::min();
+        for (int j = 1; j <= J; ++j) {
+            if (Score(I, j) >= maxScore) {
+                maxScore = Score(I, j);
+                maxJ = j;
+            }
+        }
+    }
+
     // Traceback, build up reversed aligned query, aligned target
+    int i = I;
+    int j = maxJ;
     std::string raQuery, raTarget;
-    int i = I, j = J;
-    while (i > 0 || j > 0) {
+    while (i > 0 || (config.Mode == AlignMode::GLOBAL && j > 0)) {
         int move;
         if (i == 0) {
             move = 2;  // only deletion is possible
@@ -317,7 +421,7 @@ PairwiseAlignment* Align(const std::string& target, const std::string& query, in
         }
     }
 
-    return new PairwiseAlignment(Reverse(raTarget), Reverse(raQuery));
+    return new PairwiseAlignment(Reverse(raTarget), Reverse(raQuery), std::max(0, j - 1), maxJ - 1);
 }
 
 PairwiseAlignment* Align(const std::string& target, const std::string& query, AlignConfig config)
