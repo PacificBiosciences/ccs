@@ -39,6 +39,7 @@
 #include <gtest/gtest.h>
 
 #include <pacbio/align/AffineAlignment.h>
+#include <pacbio/align/AlignConfig.h>
 #include <pacbio/align/LinearAlignment.h>
 #include <pacbio/align/LocalAlignment.h>
 #include <pacbio/align/PairwiseAlignment.h>
@@ -717,4 +718,20 @@ TEST(LocalAlignmentTests, Simple)
     EXPECT_EQ(14, a.QueryEnd());
     EXPECT_EQ(2, a.NumMismatches());
     EXPECT_EQ(21, a.Score());
+}
+
+// --------------- Semi-Global alignment tests ------------------
+
+TEST(SemiGlobalAlignmentTests, Simple)
+{
+    const std::string target = "CAGCCTTTCTGACCCGGAAATCAAAATAGGCACAACAAA";
+    const std::string query = "CTGAGCCGGTAAATC";
+    const AlignConfig cfg(AlignParams::Default(), AlignMode::SEMIGLOBAL);
+
+    const auto pa = Align(target, query, cfg);
+
+    EXPECT_EQ(13, pa->Matches());
+    EXPECT_EQ(2, pa->Errors());
+    EXPECT_EQ(7, pa->ReferenceStart());
+    EXPECT_EQ(21, pa->ReferenceEnd());
 }
