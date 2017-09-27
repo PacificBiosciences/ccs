@@ -161,36 +161,6 @@ bool Rewrite3R(std::string* target, std::string* query, std::string* transcript,
     return false;
 }
 
-size_t BisectRight(const std::vector<int> vec, const int val)
-{
-    size_t low = 0;
-    size_t high = vec.size();
-
-    while (low < high) {
-        size_t mid = (low + high) / 2;
-        if (val < vec[mid])
-            high = mid;
-        else
-            low = mid + 1;
-    }
-    return low;
-}
-
-size_t BisectLeft(const std::vector<int> vec, const int val)
-{
-    size_t low = 0;
-    size_t high = vec.size();
-
-    while (low < high) {
-        size_t mid = (low + high) / 2;
-        if (vec[mid] < val)
-            low = mid + 1;
-        else
-            high = mid;
-    }
-    return low;
-}
-
 }  // PacBio::Align::internal
 
 using namespace PacBio::Data;
@@ -323,9 +293,11 @@ PairwiseAlignment PairwiseAlignment::ClippedTo(const size_t refStart, const size
     const size_t clipRefEnd = std::min(refEnd, ReferenceEnd());
 
     const std::vector<int> pos = TargetPositions();
-    size_t clipStart = BisectRight(pos, clipRefStart);
+    size_t clipStart =
+        std::distance(pos.begin(), std::upper_bound(pos.begin(), pos.end(), clipRefStart));
     clipStart = clipStart > 0 ? clipStart - 1 : 0;
-    const size_t clipEnd = BisectLeft(pos, clipRefEnd);
+    const size_t clipEnd =
+        std::distance(pos.begin(), std::lower_bound(pos.begin(), pos.end(), clipRefEnd));
     const size_t clipLength = clipEnd - clipStart;
 
     const std::string& clippedQuery = Query().substr(clipStart, clipLength);
