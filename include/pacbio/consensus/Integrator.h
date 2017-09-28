@@ -120,6 +120,23 @@ public:
     /// Return the LL for each Evaluator, even invalid ones.
     /// DO NOT use this in production code, only for debugging purposes.
     std::vector<double> LLs() const;
+    /// Return the best-mutation improvement histogram for a locus
+    /// and given MutationType.
+    ///
+    /// Say we have 10 Evaluators, and provide some site and a MutationType::INSERTION
+    ///   - 3 of them, 'A' provides the best LL improvement,
+    ///   - 0 of them, 'C' provides the best LL improvement,
+    ///   - 1 of them, 'G' provides the best LL improvement,
+    ///   - 5 of them, 'T' provides the best LL improvement.
+    /// Notice that the sum of these is 9, that is, 1 Evaluator is either invalid
+    /// or its LL decreases for every base.
+    /// The return value is a reverse-sorted array of the base and the number of Evaluators,
+    /// sorted on the second field, e.g., for the aforementioned example we will have
+    ///
+    ///   {{'T', 5}, {'A', 3}, {'G', 1}, {'C', 0}}
+    ///
+    /// as return value.
+    std::array<std::pair<char, int>, 4> BestMutationHistogram(size_t start, MutationType mutType);
     /// For each Evaluator, returns the read name.
     std::vector<std::string> ReadNames() const;
     /// Returns the number of flip flop events for each Evaluator.
@@ -160,6 +177,10 @@ protected:
     std::string revTpl_;
 
 private:
+    /// Return LL for a single Evaluator
+    template <bool AllowInvalidEvaluators>
+    inline double SingleEvaluatorLL(Evaluator* const eval, const Mutation& fwdMut) const;
+
     /// Extract a feature vector from a vector of Evaluators for non-const functions.
     template <typename T>
     inline std::vector<T> TransformEvaluators(std::function<T(Evaluator&)> functor)
