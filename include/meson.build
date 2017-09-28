@@ -84,6 +84,12 @@ install_headers([
   'pacbio/data/SubreadResultCounter.h'],
   subdir : 'pacbio/data')
 
+# pacbio/data/internal
+install_headers([
+  'pacbio/data/internal/BaseEncoding.h',
+  'pacbio/data/internal/ConversionFunctions.h'],
+  subdir : 'pacbio/data/internal')
+
 # pacbio/denovo
 install_headers([
   'pacbio/denovo/PoaConsensus.h',

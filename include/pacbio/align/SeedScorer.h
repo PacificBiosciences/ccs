@@ -179,7 +179,7 @@ public:  // non-modifying methods
         // Count the number of occurrences of all possible successor strings
         for (TAlphabetSize i = 0; i < alphabetSize_; ++i) {
             seqan::DnaString testString = rootString;
-            seqan::append(testString, alphabet_[i]);
+            seqan::append(testString, Data::detail::NCBI2naToASCIIImpl(i));
             size_t testStringCount = CountOccurrences(testString, referenceIdx);
             //std::cout << referenceString << " "
             //          << rootString << " "
@@ -248,7 +248,6 @@ private:  // data
     TFinder kmerFinder_;
     size_t kmerSize_;
     TAlphabetSize alphabetSize_;
-    char alphabet_[4] = {'A', 'C', 'G', 'T'};
 };
 }
 }  // ::PacBio::Align
