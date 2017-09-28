@@ -43,6 +43,7 @@
 
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/data/Read.h>
+#include <pacbio/data/internal/BaseEncoding.h>
 
 #include "../ModelFactory.h"
 #include "../Recursor.h"
@@ -57,8 +58,8 @@ namespace Consensus {
 namespace S_P2C2v5 {
 namespace {
 
-static constexpr const size_t OUTCOME_NUMBER = 12;
 static constexpr const size_t CONTEXT_NUMBER = 16;
+static constexpr const size_t OUTCOME_NUMBER = 12;
 
 class S_P2C2v5_Model : public ModelConfig
 {
@@ -75,7 +76,7 @@ public:
         std::default_random_engine* const rng, const std::string& tpl,
         const std::string& readname) const override;
 
-    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
                                  MomentType moment) const override;
 
 private:
@@ -92,7 +93,8 @@ class S_P2C2v5_Recursor : public Recursor<S_P2C2v5_Recursor>
 public:
     S_P2C2v5_Recursor(const MappedRead& mr, double scoreDiff, double counterWeight);
     static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
-    inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
+    inline double EmissionPr(MoveType move, uint8_t emission, const NCBI4na prev,
+                             const NCBI4na curr) const;
     virtual double UndoCounterWeights(size_t nEmissions) const;
 
 private:
@@ -319,41 +321,25 @@ std::unique_ptr<AbstractRecursor> S_P2C2v5_Model::CreateRecursor(const MappedRea
 
 std::vector<TemplatePosition> S_P2C2v5_Model::Populate(const std::string& tpl) const
 {
-    std::vector<TemplatePosition> result;
-
-    if (tpl.empty()) return result;
-
-    result.reserve(tpl.size());
-
-    // calculate transition probabilities
-    uint8_t prev = detail::TranslationTable[static_cast<uint8_t>(tpl[0])];
-    if (prev > 3) throw std::invalid_argument("invalid character in template!");
-
-    for (size_t i = 1; i < tpl.size(); ++i) {
-        const uint8_t curr = detail::TranslationTable[static_cast<uint8_t>(tpl[i])];
-        if (curr > 3) throw std::invalid_argument("invalid character in template!");
-        const auto row = (prev << 2) | curr;
-        const auto params = ctxTrans_[row];
-        result.emplace_back(TemplatePosition{
-            tpl[i - 1], prev,
-            params[0],  // match
-            params[1],  // branch
-            params[2],  // stick
-            params[3]   // deletion
-        });
-        prev = curr;
-    }
-    result.emplace_back(TemplatePosition{tpl.back(), prev, 1.0, 0.0, 0.0, 0.0});
-
-    return result;
+    auto rowFetcher = [this](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
+    {
+        const auto row = (prev.Data() << 2) | curr.Data();
+        const double(&params)[4] = ctxTrans_[row];
+        return params;
+    };
+    return AbstractPopulater(tpl, rowFetcher);
 }
 
-double S_P2C2v5_Model::ExpectedLLForEmission(const MoveType move, const uint8_t prev,
-                                             const uint8_t curr, const MomentType moment) const
+double S_P2C2v5_Model::ExpectedLLForEmission(const MoveType move, const NCBI4na prev,
+                                             const NCBI4na curr, const MomentType moment) const
 {
-    const size_t row = (prev << 2) | curr;
-    return cachedEmissionExpectations_[row][static_cast<uint8_t>(move)]
-                                      [static_cast<uint8_t>(moment)];
+    auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
+                                        const MomentType moment) -> double {
+        const size_t row = (prev.Data() << 2) | curr.Data();
+        return cachedEmissionExpectations_[row][static_cast<uint8_t>(move)]
+                                          [static_cast<uint8_t>(moment)];
+    };
+    return AbstractExpectedLLForEmission(move, prev, curr, moment, cachedEmissionVisitor);
 }
 
 S_P2C2v5_Recursor::S_P2C2v5_Recursor(const MappedRead& mr, double scoreDiff, double counterWeight)
@@ -375,18 +361,10 @@ std::vector<uint8_t> S_P2C2v5_Recursor::EncodeRead(const MappedRead& read)
     return result;
 }
 
-inline double S_P2C2v5_EmissionPr(const MoveType move, const uint8_t emission, const uint8_t prev,
-                                  const uint8_t curr)
-{
-    assert(move != MoveType::DELETION);
-    const auto row = (prev << 2) | curr;
-    return emissionPmf[static_cast<uint8_t>(move)][row][emission];
-}
-
 double S_P2C2v5_Recursor::EmissionPr(const MoveType move, const uint8_t emission,
-                                     const uint8_t prev, const uint8_t curr) const
+                                     const NCBI4na prev, const NCBI4na curr) const
 {
-    return S_P2C2v5_EmissionPr(move, emission, prev, curr) * counterWeight_;
+    return AbstractEmissionPr(emissionPmf, move, emission, prev, curr) * counterWeight_;
 }
 
 double S_P2C2v5_Recursor::UndoCounterWeights(const size_t nEmissions) const
@@ -409,17 +387,15 @@ inline std::pair<Data::SNR, std::vector<TemplatePosition>> S_P2C2v5_InitialiseMo
 }
 
 BaseData S_P2C2v5_GenerateReadData(std::default_random_engine* const rng, const MoveType state,
-                                   const uint8_t prev, const uint8_t curr)
+                                   const NCBI4na prev, const NCBI4na curr)
 {
-    static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
-
     // distribution is arbitrary at the moment, as
     // IPD is not a covariate of the consensus HMM
     std::uniform_int_distribution<uint8_t> ipdDistrib(1, 5);
 
     std::array<double, OUTCOME_NUMBER> emissionDist;
     for (size_t i = 0; i < OUTCOME_NUMBER; ++i) {
-        emissionDist[i] = S_P2C2v5_EmissionPr(state, i, prev, curr);
+        emissionDist[i] = AbstractEmissionPr(emissionPmf, state, i, prev, curr);
     }
 
     std::discrete_distribution<uint8_t> outcomeDistrib(emissionDist.cbegin(), emissionDist.cend());

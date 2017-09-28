@@ -81,25 +81,38 @@ Data::State Integrator::AddRead(std::unique_ptr<AbstractTemplate>&& tpl,
     return evals_.back().Status();
 }
 
+template <bool AllowInvalidEvaluators>
+inline double Integrator::SingleEvaluatorLL(Evaluator* const eval, const Mutation& fwdMut) const
+{
+    const Mutation revMut{ReverseComplement(fwdMut)};
+    double result{AllowInvalidEvaluators ? NEG_DBL_INF : 0};
+
+    switch (eval->Strand()) {
+        case StrandType::FORWARD:
+            result = eval->LL(fwdMut);
+            break;
+        case StrandType::REVERSE:
+            result = eval->LL(revMut);
+            break;
+        case StrandType::UNMAPPED:
+            if (AllowInvalidEvaluators == false)
+                throw InvalidEvaluatorException("Unmapped read in mutation testing");
+            break;
+        default:
+            throw std::runtime_error("Unknown StrandType");
+    }
+
+    return result;
+}
+
 double Integrator::LL(const Mutation& fwdMut)
 {
-    const Mutation revMut(ReverseComplement(fwdMut));
     double ll = 0.0;
     for (auto& e : evals_) {
         // Skip invalid Evaluators
         if (!e.IsValid()) continue;
-        switch (e.Strand()) {
-            case StrandType::FORWARD:
-                ll += e.LL(fwdMut);
-                break;
-            case StrandType::REVERSE:
-                ll += e.LL(revMut);
-                break;
-            case StrandType::UNMAPPED:
-                throw InvalidEvaluatorException("Unmapped read in mutation testing");
-            default:
-                throw std::runtime_error("Unknown StrandType");
-        }
+
+        ll += SingleEvaluatorLL<false>(&e, fwdMut);
     }
     return ll;
 }
@@ -113,25 +126,11 @@ double Integrator::LL() const
 
 std::vector<double> Integrator::LLs(const Mutation& fwdMut)
 {
-    const Mutation revMut(ReverseComplement(fwdMut));
     // Compute individual LLs of each Evaluator
     std::vector<double> lls;
     lls.reserve(evals_.size());
     for (auto& e : evals_) {
-        double ll;
-        switch (e.Strand()) {
-            case StrandType::FORWARD:
-                ll = e.LL(fwdMut);
-                break;
-            case StrandType::REVERSE:
-                ll = e.LL(revMut);
-                break;
-            case StrandType::UNMAPPED:
-                ll = NEG_DBL_INF;
-                break;
-            default:
-                throw std::runtime_error("Unknown StrandType");
-        }
+        const double ll = SingleEvaluatorLL<true>(&e, fwdMut);
         lls.emplace_back(ll);
     }
     return lls;
@@ -141,6 +140,47 @@ std::vector<double> Integrator::LLs() const
 {
     const auto functor = [](const Evaluator& eval) { return eval.LL(); };
     return TransformEvaluators<double>(functor);
+}
+
+std::array<std::pair<char, int>, 4> Integrator::BestMutationHistogram(const size_t start,
+                                                                      const MutationType mutType)
+{
+    // Histogram makes no sense for deletions
+    if (mutType == MutationType::DELETION)
+        throw std::runtime_error("Cannot create a histogram over a deletion mutation");
+
+    std::array<std::pair<char, int>, 4> result{{{'A', 0}, {'C', 0}, {'G', 0}, {'T', 0}}};
+
+    for (auto& eval : evals_) {
+        // Skip invalid Evaluators
+        if (!eval.IsValid()) continue;
+
+        double curBestLL = eval.LL();
+        int8_t curBestIdx = -1;  // -1 is a sentinel for the current template being the best so far
+
+        for (int8_t i = 0; i < 4; ++i) {
+            const char c = result[i].first;
+            const Mutation testMut{(mutType == MutationType::SUBSTITUTION)
+                                       ? Mutation::Substitution(start, c)
+                                       : Mutation::Insertion(start, c)};
+
+            const double ll = SingleEvaluatorLL<false>(&eval, testMut);
+
+            if (curBestLL < ll) {
+                curBestLL = ll;
+                curBestIdx = i;
+            }
+        }
+
+        if (curBestIdx != -1) ++result[curBestIdx].second;
+    }
+
+    std::sort(result.begin(), result.end(),
+              [](const std::pair<char, int>& lhs, const std::pair<char, int>& rhs) {
+                  return rhs.second < lhs.second;
+              });
+
+    return result;
 }
 
 std::vector<std::string> Integrator::ReadNames() const

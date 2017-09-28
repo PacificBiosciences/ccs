@@ -82,7 +82,7 @@ public:
     virtual std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                              double scoreDiff) const = 0;
 
-    virtual double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+    virtual double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
                                          MomentType moment) const = 0;
 
     std::pair<double, double> NormalParameters() const;
@@ -124,7 +124,7 @@ public:
     std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                      double scoreDiff) const override;
 
-    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
                                  MomentType moment) const override;
 
 protected:
@@ -158,7 +158,7 @@ public:
     std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                      double scoreDiff) const override;
 
-    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
                                  MomentType moment) const override;
 
 protected:

@@ -98,8 +98,8 @@ std::pair<Data::Read, std::vector<MoveType>> SimulateReadImpl(std::default_rando
 
     size_t locus = 0;
     while (locus < tpl.size()) {
-        const uint8_t prev = (locus ? transModel[locus - 1].Idx : 0);
-        const uint8_t curr = transModel[locus].Idx;
+        const NCBI4na prev = (locus ? transModel[locus - 1].Idx : NCBI4na::FromASCII('A'));
+        const NCBI4na curr = transModel[locus].Idx;
 
         // the first base MUST be a match
         if (locus == 0)

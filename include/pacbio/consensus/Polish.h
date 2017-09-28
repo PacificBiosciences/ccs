@@ -53,6 +53,8 @@ struct PolishConfig
     size_t MutationSeparation;
     size_t MutationNeighborhood;
 
+    bool Diploid = false;
+
     PolishConfig(size_t iterations = 40, size_t separation = 10, size_t neighborhood = 20);
 };
 
@@ -91,7 +93,7 @@ QualityValues ConsensusQVs(Integrator& ai);
 
 /// Returns a list of all possible mutations that can be applied to the template
 /// of the provided integrator.
-std::vector<Mutation> Mutations(const Integrator& ai);
+std::vector<Mutation> Mutations(const Integrator& ai, bool diploid = false);
 
 /// Returns a list of all possible repeat mutations of the template
 /// of the provided integrator

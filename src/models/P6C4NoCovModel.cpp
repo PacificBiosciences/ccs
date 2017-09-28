@@ -55,6 +55,9 @@ namespace Consensus {
 namespace P6C4NoCov {
 namespace {
 
+static constexpr const size_t CONTEXT_NUMBER = 1;
+static constexpr const size_t OUTCOME_NUMBER = 2;
+
 static constexpr const double kEps = 0.00505052456472967;
 static constexpr const double kInvEps = 1.0 - kEps;
 
@@ -73,7 +76,7 @@ public:
         std::default_random_engine* const rng, const std::string& tpl,
         const std::string& readname) const override;
 
-    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
                                  MomentType moment) const override;
 
 private:
@@ -89,12 +92,20 @@ class P6C4NoCovRecursor : public Recursor<P6C4NoCovRecursor>
 public:
     P6C4NoCovRecursor(const MappedRead& mr, double scoreDiff, double counterWeight);
     static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
-    inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
+    inline double EmissionPr(MoveType move, uint8_t emission, const NCBI4na prev,
+                             const NCBI4na curr) const;
     virtual double UndoCounterWeights(size_t nEmissions) const;
 
 private:
     double counterWeight_;
     double nLgCounterWeight_;
+};
+
+static constexpr const double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
+    // 0 (match), 1 (mismatch)
+    {{kInvEps, kEps / 3.0}},  // MATCH
+    {{1.0, 0.0}},             // BRANCH
+    {{0.0, 1.0 / 3.0}}        // STICK
 };
 
 double P6C4NoCovParams[4][2][3][4] = {
@@ -172,32 +183,13 @@ P6C4NoCovModel::P6C4NoCovModel(const SNR& snr)
 
 std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) const
 {
-    std::vector<TemplatePosition> result;
-
-    if (tpl.empty()) return result;
-
-    uint8_t prev = detail::TranslationTable[static_cast<uint8_t>(tpl[0])];
-    if (prev > 3) throw std::invalid_argument("invalid character in sequence!");
-
-    for (size_t i = 1; i < tpl.size(); ++i) {
-        const uint8_t curr = detail::TranslationTable[static_cast<uint8_t>(tpl[i])];
-        if (curr > 3) throw std::invalid_argument("invalid character in sequence!");
-        const bool hp = tpl[i - 1] == tpl[i];  // NA -> 0, AA -> 1
-        const auto& params = ctxTrans_[curr][hp];
-        result.emplace_back(TemplatePosition{
-            tpl[i - 1], prev,
-            params[0],  // match
-            params[1],  // branch
-            params[2],  // stick
-            params[3]   // deletion
-        });
-
-        prev = curr;
-    }
-
-    result.emplace_back(TemplatePosition{tpl.back(), prev, 1.0, 0.0, 0.0, 0.0});
-
-    return result;
+    auto rowFetcher = [this](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
+    {
+        const bool hp = (prev.Data() == curr.Data());  // NA -> 0, AA -> 1
+        const double(&params)[4] = ctxTrans_[curr.Data()][hp];
+        return params;
+    };
+    return AbstractPopulater(tpl, rowFetcher);
 }
 
 std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(const MappedRead& mr,
@@ -223,28 +215,32 @@ std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(const MappedRea
     return std::unique_ptr<AbstractRecursor>(new P6C4NoCovRecursor(mr, scoreDiff, counterWeight));
 }
 
-double P6C4NoCovModel::ExpectedLLForEmission(const MoveType move, const uint8_t prev,
-                                             const uint8_t curr, const MomentType moment) const
+double P6C4NoCovModel::ExpectedLLForEmission(const MoveType move, const NCBI4na prev,
+                                             const NCBI4na curr, const MomentType moment) const
 {
-    const double lgThird = -std::log(3.0);
-    if (move == MoveType::MATCH) {
-        static constexpr const double probMatch = kInvEps;
-        static constexpr const double probMismatch = kEps;
-        const double lgMatch = std::log(probMatch);
-        const double lgMismatch = lgThird + std::log(probMismatch);
-        if (moment == MomentType::FIRST)
-            return probMatch * lgMatch + probMismatch * lgMismatch;
-        else if (moment == MomentType::SECOND)
-            return probMatch * (lgMatch * lgMatch) + probMismatch * (lgMismatch * lgMismatch);
-    } else if (move == MoveType::BRANCH)
-        return 0.0;
-    else if (move == MoveType::STICK) {
-        if (moment == MomentType::FIRST)
-            return lgThird;
-        else if (moment == MomentType::SECOND)
-            return lgThird * lgThird;
-    }
-    throw std::invalid_argument("invalid move!");
+    auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
+                                        const MomentType moment) -> double {
+        const double lgThird = -std::log(3.0);
+        if (move == MoveType::MATCH) {
+            static constexpr const double probMatch = kInvEps;
+            static constexpr const double probMismatch = kEps;
+            const double lgMatch = std::log(probMatch);
+            const double lgMismatch = lgThird + std::log(probMismatch);
+            if (moment == MomentType::FIRST)
+                return probMatch * lgMatch + probMismatch * lgMismatch;
+            else if (moment == MomentType::SECOND)
+                return probMatch * (lgMatch * lgMatch) + probMismatch * (lgMismatch * lgMismatch);
+        } else if (move == MoveType::BRANCH)
+            return 0.0;
+        else if (move == MoveType::STICK) {
+            if (moment == MomentType::FIRST)
+                return lgThird;
+            else if (moment == MomentType::SECOND)
+                return lgThird * lgThird;
+        }
+        throw std::invalid_argument("invalid move!");
+    };
+    return AbstractExpectedLLForEmission(move, prev, curr, moment, cachedEmissionVisitor);
 }
 
 P6C4NoCovRecursor::P6C4NoCovRecursor(const MappedRead& mr, double scoreDiff, double counterWeight)
@@ -266,26 +262,10 @@ std::vector<uint8_t> P6C4NoCovRecursor::EncodeRead(const MappedRead& read)
     return result;
 }
 
-inline double P6C4NoCovEmissionPr(const MoveType move, const uint8_t emission, const uint8_t prev,
-                                  const uint8_t curr)
-{
-    assert(move != MoveType::DELETION);
-
-    // probability of a mismatch
-    static constexpr const double tbl[3][2] = {
-        // 0 (match), 1 (mismatch)
-        {kInvEps, kEps / 3.0},  // MATCH
-        {1.0, 0.0},             // BRANCH
-        {0.0, 1.0 / 3.0}        // STICK
-    };
-
-    return tbl[static_cast<uint8_t>(move)][curr != emission];
-}
-
 double P6C4NoCovRecursor::EmissionPr(const MoveType move, const uint8_t emission,
-                                     const uint8_t prev, const uint8_t curr) const
+                                     const NCBI4na prev, const NCBI4na curr) const
 {
-    return P6C4NoCovEmissionPr(move, emission, prev, curr) * counterWeight_;
+    return AbstractEmissionPr(emissionPmf, move, emission, prev, curr) * counterWeight_;
 }
 
 double P6C4NoCovRecursor::UndoCounterWeights(const size_t nEmissions) const
@@ -308,11 +288,9 @@ inline std::pair<Data::SNR, std::vector<TemplatePosition>> P6C4NoCovModel_Initia
 }
 
 BaseData P6C4NoCovModel_GenerateReadData(std::default_random_engine* const rng,
-                                         const MoveType state, const uint8_t prev,
-                                         const uint8_t curr)
+                                         const MoveType state, const NCBI4na prev,
+                                         const NCBI4na curr)
 {
-    static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
-
     // distribution is arbitrary at the moment, as
     // PW and IPD are not a covariates of the consensus HMM
     std::uniform_int_distribution<uint8_t> pwDistrib{1, 3};
@@ -320,12 +298,12 @@ BaseData P6C4NoCovModel_GenerateReadData(std::default_random_engine* const rng,
 
     std::array<double, 4> baseDist;
     for (size_t i = 0; i < 4; ++i) {
-        baseDist[i] = P6C4NoCovEmissionPr(state, i, prev, curr);
+        baseDist[i] = AbstractEmissionPr(emissionPmf, state, i, prev, curr);
     }
 
     std::discrete_distribution<uint8_t> baseDistrib(baseDist.cbegin(), baseDist.cend());
 
-    const char newBase = bases[baseDistrib(*rng)];
+    const char newBase = Data::detail::NCBI2naToASCIIImpl(baseDistrib(*rng));
     const uint8_t newPw = pwDistrib(*rng);
     const uint8_t newIpd = ipdDistrib(*rng);
 
