@@ -7,6 +7,7 @@ uny_test_cpp_sources = files([
   'Mutations.cpp',
   'RandomDNA.cpp',
   'TestAlignment.cpp',
+  'TestAmbiguousBases.cpp',
   'TestBandedChainAlign.cpp',
   'TestChemistry.cpp',
   'TestConsensus.cpp',
