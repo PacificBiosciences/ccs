@@ -47,7 +47,6 @@
 namespace PacBio {
 namespace Data {
 namespace detail {
-namespace {
 
 // Unanimity uses 3 different formats internally for representing
 // bases: ASCII, NCBI2na and NCBI4na
@@ -210,7 +209,6 @@ inline constexpr NCBI4na NCBI2na::GetNCBI4na() const
 
 inline constexpr NCBI2na::NCBI2na(const NCBI4na base) : data_{NCBI4naToNCBI2naImpl(base.data_)} {}
 
-}  // namespace
 }  // namespace detail
 }  // namespace Data
 }  // namespace PacBio
