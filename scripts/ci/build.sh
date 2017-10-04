@@ -130,5 +130,8 @@ echo "# TEST"
 echo "## Unanimity tests"
 ( cd build && ninja check )
 
-echo "## Test CC2 via GC"
-( cd _rev_deps/GenomicConsensus && make check )
+#echo "## Test CC2 via GC"
+#module load cram/0.7
+#module add mummer/3.23
+#module add exonerate/2.0.0
+#( cd _rev_deps/GenomicConsensus && make check )
