@@ -205,6 +205,25 @@ inline constexpr char createAmbiguousBase(const char firstBase, const char secon
     return result;
 }
 
+inline std::vector<char> demultiplexAmbiguousBase(const char ambiguousBase)
+{
+    const auto NCBI4naBase = ASCIIToNCBI4naImpl(ambiguousBase, true);
+
+    std::vector<char> result;
+    for (uint8_t i = 0; i < 4; ++i) {
+        const auto iNCBI4na = NCBI2naToNCBI4naImpl(i);
+
+        if (NCBI4naBase & iNCBI4na) {
+            result.emplace_back(NCBI2naToASCIIImpl(i));
+        }
+    }
+
+    if (result.size() == 0)
+        throw std::runtime_error(ambiguousBase + " does not encode any underlying IUPAC bases!"s);
+
+    return result;
+}
+
 }  // namespace
 }  // namespace detail
 }  // namespace Data

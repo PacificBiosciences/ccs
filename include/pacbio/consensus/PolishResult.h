@@ -39,8 +39,26 @@
 
 #include <stddef.h>
 
+#include <boost/optional.hpp>
+
+#include <pacbio/consensus/Mutation.h>
+
 namespace PacBio {
 namespace Consensus {
+
+struct DiploidSite
+{
+    MutationType mutType;
+    std::vector<char> mutants;
+    int64_t pos;
+    boost::optional<double> pvalue;
+
+    DiploidSite(const MutationType mutType_, const std::vector<char>& mutants_, const int64_t pos_,
+                const boost::optional<double> pvalue_ = boost::none)
+        : mutType{mutType_}, mutants{mutants_}, pos{pos_}, pvalue{pvalue_}
+    {
+    }
+};
 
 /// This struct contains the results of Integrator::Polish()
 struct PolishResult
@@ -61,6 +79,11 @@ struct PolishResult
     std::vector<float> maxBetaPopulated;
     // Maximal number of flip flop events
     std::vector<int> maxNumFlipFlops;
+
+    // Diploid results
+    // The vector is sorted according to the standard
+    // unanimity Mutation class criterion
+    std::vector<DiploidSite> diploidSites;
 };
 
 PolishResult operator+(const PolishResult& lhs, const PolishResult& rhs);
