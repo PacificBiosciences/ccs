@@ -33,6 +33,8 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
+#include <array>
+
 #include "Mutations.h"
 
 std::vector<PacBio::Consensus::Mutation> Mutations(const std::string& tpl, const size_t start,
@@ -40,7 +42,7 @@ std::vector<PacBio::Consensus::Mutation> Mutations(const std::string& tpl, const
 {
     using namespace PacBio::Consensus;
 
-    constexpr auto bases = "ACGT";
+    static constexpr const std::array<char, 4> bases{{'A', 'C', 'G', 'T'}};
 
     std::vector<Mutation> result;
 

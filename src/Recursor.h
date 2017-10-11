@@ -189,11 +189,11 @@ typedef std::pair<size_t, size_t> Interval;
 
 // TODO(dalexander): put these into a RecursorConfig struct
 // TODO(anybody): Hmmm... not sure what the heck to do about these...
-constexpr int MAX_FLIP_FLOPS = 5;
-constexpr double REBANDING_THRESHOLD = 0.04;
+static constexpr const int MAX_FLIP_FLOPS = 5;
+static constexpr const double REBANDING_THRESHOLD = 0.04;
 
-constexpr uint8_t kDefaultBase = 0;  // corresponding to A, usually
-constexpr TemplatePosition kDefaultTplPos = TemplatePosition{'A', kDefaultBase, 1, 0, 0, 0};
+static constexpr const auto kDefaultBase = NCBI4na::FromASCII('A');  // corresponding to A, usually
+static constexpr const TemplatePosition kDefaultTplPos = TemplatePosition{'A', 1, 0, 0, 0};
 
 inline Interval RangeUnion(const Interval& range1, const Interval& range2)
 {
@@ -231,7 +231,7 @@ void Recursor<Derived>::FillAlpha(const AbstractTemplate& tpl, const M& guide, M
 
     size_t hintBeginRow = 1, hintEndRow = 1;
     auto prevTransProbs = kDefaultTplPos;
-    uint8_t prevTplBase = prevTransProbs.Idx;
+    auto prevTplBase = prevTransProbs.Idx;
 
     for (size_t j = 1; j < J; ++j)  // Note due to offset with reads and otherwise, this is ugly-ish
     {
@@ -327,7 +327,7 @@ void Recursor<Derived>::FillAlpha(const AbstractTemplate& tpl, const M& guide, M
      * information */
     {
         auto currTplBase = tpl[J - 1].Idx;
-        assert(J < 2 || prevTplBase == tpl[J - 2].Idx);
+        assert(J < 2 || prevTplBase.Overlap(tpl[J - 2].Idx));
         // end in the homopolymer state for now.
         auto likelihood = alpha(I - 1, J - 1) *
                           static_cast<const Derived*>(this)->EmissionPr(
@@ -540,7 +540,8 @@ void Recursor<Derived>::ExtendAlpha(const AbstractTemplate& tpl, const M& alpha,
         if (j > 1) {
             prevTplParams = tpl[j - 2];
         }
-        uint8_t nextTplBase = -1;  // This value is never being used, but it silences notorious gcc
+        auto nextTplBase =
+            kDefaultBase;  // This value is never being used, but it silences notorious gcc
         if (j != maxLeftMovePossible) {
             nextTplBase = tpl[j].Idx;
         }

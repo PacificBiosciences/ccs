@@ -42,6 +42,7 @@
 #include <pacbio/exception/StateError.h>
 #include <pbcopper/logging/Logging.h>
 
+#include "Constants.h"
 #include "EvaluatorImpl.h"
 
 using namespace PacBio::Data;
@@ -49,14 +50,6 @@ using namespace PacBio::Exception;
 
 namespace PacBio {
 namespace Consensus {
-namespace {
-
-constexpr double NEG_DBL_INF = -std::numeric_limits<double>::infinity();
-constexpr int NEG_INT_INF = -std::numeric_limits<int>::infinity();
-constexpr float NEG_FLOAT_INF = -std::numeric_limits<float>::infinity();
-constexpr size_t EXTEND_BUFFER_COLUMNS = 8;
-
-}  // anonymous namespace
 
 Evaluator::Evaluator(const State state) : impl_{nullptr}, curState_{state}
 {
@@ -69,8 +62,7 @@ Evaluator::Evaluator(std::unique_ptr<AbstractTemplate>&& tpl, const MappedRead& 
     : impl_{nullptr}, curState_{State::VALID}
 {
     try {
-        impl_.reset(
-            new EvaluatorImpl(std::forward<std::unique_ptr<AbstractTemplate>>(tpl), mr, scoreDiff));
+        impl_.reset(new EvaluatorImpl(std::move(tpl), mr, scoreDiff));
         CheckZScore(minZScore, mr.Model);
     } catch (const StateError& e) {
         Status(e.WhatState());
@@ -82,7 +74,7 @@ Evaluator::Evaluator(Evaluator&& eval) : impl_{std::move(eval.impl_)}, curState_
 Evaluator& Evaluator::operator=(Evaluator&& eval)
 {
     if (eval == *this) return *this;
-    impl_ = move(eval.impl_);
+    impl_ = std::move(eval.impl_);
     curState_ = eval.curState_;
     return *this;
 }

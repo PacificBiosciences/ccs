@@ -59,10 +59,9 @@ using namespace PacBio::Data;
 namespace PacBio {
 namespace Consensus {
 
-vector<Mutation> Mutations(const AbstractIntegrator& ai, const size_t start, const size_t end);
-
 vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* centers,
-                                 const AbstractIntegrator& ai, const size_t neighborhood);
+                                 const Integrator& ai, const size_t neighborhood,
+                                 const bool diploid = false);
 }
 }
 

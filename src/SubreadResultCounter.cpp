@@ -78,6 +78,7 @@ SubreadResultCounter::SubreadResultCounter()
     , FilteredBySize{0}
     , ZMWBelowMinSNR{0}
     , ZMWNotEnoughSubReads{0}
+    , PoorIdentity{0}
     , PoorZScore{0}
     , Other{0}
 
@@ -105,6 +106,9 @@ void SubreadResultCounter::WriteResultsReport(std::ostream& report) const
     report << "Failed -- Filtered by size," << FilteredBySize << ","
            << 100.0 * FilteredBySize / total << '%' << endl;
 
+    report << "Failed -- Identity too low," << PoorIdentity << "," << 100.0 * PoorIdentity / total
+           << '%' << endl;
+
     report << "Failed -- Z-Score too low," << PoorZScore << "," << 100.0 * PoorZScore / total << '%'
            << endl;
 
@@ -127,6 +131,7 @@ void SubreadResultCounter::CombineWithOtherResult(const SubreadResultCounter& ot
     BelowMinQual += other.BelowMinQual;
     FilteredBySize += other.FilteredBySize;
     Other += other.Other;
+    PoorIdentity += other.PoorIdentity;
     PoorZScore += other.PoorZScore;
     ZMWBelowMinSNR += other.ZMWBelowMinSNR;
     ZMWNotEnoughSubReads += other.ZMWNotEnoughSubReads;

@@ -46,7 +46,7 @@ using std::string;
 
 using namespace PacBio::Data;  // NOLINT
 
-namespace {
+namespace SequenceTests {
 
 TEST(SequenceTest, ReverseComplement) { EXPECT_EQ("TACGAT", ReverseComplement("ATCGTA")); }
 }

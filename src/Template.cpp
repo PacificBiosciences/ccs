@@ -189,8 +189,8 @@ std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i)
     const auto params = (*this)[i];
     // TODO: This is a bit unsafe, we should understand context and have this conversion in one
     // place (or really just move directly to using .Idx without bit shifting
-    const uint8_t prev = (i == 0) ? 0 : (*this)[i - 1].Idx;  // default base : A
-    const uint8_t curr = params.Idx;
+    const auto prev = (i == 0) ? NCBI4na::FromASCII('A') : (*this)[i - 1].Idx;  // default base : A
+    const auto curr = params.Idx;
 
     const double p_m = params.Match, l_m = std::log(p_m), l2_m = l_m * l_m;
     const double p_d = params.Deletion, l_d = std::log(p_d), l2_d = l_d * l_d;
@@ -242,14 +242,14 @@ std::ostream& operator<<(std::ostream& os, const AbstractTemplate& tpl)
 // (Concrete) Template Function Definitions
 //
 Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg)
-    : Template(tpl, std::forward<std::unique_ptr<ModelConfig>>(cfg), 0, tpl.length(), true, true)
+    : Template(tpl, std::move(cfg), 0, tpl.length(), true, true)
 {
 }
 
 Template::Template(const std::string& tpl, std::unique_ptr<ModelConfig>&& cfg, const size_t start,
                    const size_t end, const bool pinStart, const bool pinEnd)
     : AbstractTemplate(start, end, pinStart, pinEnd)
-    , cfg_(std::forward<std::unique_ptr<ModelConfig>>(cfg))
+    , cfg_(std::move(cfg))
     , tpl_{cfg_->Populate(tpl)}
 {
     assert(end_ - start_ == tpl_.size());
@@ -276,8 +276,7 @@ bool Template::ApplyMutation(const Mutation& mut)
                 if (b < tpl_.size())
                     tpl_[b - 1] = cfg_->Populate({tpl_[b - 1].Base, tpl_[b].Base})[0];
                 else
-                    tpl_[b - 1] =
-                        TemplatePosition{tpl_[b - 1].Base, tpl_[b - 1].Idx, 1.0, 0.0, 0.0, 0.0};
+                    tpl_[b - 1] = TemplatePosition{tpl_[b - 1].Base, 1.0, 0.0, 0.0, 0.0};
             }
         } else if (mut.IsInsertion()) {
             const auto elems = cfg_->Populate(mut.Bases());
@@ -331,7 +330,7 @@ std::unique_ptr<AbstractRecursor> Template::CreateRecursor(const PacBio::Data::M
 {
     return cfg_->CreateRecursor(mr, scoreDiff);
 }
-double Template::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+double Template::ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
                                        MomentType moment) const
 {
     return cfg_->ExpectedLLForEmission(move, prev, curr, moment);
@@ -368,8 +367,7 @@ MutatedTemplate::MutatedTemplate(const AbstractTemplate& master, const Mutation&
                 mutTpl_.emplace_back(
                     master_.Config().Populate({master_[mStart - 1].Base, master_[mEnd].Base})[0]);
             } else
-                mutTpl_.emplace_back(TemplatePosition{master[mStart - 1].Base,
-                                                      master[mStart - 1].Idx, 1.0, 0.0, 0.0, 0.0});
+                mutTpl_.emplace_back(TemplatePosition{master[mStart - 1].Base, 1.0, 0.0, 0.0, 0.0});
         }
     } else if (mut_.IsInsertion() || mut_.IsSubstitution()) {
         if (mStart > 0)
@@ -429,7 +427,7 @@ std::unique_ptr<AbstractRecursor> MutatedTemplate::CreateRecursor(
     return master_.CreateRecursor(mr, scoreDiff);
 }
 
-double MutatedTemplate::ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+double MutatedTemplate::ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
                                               MomentType moment) const
 {
     return master_.ExpectedLLForEmission(move, prev, curr, moment);

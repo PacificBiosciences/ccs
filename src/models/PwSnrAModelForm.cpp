@@ -38,6 +38,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <random>
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
@@ -48,24 +49,21 @@
 #include "../ModelFactory.h"
 #include "../ModelFormFactory.h"
 #include "../Recursor.h"
+#include "../Simulator.h"
 #include "CounterWeight.h"
+#include "HelperFunctions.h"
 
 using namespace PacBio::Data;
 
 namespace PacBio {
 namespace Consensus {
+namespace PwSnrA {
 namespace {
 
 using MalformedModelFile = PacBio::Exception::MalformedModelFile;
 
-template <typename T>
-inline T clip(const T val, const T range[2])
-{
-    return std::max(range[0], std::min(val, range[1]));
-}
-
-constexpr size_t OUTCOME_NUMBER = 12;
-constexpr size_t CONTEXT_NUMBER = 16;
+static constexpr const size_t CONTEXT_NUMBER = 16;
+static constexpr const size_t OUTCOME_NUMBER = 12;
 
 // fwd decl
 class PwSnrAModelCreator;
@@ -74,10 +72,16 @@ class PwSnrAModel : public ModelConfig
 {
 public:
     PwSnrAModel(const PwSnrAModelCreator* params, const SNR& snr);
-    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
-    std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                 MomentType moment) const;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr,
+                                                     double scoreDiff) const override;
+    std::vector<TemplatePosition> Populate(const std::string& tpl) const override;
+    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
+        std::default_random_engine* const rng, const std::string& tpl,
+        const std::string& readname) const override;
+    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
+                                 MomentType moment) const override;
+
+    friend class PwSnrAInitializeModel;
 
 private:
     double CalculateExpectedLLForEmission(const size_t move, const uint8_t row,
@@ -96,7 +100,8 @@ public:
                    const PwSnrAModelCreator* params);
 
     static std::vector<uint8_t> EncodeRead(const MappedRead& read);
-    double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
+    double EmissionPr(MoveType move, uint8_t emission, const NCBI4na prev,
+                      const NCBI4na curr) const;
     double UndoCounterWeights(size_t nEmissions) const;
 
 private:
@@ -110,11 +115,13 @@ class PwSnrAModelCreator : public ModelCreator
     REGISTER_MODELFORM(PwSnrAModelCreator);
     friend class PwSnrAModel;
     friend class PwSnrARecursor;
+    friend class PwSnrAInitializeModel;
+    friend class PwSnrAGenerateReadData;
 
 public:
     static ModelForm Form() { return ModelForm::PWSNRA; }
     PwSnrAModelCreator(const boost::property_tree::ptree& pt);
-    virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
+    virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const override
     {
         return std::unique_ptr<ModelConfig>(new PwSnrAModel(this, snr));
     };
@@ -192,41 +199,25 @@ std::unique_ptr<AbstractRecursor> PwSnrAModel::CreateRecursor(const MappedRead& 
 
 std::vector<TemplatePosition> PwSnrAModel::Populate(const std::string& tpl) const
 {
-    std::vector<TemplatePosition> result;
-
-    if (tpl.empty()) return result;
-
-    result.reserve(tpl.size());
-
-    // calculate transition probabilities
-    uint8_t prev = detail::TranslationTable[static_cast<uint8_t>(tpl[0])];
-    if (prev > 3) throw std::invalid_argument("invalid character in template!");
-
-    for (size_t i = 1; i < tpl.size(); ++i) {
-        const uint8_t curr = detail::TranslationTable[static_cast<uint8_t>(tpl[i])];
-        if (curr > 3) throw std::invalid_argument("invalid character in template!");
-        const auto row = (prev << 2) | curr;
-        const auto params = ctxTrans_[row];
-        result.emplace_back(TemplatePosition{
-            tpl[i - 1], prev,
-            params[0],  // match
-            params[1],  // branch
-            params[2],  // stick
-            params[3]   // deletion
-        });
-        prev = curr;
-    }
-    result.emplace_back(TemplatePosition{tpl.back(), prev, 1.0, 0.0, 0.0, 0.0});
-
-    return result;
+    auto rowFetcher = [this](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
+    {
+        const auto row = (prev.Data() << 2) | curr.Data();
+        const double(&params)[4] = ctxTrans_[row];
+        return params;
+    };
+    return AbstractPopulater(tpl, rowFetcher);
 }
 
-double PwSnrAModel::ExpectedLLForEmission(const MoveType move, const uint8_t prev,
-                                          const uint8_t curr, const MomentType moment) const
+double PwSnrAModel::ExpectedLLForEmission(const MoveType move, const NCBI4na prev,
+                                          const NCBI4na curr, const MomentType moment) const
 {
-    const size_t row = (prev << 2) | curr;
-    return cachedEmissionExpectations_[row][static_cast<uint8_t>(move)]
-                                      [static_cast<uint8_t>(moment)];
+    auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
+                                        const MomentType moment) -> double {
+        const size_t row = (prev.Data() << 2) | curr.Data();
+        return cachedEmissionExpectations_[row][static_cast<uint8_t>(move)]
+                                          [static_cast<uint8_t>(moment)];
+    };
+    return AbstractExpectedLLForEmission(move, prev, curr, moment, cachedEmissionVisitor);
 }
 
 PwSnrARecursor::PwSnrARecursor(const MappedRead& mr, double scoreDiff, double counterWeight,
@@ -241,27 +232,19 @@ PwSnrARecursor::PwSnrARecursor(const MappedRead& mr, double scoreDiff, double co
 std::vector<uint8_t> PwSnrARecursor::EncodeRead(const MappedRead& read)
 {
     std::vector<uint8_t> result;
-
     result.reserve(read.Length());
 
     for (size_t i = 0; i < read.Length(); ++i) {
-        if (read.PulseWidth[i] < 1U) throw std::runtime_error("invalid PulseWidth in read!");
-        const uint8_t pw = std::min(2, read.PulseWidth[i] - 1);
-        const uint8_t bp = detail::TranslationTable[static_cast<uint8_t>(read.Seq[i])];
-        if (bp > 3) throw std::invalid_argument("invalid character in read!");
-        const uint8_t em = (pw << 2) | bp;
-        if (em > 11) throw std::runtime_error("read encoding error!");
-        result.emplace_back(em);
+        result.emplace_back(EncodeBase(read.Seq[i], read.PulseWidth[i]));
     }
 
     return result;
 }
 
-double PwSnrARecursor::EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const
+double PwSnrARecursor::EmissionPr(const MoveType move, const uint8_t emission, const NCBI4na prev,
+                                  const NCBI4na curr) const
 {
-    assert(move != MoveType::DELETION);
-    const auto row = (prev << 2) | curr;
-    return params_->emissionPmf_[static_cast<uint8_t>(move)][row][emission] * counterWeight_;
+    return AbstractEmissionPr(params_->emissionPmf_, move, emission, prev, curr) * counterWeight_;
 }
 
 double PwSnrARecursor::UndoCounterWeights(const size_t nEmissions) const
@@ -283,6 +266,70 @@ PwSnrAModelCreator::PwSnrAModelCreator(const boost::property_tree::ptree& pt)
     }
 }
 
+class PwSnrAInitializeModel
+{
+public:
+    PwSnrAInitializeModel(const PwSnrAModel& model) : model_(model) {}
+
+    inline std::pair<Data::SNR, std::vector<TemplatePosition>> operator()(
+        std::default_random_engine* const rng, const std::string& tpl)
+    {
+        Data::SNR snrs{0, 0, 0, 0};
+        for (uint8_t i = 0; i < 4; ++i) {
+            snrs[i] = std::uniform_real_distribution<double>{model_.params_->snrRanges_[0],
+                                                             model_.params_->snrRanges_[1]}(*rng);
+        }
+
+        std::vector<TemplatePosition> transModel = model_.Populate(tpl);
+
+        return {snrs, transModel};
+    }
+
+private:
+    const PwSnrAModel& model_;
+};
+
+class PwSnrAGenerateReadData
+{
+public:
+    PwSnrAGenerateReadData(const PwSnrAModelCreator& params) : params_(params) {}
+
+    BaseData operator()(std::default_random_engine* const rng, const MoveType state,
+                        const NCBI4na prev, const NCBI4na curr)
+    {
+        // distribution is arbitrary at the moment, as
+        // IPD is not a covariate of the consensus HMM
+        std::uniform_int_distribution<uint8_t> ipdDistrib(1, 5);
+
+        std::array<double, OUTCOME_NUMBER> emissionDist;
+        for (size_t i = 0; i < OUTCOME_NUMBER; ++i) {
+            emissionDist[i] = AbstractEmissionPr(params_.emissionPmf_, state, i, prev, curr);
+        }
+
+        std::discrete_distribution<uint8_t> outcomeDistrib(emissionDist.cbegin(),
+                                                           emissionDist.cend());
+
+        const uint8_t event = outcomeDistrib(*rng);
+        const std::pair<char, uint8_t> outcome = DecodeEmission(event);
+
+        return {outcome.first, outcome.second, ipdDistrib(*rng)};
+    }
+
+private:
+    const PwSnrAModelCreator& params_;
+};
+
+std::pair<Data::Read, std::vector<MoveType>> PwSnrAModel::SimulateRead(
+    std::default_random_engine* const rng, const std::string& tpl,
+    const std::string& readname) const
+{
+    const PwSnrAInitializeModel init(*this);
+    const PwSnrAGenerateReadData generateData(*params_);
+
+    return SimulateReadImpl(rng, tpl, readname, init, generateData);
+}
+
 }  // namespace anonymous
+}  // namespace PwSnrA
 }  // namespace Consensus
 }  // namespace PacBio

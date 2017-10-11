@@ -36,6 +36,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <random>
 #include <stdexcept>
 
 #include <pacbio/consensus/ModelConfig.h>
@@ -43,16 +44,19 @@
 
 #include "../ModelFactory.h"
 #include "../Recursor.h"
+#include "../Simulator.h"
 #include "CounterWeight.h"
+#include "HelperFunctions.h"
 
 using namespace PacBio::Data;
 
 namespace PacBio {
 namespace Consensus {
+namespace S_P1C1v1 {
 namespace {
 
-constexpr size_t OUTCOME_NUMBER = 12;
-constexpr size_t CONTEXT_NUMBER = 16;
+static constexpr const size_t CONTEXT_NUMBER = 16;
+static constexpr const size_t OUTCOME_NUMBER = 12;
 
 class S_P1C1v1_Model : public ModelConfig
 {
@@ -62,10 +66,14 @@ public:
     static std::set<std::string> Chemistries() { return {"S/P1-C1.1"}; }
     static ModelForm Form() { return ModelForm::PWSNRA; }
     S_P1C1v1_Model(const SNR& snr);
-    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr, double scoreDiff) const;
-    std::vector<TemplatePosition> Populate(const std::string& tpl) const;
-    double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
-                                 MomentType moment) const;
+    std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr,
+                                                     double scoreDiff) const override;
+    std::vector<TemplatePosition> Populate(const std::string& tpl) const override;
+    std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
+        std::default_random_engine* const rng, const std::string& tpl,
+        const std::string& readname) const override;
+    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
+                                 MomentType moment) const override;
 
 private:
     SNR snr_;
@@ -81,7 +89,8 @@ class S_P1C1v1_Recursor : public Recursor<S_P1C1v1_Recursor>
 public:
     S_P1C1v1_Recursor(const MappedRead& mr, double scoreDiff, double counterWeight);
     static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
-    inline double EmissionPr(MoveType move, uint8_t emission, uint8_t prev, uint8_t curr) const;
+    inline double EmissionPr(MoveType move, uint8_t emission, const NCBI4na prev,
+                             const NCBI4na curr) const;
     virtual double UndoCounterWeights(size_t nEmissions) const;
 
 private:
@@ -89,7 +98,12 @@ private:
     double nLgCounterWeight_;
 };
 
-constexpr double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
+static constexpr const double snrRanges[2][4] = {
+    {4.0, 4.0, 4.0, 4.0},         // minimum
+    {10.65, 10.65, 10.65, 10.65}  // maximum
+};
+
+static constexpr const double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
     {// matchPmf
      {0.0516695237, 0.000856759021, 0.000805765869, 6.40098033e-05, 0.0735681929, 0.000490647727,
       0.00171763848, 1.66588276e-05, 0.864949369, 0.00298262543, 0.0027926093, 6.28389773e-05},
@@ -192,7 +206,7 @@ constexpr double emissionPmf[3][CONTEXT_NUMBER][OUTCOME_NUMBER] = {
      {0.152511749, 0.0105044023, 0.228700197, 9.13331245e-05, 0.0553648837, 0.00620728656,
       0.191510525, 7.33906221e-05, 0.048230451, 0.0444486569, 0.261928846, 7.37812688e-05}}};
 
-constexpr double transProbs[16][3][4] = {
+static constexpr const double transProbs[16][3][4] = {
     // Fit for context:  AA
     {{-11.8402163277545, 4.12000773672109, -0.661725654820908, 0.0337357107347639},
      {-3.10509518253287, 0.275600076181856, -0.101980967380149, 0.00728037713082447},
@@ -273,18 +287,12 @@ inline double CalculateExpectedLLForEmission(const size_t move, const uint8_t ro
     return expectedLL;
 }
 
-S_P1C1v1_Model::S_P1C1v1_Model(const SNR& snr) : snr_(snr)
+S_P1C1v1_Model::S_P1C1v1_Model(const SNR& snr)
+    : snr_(ClampSNR(snr, SNR{snrRanges[0]}, SNR{snrRanges[1]}))
 {
     // Generate cached transistion probabilities
 
     double snr1 = snr_.A;
-    // Adjust as necessary to clamp to bounds of SNRs observe during training
-    if (snr1 < 4.0) {
-        snr1 = 4.0;
-    } else if (snr1 > 10.65) {
-        snr1 = 10.65;
-    }
-
     const double snr2 = snr1 * snr1, snr3 = snr2 * snr1;
     for (size_t ctx = 0; ctx < CONTEXT_NUMBER; ++ctx) {
         double sum = 1.0;
@@ -330,41 +338,25 @@ std::unique_ptr<AbstractRecursor> S_P1C1v1_Model::CreateRecursor(const MappedRea
 
 std::vector<TemplatePosition> S_P1C1v1_Model::Populate(const std::string& tpl) const
 {
-    std::vector<TemplatePosition> result;
-
-    if (tpl.empty()) return result;
-
-    result.reserve(tpl.size());
-
-    // Calculate probabilities in all 16 Contexts
-    uint8_t prev = detail::TranslationTable[static_cast<uint8_t>(tpl[0])];
-    if (prev > 3) throw std::invalid_argument("invalid character in template!");
-
-    for (size_t i = 1; i < tpl.size(); ++i) {
-        const uint8_t curr = detail::TranslationTable[static_cast<uint8_t>(tpl[i])];
-        if (curr > 3) throw std::invalid_argument("invalid character in template!");
-        const auto row = (prev << 2) | curr;
-        const auto params = ctxTrans_[row];
-        result.emplace_back(TemplatePosition{
-            tpl[i - 1], prev,
-            params[0],  // match
-            params[1],  // branch
-            params[2],  // stick
-            params[3]   // deletion
-        });
-        prev = curr;
-    }
-    result.emplace_back(TemplatePosition{tpl.back(), prev, 1.0, 0.0, 0.0, 0.0});
-
-    return result;
+    auto rowFetcher = [this](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
+    {
+        const auto row = (prev.Data() << 2) | curr.Data();
+        const double(&params)[4] = ctxTrans_[row];
+        return params;
+    };
+    return AbstractPopulater(tpl, rowFetcher);
 }
 
-double S_P1C1v1_Model::ExpectedLLForEmission(const MoveType move, const uint8_t prev,
-                                             const uint8_t curr, const MomentType moment) const
+double S_P1C1v1_Model::ExpectedLLForEmission(const MoveType move, const NCBI4na prev,
+                                             const NCBI4na curr, const MomentType moment) const
 {
-    const size_t row = (prev << 2) | curr;
-    return cachedEmissionExpectations_[row][static_cast<uint8_t>(move)]
-                                      [static_cast<uint8_t>(moment)];
+    auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
+                                        const MomentType moment) -> double {
+        const size_t row = (prev.Data() << 2) | curr.Data();
+        return cachedEmissionExpectations_[row][static_cast<uint8_t>(move)]
+                                          [static_cast<uint8_t>(moment)];
+    };
+    return AbstractExpectedLLForEmission(move, prev, curr, moment, cachedEmissionVisitor);
 }
 
 S_P1C1v1_Recursor::S_P1C1v1_Recursor(const MappedRead& mr, double scoreDiff, double counterWeight)
@@ -377,34 +369,69 @@ S_P1C1v1_Recursor::S_P1C1v1_Recursor(const MappedRead& mr, double scoreDiff, dou
 std::vector<uint8_t> S_P1C1v1_Recursor::EncodeRead(const MappedRead& read)
 {
     std::vector<uint8_t> result;
-
     result.reserve(read.Length());
 
     for (size_t i = 0; i < read.Length(); ++i) {
-        if (read.PulseWidth[i] < 1U) throw std::runtime_error("invalid PulseWidth in read!");
-        const uint8_t pw = std::min(2, read.PulseWidth[i] - 1);
-        const uint8_t bp = detail::TranslationTable[static_cast<uint8_t>(read.Seq[i])];
-        if (bp > 3) throw std::invalid_argument("invalid character in read!");
-        const uint8_t em = (pw << 2) | bp;
-        if (em > 11) throw std::runtime_error("read encoding error!");
-        result.emplace_back(em);
+        result.emplace_back(EncodeBase(read.Seq[i], read.PulseWidth[i]));
     }
 
     return result;
 }
 
-double S_P1C1v1_Recursor::EmissionPr(MoveType move, uint8_t emission, uint8_t prev,
-                                     uint8_t curr) const
+double S_P1C1v1_Recursor::EmissionPr(const MoveType move, const uint8_t emission,
+                                     const NCBI4na prev, const NCBI4na curr) const
 {
-    assert(move != MoveType::DELETION);
-    const auto row = (prev << 2) | curr;
-    return emissionPmf[static_cast<uint8_t>(move)][row][emission] * counterWeight_;
+    return AbstractEmissionPr(emissionPmf, move, emission, prev, curr) * counterWeight_;
 }
 
 double S_P1C1v1_Recursor::UndoCounterWeights(const size_t nEmissions) const
 {
     return nLgCounterWeight_ * nEmissions;
 }
+
+inline std::pair<Data::SNR, std::vector<TemplatePosition>> S_P1C1v1_InitialiseModel(
+    std::default_random_engine* const rng, const std::string& tpl)
+{
+    Data::SNR snrs{0, 0, 0, 0};
+    for (uint8_t i = 0; i < 4; ++i) {
+        snrs[i] = std::uniform_real_distribution<double>{snrRanges[0][i], snrRanges[1][i]}(*rng);
+    }
+
+    const S_P1C1v1_Model model{snrs};
+    std::vector<TemplatePosition> transModel = model.Populate(tpl);
+
+    return {snrs, transModel};
+}
+
+BaseData S_P1C1v1_GenerateReadData(std::default_random_engine* const rng, const MoveType state,
+                                   const NCBI4na prev, const NCBI4na curr)
+{
+    // distribution is arbitrary at the moment, as
+    // IPD is not a covariate of the consensus HMM
+    std::uniform_int_distribution<uint8_t> ipdDistrib(1, 5);
+
+    std::array<double, OUTCOME_NUMBER> emissionDist;
+    for (size_t i = 0; i < OUTCOME_NUMBER; ++i) {
+        emissionDist[i] = AbstractEmissionPr(emissionPmf, state, i, prev, curr);
+    }
+
+    std::discrete_distribution<uint8_t> outcomeDistrib(emissionDist.cbegin(), emissionDist.cend());
+
+    const uint8_t event = outcomeDistrib(*rng);
+    const std::pair<char, uint8_t> outcome = DecodeEmission(event);
+
+    return {outcome.first, outcome.second, ipdDistrib(*rng)};
+}
+
+std::pair<Data::Read, std::vector<MoveType>> S_P1C1v1_Model::SimulateRead(
+    std::default_random_engine* const rng, const std::string& tpl,
+    const std::string& readname) const
+{
+    return SimulateReadImpl(rng, tpl, readname, S_P1C1v1_InitialiseModel,
+                            S_P1C1v1_GenerateReadData);
+}
+
 }  // namespace anonymous
+}  // namespace S_P1C1v1
 }  // namespace Consensus
 }  // namespace PacBio

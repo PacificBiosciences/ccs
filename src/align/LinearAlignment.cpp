@@ -75,12 +75,13 @@ namespace {
 
 namespace ublas = boost::numeric::ublas;
 
-int INSERT_SCORE = -2;
-int DELETE_SCORE = -2;
-int MISMATCH_SCORE = -1;
-int MATCH_SCORE = +2;
+int ALIGN_INSERT_SCORE = -2;
+int ALIGN_DELETE_SCORE = -2;
+int ALIGN_MISALIGN_MATCH_SCORE = -1;
+int ALIGN_MATCH_SCORE = +2;
 
-const AlignParams params(MATCH_SCORE, MISMATCH_SCORE, INSERT_SCORE, DELETE_SCORE);
+const AlignParams params(ALIGN_MATCH_SCORE, ALIGN_MISALIGN_MATCH_SCORE, ALIGN_INSERT_SCORE,
+                         ALIGN_DELETE_SCORE);
 const AlignConfig config(params, AlignMode::GLOBAL);
 
 //

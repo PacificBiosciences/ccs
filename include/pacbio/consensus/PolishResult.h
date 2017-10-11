@@ -42,7 +42,7 @@
 namespace PacBio {
 namespace Consensus {
 
-/// This struct contains the results of AbstractIntegrator::Polish()
+/// This struct contains the results of Integrator::Polish()
 struct PolishResult
 {
     // Did Polish() converge?

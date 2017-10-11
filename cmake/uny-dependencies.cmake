@@ -30,7 +30,10 @@ if (NOT PYTHON_SWIG)
 
     # ZLIB
     if (NOT ZLIB_INCLUDE_DIRS OR NOT ZLIB_LIBRARIES)
-        find_package(ZLIB REQUIRED)
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(ZLIB zlib)
+    else()
+        set(ZLIB_LDFLAGS ${ZLIB_LIBRARIES})
     endif()
 
     # pbbam

@@ -66,6 +66,7 @@ struct ConsensusSettings
     double MinPredictedAccuracy;
     double MinReadScore;
     double MinSNR;
+    double MinIdentity;
     double MinZScore;
     std::string ModelPath;
     std::string ModelSpec;
@@ -76,6 +77,7 @@ struct ConsensusSettings
     std::string ReportFile;
     bool RichQVs;
     std::string WlSpec;
+    bool ZmwTimings;
 
     /// Parses the provided CLI::Results and retrieves a defined set of options.
     ConsensusSettings(const PacBio::CLI::Results& options);

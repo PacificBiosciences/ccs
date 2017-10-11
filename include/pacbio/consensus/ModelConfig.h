@@ -40,9 +40,13 @@
 #include <map>
 #include <memory>
 #include <ostream>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include <pacbio/data/Read.h>
+#include <pacbio/data/internal/BaseEncoding.h>
 
 namespace PacBio {
 
@@ -52,11 +56,9 @@ struct SNR;
 }
 
 namespace Consensus {
-namespace detail {
 
-extern uint8_t TranslationTable[256];
-
-}  // namespace detail
+using Data::detail::NCBI2na;
+using Data::detail::NCBI4na;
 
 // fwd decl
 class AbstractRecursor;
@@ -65,11 +67,24 @@ class AbstractTemplate;
 struct TemplatePosition
 {
     char Base;
-    uint8_t Idx;
+    NCBI4na Idx;
     double Match;
     double Branch;
     double Stick;
     double Deletion;
+
+public:
+    // Constructor for backwards-compatibility
+    constexpr TemplatePosition(const char base, const double match, const double branch,
+                               const double stick, const double deletion)
+        : Base{base}
+        , Idx{NCBI4na::FromASCII(Base)}
+        , Match{match}
+        , Branch{branch}
+        , Stick{stick}
+        , Deletion{deletion}
+    {
+    }
 };
 
 std::ostream& operator<<(std::ostream&, const TemplatePosition&);
@@ -95,7 +110,10 @@ public:
     virtual std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                              double scoreDiff) const = 0;
     virtual std::vector<TemplatePosition> Populate(const std::string& tpl) const = 0;
-    virtual double ExpectedLLForEmission(MoveType move, uint8_t prev, uint8_t curr,
+    virtual std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
+        std::default_random_engine* const rng, const std::string& tpl,
+        const std::string& readname) const = 0;
+    virtual double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
                                          MomentType moment) const = 0;
 };
 

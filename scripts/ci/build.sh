@@ -3,6 +3,8 @@ set -euo pipefail
 
 # Function definitions
 GetBBRepo () {
+    type module >& /dev/null || . /mnt/software/Modules/current/init/bash
+    module load git
     echo "## Clone $1"
     ( cd $3 && git clone ssh://git@bitbucket.nanofluidics.com:7999/$1/$2)
 }
@@ -11,16 +13,29 @@ GetBBRepo () {
 
 echo "#############################"
 echo "# LOAD MODULES"
-source /mnt/software/Modules/current/init/bash
-module load git gcc/4.9.2 python/2.7.9 cmake cram swig ccache virtualenv zlib/1.2.5 ninja boost
+type module >& /dev/null || . /mnt/software/Modules/current/init/bash
+module load gcc/6.4.0
+module load ccache/3.3.4
+module load boost/1.60
+module load zlib/1.2.8
+module load htslib/1.3.1
+module load cmake/3.2.2
+module load swig/3.0.5
+module load ninja
+if [[ $USER == "bamboo" ]]; then
+  export CCACHE_DIR=/mnt/secondary/Share/tmp/bamboo.mobs.ccachedir
+  export CCACHE_TEMPDIR=/scratch/bamboo.ccache_tempdir
+fi
+export CCACHE_COMPILERCHECK='%compiler% -dumpversion'
+export CCACHE_BASEDIR=$PWD
 
 echo "#############################"
 echo "# EXTERNAL DEPENDENCIES"
 echo "## Create external dependency directory"
-if [ -d _deps ] ; then rm -rf _deps ; fi
+if [[ -d _deps ]] ; then rm -rf _deps ; fi
 mkdir _deps
 echo "## Create reverse external dependency directory"
-if [ -d _rev_deps ] ; then rm -rf _rev_deps ; fi
+if [[ -d _rev_deps ]] ; then rm -rf _rev_deps ; fi
 mkdir _rev_deps
 
 GetBBRepo sat GenomicConsensus _rev_deps
@@ -40,53 +55,83 @@ echo "## Check formatting"
 echo "#############################"
 echo "# VIRTUALENV"
 echo "## Create missing virtualenv"
-if [ ! -d unyve ] ; then /mnt/software/v/virtualenv/13.0.1/virtualenv.py unyve ; fi
-
-echo "## Get into virtualenv"
-set +u
-source unyve/bin/activate
-set -u
+rm -rf unyve
+mkdir unyve
+module load anaconda
+PYTHONUSERBASE=$PWD/unyve
+PATH=$PWD/unyve/bin:$PATH
+export PATH PYTHONUSERBASE
+NEXUS_WHEEL=http://nexus/repository/unsupported/pitchfork/gcc-4.9.2
+PIP="pip --cache-dir=$PWD/.pip --disable-pip-version-check"
 
 echo "## Install pip modules"
-pip install --upgrade pip
-pip install numpy cython h5py pysam cram nose jsonschema avro pytest
-( cd _deps/pbcommand && pip install --no-deps . )
-( cd _deps/pbcore && pip install --no-deps . )
+$PIP install --user \
+  cram==0.7
+$PIP install --user --no-index \
+  $NEXUS_WHEEL/pythonpkgs/pysam-0.9.1.4-cp27-cp27mu-linux_x86_64.whl \
+  $NEXUS_WHEEL/pythonpkgs/xmlbuilder-1.0-cp27-none-any.whl \
+  $NEXUS_WHEEL/pythonpkgs/avro-1.7.7-cp27-none-any.whl \
+  $NEXUS_WHEEL/pythonpkgs/iso8601-0.1.12-py2.py3-none-any.whl \
+  $NEXUS_WHEEL/pythonpkgs/tabulate-0.7.5-cp27-none-any.whl \
+  http://nexus/repository/unsupported/distfiles/coverage-4.4.1.tar.gz
+$PIP install --user --no-index -e _deps/pbcommand
+$PIP install --user --no-index -e _deps/pbcore
 
 echo "## Install pacbiotestdata"
-( cd _deps/pacbiotestdata && git lfs pull && make python )
+ln -sfn ../data _deps/pacbiotestdata/pbtestdata/data
+$PIP install --user -e _deps/pacbiotestdata
 
 echo "#############################"
 echo "# BUILD"
 echo "## Create build directory "
-if [ ! -d build ] ; then mkdir build ; fi
+if [[ ! -d build ]] ; then mkdir build ; fi
 
 echo "## Build source"
 ( cd build &&\
   rm -rf * &&\
   cmake -DCMAKE_BUILD_TYPE=ReleaseWithAssert -GNinja .. )
-( cd build && ninja )
+( cd build && sed -i -e 's@/-I/mnt/software@/ -I/mnt/software@g' build.ninja && ninja )
 
 echo "## pip install CC2"
-CMAKE_BUILD_TYPE=ReleaseWithAssert CMAKE_COMMAND=cmake VERBOSE=1 pip install --verbose --upgrade --no-deps .
+LDFLAGS='-static-libstdc++' \
+CMAKE_BUILD_TYPE=ReleaseWithAssert \
+CMAKE_COMMAND=cmake \
+VERBOSE=1 \
+$PIP install --user --no-index --verbose .
+ldd unyve/lib/python2.7/site-packages/_ConsensusCore2.so
 
+echo "## CC2 version test"
+python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
+
+rm -f unyve/bin/g++
+module unload ccache
+cat > g++ <<EOF
+#!/bin/bash
+$(which g++) -static-libstdc++ \$@
+EOF
+chmod +x g++
+module load ccache/3.3.4
+mv g++ unyve/bin/
 echo "## Install ConsensusCore"
-( cd _deps/ConsensusCore && python setup.py install --boost=$BOOST_ROOT )
+( cd _deps/ConsensusCore \
+  && python setup.py \
+       bdist_wheel \
+       --boost=$BOOST_ROOT \
+  && echo dist/ConsensusCore-*.whl | \
+     xargs $PIP install --user --verbose )
+rm unyve/bin/g++
+ldd unyve/lib/python2.7/site-packages/_ConsensusCore.so
 
 echo "## Install GC"
-( cd _rev_deps/GenomicConsensus && pip install --upgrade --no-deps --verbose . )
+$PIP install --user --no-index --verbose _rev_deps/GenomicConsensus
 
 echo "#############################"
 echo "# TEST"
 echo "## Unanimity tests"
 ( cd build && ninja check )
 
-echo "## CC2 version test"
-python -c "import ConsensusCore2 ; print ConsensusCore2.__version__"
-
-echo "## Test CC2 via GC"
-( cd _rev_deps/GenomicConsensus && make check )
-
-set +u
-deactivate
-set -u
+#echo "## Test CC2 via GC"
+#module load cram/0.7
+#module add mummer/3.23
+#module add exonerate/2.0.0
+#( cd _rev_deps/GenomicConsensus && make check )

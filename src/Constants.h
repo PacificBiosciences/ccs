@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,34 +33,21 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Author: Armin Töpfer
-
 #pragma once
 
-#include <algorithm>
-#include <string>
+#include <limits>
 
 namespace PacBio {
+namespace Consensus {
+
 namespace {
-constexpr char   UnyVersion[]    = "@UNANIMITY_VERSION@";
-constexpr char   UnyGitSha1[]    = "@UNANIMITY_GIT_SHA1@";
-constexpr char   UnyChangelog[]  = "${UNANIMITY_CHANGELOG}";
-constexpr size_t UnyVersionMajor = @UNANIMITY_VERSION_MAJOR@;
-constexpr size_t UnyVersionMinor = @UNANIMITY_VERSION_MINOR@;
-constexpr size_t UnyVersionPatch = @UNANIMITY_VERSION_PATCH@;
-}
 
-std::string UnanimityVersion()
-{ return UnyVersion; }
+static constexpr const size_t EXTEND_BUFFER_COLUMNS = 8;
+static constexpr const int NEG_INT_INF = -std::numeric_limits<int>::infinity();
+static constexpr const double NEG_DBL_INF = -std::numeric_limits<double>::infinity();
+static constexpr const float NEG_FLOAT_INF = -std::numeric_limits<float>::infinity();
 
-std::string UnanimityGitSha1()
-{ return UnyGitSha1; }
+}  // anonymous namespace
 
-std::string UnanimityChangelog()
-{
-    std::string changelog(UnyChangelog);
-    std::replace(changelog.begin(), changelog.end(), ';', '\n');
-    return changelog;
-}
-
-} // ::PacBio
+}  // namespace Consensus
+}  // namespace PacBio

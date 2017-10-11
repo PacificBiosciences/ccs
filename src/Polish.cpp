@@ -44,11 +44,12 @@
 #include <tuple>
 #include <vector>
 
+#include <boost/math/distributions/binomial.hpp>
 #include <boost/optional.hpp>
 
 #include <pbcopper/logging/Logging.h>
 
-#include <pacbio/consensus/AbstractIntegrator.h>
+#include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Polish.h>
 #include <pacbio/exception/InvalidEvaluatorException.h>
 
@@ -73,11 +74,15 @@ RepeatConfig::RepeatConfig(const size_t repeatSize, const size_t elementCount,
 {
 }
 
-void Mutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const size_t start,
-               const size_t end)
+// 'Z' is the special sentinel value to indicate
+// that we test a nascent diploid site
+static constexpr const char newDiploidMutation[] = "Z";
+
+void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start, const size_t end,
+               const bool diploid = false)
 {
-    constexpr auto bases = "ACGT";
-    constexpr size_t nbases = 4;
+    const std::vector<char> bases = (diploid ? std::vector<char>{newDiploidMutation[0]}
+                                             : std::vector<char>{'A', 'C', 'G', 'T'});
 
     if (start == end) return;
 
@@ -88,17 +93,17 @@ void Mutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const size_
 
         // insertions come before deletion/substitutions at site i, their End()
         // is i < i + 1
-        for (size_t j = 0; j < nbases; ++j) {
+        for (const char j : bases) {
             // if it's not a homopolymer insertion, or it's the first base of
             // one..
-            if (bases[j] != last) muts->emplace_back(Mutation::Insertion(i, bases[j]));
+            if (j != last) muts->emplace_back(Mutation::Insertion(i, j));
         }
 
         // if we're the first in the homopolymer, we can delete
         if (curr != last) muts->emplace_back(Mutation::Deletion(i, 1));
 
-        for (size_t j = 0; j < nbases; ++j) {
-            if (bases[j] != curr) muts->emplace_back(Mutation::Substitution(i, bases[j]));
+        for (const char j : bases) {
+            if (j != curr) muts->emplace_back(Mutation::Substitution(i, j));
         }
 
         last = curr;
@@ -106,23 +111,24 @@ void Mutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const size_
 
     // if we are at the end, make sure we're not performing a terminal
     // homopolymer insertion
-    for (size_t j = 0; j < nbases; ++j)
-        if (bases[j] != last) muts->emplace_back(Mutation::Insertion(end, bases[j]));
+    for (const char j : bases)
+        if (j != last) muts->emplace_back(Mutation::Insertion(end, j));
 }
 
-vector<Mutation> Mutations(const AbstractIntegrator& ai, const size_t start, const size_t end)
+vector<Mutation> Mutations(const Integrator& ai, const size_t start, const size_t end,
+                           const bool diploid = false)
 {
     vector<Mutation> muts;
-    Mutations(&muts, ai, start, end);
+    Mutations(&muts, ai, start, end, diploid);
     return muts;
 }
 
-vector<Mutation> Mutations(const AbstractIntegrator& ai)
+vector<Mutation> Mutations(const Integrator& ai, const bool diploid)
 {
-    return Mutations(ai, 0, ai.TemplateLength());
+    return Mutations(ai, 0, ai.TemplateLength(), diploid);
 }
 
-void RepeatMutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const RepeatConfig& cfg,
+void RepeatMutations(vector<Mutation>* muts, const Integrator& ai, const RepeatConfig& cfg,
                      const size_t start, const size_t end)
 {
     if (cfg.MaximumRepeatSize < 2 || cfg.MinimumElementCount <= 0) return;
@@ -155,15 +161,15 @@ void RepeatMutations(vector<Mutation>* muts, const AbstractIntegrator& ai, const
     sort(muts->begin(), muts->end(), Mutation::SiteComparer);
 }
 
-vector<Mutation> RepeatMutations(const AbstractIntegrator& ai, const RepeatConfig& cfg,
-                                 const size_t start, const size_t end)
+vector<Mutation> RepeatMutations(const Integrator& ai, const RepeatConfig& cfg, const size_t start,
+                                 const size_t end)
 {
     vector<Mutation> muts;
     RepeatMutations(&muts, ai, cfg, start, end);
     return muts;
 }
 
-vector<Mutation> RepeatMutations(const AbstractIntegrator& ai, const RepeatConfig& cfg)
+vector<Mutation> RepeatMutations(const Integrator& ai, const RepeatConfig& cfg)
 {
     return RepeatMutations(ai, cfg, 0, ai.TemplateLength());
 }
@@ -192,7 +198,8 @@ vector<Mutation> BestMutations(list<ScoredMutation>* scoredMuts, const size_t se
 }
 
 vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* centers,
-                                 const AbstractIntegrator& ai, const size_t neighborhood)
+                                 const Integrator& ai, const size_t neighborhood,
+                                 const bool diploid = false)
 {
     const size_t len = ai.TemplateLength();
     const auto clamp = [len](const int i) { return max(0, min<int>(len, i)); };
@@ -240,15 +247,84 @@ vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* ce
     }
 
     for (const auto& range : ranges)
-        Mutations(&result, ai, range.first, range.second);
+        Mutations(&result, ai, range.first, range.second, diploid);
 
     return result;
 }
 
-PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
+// TODO(dseifert+lhepler)
+// The current implementation makes a number simplifying approximations
+// that are - strictly speaking - incorrect:
+//
+// 1. In order to perform the major allele test we need an error rate
+//    p for the binomial test. If we have the HMM
+//
+//      Z_1 -> ... -> Z_i -> ... -> Z_L
+//       |             |             |
+//       v             v             v
+//      X_1           X_i           X_L
+//
+//    Then the probability of reproducing the major allele (= wt) at position is
+//
+//      p := P(X_i = wt) = \sum_{Z_i} P(X_i = wt | Z_i) * P(Z_i)
+//
+//    which itself can be turned into a recursion with a_k(i) = P(Z_i = k)
+//
+//      P(X_i = wt) = \sum_{k} P(X_i = wt | Z_i) * a_k(i)
+//
+//    where
+//
+//      a_k(i) = \sum_{j} P(Z_i = k | Z_{i-1} = j) * a_j(i-1).
+//
+//    The current framework does not easily provide a handle for calculating
+//    a_k(i), which is the marginal probability of _just_ the hidden chain.
+//    This might be implemented in a future version, depending on specificity
+//    and sensitivity requirements.
+//
+//    The current implementation takes the average error across sites. This
+//    will lead to local specificity (and sensitivity) fluctuations that are
+//    currently unavoidable. The proper solution would be to compute the
+//    (local) probabilities of reproducing the major allele.
+//
+// 2. A further violation is the fact that deviations are not actually the
+//    result of a binomial distribution, but rather of a Poisson binomial
+//    distribution, as the p's are different for different Evaluators,
+//    that is, the sum of independent but not identically distributed Bernoulli
+//    trials. Unfortunately, the Poisson binomial distribution is a
+//    combinatorial disaster, as there are no tractable forms that allow for
+//    computing the "tail" of the distribution. In practice, people resort to
+//    Monte Carlo simulations or using asymptotic Poisson approximations, all
+//    of which fail in weird ways. I do not have a good solution to this
+//    problem, beyond going to a full-blown likelihood-ratio framework.
+
+// 1. Minimum coverage to even consider doing diploid polishing
+static constexpr const int minCoverage = 10;
+
+// 2. Even for a diploid site, the major and minor allele
+//    together have to yield at least majorityFraction
+//    of all Evaluators together.
+static constexpr const double majorityFraction = 0.75;
+
+// 3. The average error rate, i.e., 1-errorRate is the probability
+//    of recovering the major allele
+static constexpr const double errorRate = 0.08;
+
+//    The binomial significance level for rejecting the null
+//    of having a purely haploid site
+//    We use 0.5%, in order to make strong claims for our discoveries
+//    Reference:
+//      https://www.nature.com/articles/s41562-017-0189-z
+static constexpr const double significanceLevel = 0.005;
+
+// 4. Even when significant for a diploid site, the minor
+//    allele has to rise above minFractionMinor to be
+//    realistically considered.
+static constexpr const double minFractionMinor = 0.25;
+
+PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
 {
-    vector<Mutation> muts = Mutations(*ai);
-    hash<string> hashFn;
+    vector<Mutation> muts = Mutations(*ai, cfg.Diploid);
+    std::hash<string> hashFn;
     size_t oldTpl = hashFn(*ai);
     set<size_t> history = {oldTpl};
 
@@ -262,7 +338,7 @@ PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
             bool hasNewInvalidEvaluator;
 
             // Compute new sets of possible mutations until no Evaluators are
-            // being invalided.
+            // being invalidated.
             do {
                 // Compute the LL only with the active Evaluators
                 const double LL = ai->LL();
@@ -271,9 +347,66 @@ PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
                 try {
                     // Get set of possible mutations
                     for (const auto& mut : muts) {
-                        const double ll = ai->LL(mut);
-                        if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
                         ++mutationsTested;
+                        if ((cfg.Diploid) && (mut.Type() != MutationType::DELETION)) {
+                            // Diploid Insertion or Substitution
+                            if (mut.Bases() == newDiploidMutation) {
+                                // mut is the special sentinel, that is, in this case
+                                // we perform the binomial test.
+                                const auto histogram =
+                                    ai->BestMutationHistogram(mut.Start(), mut.Type());
+
+                                const int coverage =
+                                    std::accumulate(histogram.cbegin(), histogram.cend(), 0,
+                                                    [](const int a, const std::pair<char, int>& b) {
+                                                        return a + b.second;
+                                                    });
+
+                                // 1. do we have enough absolute coverage to
+                                //    even contemplate doing Diploid polishing?
+                                if (coverage < minCoverage) continue;
+
+                                // 2. do first and second most frequent allele cover enough?
+                                if ((histogram[0].second + histogram[1].second) <
+                                    (coverage * majorityFraction))
+                                    continue;
+
+                                // 3. perform binomial test
+                                boost::math::binomial binomialCDF(coverage, 1 - errorRate);
+                                const double pValue = cdf(binomialCDF, histogram[0].second);
+
+                                if (pValue > significanceLevel) continue;
+
+                                // 4. is the minor allele above a minimum frequency?
+                                if (histogram[1].second < coverage * minFractionMinor) continue;
+
+                                // if we managed to get this far, all filters passed and we can proceed
+                                // to add the diploid site to the pool of succesful sites
+                                const char newAmbiguousBase = Data::detail::createAmbiguousBase(
+                                    histogram[0].first, histogram[1].first);
+
+                                Mutation newMutation{
+                                    (mut.Type() == MutationType::INSERTION)
+                                        ? Mutation::Insertion(mut.Start(), newAmbiguousBase)
+                                        : Mutation::Substitution(mut.Start(), newAmbiguousBase)};
+
+                                const double ll = ai->LL(newMutation);
+                                scoredMuts.emplace_back(newMutation.WithScore(ll));
+
+                                assert(scoredMuts.back().Bases().find(newDiploidMutation) ==
+                                       std::string::npos);
+                            } else {
+                                // The sentinel should never reappear once used initially
+                                assert(mut.Bases().find(newDiploidMutation) == std::string::npos);
+
+                                const double ll = ai->LL(mut);
+                                if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
+                            }
+                        } else {
+                            // Haploid or Deletion
+                            const double ll = ai->LL(mut);
+                            if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
+                        }
                     }
                 } catch (const Exception::InvalidEvaluatorException& e) {
                     // If an Evaluator exception occured,
@@ -299,7 +432,7 @@ PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
 
         const size_t newTpl = hashFn(ApplyMutations(*ai, &muts));
 
-        const auto diagnostics = [&result](AbstractIntegrator* ai) {
+        const auto diagnostics = [&result](Integrator* ai) {
             result.maxAlphaPopulated.emplace_back(ai->MaxAlphaPopulated());
             result.maxBetaPopulated.emplace_back(ai->MaxBetaPopulated());
             result.maxNumFlipFlops.emplace_back(ai->MaxNumFlipFlops());
@@ -322,7 +455,7 @@ PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
 
             // get the mutations for the next round
             vector<Mutation> applied = {muts.front()};
-            muts = NearbyMutations(&applied, &muts, *ai, cfg.MutationNeighborhood);
+            muts = NearbyMutations(&applied, &muts, *ai, cfg.MutationNeighborhood, cfg.Diploid);
         } else {
             ai->ApplyMutations(&muts);
             oldTpl = newTpl;
@@ -331,7 +464,7 @@ PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
             diagnostics(ai);
 
             // get the mutations for the next round
-            muts = NearbyMutations(&muts, &muts, *ai, cfg.MutationNeighborhood);
+            muts = NearbyMutations(&muts, &muts, *ai, cfg.MutationNeighborhood, cfg.Diploid);
         }
 
         // keep track of which templates we've seen
@@ -341,11 +474,11 @@ PolishResult Polish(AbstractIntegrator* const ai, const PolishConfig& cfg)
     return result;
 }
 
-PolishResult PolishRepeats(AbstractIntegrator* const ai, const RepeatConfig& cfg)
+PolishResult PolishRepeats(Integrator* const ai, const RepeatConfig& cfg)
 {
     PolishResult result;
 
-    const auto diagnostics = [&result](AbstractIntegrator* ai) {
+    const auto diagnostics = [&result](Integrator* ai) {
         result.maxAlphaPopulated.emplace_back(ai->MaxAlphaPopulated());
         result.maxBetaPopulated.emplace_back(ai->MaxBetaPopulated());
         result.maxNumFlipFlops.emplace_back(ai->MaxNumFlipFlops());
@@ -409,7 +542,7 @@ inline int ScoreSumToQV(const double scoreSum)
 
 }  // anonymous namespace
 
-vector<int> ConsensusQualities(AbstractIntegrator& ai)
+vector<int> ConsensusQualities(Integrator& ai)
 {
     vector<int> quals;
     quals.reserve(ai.TemplateLength());
@@ -442,7 +575,7 @@ vector<int> ConsensusQualities(AbstractIntegrator& ai)
     return quals;
 }
 
-QualityValues ConsensusQVs(AbstractIntegrator& ai)
+QualityValues ConsensusQVs(Integrator& ai)
 {
     const size_t len = ai.TemplateLength();
     vector<int> quals, delQVs, insQVs, subQVs;
@@ -489,7 +622,7 @@ QualityValues ConsensusQVs(AbstractIntegrator& ai)
         subQVs.emplace_back(ScoreSumToQV(subScoreSum));
     }
     // TODO(lhepler): discuss InsQV being len + 1 to capture trailing insertion
-    return QualityValues{move(quals), move(delQVs), move(insQVs), move(subQVs)};
+    return QualityValues{std::move(quals), std::move(delQVs), std::move(insQVs), std::move(subQVs)};
 }
 
 }  // namespace Consensus

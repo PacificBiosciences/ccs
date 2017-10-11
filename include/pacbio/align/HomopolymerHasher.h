@@ -41,6 +41,8 @@
 
 #include <seqan/basic.h>
 
+#include <pacbio/data/internal/BaseEncoding.h>
+
 namespace PacBio {
 namespace Align {
 
@@ -73,10 +75,8 @@ private:  // Internal class methods
     {
         using namespace seqan;
 
-        const char dna[4] = {'A', 'C', 'G', 'T'};
-
         for (size_t i = 0; i < 4; i++) {
-            DnaString s = std::string(length(shape), dna[i]);
+            DnaString s = std::string(length(shape), Data::detail::NCBI2naToASCIIImpl(i));
             hashes[i] = seqan::hash(shape, begin(s));
         }
     }

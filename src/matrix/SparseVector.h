@@ -94,8 +94,8 @@ private:
 
 namespace {  // anonymous
 
-constexpr size_t PADDING = 8;
-constexpr double SHRINK_THRESHOLD = 0.8;
+static constexpr const size_t PADDING = 8;
+static constexpr const double SHRINK_THRESHOLD = 0.8;
 
 }  // anonymous namespace
 

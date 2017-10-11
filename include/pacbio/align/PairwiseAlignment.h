@@ -74,6 +74,8 @@ private:
     std::string target_;
     std::string query_;
     std::string transcript_;
+    size_t refStart_;
+    size_t refEnd_;
 
 public:
     // either left- or right- justify indels
@@ -89,6 +91,15 @@ public:
     // transcript as defined by Gusfield pg 215.
     std::string Transcript() const;
 
+    // starting position in the reference sequence
+    size_t ReferenceStart() const;
+
+    // ending position in the reference sequence
+    size_t ReferenceEnd() const;
+
+    // vector of target positions for each position in alignment
+    std::vector<int> TargetPositions() const;
+
 public:
     float Accuracy() const;
     int Matches() const;
@@ -99,11 +110,14 @@ public:
     int Length() const;
 
 public:
-    PairwiseAlignment(const std::string& target, const std::string& query);
+    PairwiseAlignment(const std::string& target, const std::string& query, size_t refStart = 0,
+                      size_t refEnd = 0);
 
     static PairwiseAlignment* FromTranscript(const std::string& transcript,
                                              const std::string& unalnTarget,
                                              const std::string& unalnQuery);
+
+    PairwiseAlignment ClippedTo(const size_t refStart, const size_t refEnd);
 };
 
 PairwiseAlignment* Align(const std::string& target, const std::string& query, int* score,

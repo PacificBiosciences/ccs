@@ -32,7 +32,6 @@ set(UNY_INCLUDE_DIRS
     ${UNY_IncludeDir}
     ${CMAKE_BINARY_DIR}/generated
     ${Boost_INCLUDE_DIRS}
-    ${ZLIB_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
     ${SEQAN_INCLUDE_DIRS}
     ${CPPOPTPARSE_IncludeDir}
@@ -46,11 +45,12 @@ set(UNY_INCLUDE_DIRS
 
 # add subset of sources that only contains cc2
 add_library(cc2 STATIC
+    ${CMAKE_BINARY_DIR}/generated/UnanimityGitHash.cpp
+    ${CMAKE_BINARY_DIR}/generated/UnanimityVersion.cpp
     ${UNY_ALIGN_CPP}
     ${UNY_MATRIX_CPP}
     ${UNY_MODELS_CPP}
     ${UNY_POA_CPP}
-    AbstractIntegrator.cpp
     Coverage.cpp
     EasyReadScorer.cpp
     Evaluator.cpp
@@ -111,7 +111,7 @@ set(UNY_LIBRARIES
     cc2
     ${POST_LINK}
     unanimity
-    ${ZLIB_LIBRARIES}
+    ${ZLIB_LDFLAGS}
     ${HTSLIB_LIBRARIES}
     ${PacBioBAM_LIBRARIES}
     ${pbcopper_LIBRARIES}
@@ -127,4 +127,9 @@ endif()
 
 if (UNY_build_chimera)
     create_exe(ChimeraLabeler)
+endif()
+
+if (UNY_build_sim)
+    create_exe(ccs_sim)
+    create_exe(genomic_sim)
 endif()

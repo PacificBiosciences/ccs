@@ -70,6 +70,13 @@ const PlainOption MinPredictedAccuracy{
     "Minimum predicted accuracy in [0, 1].",
     CLI::Option::FloatType(0.9)
 };
+const PlainOption MinIdentity{
+    "min_identity",
+    { "minIdentity" },
+    "Minimum Identity",
+    "Minimum identity to the POA to use a subread. 0 disables this filter.",
+    CLI::Option::FloatType(0.82)
+};
 const PlainOption MinZScore{
     "min_zscore",
     { "minZScore" },
@@ -184,6 +191,15 @@ const PlainOption ModelSpec{
     "Name of chemistry or model to use, overriding default selection.",
     CLI::Option::StringType("")
 };
+const PlainOption ZmwTimings{
+    "zmw_timings",
+    { "zmwTimings" },
+    "Measure ZMW Timings",
+    "Measure individual ZMW wall clock timings.",
+    CLI::Option::BoolType(),
+    JSON::Json(nullptr),
+    CLI::OptionFlags::HIDE_FROM_HELP
+};
 // clang-format on
 }  // namespace OptionNames
 
@@ -199,7 +215,7 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
     , MinPredictedAccuracy(options[OptionNames::MinPredictedAccuracy])
     , MinReadScore(options[OptionNames::MinReadScore])
     , MinSNR(options[OptionNames::MinSnr])
-
+    , MinIdentity(options[OptionNames::MinIdentity])
     , MinZScore(options[OptionNames::MinZScore] == nullptr
                     ? NAN
                     : static_cast<float>(options[OptionNames::MinZScore]))
@@ -209,6 +225,7 @@ ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
     , ReportFile(std::forward<std::string>(options[OptionNames::ReportFile]))
     , RichQVs(options[OptionNames::RichQVs])
     , WlSpec(std::forward<std::string>(options[OptionNames::Zmws]))
+    , ZmwTimings(options[OptionNames::ZmwTimings])
 {
     // N.B. If the user somehow specifies both polish and noPolish, noPolish wins.
     // Unfortunately there's no sensible way to check for this condition and error out.
@@ -239,7 +256,6 @@ size_t ConsensusSettings::ThreadCount(int n)
 PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& description,
                                                     const std::string& version)
 {
-    using Option = PacBio::CLI::Option;
     using Task = PacBio::CLI::ToolContract::Task;
 
     PacBio::CLI::Interface i{"ccs", description, version};
@@ -264,6 +280,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
         OptionNames::MinLength,
         OptionNames::MinPasses,
         OptionNames::MinPredictedAccuracy,
+        OptionNames::MinIdentity,
         OptionNames::MinZScore,
         OptionNames::MaxDropFraction,
         OptionNames::MinSnr,
@@ -277,7 +294,8 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
         OptionNames::ModelPath,
         OptionNames::ModelSpec,
         OptionNames::NumThreads,
-        OptionNames::LogFile
+        OptionNames::LogFile,
+        OptionNames::ZmwTimings
     });
 
     const std::string id = "pbccs.tasks.ccs";
@@ -288,6 +306,7 @@ PacBio::CLI::Interface ConsensusSettings::CreateCLI(const std::string& descripti
     tcTask.AddOption(OptionNames::MinLength);
     tcTask.AddOption(OptionNames::MinPasses);
     tcTask.AddOption(OptionNames::MinPredictedAccuracy);
+    tcTask.AddOption(OptionNames::MinIdentity);
     tcTask.AddOption(OptionNames::MinZScore);
     tcTask.AddOption(OptionNames::MaxDropFraction);
     tcTask.AddOption(OptionNames::Polish);
