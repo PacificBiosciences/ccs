@@ -53,9 +53,10 @@ struct PolishConfig
     size_t MutationSeparation;
     size_t MutationNeighborhood;
 
-    bool Diploid = false;
+    bool Diploid;
 
-    PolishConfig(size_t iterations = 40, size_t separation = 10, size_t neighborhood = 20);
+    PolishConfig(size_t iterations = 40, size_t separation = 10, size_t neighborhood = 20,
+                 bool diploid = false);
 };
 
 struct RepeatConfig

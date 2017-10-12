@@ -128,11 +128,22 @@ public:
         return l < r;
     }
 
+    /// Used by the diploid API to store pvalues
+    inline Mutation WithPvalue(const double pvalue)
+    {
+        auto result = *this;
+        result.pvalue_ = pvalue;
+        return result;
+    }
+
+    inline boost::optional<double> GetPvalue() const { return pvalue_; }
+
 private:
     std::string bases_;
     MutationType type_;
     size_t start_;
     size_t length_;
+    boost::optional<double> pvalue_;
 
     Mutation(MutationType type, size_t start, size_t length);
     Mutation(MutationType type, size_t start, const std::string& bases);
