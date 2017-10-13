@@ -53,6 +53,8 @@
 #include <pacbio/consensus/Polish.h>
 #include <pacbio/exception/InvalidEvaluatorException.h>
 
+#include "MutationTracker.h"
+
 using namespace std;
 
 namespace PacBio {
@@ -330,64 +332,8 @@ PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
     set<size_t> history = {oldTpl};
 
     PolishResult result;
-
-    const std::string originalTpl{static_cast<std::string>(*ai)};
-    enum class TrackedMutationType : uint8_t
-    {
-        TEMPLATE,
-        INSERTION,
-        SUBSTITUTION
-    };
-
-    struct origTplInfo
-    {
-        int64_t origPos;
-        // mutType can be either a
-        //   - TEMPLATE : i.e. the original template (unchanged)
-        //   - INSERTION
-        //   - SUBSTITUTION : i.e. newTplBase != originalTpl[origPos]
-        //
-        // Notice that there is not "Deletion" type, as there is no way
-        // to point from anywhere in the current Template to the original
-        // one if a deletion occurred. Nonetheless, finding deletions is
-        // easy, as the vector will have a discontinuity, e.g.
-        //
-        //            012
-        //   origTpl: AAC
-        //    curTpl: A-C
-        //
-        // where the vector will contain {{0, TEMPLATE, 'A'}, {2, TEMPLATE, 'C'}},
-        // i.e., for index i and i+1, if vec[i+1].origPos - vec[i].origPos > 1
-        // holds, we have lost a base.
-        TrackedMutationType mutType;
-        char newTplBase;
-        boost::optional<double> pvalue;
-
-        origTplInfo(const int64_t origPos_, const TrackedMutationType mutType_,
-                    const char newTplBase_, const boost::optional<double> pvalue_ = boost::none)
-            : origPos{origPos_}, mutType{mutType_}, newTplBase{newTplBase_}, pvalue{pvalue_}
-        {
-        }
-    };
-
-    // diploid bookkeeping vector
-    //
-    // In order to generate the correct std::vector<Mutation>
-    // for the diploid result, we need to keep track of the
-    // correspondence between the current template and the
-    // original one
-    // This vector is a map
-    //
-    //   f : currentTplIdx -> [originatingIdx, +type etc]
-    //
-    // Thus, the length of the vector is always equal to the
-    // current template.
-    std::vector<origTplInfo> curTplToOrigTpl;
-    curTplToOrigTpl.reserve(originalTpl.size());
-
-    for (int64_t i = 0; i < curTplToOrigTpl.size(); ++i) {
-        curTplToOrigTpl.emplace_back(i, TrackedMutationType::TEMPLATE, originalTpl[i]);
-    }
+    // keep track of the changes to the original template over many rounds
+    MutationTracker mutTracker{static_cast<std::string>(*ai)};
 
     for (size_t i = 0; i < cfg.MaximumIterations; ++i) {
         // find the best mutations given our parameters
@@ -489,68 +435,7 @@ PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
             result.hasConverged = true;
 
             if (cfg.Diploid) {
-                // extract the meaty parts from curTplToOrigTpl
-                result.diploidSites.clear();
-                // leave some buffer
-                result.diploidSites.reserve(2 * result.mutationsApplied);
-
-                // 1. find all SUBSTITUTIONs and INSERTIONs
-                for (const auto& j : curTplToOrigTpl) {
-                    if (j.mutType != TrackedMutationType::TEMPLATE) {
-                        result.diploidSites.emplace_back(
-                            static_cast<MutationType>(j.mutType),
-                            Data::detail::demultiplexAmbiguousBase(j.newTplBase), j.origPos,
-                            j.pvalue);
-                    }
-                }
-
-                // 2. find all DELETIONs
-                // Recall that curTplToOrigTpl cannot represent deletions
-                // so we find deletions by looking at all TEMPLATE positions
-                // and checking whether there is a discontinuity between them
-                auto lastTplPos = std::find_if(
-                    curTplToOrigTpl.cbegin(), curTplToOrigTpl.cend(),
-                    [](const auto& elem) { return elem.mutType == TrackedMutationType::TEMPLATE; });
-                if (lastTplPos == curTplToOrigTpl.cend())
-                    throw std::runtime_error(
-                        "The template has been completely mutated, this should not occur!");
-
-                // 2.1 check for deletions before the first remaining original template base
-                for (int64_t delPos = 0; delPos < lastTplPos->origPos; ++delPos) {
-                    // deletions don't have an associated p-value
-                    result.diploidSites.emplace_back(MutationType::DELETION, std::vector<char>{},
-                                                     delPos);
-                }
-
-                // 2.2 check for deletions between the first and last remaining original template bases
-                for (auto it = curTplToOrigTpl.cbegin(); it < curTplToOrigTpl.cend(); ++it) {
-                    if (it->mutType == TrackedMutationType::TEMPLATE) {
-                        for (int64_t delPos = lastTplPos->origPos + 1; delPos < it->origPos;
-                             ++delPos) {
-                            // deletions don't have an associated p-value
-                            result.diploidSites.emplace_back(MutationType::DELETION,
-                                                             std::vector<char>{}, delPos);
-                        }
-                        lastTplPos = it;
-                    }
-                }
-
-                // 2.3 check for deletions after the last remaining original template base
-                for (int64_t delPos = lastTplPos->origPos + 1; delPos < originalTpl.size();
-                     ++delPos) {
-                    // deletions don't have an associated p-value
-                    result.diploidSites.emplace_back(MutationType::DELETION, std::vector<char>{},
-                                                     delPos);
-                }
-
-                // 3. finally sort everything
-                sort(result.diploidSites.begin(), result.diploidSites.end(), [](const auto& lhs,
-                                                                                const auto& rhs) {
-                    // copied from Mutation.h
-                    const auto l = std::make_tuple(lhs.pos, lhs.mutType != MutationType::DELETION);
-                    const auto r = std::make_tuple(rhs.pos, rhs.mutType != MutationType::DELETION);
-                    return l < r;
-                });
+                result.diploidSites = mutTracker.MappingToOriginalTpl();
             }
 
             return result;
@@ -558,40 +443,8 @@ PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
 
         const size_t newTpl = hashFn(ApplyMutations(*ai, &muts));
 
-        // update diploid bookkeeping
-        // TODO(dseifert):
-        // Try and do this more implicitly with less vector rewriting and not in O(L*N).
-        //
-        // While in theory a linked list should be preferred for this, that is CS theory
-        // and has been invalidated in practice by caches, prefetchers and branch prediction.
-        // https://view.officeapps.live.com/op/view.aspx?src=http%3a%2f%2fvideo.ch9.ms%2fsessions%2fbuild%2f2014%2f2-661.pptx
         if (cfg.Diploid) {
-            for (auto it = muts.crbegin(); it != muts.crend(); ++it) {
-                // Caveat: Current diploid handling does not
-                // handle Mutations having Length() > 1.
-                assert(it->Length() == 1);
-
-                switch (it->Type()) {
-                    case MutationType::DELETION:
-                        curTplToOrigTpl.erase(curTplToOrigTpl.begin() + it->Start());
-                        break;
-
-                    case MutationType::INSERTION:
-                        assert(static_cast<bool>(it->GetPvalue()));
-                        curTplToOrigTpl.insert(
-                            curTplToOrigTpl.begin() + it->Start(),
-                            {curTplToOrigTpl[it->Start()].origPos, TrackedMutationType::INSERTION,
-                             it->Bases().front(), it->GetPvalue()});
-                        break;
-
-                    case MutationType::SUBSTITUTION:
-                        assert(static_cast<bool>(it->GetPvalue()));
-                        curTplToOrigTpl[it->Start()].mutType = TrackedMutationType::SUBSTITUTION;
-                        curTplToOrigTpl[it->Start()].newTplBase = it->Bases().front();
-                        curTplToOrigTpl[it->Start()].pvalue = it->GetPvalue();
-                        break;
-                }
-            }
+            mutTracker.AddSortedMutations(muts);
         }
 
         const auto diagnostics = [&result](Integrator* ai) {
