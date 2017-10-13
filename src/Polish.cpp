@@ -51,6 +51,7 @@
 
 #include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Polish.h>
+#include <pacbio/data/internal/ConversionFunctions.h>
 #include <pacbio/exception/InvalidEvaluatorException.h>
 
 #include "MutationTracker.h"
@@ -84,6 +85,8 @@ static constexpr const char newDiploidMutation[] = "Z";
 void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start, const size_t end,
                const bool diploid = false)
 {
+    using Data::detail::ambiguousBaseContainsPureBase;
+
     const std::vector<char> bases = (diploid ? std::vector<char>{newDiploidMutation[0]}
                                              : std::vector<char>{'A', 'C', 'G', 'T'});
 
@@ -99,14 +102,16 @@ void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start,
         for (const char j : bases) {
             // if it's not a homopolymer insertion, or it's the first base of
             // one..
-            if (j != last) muts->emplace_back(Mutation::Insertion(i, j));
+            if (!ambiguousBaseContainsPureBase(last, j))
+                muts->emplace_back(Mutation::Insertion(i, j));
         }
 
         // if we're the first in the homopolymer, we can delete
         if (curr != last) muts->emplace_back(Mutation::Deletion(i, 1));
 
         for (const char j : bases) {
-            if (j != curr) muts->emplace_back(Mutation::Substitution(i, j));
+            if (!ambiguousBaseContainsPureBase(curr, j))
+                muts->emplace_back(Mutation::Substitution(i, j));
         }
 
         last = curr;
@@ -115,7 +120,8 @@ void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start,
     // if we are at the end, make sure we're not performing a terminal
     // homopolymer insertion
     for (const char j : bases)
-        if (j != last) muts->emplace_back(Mutation::Insertion(end, j));
+        if (!ambiguousBaseContainsPureBase(last, j))
+            muts->emplace_back(Mutation::Insertion(end, j));
 }
 
 vector<Mutation> Mutations(const Integrator& ai, const size_t start, const size_t end,
