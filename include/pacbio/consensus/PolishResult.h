@@ -58,6 +58,12 @@ struct DiploidSite
         : mutType{mutType_}, mutants{mutants_}, pos{pos_}, pvalue{pvalue_}
     {
     }
+
+    bool operator==(const DiploidSite& rhs) const
+    {
+        return std::tie(mutType, mutants, pos, pvalue) ==
+               std::tie(rhs.mutType, rhs.mutants, rhs.pos, rhs.pvalue);
+    }
 };
 
 /// This struct contains the results of Integrator::Polish()

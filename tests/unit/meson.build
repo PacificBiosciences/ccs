@@ -17,6 +17,7 @@ uny_test_cpp_sources = files([
   'TestIntervalMask.cpp',
   'TestLoadModels.cpp',
   'TestMutationEnumerator.cpp',
+  'TestMutationTracker.cpp',
   'TestPoaConsensus.cpp',
   'TestPolish.cpp',
   'TestSequence.cpp',
