@@ -137,6 +137,7 @@ if get_option('enable-build-ccs')
   uny_ccs = executable(
   'ccs', [
     'main/ccs.cpp'],
+  install : true,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep],
   include_directories : uny_include_directories,
   link_with : uny_cc2_lib_shared,
@@ -149,6 +150,7 @@ if get_option('enable-build-chimera')
   executable(
   'ChimeraLabeler', [
     'main/ChimeraLabeler.cpp'],
+  install : true,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_seqan_dep],
   include_directories : uny_include_directories,
   link_with : uny_cc2_lib_shared,
@@ -161,6 +163,7 @@ if get_option('enable-build-sim')
   executable(
   'ccs_sim', [
     'main/ccs_sim.cpp'],
+  install : true,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep],
   include_directories : [uny_include_directories, uny_cssw_header],
   link_with : uny_cc2_lib_shared,
@@ -173,6 +176,7 @@ if get_option('enable-build-sim')
   executable(
   'genomic_sim', [
     'main/genomic_sim.cpp'],
+  install : true,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep],
   include_directories : [uny_include_directories, uny_cssw_header],
   link_with : uny_cc2_lib_shared,
