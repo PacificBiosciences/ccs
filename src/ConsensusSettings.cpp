@@ -47,7 +47,7 @@ const PlainOption MaxLength{
     { "maxLength" },
     "Maximum Subread Length",
     "Maximum length of subreads to use for generating CCS.",
-    CLI::Option::IntType(7000)
+    CLI::Option::IntType(21000)
 };
 const PlainOption MinLength{
     "min_length",
