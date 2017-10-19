@@ -29,7 +29,8 @@ uny_consensus_core2_wrap_cpp = custom_target('swig2cpp',
     '-outdir',
     meson.current_build_dir(),
     '@INPUT@'],
-  install : false)
+  install : true,
+  install_dir : [uny_python_install_dir, false])
 
 # python .py files should be byte-compiled before installing, in order not to have the python
 # vm generate them at runtime which on some distros causes them to become orphaned
@@ -47,12 +48,14 @@ custom_target('uny_py_bytecompile_pyc',
   install : true,
   install_dir : uny_python_install_dir)
 
-install_data('ConsensusCore2.py', install_dir : uny_python_install_dir)
-
 uny_consensus_core2_lib = shared_library(
   '_ConsensusCore2',
   uny_consensus_core2_wrap_cpp,
   name_prefix : '',
+  # python is brain-damaged and will
+  # not load dylib libraries on macOS
+  # https://stackoverflow.com/a/2582504
+  name_suffix : 'so',
   install : true,
   install_dir : uny_python_install_dir,
   dependencies : [uny_boost_dep, uny_python_dep],
