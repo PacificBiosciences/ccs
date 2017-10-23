@@ -44,7 +44,7 @@
 #include <tuple>
 #include <vector>
 
-#include <boost/math/distributions/binomial.hpp>
+#include <boost/math/distributions/chi_squared.hpp>
 #include <boost/optional.hpp>
 
 #include <pbcopper/logging/Logging.h>
@@ -78,17 +78,26 @@ RepeatConfig::RepeatConfig(const size_t repeatSize, const size_t elementCount,
 {
 }
 
-// 'Z' is the special sentinel value to indicate
-// that we test a nascent diploid site
-static constexpr const char newDiploidMutation[] = "Z";
-
 void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start, const size_t end,
                const bool diploid = false)
 {
-    using Data::detail::ambiguousBaseContainsPureBase;
+    const std::vector<char> bases{
+        diploid ? std::vector<char>{'A', 'C', 'G', 'T', 'Y', 'R', 'W', 'S', 'K', 'M'}
+                : std::vector<char>{'A', 'C', 'G', 'T'}};
 
-    const std::vector<char> bases = (diploid ? std::vector<char>{newDiploidMutation[0]}
-                                             : std::vector<char>{'A', 'C', 'G', 'T'});
+    std::function<bool(const char&, const char&)> containedWithin;
+    if (diploid) {
+        // in diploid mode, we want to generate candidates
+        // that are unequal to the current *char*, i.e.,
+        // say we have a 'Y' (='C'+'T'), we still want to
+        // generate a 'C' and 'T', we just don't want a 'Y'.
+        containedWithin = std::equal_to<char>{};
+    } else {
+        // in haploid mode, we want to avoid all *subsets*
+        // of pure bases, that is, if curr is 'Y', then we
+        // neither want a 'C' nor a 'T'.
+        containedWithin = Data::detail::ambiguousBaseContainsPureBase;
+    }
 
     if (start == end) return;
 
@@ -102,16 +111,14 @@ void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start,
         for (const char j : bases) {
             // if it's not a homopolymer insertion, or it's the first base of
             // one..
-            if (!ambiguousBaseContainsPureBase(last, j))
-                muts->emplace_back(Mutation::Insertion(i, j));
+            if (!containedWithin(last, j)) muts->emplace_back(Mutation::Insertion(i, j));
         }
 
         // if we're the first in the homopolymer, we can delete
         if (curr != last) muts->emplace_back(Mutation::Deletion(i, 1));
 
         for (const char j : bases) {
-            if (!ambiguousBaseContainsPureBase(curr, j))
-                muts->emplace_back(Mutation::Substitution(i, j));
+            if (!containedWithin(curr, j)) muts->emplace_back(Mutation::Substitution(i, j));
         }
 
         last = curr;
@@ -120,8 +127,7 @@ void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start,
     // if we are at the end, make sure we're not performing a terminal
     // homopolymer insertion
     for (const char j : bases)
-        if (!ambiguousBaseContainsPureBase(last, j))
-            muts->emplace_back(Mutation::Insertion(end, j));
+        if (!containedWithin(last, j)) muts->emplace_back(Mutation::Insertion(end, j));
 }
 
 vector<Mutation> Mutations(const Integrator& ai, const size_t start, const size_t end,
@@ -261,74 +267,12 @@ vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* ce
     return result;
 }
 
-// TODO(dseifert+lhepler)
-// The current implementation makes a number simplifying approximations
-// that are - strictly speaking - incorrect:
-//
-// 1. In order to perform the major allele test we need an error rate
-//    p for the binomial test. If we have the HMM
-//
-//      Z_1 -> ... -> Z_i -> ... -> Z_L
-//       |             |             |
-//       v             v             v
-//      X_1           X_i           X_L
-//
-//    Then the probability of reproducing the major allele (= wt) at position is
-//
-//      p := P(X_i = wt) = \sum_{Z_i} P(X_i = wt | Z_i) * P(Z_i)
-//
-//    which itself can be turned into a recursion with a_k(i) = P(Z_i = k)
-//
-//      P(X_i = wt) = \sum_{k} P(X_i = wt | Z_i) * a_k(i)
-//
-//    where
-//
-//      a_k(i) = \sum_{j} P(Z_i = k | Z_{i-1} = j) * a_j(i-1).
-//
-//    The current framework does not easily provide a handle for calculating
-//    a_k(i), which is the marginal probability of _just_ the hidden chain.
-//    This might be implemented in a future version, depending on specificity
-//    and sensitivity requirements.
-//
-//    The current implementation takes the average error across sites. This
-//    will lead to local specificity (and sensitivity) fluctuations that are
-//    currently unavoidable. The proper solution would be to compute the
-//    (local) probabilities of reproducing the major allele.
-//
-// 2. A further violation is the fact that deviations are not actually the
-//    result of a binomial distribution, but rather of a Poisson binomial
-//    distribution, as the p's are different for different Evaluators,
-//    that is, the sum of independent but not identically distributed Bernoulli
-//    trials. Unfortunately, the Poisson binomial distribution is a
-//    combinatorial disaster, as there are no tractable forms that allow for
-//    computing the "tail" of the distribution. In practice, people resort to
-//    Monte Carlo simulations or using asymptotic Poisson approximations, all
-//    of which fail in weird ways. I do not have a good solution to this
-//    problem, beyond going to a full-blown likelihood-ratio framework.
-
-// 1. Minimum coverage to even consider doing diploid polishing
-static constexpr const int minCoverage = 10;
-
-// 2. Even for a diploid site, the major and minor allele
-//    together have to yield at least majorityFraction
-//    of all Evaluators together.
-static constexpr const double majorityFraction = 0.75;
-
-// 3. The average error rate, i.e., 1-errorRate is the probability
-//    of recovering the major allele
-static constexpr const double errorRate = 0.08;
-
-//    The binomial significance level for rejecting the null
-//    of having a purely haploid site
-//    We use 0.5%, in order to make strong claims for our discoveries
-//    Reference:
-//      https://www.nature.com/articles/s41562-017-0189-z
+// The significance level for the likelihood-ratio test of
+// rejecting the null of having a purely haploid site.
+// We use 0.5%, in order to make strong claims for our discoveries
+// Reference:
+//   https://www.nature.com/articles/s41562-017-0189-z
 static constexpr const double significanceLevel = 0.005;
-
-// 4. Even when significant for a diploid site, the minor
-//    allele has to rise above minFractionMinor to be
-//    realistically considered.
-static constexpr const double minFractionMinor = 0.25;
 
 PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
 {
@@ -340,6 +284,31 @@ PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
     PolishResult result;
     // keep track of the changes to the original template over many rounds
     MutationTracker mutTracker{static_cast<std::string>(*ai)};
+
+    // In Haploid mode, the LL just needs to improve, i.e.,
+    //
+    //   newLL > currentLL
+    //
+    // or equivalently
+    //
+    //   newLL - currentLL > 0
+    //
+    // In Diploid mode however, we perform an implicit likelihood
+    // ratio test, where
+    //
+    //   H_0: current haploid base
+    //   H_A: prospective diploid base
+    //
+    // We make an extremely conservative assumption that H_A has
+    // 3 degrees of freedom more than H_0 (which is not true, but
+    // only makes the test more conservative, i.e., we trade a
+    // [negligible] amount of sensitivity for more specificity).
+    // To calculate this we have to calculate the ChiSq quantile
+    // function for (1 - significanceLevel).
+    const double minImprovementThreshold{
+        cfg.Diploid
+            ? boost::math::quantile(complement(boost::math::chi_squared{3}, significanceLevel))
+            : 0};
 
     for (size_t i = 0; i < cfg.MaximumIterations; ++i) {
         // find the best mutations given our parameters
@@ -359,66 +328,9 @@ PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
                     // Get set of possible mutations
                     for (const auto& mut : muts) {
                         ++mutationsTested;
-                        if ((cfg.Diploid) && (mut.Type() != MutationType::DELETION)) {
-                            // Diploid Insertion or Substitution
-                            if (mut.Bases() == newDiploidMutation) {
-                                // mut is the special sentinel, that is, in this case
-                                // we perform the binomial test.
-                                const auto histogram =
-                                    ai->BestMutationHistogram(mut.Start(), mut.Type());
-
-                                const int coverage =
-                                    std::accumulate(histogram.cbegin(), histogram.cend(), 0,
-                                                    [](const int a, const std::pair<char, int>& b) {
-                                                        return a + b.second;
-                                                    });
-
-                                // 1. do we have enough absolute coverage to
-                                //    even contemplate doing Diploid polishing?
-                                if (coverage < minCoverage) continue;
-
-                                // 2. do first and second most frequent allele cover enough?
-                                if ((histogram[0].second + histogram[1].second) <
-                                    (coverage * majorityFraction))
-                                    continue;
-
-                                // 3. perform binomial test
-                                boost::math::binomial binomialCDF(coverage, 1 - errorRate);
-                                const double pValue = cdf(binomialCDF, histogram[0].second);
-
-                                if (pValue > significanceLevel) continue;
-
-                                // 4. is the minor allele above a minimum frequency?
-                                if (histogram[1].second < coverage * minFractionMinor) continue;
-
-                                // if we managed to get this far, all filters passed and we can proceed
-                                // to add the diploid site to the pool of succesful sites
-                                const char newAmbiguousBase = Data::detail::createAmbiguousBase(
-                                    histogram[0].first, histogram[1].first);
-
-                                Mutation newMutation{
-                                    (mut.Type() == MutationType::INSERTION)
-                                        ? Mutation::Insertion(mut.Start(), newAmbiguousBase)
-                                        : Mutation::Substitution(mut.Start(), newAmbiguousBase)};
-
-                                const double ll = ai->LL(newMutation);
-                                scoredMuts.emplace_back(
-                                    newMutation.WithPvalue(pValue).WithScore(ll));
-
-                                assert(scoredMuts.back().Bases().find(newDiploidMutation) ==
-                                       std::string::npos);
-                            } else {
-                                // The sentinel should never reappear once used initially
-                                assert(mut.Bases().find(newDiploidMutation) == std::string::npos);
-
-                                const double ll = ai->LL(mut);
-                                if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
-                            }
-                        } else {
-                            // Haploid or Deletion
-                            const double ll = ai->LL(mut);
-                            if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
-                        }
+                        const double ll = ai->LL(mut);
+                        if (ll - LL > (mut.IsDeletion() ? 0 : minImprovementThreshold))
+                            scoredMuts.emplace_back(mut.WithScore(ll));
                     }
                 } catch (const Exception::InvalidEvaluatorException& e) {
                     // If an Evaluator exception occured,
