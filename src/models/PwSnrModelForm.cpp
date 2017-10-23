@@ -141,6 +141,7 @@ inline double PwSnrModel::CalculateExpectedLLForEmission(const size_t move, cons
     for (size_t i = 0; i < OUTCOME_NUMBER; i++) {
         double curProb = params_->emissionPmf_[move][row][i];
         double lgCurProb = std::log(curProb);
+        if (!std::isfinite(lgCurProb)) continue;
         if (moment == static_cast<uint8_t>(MomentType::FIRST))
             expectedLL += curProb * lgCurProb;
         else if (moment == static_cast<uint8_t>(MomentType::SECOND))
