@@ -205,7 +205,7 @@ inline constexpr char createAmbiguousBase(const char firstBase, const char secon
     return result;
 }
 
-inline constexpr bool ambiguousBaseContainsPureBase(const char ambiguousBase, const char pureBase)
+inline constexpr bool ambiguousBaseContainsPureBase(const char& ambiguousBase, const char& pureBase)
 {
     const uint8_t encAmbiguousBase = ASCIIToNCBI4naImpl(ambiguousBase, false);
     const uint8_t encPureBase = ASCIIToNCBI4naImpl(pureBase, false);
