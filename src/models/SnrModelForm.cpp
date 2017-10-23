@@ -199,6 +199,7 @@ double SnrModel::ExpectedLLForEmission(const MoveType move, const NCBI4na prev, 
             const double probMatch = 1.0 - probMismatch;
             const double lgMatch = std::log(probMatch);
             const double lgMismatch = lgThird + std::log(probMismatch);
+            if (!std::isfinite(lgMatch) || !std::isfinite(lgMismatch)) return 0.0;
             if (moment == MomentType::FIRST)
                 return probMatch * lgMatch + probMismatch * lgMismatch;
             else if (moment == MomentType::SECOND)
