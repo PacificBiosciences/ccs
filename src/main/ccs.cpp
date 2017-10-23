@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -73,7 +73,33 @@
 
 #include <pacbio/UnanimityVersion.h>
 
-using namespace std;
+using std::map;
+using std::set;
+using std::string;
+using std::vector;
+using std::tuple;
+
+using std::shared_ptr;
+using std::unique_ptr;
+
+using std::make_shared;
+using std::make_tuple;
+using std::ref;
+using std::get;
+using std::tie;
+
+using std::ostream;
+using std::ofstream;
+
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::fixed;
+using std::setprecision;
+
+using std::launch;
+using std::future;
+
 using namespace PacBio::BAM;
 using namespace PacBio::CCS;
 using namespace PacBio::Data;
@@ -106,7 +132,7 @@ inline string QVsToASCII(const vector<int>& qvs)
     result.reserve(qvs.size());
 
     for (const int qv : qvs) {
-        result.push_back(static_cast<char>(min(max(0, qv), 93) + 33));
+        result.push_back(static_cast<char>(std::min(std::max(0, qv), 93) + 33));
     }
 
     return result;
@@ -120,7 +146,7 @@ void WriteBamRecords(BamWriter& ccsBam, unique_ptr<PbiBuilder>& ccsPbi, Results&
     for (const auto& ccs : results) {
         BamRecordImpl record;
         TagCollection tags;
-        stringstream name;
+        std::ostringstream name;
 
         // some defaults values
         record.Bin(0)

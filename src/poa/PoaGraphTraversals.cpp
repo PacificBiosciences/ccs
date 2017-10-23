@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -54,7 +54,7 @@ using namespace PacBio::Consensus;
 std::string sequenceAlongPath(const BoostGraph& g, const VertexInfoMap& vertexInfoMap,
                               const std::vector<VD>& path)
 {
-    std::stringstream ss;
+    std::ostringstream ss;
     for (const VD v : path) {
         ss << vertexInfoMap[v].Base;
     }

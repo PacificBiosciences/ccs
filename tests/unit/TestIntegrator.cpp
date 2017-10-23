@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -284,7 +284,7 @@ void MutationEquivalence(const size_t nsamp, const size_t nmut, const F& makeInt
                     std::cerr << "  " << tpl.length() << ", " << tpl << std::endl;
                     std::cerr << "  " << app.length() << ", " << app << std::endl;
                     std::cerr << "  " << ai1.TemplateLength() << ", " << string(ai1) << std::endl;
-                    std::stringstream result;
+                    std::ostringstream result;
                     std::copy(pws.begin(), pws.end(), std::ostream_iterator<int>(result, " "));
                     std::cerr << "  " << read.length() << ", " << read << " - " << result.str()
                               << std::endl;
@@ -383,7 +383,7 @@ TEST(IntegratorTest, TestIntegratorEquivalenceDiTriRepeats)
             std::cerr << "  " << tpl.length() << ", " << tpl << std::endl;
             std::cerr << "  " << app.length() << ", " << app << std::endl;
             std::cerr << "  " << ai1.TemplateLength() << ", " << string(ai1) << std::endl;
-            std::stringstream result;
+            std::ostringstream result;
             std::copy(pws.begin(), pws.end(), std::ostream_iterator<int>(result, " "));
             std::cerr << "  " << read.length() << ", " << read << " - " << result.str()
                       << std::endl;

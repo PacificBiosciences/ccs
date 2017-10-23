@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -44,7 +44,7 @@
 #include <pacbio/exception/CCSExceptions.h>
 #include <pbcopper/utility/FileUtils.h>
 
-using namespace std;
+using std::string;
 
 namespace PacBio {
 namespace Data {
@@ -84,7 +84,7 @@ string ChemistryMapping::MapTriple(const ChemistryTriple& triple, const std::str
 {
     try {
         return mapping.at(triple);
-    } catch (const out_of_range& e) {
+    } catch (const std::out_of_range& e) {
         if (fallback.empty()) throw;
         return fallback;
     }

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -68,7 +68,7 @@ std::string Timer::ElapsedTime() const
     auto ms = (t / 1000 / 1000) % 1000;
     auto us = (t / 1000) % 1000;
     auto ns = t % 1000;
-    std::stringstream ss;
+    std::ostringstream ss;
     if (d > 0) ss << d << "d ";
     if (h > 0) ss << h << "h ";
     if (m > 0) ss << m << "m ";
