@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -45,7 +45,10 @@
 
 #include <pacbio/io/Utility.h>
 
-using namespace std;
+using std::string;
+using std::vector;
+
+using std::ifstream;
 
 namespace PacBio {
 namespace IO {
@@ -64,7 +67,7 @@ void FlattenFofn(vector<string>& res, const string& file)
     } else if (iends_with(file, ".bam"))
         res.push_back(file);
     else
-        throw invalid_argument("not a .fofn or .bam file!");
+        throw std::invalid_argument("not a .fofn or .bam file!");
 }
 
 vector<string> FlattenFofn(const vector<string>& files)

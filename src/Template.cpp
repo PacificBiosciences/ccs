@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -64,7 +64,7 @@ AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const b
 AbstractTemplate::~AbstractTemplate() {}
 AbstractTemplate::operator std::string() const
 {
-    std::stringstream ss;
+    std::ostringstream ss;
     for (size_t i = 0; i < Length(); ++i)
         ss << (*this)[i].Base;
     return ss.str();

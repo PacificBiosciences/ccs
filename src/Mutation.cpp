@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -104,7 +104,7 @@ boost::optional<Mutation> Mutation::Translate(size_t start, size_t length) const
 
 Mutation::operator std::string() const
 {
-    std::stringstream ss;
+    std::ostringstream ss;
     ss << (*this);
     return ss.str();
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -42,12 +42,13 @@
 #include <string>
 #include <tuple>
 
+using std::string;
+
 #include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Polish.h>
 #include <pacbio/data/Read.h>
 #include <pacbio/data/Sequence.h>
 
-using namespace std;
 using namespace PacBio::Consensus;  // NOLINT
 using namespace PacBio::Data;       // NOLINT
 

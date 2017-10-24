@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -79,9 +79,9 @@ void PoaAlignmentMatrixImpl::Print() const
     //
     //     G          0S    2I    9=    5D    7I   14I   21=   17D -infZ
     //
-    std::stringstream header0;  // Vertex IDs
-    std::stringstream header1;  // Vertex labels
-    std::vector<std::stringstream> outputRows(NumRows());
+    std::ostringstream header0;  // Vertex IDs
+    std::ostringstream header1;  // Vertex labels
+    std::vector<std::ostringstream> outputRows(NumRows());
 
     header0 << std::setw(COL_WIDTH) << std::right << "";
     header1 << std::setw(COL_WIDTH) << std::right << "";

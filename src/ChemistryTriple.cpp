@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -40,8 +40,6 @@
 
 #include <pacbio/data/ChemistryTriple.h>
 #include <pacbio/exception/CCSExceptions.h>
-
-using namespace std;
 
 namespace PacBio {
 namespace Data {

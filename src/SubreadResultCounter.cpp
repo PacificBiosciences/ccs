@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -35,6 +35,11 @@
 
 #include <pacbio/data/SubreadResultCounter.h>
 #include <stdexcept>
+
+using std::string;
+using std::vector;
+
+using std::endl;
 
 using namespace PacBio::Data;
 
@@ -87,7 +92,6 @@ SubreadResultCounter::SubreadResultCounter()
 
 void SubreadResultCounter::WriteResultsReport(std::ostream& report) const
 {
-    using namespace std;
     double total = static_cast<float>(Total());
 
     report << "Subread Yield" << endl;

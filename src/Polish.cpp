@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -56,7 +56,14 @@
 
 #include "MutationTracker.h"
 
-using namespace std;
+using std::list;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
+using std::make_pair;
+using std::tie;
 
 namespace PacBio {
 namespace Consensus {
@@ -194,7 +201,7 @@ vector<Mutation> BestMutations(list<ScoredMutation>* scoredMuts, const size_t se
     vector<Mutation> result;
 
     // TODO handle 0-separation correctly
-    if (separation == 0) throw invalid_argument("nonzero separation required");
+    if (separation == 0) throw std::invalid_argument("nonzero separation required");
 
     while (!scoredMuts->empty()) {
         const auto& mut =
@@ -217,7 +224,7 @@ vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* ce
                                  const bool diploid = false)
 {
     const size_t len = ai.TemplateLength();
-    const auto clamp = [len](const int i) { return max(0, min<int>(len, i)); };
+    const auto clamp = [len](const int i) { return std::max(0, std::min<int>(len, i)); };
 
     vector<Mutation> result;
 
@@ -461,9 +468,9 @@ namespace {  // anonymous
 int ProbabilityToQV(double probability)
 {
     if (probability < 0.0 || probability > 1.0)
-        throw invalid_argument("invalid value: probability not in [0,1]");
+        throw std::invalid_argument("invalid value: probability not in [0,1]");
     else if (probability == 0.0)
-        probability = numeric_limits<double>::min();
+        probability = std::numeric_limits<double>::min();
 
     return static_cast<int>(round(-10.0 * log10(probability)));
 }
