@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -479,7 +479,7 @@ size_t PoaGraphImpl::NumReads() const { return numReads_; }
 
 string PoaGraphImpl::ToGraphViz(int flags, const PoaConsensus* pc) const
 {
-    std::stringstream ss;
+    std::ostringstream ss;
     write_graphviz(ss, g_, my_label_writer(vertexInfoMap_, flags & PoaGraph::COLOR_NODES,
                                            flags & PoaGraph::VERBOSE_NODES, pc),
                    default_writer(),  // edge writer

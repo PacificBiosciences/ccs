@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -43,6 +43,9 @@
 #include <string>
 #include <vector>
 
+using std::string;
+using std::vector;
+
 #include <sys/stat.h>
 
 #include <gmock/gmock.h>
@@ -55,7 +58,6 @@
 
 #include "TestData.h"
 
-using namespace std;
 using namespace PacBio::Consensus;  // NOLINT
 using namespace PacBio::Data;       // NOLINT
 

@@ -473,3 +473,56 @@ TEST(AmbiguousBasesTest, TestNCBI2naNotContainedInNCBI4na)
     EXPECT_EQ(testBaseNCBI4naM.Contains(testBaseNCBI2naT), false);
     EXPECT_EQ(testBaseNCBI4naV.Contains(testBaseNCBI2naT), false);
 }
+
+TEST(AmbiguousBasesTest, TestAmbiguousBaseContainsPureBase)
+{
+    // Pure Bases
+    const char testBaseA{'A'};
+    const char testBaseC{'C'};
+    const char testBaseG{'G'};
+    const char testBaseT{'T'};
+
+    // Diploid Bases
+    const char testBaseM{'M'};
+    const char testBaseR{'R'};
+    const char testBaseS{'S'};
+    const char testBaseW{'W'};
+    const char testBaseY{'Y'};
+    const char testBaseK{'K'};
+
+    // M = A or C
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseM, testBaseA), true);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseM, testBaseC), true);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseM, testBaseG), false);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseM, testBaseT), false);
+
+    // R = A or G
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseR, testBaseA), true);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseR, testBaseC), false);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseR, testBaseG), true);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseR, testBaseT), false);
+
+    // S = C or G
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseS, testBaseA), false);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseS, testBaseC), true);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseS, testBaseG), true);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseS, testBaseT), false);
+
+    // W = A or T
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseW, testBaseA), true);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseW, testBaseC), false);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseW, testBaseG), false);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseW, testBaseT), true);
+
+    // Y = C or T
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseY, testBaseA), false);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseY, testBaseC), true);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseY, testBaseG), false);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseY, testBaseT), true);
+
+    // K = G or T
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseK, testBaseA), false);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseK, testBaseC), false);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseK, testBaseG), true);
+    EXPECT_EQ(ambiguousBaseContainsPureBase(testBaseK, testBaseT), true);
+}

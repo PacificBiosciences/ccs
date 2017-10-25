@@ -175,6 +175,7 @@ double MarginalModel::ExpectedLLForEmission(const MoveType move, const NCBI4na p
         for (size_t i = 0; i < OUTCOME_NUMBER; i++) {
             double curProb = params_->emissionPmf_[static_cast<uint8_t>(move)][ctx][i];
             double lgCurProb = std::log(curProb);
+            if (!std::isfinite(lgCurProb)) continue;
             if (moment == MomentType::FIRST)
                 expectedLL += curProb * lgCurProb;
             else if (moment == MomentType::SECOND)

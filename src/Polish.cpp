@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -44,16 +44,26 @@
 #include <tuple>
 #include <vector>
 
-#include <boost/math/distributions/binomial.hpp>
+#include <boost/math/distributions/chi_squared.hpp>
 #include <boost/optional.hpp>
 
 #include <pbcopper/logging/Logging.h>
 
 #include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Polish.h>
+#include <pacbio/data/internal/ConversionFunctions.h>
 #include <pacbio/exception/InvalidEvaluatorException.h>
 
-using namespace std;
+#include "MutationTracker.h"
+
+using std::list;
+using std::pair;
+using std::set;
+using std::string;
+using std::vector;
+
+using std::make_pair;
+using std::tie;
 
 namespace PacBio {
 namespace Consensus {
@@ -75,15 +85,26 @@ RepeatConfig::RepeatConfig(const size_t repeatSize, const size_t elementCount,
 {
 }
 
-// 'Z' is the special sentinel value to indicate
-// that we test a nascent diploid site
-static constexpr const char newDiploidMutation[] = "Z";
-
 void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start, const size_t end,
                const bool diploid = false)
 {
-    const std::vector<char> bases = (diploid ? std::vector<char>{newDiploidMutation[0]}
-                                             : std::vector<char>{'A', 'C', 'G', 'T'});
+    const std::vector<char> bases{
+        diploid ? std::vector<char>{'A', 'C', 'G', 'T', 'Y', 'R', 'W', 'S', 'K', 'M'}
+                : std::vector<char>{'A', 'C', 'G', 'T'}};
+
+    std::function<bool(const char&, const char&)> containedWithin;
+    if (diploid) {
+        // in diploid mode, we want to generate candidates
+        // that are unequal to the current *char*, i.e.,
+        // say we have a 'Y' (='C'+'T'), we still want to
+        // generate a 'C' and 'T', we just don't want a 'Y'.
+        containedWithin = std::equal_to<char>{};
+    } else {
+        // in haploid mode, we want to avoid all *subsets*
+        // of pure bases, that is, if curr is 'Y', then we
+        // neither want a 'C' nor a 'T'.
+        containedWithin = Data::detail::ambiguousBaseContainsPureBase;
+    }
 
     if (start == end) return;
 
@@ -97,14 +118,14 @@ void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start,
         for (const char j : bases) {
             // if it's not a homopolymer insertion, or it's the first base of
             // one..
-            if (j != last) muts->emplace_back(Mutation::Insertion(i, j));
+            if (!containedWithin(last, j)) muts->emplace_back(Mutation::Insertion(i, j));
         }
 
         // if we're the first in the homopolymer, we can delete
         if (curr != last) muts->emplace_back(Mutation::Deletion(i, 1));
 
         for (const char j : bases) {
-            if (j != curr) muts->emplace_back(Mutation::Substitution(i, j));
+            if (!containedWithin(curr, j)) muts->emplace_back(Mutation::Substitution(i, j));
         }
 
         last = curr;
@@ -113,7 +134,7 @@ void Mutations(vector<Mutation>* muts, const Integrator& ai, const size_t start,
     // if we are at the end, make sure we're not performing a terminal
     // homopolymer insertion
     for (const char j : bases)
-        if (j != last) muts->emplace_back(Mutation::Insertion(end, j));
+        if (!containedWithin(last, j)) muts->emplace_back(Mutation::Insertion(end, j));
 }
 
 vector<Mutation> Mutations(const Integrator& ai, const size_t start, const size_t end,
@@ -180,7 +201,7 @@ vector<Mutation> BestMutations(list<ScoredMutation>* scoredMuts, const size_t se
     vector<Mutation> result;
 
     // TODO handle 0-separation correctly
-    if (separation == 0) throw invalid_argument("nonzero separation required");
+    if (separation == 0) throw std::invalid_argument("nonzero separation required");
 
     while (!scoredMuts->empty()) {
         const auto& mut =
@@ -203,7 +224,7 @@ vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* ce
                                  const bool diploid = false)
 {
     const size_t len = ai.TemplateLength();
-    const auto clamp = [len](const int i) { return max(0, min<int>(len, i)); };
+    const auto clamp = [len](const int i) { return std::max(0, std::min<int>(len, i)); };
 
     vector<Mutation> result;
 
@@ -253,74 +274,12 @@ vector<Mutation> NearbyMutations(vector<Mutation>* applied, vector<Mutation>* ce
     return result;
 }
 
-// TODO(dseifert+lhepler)
-// The current implementation makes a number simplifying approximations
-// that are - strictly speaking - incorrect:
-//
-// 1. In order to perform the major allele test we need an error rate
-//    p for the binomial test. If we have the HMM
-//
-//      Z_1 -> ... -> Z_i -> ... -> Z_L
-//       |             |             |
-//       v             v             v
-//      X_1           X_i           X_L
-//
-//    Then the probability of reproducing the major allele (= wt) at position is
-//
-//      p := P(X_i = wt) = \sum_{Z_i} P(X_i = wt | Z_i) * P(Z_i)
-//
-//    which itself can be turned into a recursion with a_k(i) = P(Z_i = k)
-//
-//      P(X_i = wt) = \sum_{k} P(X_i = wt | Z_i) * a_k(i)
-//
-//    where
-//
-//      a_k(i) = \sum_{j} P(Z_i = k | Z_{i-1} = j) * a_j(i-1).
-//
-//    The current framework does not easily provide a handle for calculating
-//    a_k(i), which is the marginal probability of _just_ the hidden chain.
-//    This might be implemented in a future version, depending on specificity
-//    and sensitivity requirements.
-//
-//    The current implementation takes the average error across sites. This
-//    will lead to local specificity (and sensitivity) fluctuations that are
-//    currently unavoidable. The proper solution would be to compute the
-//    (local) probabilities of reproducing the major allele.
-//
-// 2. A further violation is the fact that deviations are not actually the
-//    result of a binomial distribution, but rather of a Poisson binomial
-//    distribution, as the p's are different for different Evaluators,
-//    that is, the sum of independent but not identically distributed Bernoulli
-//    trials. Unfortunately, the Poisson binomial distribution is a
-//    combinatorial disaster, as there are no tractable forms that allow for
-//    computing the "tail" of the distribution. In practice, people resort to
-//    Monte Carlo simulations or using asymptotic Poisson approximations, all
-//    of which fail in weird ways. I do not have a good solution to this
-//    problem, beyond going to a full-blown likelihood-ratio framework.
-
-// 1. Minimum coverage to even consider doing diploid polishing
-static constexpr const int minCoverage = 10;
-
-// 2. Even for a diploid site, the major and minor allele
-//    together have to yield at least majorityFraction
-//    of all Evaluators together.
-static constexpr const double majorityFraction = 0.75;
-
-// 3. The average error rate, i.e., 1-errorRate is the probability
-//    of recovering the major allele
-static constexpr const double errorRate = 0.08;
-
-//    The binomial significance level for rejecting the null
-//    of having a purely haploid site
-//    We use 0.5%, in order to make strong claims for our discoveries
-//    Reference:
-//      https://www.nature.com/articles/s41562-017-0189-z
+// The significance level for the likelihood-ratio test of
+// rejecting the null of having a purely haploid site.
+// We use 0.5%, in order to make strong claims for our discoveries
+// Reference:
+//   https://www.nature.com/articles/s41562-017-0189-z
 static constexpr const double significanceLevel = 0.005;
-
-// 4. Even when significant for a diploid site, the minor
-//    allele has to rise above minFractionMinor to be
-//    realistically considered.
-static constexpr const double minFractionMinor = 0.25;
 
 PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
 {
@@ -330,64 +289,33 @@ PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
     set<size_t> history = {oldTpl};
 
     PolishResult result;
+    // keep track of the changes to the original template over many rounds
+    MutationTracker mutTracker{static_cast<std::string>(*ai)};
 
-    const std::string originalTpl{static_cast<std::string>(*ai)};
-    enum class TrackedMutationType : uint8_t
-    {
-        TEMPLATE,
-        INSERTION,
-        SUBSTITUTION
-    };
-
-    struct origTplInfo
-    {
-        int64_t origPos;
-        // mutType can be either a
-        //   - TEMPLATE : i.e. the original template (unchanged)
-        //   - INSERTION
-        //   - SUBSTITUTION : i.e. newTplBase != originalTpl[origPos]
-        //
-        // Notice that there is not "Deletion" type, as there is no way
-        // to point from anywhere in the current Template to the original
-        // one if a deletion occurred. Nonetheless, finding deletions is
-        // easy, as the vector will have a discontinuity, e.g.
-        //
-        //            012
-        //   origTpl: AAC
-        //    curTpl: A-C
-        //
-        // where the vector will contain {{0, TEMPLATE, 'A'}, {2, TEMPLATE, 'C'}},
-        // i.e., for index i and i+1, if vec[i+1].origPos - vec[i].origPos > 1
-        // holds, we have lost a base.
-        TrackedMutationType mutType;
-        char newTplBase;
-        boost::optional<double> pvalue;
-
-        origTplInfo(const int64_t origPos_, const TrackedMutationType mutType_,
-                    const char newTplBase_, const boost::optional<double> pvalue_ = boost::none)
-            : origPos{origPos_}, mutType{mutType_}, newTplBase{newTplBase_}, pvalue{pvalue_}
-        {
-        }
-    };
-
-    // diploid bookkeeping vector
+    // In Haploid mode, the LL just needs to improve, i.e.,
     //
-    // In order to generate the correct std::vector<Mutation>
-    // for the diploid result, we need to keep track of the
-    // correspondence between the current template and the
-    // original one
-    // This vector is a map
+    //   newLL > currentLL
     //
-    //   f : currentTplIdx -> [originatingIdx, +type etc]
+    // or equivalently
     //
-    // Thus, the length of the vector is always equal to the
-    // current template.
-    std::vector<origTplInfo> curTplToOrigTpl;
-    curTplToOrigTpl.reserve(originalTpl.size());
-
-    for (int64_t i = 0; i < curTplToOrigTpl.size(); ++i) {
-        curTplToOrigTpl.emplace_back(i, TrackedMutationType::TEMPLATE, originalTpl[i]);
-    }
+    //   newLL - currentLL > 0
+    //
+    // In Diploid mode however, we perform an implicit likelihood
+    // ratio test, where
+    //
+    //   H_0: current haploid base
+    //   H_A: prospective diploid base
+    //
+    // We make an extremely conservative assumption that H_A has
+    // 3 degrees of freedom more than H_0 (which is not true, but
+    // only makes the test more conservative, i.e., we trade a
+    // [negligible] amount of sensitivity for more specificity).
+    // To calculate this we have to calculate the ChiSq quantile
+    // function for (1 - significanceLevel).
+    const double minImprovementThreshold{
+        cfg.Diploid
+            ? boost::math::quantile(complement(boost::math::chi_squared{3}, significanceLevel))
+            : 0};
 
     for (size_t i = 0; i < cfg.MaximumIterations; ++i) {
         // find the best mutations given our parameters
@@ -407,66 +335,9 @@ PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
                     // Get set of possible mutations
                     for (const auto& mut : muts) {
                         ++mutationsTested;
-                        if ((cfg.Diploid) && (mut.Type() != MutationType::DELETION)) {
-                            // Diploid Insertion or Substitution
-                            if (mut.Bases() == newDiploidMutation) {
-                                // mut is the special sentinel, that is, in this case
-                                // we perform the binomial test.
-                                const auto histogram =
-                                    ai->BestMutationHistogram(mut.Start(), mut.Type());
-
-                                const int coverage =
-                                    std::accumulate(histogram.cbegin(), histogram.cend(), 0,
-                                                    [](const int a, const std::pair<char, int>& b) {
-                                                        return a + b.second;
-                                                    });
-
-                                // 1. do we have enough absolute coverage to
-                                //    even contemplate doing Diploid polishing?
-                                if (coverage < minCoverage) continue;
-
-                                // 2. do first and second most frequent allele cover enough?
-                                if ((histogram[0].second + histogram[1].second) <
-                                    (coverage * majorityFraction))
-                                    continue;
-
-                                // 3. perform binomial test
-                                boost::math::binomial binomialCDF(coverage, 1 - errorRate);
-                                const double pValue = cdf(binomialCDF, histogram[0].second);
-
-                                if (pValue > significanceLevel) continue;
-
-                                // 4. is the minor allele above a minimum frequency?
-                                if (histogram[1].second < coverage * minFractionMinor) continue;
-
-                                // if we managed to get this far, all filters passed and we can proceed
-                                // to add the diploid site to the pool of succesful sites
-                                const char newAmbiguousBase = Data::detail::createAmbiguousBase(
-                                    histogram[0].first, histogram[1].first);
-
-                                Mutation newMutation{
-                                    (mut.Type() == MutationType::INSERTION)
-                                        ? Mutation::Insertion(mut.Start(), newAmbiguousBase)
-                                        : Mutation::Substitution(mut.Start(), newAmbiguousBase)};
-
-                                const double ll = ai->LL(newMutation);
-                                scoredMuts.emplace_back(
-                                    newMutation.WithPvalue(pValue).WithScore(ll));
-
-                                assert(scoredMuts.back().Bases().find(newDiploidMutation) ==
-                                       std::string::npos);
-                            } else {
-                                // The sentinel should never reappear once used initially
-                                assert(mut.Bases().find(newDiploidMutation) == std::string::npos);
-
-                                const double ll = ai->LL(mut);
-                                if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
-                            }
-                        } else {
-                            // Haploid or Deletion
-                            const double ll = ai->LL(mut);
-                            if (ll > LL) scoredMuts.emplace_back(mut.WithScore(ll));
-                        }
+                        const double ll = ai->LL(mut);
+                        if (ll - LL > (mut.IsDeletion() ? 0 : minImprovementThreshold))
+                            scoredMuts.emplace_back(mut.WithScore(ll));
                     }
                 } catch (const Exception::InvalidEvaluatorException& e) {
                     // If an Evaluator exception occured,
@@ -489,68 +360,7 @@ PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
             result.hasConverged = true;
 
             if (cfg.Diploid) {
-                // extract the meaty parts from curTplToOrigTpl
-                result.diploidSites.clear();
-                // leave some buffer
-                result.diploidSites.reserve(2 * result.mutationsApplied);
-
-                // 1. find all SUBSTITUTIONs and INSERTIONs
-                for (const auto& j : curTplToOrigTpl) {
-                    if (j.mutType != TrackedMutationType::TEMPLATE) {
-                        result.diploidSites.emplace_back(
-                            static_cast<MutationType>(j.mutType),
-                            Data::detail::demultiplexAmbiguousBase(j.newTplBase), j.origPos,
-                            j.pvalue);
-                    }
-                }
-
-                // 2. find all DELETIONs
-                // Recall that curTplToOrigTpl cannot represent deletions
-                // so we find deletions by looking at all TEMPLATE positions
-                // and checking whether there is a discontinuity between them
-                auto lastTplPos = std::find_if(
-                    curTplToOrigTpl.cbegin(), curTplToOrigTpl.cend(),
-                    [](const auto& elem) { return elem.mutType == TrackedMutationType::TEMPLATE; });
-                if (lastTplPos == curTplToOrigTpl.cend())
-                    throw std::runtime_error(
-                        "The template has been completely mutated, this should not occur!");
-
-                // 2.1 check for deletions before the first remaining original template base
-                for (int64_t delPos = 0; delPos < lastTplPos->origPos; ++delPos) {
-                    // deletions don't have an associated p-value
-                    result.diploidSites.emplace_back(MutationType::DELETION, std::vector<char>{},
-                                                     delPos);
-                }
-
-                // 2.2 check for deletions between the first and last remaining original template bases
-                for (auto it = curTplToOrigTpl.cbegin(); it < curTplToOrigTpl.cend(); ++it) {
-                    if (it->mutType == TrackedMutationType::TEMPLATE) {
-                        for (int64_t delPos = lastTplPos->origPos + 1; delPos < it->origPos;
-                             ++delPos) {
-                            // deletions don't have an associated p-value
-                            result.diploidSites.emplace_back(MutationType::DELETION,
-                                                             std::vector<char>{}, delPos);
-                        }
-                        lastTplPos = it;
-                    }
-                }
-
-                // 2.3 check for deletions after the last remaining original template base
-                for (int64_t delPos = lastTplPos->origPos + 1; delPos < originalTpl.size();
-                     ++delPos) {
-                    // deletions don't have an associated p-value
-                    result.diploidSites.emplace_back(MutationType::DELETION, std::vector<char>{},
-                                                     delPos);
-                }
-
-                // 3. finally sort everything
-                sort(result.diploidSites.begin(), result.diploidSites.end(), [](const auto& lhs,
-                                                                                const auto& rhs) {
-                    // copied from Mutation.h
-                    const auto l = std::make_tuple(lhs.pos, lhs.mutType != MutationType::DELETION);
-                    const auto r = std::make_tuple(rhs.pos, rhs.mutType != MutationType::DELETION);
-                    return l < r;
-                });
+                result.diploidSites = mutTracker.MappingToOriginalTpl();
             }
 
             return result;
@@ -558,40 +368,8 @@ PolishResult Polish(Integrator* ai, const PolishConfig& cfg)
 
         const size_t newTpl = hashFn(ApplyMutations(*ai, &muts));
 
-        // update diploid bookkeeping
-        // TODO(dseifert):
-        // Try and do this more implicitly with less vector rewriting and not in O(L*N).
-        //
-        // While in theory a linked list should be preferred for this, that is CS theory
-        // and has been invalidated in practice by caches, prefetchers and branch prediction.
-        // https://view.officeapps.live.com/op/view.aspx?src=http%3a%2f%2fvideo.ch9.ms%2fsessions%2fbuild%2f2014%2f2-661.pptx
         if (cfg.Diploid) {
-            for (auto it = muts.crbegin(); it != muts.crend(); ++it) {
-                // Caveat: Current diploid handling does not
-                // handle Mutations having Length() > 1.
-                assert(it->Length() == 1);
-
-                switch (it->Type()) {
-                    case MutationType::DELETION:
-                        curTplToOrigTpl.erase(curTplToOrigTpl.begin() + it->Start());
-                        break;
-
-                    case MutationType::INSERTION:
-                        assert(static_cast<bool>(it->GetPvalue()));
-                        curTplToOrigTpl.insert(
-                            curTplToOrigTpl.begin() + it->Start(),
-                            {curTplToOrigTpl[it->Start()].origPos, TrackedMutationType::INSERTION,
-                             it->Bases().front(), it->GetPvalue()});
-                        break;
-
-                    case MutationType::SUBSTITUTION:
-                        assert(static_cast<bool>(it->GetPvalue()));
-                        curTplToOrigTpl[it->Start()].mutType = TrackedMutationType::SUBSTITUTION;
-                        curTplToOrigTpl[it->Start()].newTplBase = it->Bases().front();
-                        curTplToOrigTpl[it->Start()].pvalue = it->GetPvalue();
-                        break;
-                }
-            }
+            mutTracker.AddSortedMutations(muts);
         }
 
         const auto diagnostics = [&result](Integrator* ai) {
@@ -690,9 +468,9 @@ namespace {  // anonymous
 int ProbabilityToQV(double probability)
 {
     if (probability < 0.0 || probability > 1.0)
-        throw invalid_argument("invalid value: probability not in [0,1]");
+        throw std::invalid_argument("invalid value: probability not in [0,1]");
     else if (probability == 0.0)
-        probability = numeric_limits<double>::min();
+        probability = std::numeric_limits<double>::min();
 
     return static_cast<int>(round(-10.0 * log10(probability)));
 }

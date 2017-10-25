@@ -265,6 +265,7 @@ inline double CalculateExpectedLLForEmission(const size_t move, const uint8_t ro
     for (size_t i = 0; i < OUTCOME_NUMBER; i++) {
         double curProb = emissionPmf[move][row][i];
         double lgCurProb = std::log(curProb);
+        if (!std::isfinite(lgCurProb)) continue;
         if (moment == static_cast<uint8_t>(MomentType::FIRST))
             expectedLL += curProb * lgCurProb;
         else if (moment == static_cast<uint8_t>(MomentType::SECOND))

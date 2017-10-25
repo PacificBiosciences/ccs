@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -35,6 +35,10 @@
 
 // Author: Lance Hepler
 
+#include <string>
+
+using std::string;
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -42,8 +46,6 @@
 
 TEST(SparseAlignTest, ExactAlign)
 {
-    using namespace std;
-
     const size_t K = 5;
     string s1 = "ACGTACACACAGTACAGTACAAGTTTCACGGACATTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
     auto chain = PacBio::CCS::SparseAlign(K, s1, s1);
@@ -59,8 +61,6 @@ TEST(SparseAlignTest, ExactAlign)
 
 TEST(SparseAlignTest, ExactPartial)
 {
-    using namespace std;
-
     const size_t K = 5;
     string s1 = "ACGTACACACAGTACAGTACAAGTTTCACGGACATTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
     string s2 = "TTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
@@ -77,8 +77,6 @@ TEST(SparseAlignTest, ExactPartial)
 
 TEST(SparseAlignTest, InsertAlign)
 {
-    using namespace std;
-
     const size_t K = 5;
     string s1 = "ACGTACACACAGTACAGTACAAGTTTCACGGACATTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
     string s2 =
@@ -96,8 +94,6 @@ TEST(SparseAlignTest, InsertAlign)
 
 TEST(SparseAlignTest, NoAlign)
 {
-    using namespace std;
-
     const size_t K = 5;
     string s1 = "ACGTACACACAGTACAGTACAAGTTTCACGGACATTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
     string s2 = "AAAATCCCCCCCCCCAGGGGG";
@@ -108,8 +104,6 @@ TEST(SparseAlignTest, NoAlign)
 
 TEST(SparseAlignTest, SimpleAlign)
 {
-    using namespace std;
-
     const size_t K = 5;
     string s1 = "ACGTACACACAGTACAGTACAAGTTTCACGGACATTTGGTTCCCACTTGTACAGTGCACACGGGTTACACGT";
     string s2 = "ACGTACACCAGTAAGTACAAGTTTCACGCGAATTTGGTTCCCACTTGTCAAGTGCACACGGGTTACACGT";
@@ -125,8 +119,6 @@ TEST(SparseAlignTest, SimpleAlign)
 
 TEST(SparseAlignTest, LongAlign)
 {
-    using namespace std;
-
     const size_t K = 5;
     string s1 =
         "AGAGAACATCGCTATCCGCAGATAAAGCAAATCCTTCCAGACCAACAACCAATCGTAGCAAAAACATTCAGCGAACAGCAACACGCAGTT"

@@ -8,8 +8,7 @@ Run CCS:
 
   $ DATADIR=/pbi/dept/consensus/testdata/unanimity-nightly
 
-  $ mkdir results
-  $ ${__PBTEST_CCS_EXE} --zmws 1-187412 $DATADIR/ds.subreadset.xml out.bam
+  $ ${__PBTEST_CCS_EXE} --logLevel=DEBUG --logFile=ccs.log --zmws 1-187412 $DATADIR/ds.subreadset.xml out.bam
 
 Run ccscheck, check output:
 
@@ -21,3 +20,4 @@ Copy outputs to lastrun directory, for later inspection if need be
 
   $ cp out.bam* $DATADIR/lastrun/
   $ cp zmws.sorted.csv $DATADIR/lastrun/
+  $ cp ccs.log ccs_report.txt $DATADIR/lastrun/

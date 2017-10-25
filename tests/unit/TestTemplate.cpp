@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -55,7 +55,17 @@
 #include "Mutations.h"
 #include "RandomDNA.h"
 
-using namespace std;
+using std::string;
+using std::tuple;
+using std::vector;
+
+using std::cerr;
+using std::endl;
+
+using std::make_tuple;
+using std::swap;
+using std::tie;
+
 using namespace PacBio::Consensus;  // NOLINT
 using namespace PacBio::Exception;  // NOLINT
 
@@ -141,10 +151,10 @@ string ToString(const AbstractTemplate& tpl)
 void TemplateEquivalence(const size_t nSamples, const size_t nReads, const size_t len = 100)
 {
     std::random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<size_t> randIdx(0, len - 1);
-    bernoulli_distribution randPin(0.5);
-    bernoulli_distribution randNonSpanning(0.33);
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<size_t> randIdx(0, len - 1);
+    std::bernoulli_distribution randPin(0.5);
+    std::bernoulli_distribution randNonSpanning(0.33);
 
     for (size_t i = 0; i < nSamples; ++i) {
         const string tpl = RandomDNA(len, &gen);               // "Reference" sequence

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -41,14 +41,14 @@
 
 #include <pacbio/data/ReadId.h>
 
-using namespace std;
+using std::ostream;
 
 namespace PacBio {
 namespace Data {
 
 ReadId::operator std::string() const
 {
-    stringstream ss;
+    std::ostringstream ss;
     ss << *this;
     return ss.str();
 }
