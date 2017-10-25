@@ -49,7 +49,7 @@
 #include <pacbio/data/SubreadResultCounter.h>
 
 using namespace PacBio::CCS;
-typedef ReadType<ReadId> Subread;
+using Subread = ReadType<ReadId>;
 
 TEST(ConsensusTest, TestReadFilter)
 {

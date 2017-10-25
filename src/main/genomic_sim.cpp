@@ -199,7 +199,7 @@ static int SimulateGenomicReads(const std::string& referenceFilename,
     std::vector<size_t> refSizes;
     for (const auto& ref : references) {
         refSizes.push_back(ref.Bases().size());
-        rcReferences.push_back(FastaSequence{ref.Name(), ReverseComplement(ref.Bases())});
+        rcReferences.emplace_back(ref.Name(), ReverseComplement(ref.Bases()));
         SequenceInfo si{ref.Name(), std::to_string(ref.Bases().size())};
         si.Checksum(MD5Hash(ref.Bases()));
         newHeader.AddSequence(si);

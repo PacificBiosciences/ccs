@@ -252,7 +252,7 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
         Vertex vExt = this->externalize(v);  // DEBUGGING
 
         curCol = alignmentColumnForVertex.at(u);
-        assert(curCol != NULL);
+        assert(curCol != nullptr);
         PoaNode& curNodeInfo = vertexInfoMap_[u];
         VD prevVertex = curCol->PreviousVertex[i];
         MoveType reachingMove = curCol->ReachingMove[i];
@@ -338,7 +338,7 @@ void PoaGraphImpl::tracebackAndThread(std::string sequence,
     }
 
     // all filled in?
-    assert(outputPath == NULL ||
+    assert(outputPath == nullptr ||
            std::find(outputPath->begin(), outputPath->end(), ((size_t)-1)) == outputPath->end());
 
 #undef READPOS
@@ -369,8 +369,7 @@ vector<PacBio::Consensus::ScoredMutation>* PoaGraphImpl::findPossibleVariants(
     std::vector<VD> bestPath_ = internalizePath(bestPath);
 
     // Return value will be deallocated by PoaConsensus destructor.
-    vector<PacBio::Consensus::ScoredMutation>* variants =
-        new vector<PacBio::Consensus::ScoredMutation>();
+    auto* variants = new vector<PacBio::Consensus::ScoredMutation>();
 
     for (int i = 2; i < (int)bestPath_.size() - 2; i++)  // NOLINT
     {

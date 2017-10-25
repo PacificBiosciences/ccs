@@ -61,7 +61,7 @@ AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const b
     if (end_ - start_ < 2) throw TemplateTooSmall();
 }
 
-AbstractTemplate::~AbstractTemplate() {}
+AbstractTemplate::~AbstractTemplate() = default;
 AbstractTemplate::operator std::string() const
 {
     std::ostringstream ss;

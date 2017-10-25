@@ -185,7 +185,7 @@ private:
 
 namespace {  // anonymous
 
-typedef std::pair<size_t, size_t> Interval;
+using Interval = std::pair<size_t, size_t>;
 
 // TODO(dalexander): put these into a RecursorConfig struct
 // TODO(anybody): Hmmm... not sure what the heck to do about these...

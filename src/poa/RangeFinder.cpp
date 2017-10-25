@@ -72,17 +72,17 @@ static inline bool compareAnchorsOnCssPos(const SdpAnchor& a1, const SdpAnchor& 
 
 static const SdpAnchor* binarySearchAnchors(const SdpAnchorVector& anchors, size_t cssPosition)
 {
-    typedef SdpAnchorVector::const_iterator iter_t;
-    iter_t found = std::lower_bound(anchors.begin(), anchors.end(), std::make_pair(cssPosition, -1),
-                                    compareAnchorsOnCssPos);
+    using iter_t = SdpAnchorVector::const_iterator;
+    auto found = std::lower_bound(anchors.begin(), anchors.end(), std::make_pair(cssPosition, -1),
+                                  compareAnchorsOnCssPos);
     if (found != anchors.end() && (*found).first == cssPosition) {
         return &(*found);
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
-typedef std::pair<int, int> Interval;
+using Interval = std::pair<int, int>;
 
 std::string formatIntervalEndpoint(int i)
 {
@@ -134,7 +134,7 @@ inline Interval prev(const Interval& v, int lowerBound = 0)
         return Interval(max(v.first - 1, lowerBound), max(v.second - 1, lowerBound));
 }
 
-SdpRangeFinder::~SdpRangeFinder() {}
+SdpRangeFinder::~SdpRangeFinder() = default;
 void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
                                      const std::vector<Vertex>& consensusPath,
                                      const std::string& consensusSequence,
@@ -170,7 +170,7 @@ void SdpRangeFinder::InitRangeFinder(const PoaGraphImpl& poaGraph,
         Vertex vExt = consensusPath[cssPos];
         VD v = poaGraph.internalize(vExt);
         const SdpAnchor* anchor = binarySearchAnchors(anchors, cssPos);
-        if (anchor != NULL) {
+        if (anchor != nullptr) {
 #if DEBUG_RANGE_FINDER
             anchorByVertex[vExt] = anchor;
 #endif

@@ -42,6 +42,7 @@
 
 #include <algorithm>
 #include <array>
+#include <utility>
 #include <vector>
 
 #include <pacbio/align/internal/BCAlignBlocks.h>
@@ -294,9 +295,9 @@ size_t BandedGlobalAlignBlock::InitLookup(const size_t tLen, const size_t qLen)
     lookup_.clear();
     lookup_.reserve(qLen + 1);
 
-    const int64_t t = static_cast<int64_t>(tLen);
-    const int64_t q = static_cast<int64_t>(qLen);
-    const int64_t k = static_cast<int64_t>(config_.bandExtend_);
+    const auto t = static_cast<int64_t>(tLen);
+    const auto q = static_cast<int64_t>(qLen);
+    const auto k = static_cast<int64_t>(config_.bandExtend_);
     assert(t >= q);
 
     size_t arrayStart = 0;
@@ -580,7 +581,7 @@ void BandedChainAlignerImpl::AlignGapBlock(const PacBio::Align::Seed& nextSeed)
     AlignGapBlock(hLength, vLength);
 }
 
-void BandedChainAlignerImpl::AlignLastGapBlock(void)
+void BandedChainAlignerImpl::AlignLastGapBlock()
 {
     const size_t hLength = sequences_.targetLen - gapBlockBeginH_;
     const size_t vLength = sequences_.queryLen - gapBlockBeginV_;
@@ -664,7 +665,7 @@ std::vector<PacBio::Align::Seed> BandedChainAlignerImpl::MergeSeeds(
     return mergedSeeds;
 }
 
-BandedChainAlignment BandedChainAlignerImpl::Result(void)
+BandedChainAlignment BandedChainAlignerImpl::Result()
 {
     return BandedChainAlignment{config_,          sequences_.target,   sequences_.targetLen,
                                 sequences_.query, sequences_.queryLen, globalCigar_};
@@ -703,10 +704,12 @@ void BandedChainAlignerImpl::StitchCigars(PacBio::Data::Cigar* global, PacBio::D
 // BandedChainAlignment
 // ------------------------
 
-BandedChainAlignment::BandedChainAlignment(const BandedChainAlignConfig& config,
-                                           const std::string& target, const std::string& query,
-                                           const PacBio::Data::Cigar& cigar)
-    : config_(config), target_{target}, query_{query}, cigar_{cigar}
+BandedChainAlignment::BandedChainAlignment(const BandedChainAlignConfig& config, std::string target,
+                                           std::string query, PacBio::Data::Cigar cigar)
+    : config_(config)
+    , target_{std::move(target)}
+    , query_{std::move(query)}
+    , cigar_{std::move(cigar)}
 {
     using PacBio::Data::CigarOperationType;
 
@@ -758,7 +761,7 @@ BandedChainAlignment::BandedChainAlignment(const BandedChainAlignConfig& config,
 {
 }
 
-float BandedChainAlignment::Identity(void) const
+float BandedChainAlignment::Identity() const
 {
     assert(alignedQuery_.length() == alignedTarget_.length());
 
@@ -770,7 +773,7 @@ float BandedChainAlignment::Identity(void) const
     return (100.0f * static_cast<float>(numMatches) / len);
 }
 
-int64_t BandedChainAlignment::Score(void) const
+int64_t BandedChainAlignment::Score() const
 {
     using PacBio::Data::CigarOperationType;
 
@@ -814,7 +817,7 @@ int64_t BandedChainAlignment::Score(void) const
 // BandedChainAlignConfig
 // ------------------------
 
-BandedChainAlignConfig BandedChainAlignConfig::Default(void)
+BandedChainAlignConfig BandedChainAlignConfig::Default()
 {
     // match, mismatch, gapOpen, gapExtend, band
     return BandedChainAlignConfig{2.0f, -1.0f, -2.0f, -1.0f, 15};

@@ -108,7 +108,7 @@ std::vector<std::pair<int, int>> CoveredIntervals(int minCoverage, int tStartDim
                 }
             } else {
                 if (currentIntervalStart != -1) {
-                    intervals.push_back(std::make_pair(currentIntervalStart, chunkStart + j));
+                    intervals.emplace_back(currentIntervalStart, chunkStart + j);
                     currentIntervalStart = -1;
                 }
             }
@@ -116,7 +116,7 @@ std::vector<std::pair<int, int>> CoveredIntervals(int minCoverage, int tStartDim
         }
     }
     if (currentIntervalStart != -1) {
-        intervals.push_back(std::make_pair(currentIntervalStart, winEnd));
+        intervals.emplace_back(currentIntervalStart, winEnd);
     }
     return intervals;
 }

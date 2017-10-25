@@ -63,16 +63,15 @@ struct PoaConsensus : private boost::noncopyable
     PoaGraph Graph;
     std::vector<PoaGraph::Vertex> Path;
 
-    PoaConsensus(const std::string& css, const PoaGraph& g,
-                 const std::vector<PoaGraph::Vertex>& ConsensusPath);
+    PoaConsensus(std::string css, const PoaGraph& g, std::vector<PoaGraph::Vertex> ConsensusPath);
 
     // NB: this constructor exists to provide a means to avoid an unnecessary
     // copy of the
     // boost graph.  If we had move semantics (C++11) we would be able to get by
     // without
     // this.
-    PoaConsensus(const std::string& css, const detail::PoaGraphImpl& g,
-                 const std::vector<PoaGraph::Vertex>& ConsensusPath);
+    PoaConsensus(std::string css, const detail::PoaGraphImpl& g,
+                 std::vector<PoaGraph::Vertex> ConsensusPath);
 
     ~PoaConsensus();
 
