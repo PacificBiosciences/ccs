@@ -120,9 +120,9 @@ using boost::optional;
 const string DESCRIPTION = "Generate circular consensus sequences (ccs) from subreads.";
 const string APPNAME = "ccs";
 
-typedef ReadType<ReadId> Subread;
-typedef ChunkType<ReadId, Subread> Chunk;
-typedef ResultType<ConsensusType> Results;
+using Subread = ReadType<ReadId>;
+using Chunk = ChunkType<ReadId, Subread>;
+using Results = ResultType<ConsensusType>;
 
 const auto CircularConsensus = &PacBio::CCS::Consensus<Chunk>;
 
@@ -485,9 +485,9 @@ static int Runner(const PacBio::CLI::Results& args)
     const auto filter = PbiFilter::FromDataSet(ds);
     unique_ptr<internal::IQuery> query(nullptr);
     if (filter.IsEmpty())
-        query.reset(new EntireFileQuery(ds));
+        query = std::make_unique<EntireFileQuery>(ds);
     else
-        query.reset(new PbiFilterQuery(filter, ds));
+        query = std::make_unique<PbiFilterQuery>(filter, ds);
 
     WorkQueue<Results> workQueue(settings.NThreads);
     future<Results> writer;
@@ -553,7 +553,7 @@ static int Runner(const PacBio::CLI::Results& args)
         if ((!holeNumber) || (holeNumber.value() != read.HoleNumber())) {
             if (chunk && chunk->size() >= settings.ChunkSize) {
                 workQueue.ProduceWith(CircularConsensus, move(chunk), settings);
-                chunk.reset(new vector<Chunk>());
+                chunk = std::make_unique<vector<Chunk>>();
             }
             holeNumber = read.HoleNumber();
 
@@ -583,7 +583,7 @@ static int Runner(const PacBio::CLI::Results& args)
                          read.BarcodeForward() != get<0>(*barcodes) ||
                          read.BarcodeReverse() != get<1>(*barcodes) ||
                          read.BarcodeQuality() != get<2>(*barcodes))) {
-            PBLOG_FATAL << "invalid data: \"bc\" or \"bq\" tag did not agree between subreads!";
+            PBLOG_FATAL << R"(invalid data: "bc" or "bq" tag did not agree between subreads!)";
             exit(EXIT_FAILURE);
         }
 

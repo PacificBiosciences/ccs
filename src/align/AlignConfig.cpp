@@ -45,14 +45,11 @@ AlignParams::AlignParams(int match, int mismatch, int insert, int delete_)
 {
 }
 
-AlignParams AlignParams::Default() { return AlignParams(0, -1, -1, -1); }
+AlignParams AlignParams::Default() { return {0, -1, -1, -1}; }
 
 AlignConfig::AlignConfig(AlignParams params, AlignMode mode) : Params(params), Mode(mode) {}
 
-AlignConfig AlignConfig::Default()
-{
-    return AlignConfig(AlignParams::Default(), AlignMode::GLOBAL);
-}
+AlignConfig AlignConfig::Default() { return {AlignParams::Default(), AlignMode::GLOBAL}; }
 
 }  // namespace Align
 }  // namespace PacBio

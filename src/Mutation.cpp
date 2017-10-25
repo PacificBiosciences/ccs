@@ -37,6 +37,7 @@
 #include <cassert>
 #include <sstream>
 #include <stdexcept>
+#include <utility>
 
 #include <pacbio/consensus/Mutation.h>
 
@@ -53,12 +54,7 @@ Mutation Mutation::Insertion(size_t start, const char base)
     return Mutation(MutationType::INSERTION, start, base);
 }
 
-Mutation Mutation::Insertion(size_t start, const std::string& bases)
-{
-    return Mutation(MutationType::INSERTION, start, bases);
-}
-
-Mutation Mutation::Insertion(size_t start, std::string&& bases)
+Mutation Mutation::Insertion(size_t start, std::string bases)
 {
     return Mutation(MutationType::INSERTION, start, std::move(bases));
 }
@@ -68,12 +64,7 @@ Mutation Mutation::Substitution(size_t start, const char base)
     return Mutation(MutationType::SUBSTITUTION, start, base);
 }
 
-Mutation Mutation::Substitution(size_t start, const std::string& bases)
-{
-    return Mutation(MutationType::SUBSTITUTION, start, bases);
-}
-
-Mutation Mutation::Substitution(size_t start, std::string&& bases)
+Mutation Mutation::Substitution(size_t start, std::string bases)
 {
     return Mutation(MutationType::SUBSTITUTION, start, std::move(bases));
 }
@@ -125,20 +116,11 @@ Mutation::Mutation(const MutationType type, const size_t start, const char base)
 {
 }
 
-Mutation::Mutation(const MutationType type, const size_t start, const std::string& bases)
-    : bases_{bases}
-    , type_{type}
-    , start_{start}
-    , length_{(type_ == MutationType::INSERTION) ? size_t(0) : bases_.length()}
-{
-    assert(bases_.length() > 0);
-}
-
-Mutation::Mutation(const MutationType type, const size_t start, std::string&& bases)
+Mutation::Mutation(const MutationType type, const size_t start, std::string bases)
     : bases_{std::move(bases)}
     , type_{type}
     , start_{start}
-    , length_{(type == MutationType::INSERTION) ? size_t(0) : bases_.length()}
+    , length_{(type_ == MutationType::INSERTION) ? size_t(0) : bases_.length()}
 {
     assert(bases_.length() > 0);
 }

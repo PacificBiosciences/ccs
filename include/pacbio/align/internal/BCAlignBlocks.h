@@ -166,7 +166,7 @@ private:
 
 private:
     const BandedChainAlignConfig& config_;
-    typedef std::vector<std::vector<float>> Matrix_t;
+    using Matrix_t = std::vector<std::vector<float>>;
     Matrix_t matchScores_;
     Matrix_t gapScores_;
 };

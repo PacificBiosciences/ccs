@@ -58,10 +58,10 @@ using boost::format;
 class my_label_writer
 {
 public:
-    my_label_writer(VertexInfoMap map, bool color, bool verbose, const PoaConsensus* pc = NULL)
+    my_label_writer(VertexInfoMap map, bool color, bool verbose, const PoaConsensus* pc = nullptr)
         : map_(map), cssVtxs_(), color_(color), verbose_(verbose)
     {
-        if (pc != NULL) {
+        if (pc != nullptr) {
             cssVtxs_.insert(pc->Path.begin(), pc->Path.end());
         }
     }
@@ -72,7 +72,7 @@ public:
         PoaGraph::Vertex vertexId = map_[v].Id;
 
         std::string nodeColoringAttribute =
-            (color_ && isInConsensus(vertexId) ? " style=\"filled\", fillcolor=\"lightblue\" ,"
+            (color_ && isInConsensus(vertexId) ? R"( style="filled", fillcolor="lightblue" ,)"
                                                : "");
 
         if (!verbose_) {
@@ -134,7 +134,7 @@ PoaGraphImpl::PoaGraphImpl(const PoaGraphImpl& other)
 {
 }
 
-PoaGraphImpl::~PoaGraphImpl() {}
+PoaGraphImpl::~PoaGraphImpl() = default;
 void PoaGraphImpl::repCheck() const
 {
 #ifndef NDEBUG
@@ -162,7 +162,7 @@ static inline vector<const AlignmentColumn*> getPredecessorColumns(const BoostGr
     for (auto e : inEdges(v, g)) {
         VD u = source(e, g);
         predCol = colMap.at(u);
-        assert(predCol != NULL);
+        assert(predCol != nullptr);
         predecessorColumns.push_back(predCol);
     }
     return predecessorColumns;
@@ -186,7 +186,7 @@ const AlignmentColumn* PoaGraphImpl::makeAlignmentColumnForExit(VD v,
     // this is kind of unnecessary as we are only actually using one entry in
     // this column
     int I = sequence.length();
-    AlignmentColumn* curCol = new AlignmentColumn(v, 0, I + 1);
+    auto* curCol = new AlignmentColumn(v, 0, I + 1);
 
     float bestScore = -FLT_MAX;
     VD prevVertex = null_vertex;
@@ -372,7 +372,7 @@ PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq, const A
     assert(numReads_ > 0);
 
     // Prepare the range finder, if applicable
-    if (rangeFinder != NULL) {
+    if (rangeFinder != nullptr) {
         // NB: no minCoverage applicable here; this
         // "intermediate" consensus may include extra sequence
         // at either end
@@ -383,7 +383,7 @@ PoaAlignmentMatrix* PoaGraphImpl::TryAddRead(const std::string& readSeq, const A
 
     // Calculate alignment columns of sequence vs. graph, using sparsity if
     // we have a range finder.
-    PoaAlignmentMatrixImpl* mat = new PoaAlignmentMatrixImpl();
+    auto* mat = new PoaAlignmentMatrixImpl();
     mat->readSequence_ = readSeq;
     mat->mode_ = config.Mode;
     mat->graph_ = this;
@@ -420,7 +420,7 @@ void PoaGraphImpl::CommitAdd(PoaAlignmentMatrix* mat_, std::vector<Vertex>* read
 {
     repCheck();
 
-    PoaAlignmentMatrixImpl* mat = static_cast<PoaAlignmentMatrixImpl*>(mat_);
+    auto* mat = static_cast<PoaAlignmentMatrixImpl*>(mat_);
     tracebackAndThread(mat->readSequence_, mat->columns_, mat->mode_, readPathOutput);
     numReads_++;
 

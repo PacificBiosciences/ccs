@@ -57,19 +57,18 @@ AlignConfig DefaultPoaConfig(AlignMode mode)
     return config;
 }
 
-PoaConsensus::PoaConsensus(const std::string& css, const PoaGraph& g,
-                           const std::vector<size_t>& cssPath)
-    : Sequence(css), Graph(g), Path(cssPath)
+PoaConsensus::PoaConsensus(std::string css, const PoaGraph& g, std::vector<size_t> cssPath)
+    : Sequence(std::move(css)), Graph(g), Path(std::move(cssPath))
 {
 }
 
-PoaConsensus::PoaConsensus(const std::string& css, const detail::PoaGraphImpl& gi,
-                           const std::vector<size_t>& cssPath)
-    : Sequence(css), Graph(gi), Path(cssPath)
+PoaConsensus::PoaConsensus(std::string css, const detail::PoaGraphImpl& gi,
+                           std::vector<size_t> cssPath)
+    : Sequence(std::move(css)), Graph(gi), Path(std::move(cssPath))
 {
 }
 
-PoaConsensus::~PoaConsensus() {}
+PoaConsensus::~PoaConsensus() = default;
 const PoaConsensus* PoaConsensus::FindConsensus(const std::vector<std::string>& reads)
 {
     return FindConsensus(reads, DefaultPoaConfig(AlignMode::GLOBAL), -INT_MAX);

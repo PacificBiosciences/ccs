@@ -82,8 +82,8 @@ public:
 
 public:
     BandedChainAlignment(void) = default;
-    BandedChainAlignment(const BandedChainAlignConfig& config, const std::string& target,
-                         const std::string& query, const PacBio::Data::Cigar& cigar);
+    BandedChainAlignment(const BandedChainAlignConfig& config, std::string target,
+                         std::string query, PacBio::Data::Cigar cigar);
     BandedChainAlignment(const BandedChainAlignConfig& config, const char* target,
                          const size_t targetLen, const char* query, const size_t queryLen,
                          const PacBio::Data::Cigar& cigar);

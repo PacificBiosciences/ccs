@@ -35,11 +35,13 @@
 
 #include "Recursor.h"
 
+#include <utility>
+
 namespace PacBio {
 namespace Consensus {
 
-AbstractRecursor::AbstractRecursor(const PacBio::Data::MappedRead& mr, const double scoreDiff)
-    : read_{mr}, scoreDiff_{exp(scoreDiff)}
+AbstractRecursor::AbstractRecursor(PacBio::Data::MappedRead mr, const double scoreDiff)
+    : read_{std::move(mr)}, scoreDiff_{exp(scoreDiff)}
 {
 }
 

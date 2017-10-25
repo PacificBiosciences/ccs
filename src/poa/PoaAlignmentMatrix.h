@@ -90,7 +90,7 @@ struct AlignmentColumn : noncopyable
     bool HasRow(size_t i) const { return (BeginRow() <= i) && (i < EndRow()); }
 };
 
-typedef unordered_map<VD, const AlignmentColumn*> AlignmentColumnMap;
+using AlignmentColumnMap = unordered_map<VD, const AlignmentColumn*>;
 
 class PoaAlignmentMatrixImpl : public PoaAlignmentMatrix
 {

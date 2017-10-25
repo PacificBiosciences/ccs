@@ -110,7 +110,7 @@ public:
     int Length() const;
 
 public:
-    PairwiseAlignment(const std::string& target, const std::string& query, size_t refStart = 0,
+    PairwiseAlignment(std::string target, std::string query, size_t refStart = 0,
                       size_t refEnd = 0);
 
     static PairwiseAlignment* FromTranscript(const std::string& transcript,

@@ -37,6 +37,8 @@
 
 #include "SparseMatrix.h"
 
+#include <memory>
+
 namespace PacBio {
 namespace Consensus {
 
@@ -57,11 +59,10 @@ SparseMatrix::SparseMatrix(const SparseMatrix& other)
     , usedRanges_(other.usedRanges_)
 {
     for (size_t j = 0; j < nCols_; j++)
-        if (other.columns_[j])
-            columns_[j] = std::unique_ptr<SparseVector>(new SparseVector(*other.columns_[j]));
+        if (other.columns_[j]) columns_[j] = std::make_unique<SparseVector>(*other.columns_[j]);
 }
 
-SparseMatrix::~SparseMatrix() {}
+SparseMatrix::~SparseMatrix() = default;
 
 void SparseMatrix::Reset(const size_t rows, const size_t cols)
 {
@@ -86,8 +87,8 @@ size_t SparseMatrix::UsedEntries() const
 
 float SparseMatrix::UsedEntriesRatio() const
 {
-    const float filled = static_cast<float>(UsedEntries());
-    const float size = static_cast<float>(Rows() * Columns());
+    const auto filled = static_cast<float>(UsedEntries());
+    const auto size = static_cast<float>(Rows() * Columns());
     return filled / size;
 }
 
@@ -95,7 +96,7 @@ size_t SparseMatrix::AllocatedEntries() const
 {
     size_t sum = 0;
     for (size_t j = 0; j < nCols_; j++) {
-        sum += (columns_[j] != NULL ? columns_[j]->AllocatedEntries() : 0);
+        sum += (columns_[j] != nullptr ? columns_[j]->AllocatedEntries() : 0);
     }
     return sum;
 }
@@ -117,7 +118,7 @@ void SparseMatrix::CheckInvariants(size_t column) const
 {
 #ifndef NDEBUG
     for (size_t j = 0; j < nCols_; j++) {
-        if (columns_[j] != NULL) columns_[j]->CheckInvariants();
+        if (columns_[j] != nullptr) columns_[j]->CheckInvariants();
     }
 #endif
 }

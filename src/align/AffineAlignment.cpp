@@ -206,15 +206,9 @@ AffineAlignmentParams::AffineAlignmentParams(float matchScore, float mismatchSco
 {
 }
 
-AffineAlignmentParams DefaultAffineAlignmentParams()
-{
-    return AffineAlignmentParams(0, -1.0, -1.0, -0.5, 0);
-}
+AffineAlignmentParams DefaultAffineAlignmentParams() { return {0, -1.0, -1.0, -0.5, 0}; }
 
-AffineAlignmentParams IupacAwareAffineAlignmentParams()
-{
-    return AffineAlignmentParams(0, -1.0, -1.0, -0.5, -0.25);
-}
+AffineAlignmentParams IupacAwareAffineAlignmentParams() { return {0, -1.0, -1.0, -0.5, -0.25}; }
 
 PairwiseAlignment* AlignAffine(const std::string& target, const std::string& query,
                                AffineAlignmentParams params)

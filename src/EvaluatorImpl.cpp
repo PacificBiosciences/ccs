@@ -242,7 +242,7 @@ const AbstractMatrix& EvaluatorImpl::Beta() const { return beta_; }
 
 const AbstractMatrix* EvaluatorImpl::AlphaView(MatrixViewConvention c) const
 {
-    BasicDenseMatrix* m = new BasicDenseMatrix(alpha_.Rows(), alpha_.Columns());
+    auto* m = new BasicDenseMatrix(alpha_.Rows(), alpha_.Columns());
 
     for (size_t i = 0; i < alpha_.Rows(); ++i) {
         for (size_t j = 0; j < alpha_.Columns(); ++j) {
@@ -266,7 +266,7 @@ const AbstractMatrix* EvaluatorImpl::AlphaView(MatrixViewConvention c) const
 
 const AbstractMatrix* EvaluatorImpl::BetaView(MatrixViewConvention c) const
 {
-    BasicDenseMatrix* m = new BasicDenseMatrix(beta_.Rows(), beta_.Columns());
+    auto* m = new BasicDenseMatrix(beta_.Rows(), beta_.Columns());
 
     for (size_t i = 0; i < beta_.Rows(); ++i) {
         for (size_t j = 0; j < beta_.Columns(); ++j) {

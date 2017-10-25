@@ -52,11 +52,7 @@ class LocalAlignment
 public:
     LocalAlignment(const int32_t targetBegin, const int32_t targetEnd, const int32_t queryBegin,
                    const int32_t queryEnd, const int32_t mismatches, const uint16_t score,
-                   const std::vector<uint32_t>& cigar, const std::string& cigarString);
-
-    LocalAlignment(const int32_t targetBegin, const int32_t targetEnd, const int32_t queryBegin,
-                   const int32_t queryEnd, const int32_t mismatches, const uint16_t score,
-                   std::vector<uint32_t>&& cigar, std::string&& cigarString);
+                   std::vector<uint32_t> cigar, std::string cigarString);
 
     LocalAlignment(const LocalAlignment&) = delete;
     LocalAlignment(LocalAlignment&&) = default;

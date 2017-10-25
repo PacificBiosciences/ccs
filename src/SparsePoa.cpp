@@ -61,7 +61,7 @@ using PacBio::Data::ReverseComplement;
 namespace PacBio {
 namespace Poa {
 
-typedef PoaGraph::Vertex Vertex;
+using Vertex = PoaGraph::Vertex;
 
 SdpAnchorVector SdpRangeFinder::FindAnchors(const std::string& consensusSequence,
                                             const std::string& readSequence) const
@@ -156,7 +156,7 @@ std::shared_ptr<const PoaConsensus> SparsePoa::FindConsensus(
     std::shared_ptr<const PoaConsensus> pc(graph_->FindConsensus(config, minCoverage));
     std::string css = pc->Sequence;
 
-    if (summaries != NULL) {
+    if (summaries != nullptr) {
         summaries->clear();
 
         // digest the consensus path consensus into map(vtx, pos)

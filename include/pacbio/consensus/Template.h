@@ -179,7 +179,7 @@ protected:
     typedef ScaledMatrix M;
 
 public:
-    AbstractRecursor(const PacBio::Data::MappedRead& mr, double scoreDiff);
+    AbstractRecursor(PacBio::Data::MappedRead mr, double scoreDiff);
     virtual ~AbstractRecursor() {}
     virtual size_t FillAlphaBeta(const AbstractTemplate& tpl, M& alpha, M& beta,
                                  double tol) const = 0;

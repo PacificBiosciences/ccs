@@ -110,7 +110,7 @@ bool CheckTranscript(const std::string& transcript, const std::string& unalnTarg
                      const std::string& unalnQuery)
 {
     PairwiseAlignment* pa = PairwiseAlignment::FromTranscript(transcript, unalnTarget, unalnQuery);
-    if (pa == NULL) {
+    if (pa == nullptr) {
         return false;
     } else {
         delete pa;
@@ -136,7 +136,7 @@ bool CheckTranscript(const std::string& transcript, const std::string& unalnTarg
 //
 std::string OptimalTranscript(const std::string& target, int j1, int j2, const std::string& query,
                               int i1, int i2, ublas::vector<int>& buf1, ublas::vector<int>& buf2,
-                              int* score = NULL)
+                              int* score = nullptr)
 {
 #ifndef NDEBUG
     std::string subtarget = target.substr(j1 - 1, j2 - j1 + 1);
@@ -245,7 +245,7 @@ std::string OptimalTranscript(const std::string& target, int j1, int j2, const s
     delete peerAlignment;
 #endif
 
-    if (score != NULL) {
+    if (score != nullptr) {
         *score = segmentScore;
     }
     return x;
@@ -266,7 +266,7 @@ PairwiseAlignment* AlignLinear(const std::string& target, const std::string& que
 PairwiseAlignment* AlignLinear(const std::string& target, const std::string& query,
                                AlignConfig config)
 {
-    return AlignLinear(target, query, NULL, config);
+    return AlignLinear(target, query, nullptr, config);
 }
 
 }  // namespace Align

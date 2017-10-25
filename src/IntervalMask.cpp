@@ -66,16 +66,16 @@ void IntervalMask::Mutate(const std::vector<Mutation>& muts)
     IntervalMask newMask;
     auto m = muts.begin();
     int offL = 0;
-    for (auto ab = begin(); ab != end(); ++ab) {
+    for (auto ab : *this) {
         //   if the mutation's right is before the interval's left, update offL
-        for (; m != muts.end() && m->End() <= ab->Left(); ++m)
+        for (; m != muts.end() && m->End() <= ab.Left(); ++m)
             offL += m->LengthDiff();
         int offR = offL;
         // if the mutation's left is within the interval, then update offR
-        for (; m != muts.end() && ab->Contains(m->Start()); ++m)
+        for (; m != muts.end() && ab.Contains(m->Start()); ++m)
             offR += m->LengthDiff();
-        size_t l = SafeAdd(ab->Left(), offL);
-        size_t r = SafeAdd(ab->Right(), offR);
+        size_t l = SafeAdd(ab.Left(), offL);
+        size_t r = SafeAdd(ab.Right(), offR);
         // if the interval has a span, add it
         if (l < r) newMask.Insert({l, r});
         // offR is the new offL

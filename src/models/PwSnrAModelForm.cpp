@@ -102,7 +102,7 @@ public:
     static std::vector<uint8_t> EncodeRead(const MappedRead& read);
     double EmissionPr(MoveType move, uint8_t emission, const NCBI4na prev,
                       const NCBI4na curr) const;
-    double UndoCounterWeights(size_t nEmissions) const;
+    double UndoCounterWeights(size_t nEmissions) const override;
 
 private:
     const PwSnrAModelCreator* params_;
@@ -121,7 +121,7 @@ class PwSnrAModelCreator : public ModelCreator
 public:
     static ModelForm Form() { return ModelForm::PWSNRA; }
     PwSnrAModelCreator(const boost::property_tree::ptree& pt);
-    virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const override
+    std::unique_ptr<ModelConfig> Create(const SNR& snr) const override
     {
         return std::unique_ptr<ModelConfig>(new PwSnrAModel(this, snr));
     };
