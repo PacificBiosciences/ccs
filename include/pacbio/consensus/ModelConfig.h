@@ -57,17 +57,22 @@ struct SNR;
 
 namespace Consensus {
 
-using Data::detail::NCBI2na;
-using Data::detail::NCBI4na;
-
 // fwd decl
 class AbstractRecursor;
 class AbstractTemplate;
 
+using Data::detail::NCBI2na;
+using Data::detail::NCBI4na;
+
+// The allele representation in Unanimity
+// currently employs the NCBI4na model, in
+// order to account for diploid sites.
+typedef NCBI4na AlleleRep;
+
 struct TemplatePosition
 {
     char Base;
-    NCBI4na Idx;
+    AlleleRep Idx;
     double Match;
     double Branch;
     double Stick;
@@ -78,7 +83,7 @@ public:
     constexpr TemplatePosition(const char base, const double match, const double branch,
                                const double stick, const double deletion)
         : Base{base}
-        , Idx{NCBI4na::FromASCII(Base)}
+        , Idx{AlleleRep::FromASCII(Base)}
         , Match{match}
         , Branch{branch}
         , Stick{stick}
@@ -113,8 +118,8 @@ public:
     virtual std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
         std::default_random_engine* const rng, const std::string& tpl,
         const std::string& readname) const = 0;
-    virtual double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
-                                         MomentType moment) const = 0;
+    virtual double ExpectedLLForEmission(MoveType move, const AlleleRep& prev,
+                                         const AlleleRep& curr, MomentType moment) const = 0;
 };
 
 }  // namespace Consensus

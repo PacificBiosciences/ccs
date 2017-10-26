@@ -77,7 +77,7 @@ public:
     std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
         std::default_random_engine* const rng, const std::string& tpl,
         const std::string& readname) const override;
-    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
+    double ExpectedLLForEmission(MoveType move, const AlleleRep& prev, const AlleleRep& curr,
                                  MomentType moment) const override;
     friend class SnrInitializeModel;
 
@@ -94,8 +94,8 @@ public:
                 const SnrModelCreator* params);
 
     static std::vector<uint8_t> EncodeRead(const MappedRead& read);
-    double EmissionPr(MoveType move, uint8_t emission, const NCBI4na prev,
-                      const NCBI4na curr) const;
+    double EmissionPr(MoveType move, uint8_t emission, const AlleleRep& prev,
+                      const AlleleRep& curr) const;
     double UndoCounterWeights(size_t nEmissions) const override;
 
 private:
@@ -188,8 +188,8 @@ std::vector<TemplatePosition> SnrModel::Populate(const std::string& tpl) const
     return AbstractPopulater(tpl, rowFetcher);
 }
 
-double SnrModel::ExpectedLLForEmission(const MoveType move, const NCBI4na prev, const NCBI4na curr,
-                                       const MomentType moment) const
+double SnrModel::ExpectedLLForEmission(const MoveType move, const AlleleRep& prev,
+                                       const AlleleRep& curr, const MomentType moment) const
 {
     auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
                                         const MomentType moment) -> double {
@@ -238,8 +238,8 @@ std::vector<uint8_t> SnrRecursor::EncodeRead(const MappedRead& read)
     return result;
 }
 
-double SnrRecursor::EmissionPr(const MoveType move, const uint8_t emission, const NCBI4na prev,
-                               const NCBI4na curr) const
+double SnrRecursor::EmissionPr(const MoveType move, const uint8_t emission, const AlleleRep& prev,
+                               const AlleleRep& curr) const
 {
     return AbstractEmissionPr(params_->emissionPmf_, move, emission, prev, curr) * counterWeight_;
 }
@@ -294,7 +294,7 @@ public:
     SnrGenerateReadData(const SnrModelCreator& params) : params_(params) {}
 
     BaseData operator()(std::default_random_engine* const rng, const MoveType state,
-                        const NCBI4na prev, const NCBI4na curr)
+                        const AlleleRep& prev, const AlleleRep& curr)
     {
         // distribution is arbitrary at the moment, as
         // PW and IPD are not a covariates of the consensus HMM

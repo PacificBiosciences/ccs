@@ -76,7 +76,7 @@ public:
         std::default_random_engine* const rng, const std::string& tpl,
         const std::string& readname) const override;
 
-    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
+    double ExpectedLLForEmission(MoveType move, const AlleleRep& prev, const AlleleRep& curr,
                                  MomentType moment) const override;
 
 private:
@@ -93,8 +93,8 @@ class S_P2C2v5_Recursor : public Recursor<S_P2C2v5_Recursor>
 public:
     S_P2C2v5_Recursor(const MappedRead& mr, double scoreDiff, double counterWeight);
     static inline std::vector<uint8_t> EncodeRead(const MappedRead& read);
-    inline double EmissionPr(MoveType move, uint8_t emission, const NCBI4na prev,
-                             const NCBI4na curr) const;
+    inline double EmissionPr(MoveType move, uint8_t emission, const AlleleRep& prev,
+                             const AlleleRep& curr) const;
     double UndoCounterWeights(size_t nEmissions) const override;
 
 private:
@@ -331,8 +331,8 @@ std::vector<TemplatePosition> S_P2C2v5_Model::Populate(const std::string& tpl) c
     return AbstractPopulater(tpl, rowFetcher);
 }
 
-double S_P2C2v5_Model::ExpectedLLForEmission(const MoveType move, const NCBI4na prev,
-                                             const NCBI4na curr, const MomentType moment) const
+double S_P2C2v5_Model::ExpectedLLForEmission(const MoveType move, const AlleleRep& prev,
+                                             const AlleleRep& curr, const MomentType moment) const
 {
     auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
                                         const MomentType moment) -> double {
@@ -363,7 +363,7 @@ std::vector<uint8_t> S_P2C2v5_Recursor::EncodeRead(const MappedRead& read)
 }
 
 double S_P2C2v5_Recursor::EmissionPr(const MoveType move, const uint8_t emission,
-                                     const NCBI4na prev, const NCBI4na curr) const
+                                     const AlleleRep& prev, const AlleleRep& curr) const
 {
     return AbstractEmissionPr(emissionPmf, move, emission, prev, curr) * counterWeight_;
 }
@@ -388,7 +388,7 @@ inline std::pair<Data::SNR, std::vector<TemplatePosition>> S_P2C2v5_InitialiseMo
 }
 
 BaseData S_P2C2v5_GenerateReadData(std::default_random_engine* const rng, const MoveType state,
-                                   const NCBI4na prev, const NCBI4na curr)
+                                   const AlleleRep& prev, const AlleleRep& curr)
 {
     // distribution is arbitrary at the moment, as
     // IPD is not a covariate of the consensus HMM

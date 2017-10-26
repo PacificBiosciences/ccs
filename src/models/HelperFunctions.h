@@ -162,7 +162,7 @@ inline constexpr double EmissionTableLookup(const double (&emissionTable)[3][16]
 template <size_t EmissionContextNumber, size_t EmissionOutcomeNumber>
 inline constexpr double AbstractEmissionPr(
     const double (&emissionTable)[3][EmissionContextNumber][EmissionOutcomeNumber],
-    const MoveType move, const uint8_t emission, const NCBI4na prev, const NCBI4na curr)
+    const MoveType move, const uint8_t emission, const AlleleRep& prev, const AlleleRep& curr)
 {
     // constrain template
     static_assert(
@@ -226,8 +226,9 @@ inline constexpr double AbstractEmissionPr(
 
 // Generic cache expectation interface
 template <typename Callable>
-inline constexpr double AbstractExpectedLLForEmission(const MoveType move, const NCBI4na prev,
-                                                      const NCBI4na curr, const MomentType moment,
+inline constexpr double AbstractExpectedLLForEmission(const MoveType move, const AlleleRep& prev,
+                                                      const AlleleRep& curr,
+                                                      const MomentType moment,
                                                       Callable cacheExpectationFetcher)
 {
     // Recall that 0 in NCBI4na indicates a gap
@@ -281,14 +282,14 @@ inline std::vector<TemplatePosition> AbstractPopulater(const std::string& tpl, C
     result.reserve(tpl.size());
 
     // calculate transition probabilities
-    auto prev = NCBI4na::FromASCII(tpl[0], false);
+    auto prev = AlleleRep::FromASCII(tpl[0], false);
     if (!prev.IsValid())
         throw std::invalid_argument("invalid character ('"s + tpl[0] + "', ordinal "s +
                                     std::to_string(static_cast<int>(tpl[0])) +
                                     ") in template at position 0!"s);
 
     for (size_t i = 1; i < tpl.size(); ++i) {
-        const auto curr = NCBI4na::FromASCII(tpl[i], false);
+        const auto curr = AlleleRep::FromASCII(tpl[i], false);
         if (!curr.IsValid())
             throw std::invalid_argument("invalid character ('"s + tpl[i] + "', ordinal "s +
                                         std::to_string(static_cast<int>(tpl[i])) +
