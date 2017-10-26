@@ -83,7 +83,7 @@ public:
     std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
         std::default_random_engine* const rng, const std::string& tpl,
         const std::string& readname) const override;
-    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
+    double ExpectedLLForEmission(MoveType move, const AlleleRep& prev, const AlleleRep& curr,
                                  MomentType moment) const override;
 
 private:
@@ -97,8 +97,8 @@ public:
                      const MarginalModelCreator* params);
 
     static std::vector<uint8_t> EncodeRead(const MappedRead& read);
-    double EmissionPr(MoveType move, uint8_t emission, const NCBI4na prev,
-                      const NCBI4na curr) const;
+    double EmissionPr(MoveType move, uint8_t emission, const AlleleRep& prev,
+                      const AlleleRep& curr) const;
     double UndoCounterWeights(size_t nEmissions) const override;
 
 private:
@@ -165,8 +165,8 @@ std::vector<TemplatePosition> MarginalModel::Populate(const std::string& tpl) co
     return AbstractPopulater(tpl, rowFetcher);
 }
 
-double MarginalModel::ExpectedLLForEmission(const MoveType move, const NCBI4na prev,
-                                            const NCBI4na curr, const MomentType moment) const
+double MarginalModel::ExpectedLLForEmission(const MoveType move, const AlleleRep& prev,
+                                            const AlleleRep& curr, const MomentType moment) const
 {
     auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
                                         const MomentType moment) -> double {
@@ -207,8 +207,8 @@ std::vector<uint8_t> MarginalRecursor::EncodeRead(const MappedRead& read)
     return result;
 }
 
-double MarginalRecursor::EmissionPr(const MoveType move, const uint8_t emission, const NCBI4na prev,
-                                    const NCBI4na curr) const
+double MarginalRecursor::EmissionPr(const MoveType move, const uint8_t emission,
+                                    const AlleleRep& prev, const AlleleRep& curr) const
 {
     return AbstractEmissionPr(params_->emissionPmf_, move, emission, prev, curr) * counterWeight_;
 }
@@ -260,7 +260,7 @@ public:
     MarginalModelGenerateReadData(const MarginalModelCreator& params) : params_(params) {}
 
     BaseData operator()(std::default_random_engine* const rng, const MoveType state,
-                        const NCBI4na prev, const NCBI4na curr)
+                        const AlleleRep& prev, const AlleleRep& curr)
     {
         // distribution is arbitrary at the moment, as
         // PW and IPD are not a covariates of the consensus HMM
