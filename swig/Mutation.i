@@ -1,3 +1,5 @@
+// TODO(lhepler): remove these, figure out %ignore
+%warnfilter(509) PacBio::Consensus::Mutation;
 
 %{
 #include <pacbio/consensus/Mutation.h>
