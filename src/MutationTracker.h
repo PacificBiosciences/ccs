@@ -116,7 +116,7 @@ public:
             // handle Mutations having Length() > 1.
             auto insertIter = curTplToOrigTpl_.begin() + it->Start();
             int64_t tempOrigPos;
-            boost::optional<double> tempPvalue;
+            auto tempPvalue = boost::optional<double>{};
 
             switch (it->Type()) {
                 case MutationType::DELETION:
