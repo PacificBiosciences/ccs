@@ -100,6 +100,20 @@ inline constexpr uint8_t EncodeBase(const char base, const uint8_t raw_pw)
     return em;
 }
 
+// context order for A=0, C=1, G=2, T=3:
+//   AA, CC, GG, TT, NA, NC, NG, NT
+inline constexpr uint8_t EncodeContext8(const NCBI2na prev, const NCBI2na curr)
+{
+    return ((prev.Data() != curr.Data()) << 2) | curr.Data();
+}
+
+// context order for A=0, C=1, G=2, T=3:
+//   AA, AC, AG, AT, CA, CC, CG, CT, GA, GC, GG, GT, TA, TC, TG, TT
+inline constexpr uint8_t EncodeContext16(const NCBI2na prev, const NCBI2na curr)
+{
+    return (prev.Data() << 2) | curr.Data();
+}
+
 // first: base
 // second: pw
 inline constexpr std::pair<char, uint8_t> DecodeEmission(const uint8_t em)
@@ -137,9 +151,7 @@ inline constexpr double EmissionTableLookup(const double (&emissionTable)[3][8][
 {
     assert(move != MoveType::DELETION);
 
-    const uint8_t hpAdd = (prev.Data() == curr.Data() ? 0 : 4);
-    // Which row do we want?
-    const uint8_t row = curr.Data() + hpAdd;
+    const auto row = EncodeContext8(prev, curr);
     return emissionTable[static_cast<uint8_t>(move)][row][emission];
 }
 
@@ -155,7 +167,7 @@ inline constexpr double EmissionTableLookup(const double (&emissionTable)[3][16]
 {
     assert(move != MoveType::DELETION);
 
-    const uint8_t row = (prev.Data() << 2) | curr.Data();
+    const auto row = EncodeContext16(prev, curr);
     return emissionTable[static_cast<uint8_t>(move)][row][emission];
 }
 

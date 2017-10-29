@@ -181,7 +181,7 @@ std::vector<TemplatePosition> SnrModel::Populate(const std::string& tpl) const
 {
     auto rowFetcher = [this](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
     {
-        const uint8_t row = ((prev.Data() == curr.Data()) << 2) | curr.Data();
+        const auto row = EncodeContext8(prev, curr);
         const double(&params)[4] = ctxTrans_[row];
         return params;
     };

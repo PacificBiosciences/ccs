@@ -158,7 +158,7 @@ std::vector<TemplatePosition> MarginalModel::Populate(const std::string& tpl) co
 {
     auto rowFetcher = [this](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
     {
-        const uint8_t ctx = ((prev.Data() == curr.Data()) << 2) | curr.Data();
+        const auto ctx = EncodeContext8(prev, curr);
         const double(&params)[4] = params_->transitionPmf_[ctx];
         return params;
     };
@@ -170,7 +170,7 @@ double MarginalModel::ExpectedLLForEmission(const MoveType move, const AlleleRep
 {
     auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
                                         const MomentType moment) -> double {
-        const uint8_t ctx = ((prev.Data() == curr.Data()) << 2) | curr.Data();
+        const auto ctx = EncodeContext8(prev, curr);
         double expectedLL = 0;
         for (size_t i = 0; i < OUTCOME_NUMBER; i++) {
             double curProb = params_->emissionPmf_[static_cast<uint8_t>(move)][ctx][i];
