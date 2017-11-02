@@ -59,14 +59,12 @@ void SubreadResultCounter::AddResult(State result)
         case State::POOR_ZSCORE:
             PoorZScore++;
             break;
-        case State::SIZE:
-            FilteredBySize++;
-            break;
         case State::VALID:
             Success++;
             break;
         default:
-            throw std::runtime_error("Unexpected State");
+            Other++;
+            break;
     }
 }
 
