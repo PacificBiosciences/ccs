@@ -337,7 +337,7 @@ std::vector<TemplatePosition> S_P1C1v2_Model::Populate(const std::string& tpl) c
 {
     auto rowFetcher = [this](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
     {
-        const auto row = (prev.Data() << 2) | curr.Data();
+        const auto row = EncodeContext16(prev, curr);
         const double(&params)[4] = ctxTrans_[row];
         return params;
     };
@@ -349,7 +349,7 @@ double S_P1C1v2_Model::ExpectedLLForEmission(const MoveType move, const AlleleRe
 {
     auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
                                         const MomentType moment) -> double {
-        const size_t row = (prev.Data() << 2) | curr.Data();
+        const auto row = EncodeContext16(prev, curr);
         return cachedEmissionExpectations_[row][static_cast<uint8_t>(move)]
                                           [static_cast<uint8_t>(moment)];
     };
