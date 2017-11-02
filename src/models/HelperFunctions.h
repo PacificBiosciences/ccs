@@ -49,6 +49,10 @@ using namespace std::literals::string_literals;  // for std::operator ""s
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/data/Read.h>
 #include <pacbio/data/internal/BaseEncoding.h>
+#include <pacbio/exception/StateError.h>
+
+using PacBio::Data::State;
+using PacBio::Exception::StateError;
 
 namespace PacBio {
 namespace Consensus {
@@ -79,7 +83,7 @@ inline constexpr uint8_t EncodeBase(const char base)
     //   https://www.ncbi.nlm.nih.gov/IEB/ToolBox/SDKDOCS/BIOSEQ.HTML
 
     const uint8_t em = Data::detail::ASCIIToNCBI2naImpl(base);
-    if (em > 3U) throw std::invalid_argument("invalid character in read!");
+    if (em > 3U) throw StateError(State::ILLEGAL_BASE, "invalid base in read!");
     return em;
 }
 
@@ -93,10 +97,10 @@ inline constexpr uint8_t EncodeBase(const char base, const uint8_t raw_pw)
     // the 2-bit pulsewidth value and BB are two bits in NCBI2na
     // format.
 
-    if (raw_pw < 1U) throw std::runtime_error("invalid PulseWidth in read!");
+    if (raw_pw < 1U) throw StateError(State::ILLEGAL_PW, "invalid PulseWidth in read!");
     const uint8_t pw = std::min(2, raw_pw - 1);
     const uint8_t em = (pw << 2) | EncodeBase(base);
-    if (em > 11U) throw std::runtime_error("read encoding error!");
+    if (em > 11U) throw StateError(State::INVALID, "read encoding error!");
     return em;
 }
 
