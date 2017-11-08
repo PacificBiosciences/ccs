@@ -37,6 +37,7 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <boost/numeric/ublas/matrix.hpp>
@@ -228,10 +229,10 @@ void PairwiseAlignment::Justify(const LRType lr)
 
 int PairwiseAlignment::Length() const { return target_.length(); }
 
-PairwiseAlignment::PairwiseAlignment(const std::string& target, const std::string& query,
-                                     const size_t refStart, const size_t refEnd)
-    : target_(target)
-    , query_(query)
+PairwiseAlignment::PairwiseAlignment(std::string target, std::string query, const size_t refStart,
+                                     const size_t refEnd)
+    : target_(std::move(target))
+    , query_(std::move(query))
     , transcript_(target_.length(), 'Z')
     , refStart_(refStart)
     , refEnd_(refEnd)
@@ -340,7 +341,7 @@ PairwiseAlignment* Align(const std::string& target, const std::string& query, in
                                Score(i - 1, j) + params.Insert, Score(i, j - 1) + params.Delete);
         }
     }
-    if (score != NULL) {
+    if (score != nullptr) {
         *score = Score(I, J);
     }
 
@@ -398,7 +399,7 @@ PairwiseAlignment* Align(const std::string& target, const std::string& query, in
 
 PairwiseAlignment* Align(const std::string& target, const std::string& query, AlignConfig config)
 {
-    return Align(target, query, NULL, config);
+    return Align(target, query, nullptr, config);
 }
 
 //
@@ -491,7 +492,7 @@ PairwiseAlignment* PairwiseAlignment::FromTranscript(const std::string& transcri
     qPos = 0;
     for (const char x : transcript) {
         if (tPos > tLen || qPos > qLen) {
-            return NULL;
+            return nullptr;
         }
 
         char t = (tPos < tLen ? unalnTarget[tPos] : '\0');
@@ -500,7 +501,7 @@ PairwiseAlignment* PairwiseAlignment::FromTranscript(const std::string& transcri
         switch (x) {
             case 'M':
                 if (t != q) {
-                    return NULL;
+                    return nullptr;
                 }
                 alnTarget.push_back(t);
                 alnQuery.push_back(q);
@@ -509,7 +510,7 @@ PairwiseAlignment* PairwiseAlignment::FromTranscript(const std::string& transcri
                 break;
             case 'R':
                 if (t == q) {
-                    return NULL;
+                    return nullptr;
                 }
                 alnTarget.push_back(t);
                 alnQuery.push_back(q);
@@ -527,12 +528,12 @@ PairwiseAlignment* PairwiseAlignment::FromTranscript(const std::string& transcri
                 tPos++;
                 break;
             default:
-                return NULL;
+                return nullptr;
         }
     }
     // Didn't consume all of one of the strings
     if (tPos != tLen || qPos != qLen) {
-        return NULL;
+        return nullptr;
     }
 
     // Provide another constructor to inject transcript?  Calculate transcript on the fly?

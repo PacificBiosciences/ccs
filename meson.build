@@ -115,11 +115,7 @@ if get_option('enable-build-swig')
   message('Python modules will be installed into: ' + uny_python_install_dir)
 
   # python2 compiling + linking
-  uny_python_dep = dependency('python2', required : false)
-
-  if not uny_python_dep.found()
-    uny_python_dep = dependency('python-2.7', required : true)
-  endif
+  uny_python_dep = dependency('python-2.7', required : true)
 
   subdir('swig')
 endif

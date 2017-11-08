@@ -29,8 +29,8 @@ TEST(ChimeraLabeler, MinimalEndToEnd)
     std::vector<std::string> seqList;
 
     for (size_t i = 0; i < length(ids); ++i) {
-        idList.push_back(toCString(static_cast<CharString>(ids[i])));
-        seqList.push_back(toCString(static_cast<CharString>(seqs[i])));
+        idList.emplace_back(toCString(static_cast<CharString>(ids[i])));
+        seqList.emplace_back(toCString(static_cast<CharString>(seqs[i])));
     }
 
     // Label the Records

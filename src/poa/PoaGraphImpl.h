@@ -93,7 +93,7 @@ struct PoaNode
 };
 
 // External-facing vertex id type
-typedef size_t Vertex;
+using Vertex = size_t;
 
 struct EdgeComparator
 {

@@ -98,7 +98,7 @@ SNR ClampSNR(const SNR& val, const SNR& min, const SNR& max);
 struct Read
 {
     Read(const std::string& name, const std::string& seq, const std::vector<uint8_t>& ipd,
-         const std::vector<uint8_t>& pw, const SNR& snr, const std::string& model);
+         const std::vector<uint8_t>& pw, const SNR& snr, std::string model);
     Read(const Read& read) = default;
     Read(Read&& read) = default;
 

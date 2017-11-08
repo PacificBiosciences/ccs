@@ -49,6 +49,10 @@ using namespace std::literals::string_literals;  // for std::operator ""s
 #include <pacbio/consensus/ModelConfig.h>
 #include <pacbio/data/Read.h>
 #include <pacbio/data/internal/BaseEncoding.h>
+#include <pacbio/exception/StateError.h>
+
+using PacBio::Data::State;
+using PacBio::Exception::StateError;
 
 namespace PacBio {
 namespace Consensus {
@@ -79,7 +83,7 @@ inline constexpr uint8_t EncodeBase(const char base)
     //   https://www.ncbi.nlm.nih.gov/IEB/ToolBox/SDKDOCS/BIOSEQ.HTML
 
     const uint8_t em = Data::detail::ASCIIToNCBI2naImpl(base);
-    if (em > 3U) throw std::invalid_argument("invalid character in read!");
+    if (em > 3U) throw StateError(State::ILLEGAL_BASE, "invalid base in read!");
     return em;
 }
 
@@ -93,11 +97,25 @@ inline constexpr uint8_t EncodeBase(const char base, const uint8_t raw_pw)
     // the 2-bit pulsewidth value and BB are two bits in NCBI2na
     // format.
 
-    if (raw_pw < 1U) throw std::runtime_error("invalid PulseWidth in read!");
+    if (raw_pw < 1U) throw StateError(State::ILLEGAL_PW, "invalid PulseWidth in read!");
     const uint8_t pw = std::min(2, raw_pw - 1);
     const uint8_t em = (pw << 2) | EncodeBase(base);
-    if (em > 11U) throw std::runtime_error("read encoding error!");
+    if (em > 11U) throw StateError(State::INVALID, "read encoding error!");
     return em;
+}
+
+// context order for A=0, C=1, G=2, T=3:
+//   AA, CC, GG, TT, NA, NC, NG, NT
+inline constexpr uint8_t EncodeContext8(const NCBI2na prev, const NCBI2na curr)
+{
+    return ((prev.Data() != curr.Data()) << 2) | curr.Data();
+}
+
+// context order for A=0, C=1, G=2, T=3:
+//   AA, AC, AG, AT, CA, CC, CG, CT, GA, GC, GG, GT, TA, TC, TG, TT
+inline constexpr uint8_t EncodeContext16(const NCBI2na prev, const NCBI2na curr)
+{
+    return (prev.Data() << 2) | curr.Data();
 }
 
 // first: base
@@ -137,9 +155,7 @@ inline constexpr double EmissionTableLookup(const double (&emissionTable)[3][8][
 {
     assert(move != MoveType::DELETION);
 
-    const uint8_t hpAdd = (prev.Data() == curr.Data() ? 0 : 4);
-    // Which row do we want?
-    const uint8_t row = curr.Data() + hpAdd;
+    const auto row = EncodeContext8(prev, curr);
     return emissionTable[static_cast<uint8_t>(move)][row][emission];
 }
 
@@ -155,14 +171,14 @@ inline constexpr double EmissionTableLookup(const double (&emissionTable)[3][16]
 {
     assert(move != MoveType::DELETION);
 
-    const uint8_t row = (prev.Data() << 2) | curr.Data();
+    const auto row = EncodeContext16(prev, curr);
     return emissionTable[static_cast<uint8_t>(move)][row][emission];
 }
 
 template <size_t EmissionContextNumber, size_t EmissionOutcomeNumber>
 inline constexpr double AbstractEmissionPr(
     const double (&emissionTable)[3][EmissionContextNumber][EmissionOutcomeNumber],
-    const MoveType move, const uint8_t emission, const NCBI4na prev, const NCBI4na curr)
+    const MoveType move, const uint8_t emission, const AlleleRep& prev, const AlleleRep& curr)
 {
     // constrain template
     static_assert(
@@ -226,8 +242,9 @@ inline constexpr double AbstractEmissionPr(
 
 // Generic cache expectation interface
 template <typename Callable>
-inline constexpr double AbstractExpectedLLForEmission(const MoveType move, const NCBI4na prev,
-                                                      const NCBI4na curr, const MomentType moment,
+inline constexpr double AbstractExpectedLLForEmission(const MoveType move, const AlleleRep& prev,
+                                                      const AlleleRep& curr,
+                                                      const MomentType moment,
                                                       Callable cacheExpectationFetcher)
 {
     // Recall that 0 in NCBI4na indicates a gap
@@ -281,14 +298,14 @@ inline std::vector<TemplatePosition> AbstractPopulater(const std::string& tpl, C
     result.reserve(tpl.size());
 
     // calculate transition probabilities
-    auto prev = NCBI4na::FromASCII(tpl[0], false);
+    auto prev = AlleleRep::FromASCII(tpl[0], false);
     if (!prev.IsValid())
         throw std::invalid_argument("invalid character ('"s + tpl[0] + "', ordinal "s +
                                     std::to_string(static_cast<int>(tpl[0])) +
                                     ") in template at position 0!"s);
 
     for (size_t i = 1; i < tpl.size(); ++i) {
-        const auto curr = NCBI4na::FromASCII(tpl[i], false);
+        const auto curr = AlleleRep::FromASCII(tpl[i], false);
         if (!curr.IsValid())
             throw std::invalid_argument("invalid character ('"s + tpl[i] + "', ordinal "s +
                                         std::to_string(static_cast<int>(tpl[i])) +

@@ -47,14 +47,21 @@ enum struct State : uint8_t
     POOR_ZSCORE,
     TEMPLATE_TOO_SMALL,
     MANUALLY_RELEASED,
+    ILLEGAL_BASE,
+    ILLEGAL_PW,
     INVALID,
 
     SIZE
 };
 
-static const char* StateName[] = {
-    "VALID",  "ALPHA/BETA MISMATCH", "POOR Z-SCORE", "TEMPLATE TOO SMALL", "MANUALLY RELEASED",
-    "INVALID"};
+static constexpr const char* StateName[] = {"VALID",
+                                            "ALPHA/BETA MISMATCH",
+                                            "POOR Z-SCORE",
+                                            "TEMPLATE TOO SMALL",
+                                            "MANUALLY RELEASED",
+                                            "ILLEGAL BASE",
+                                            "ILLEGAL PULSEWIDTH",
+                                            "INVALID"};
 
 inline std::ostream& operator<<(std::ostream& os, State result)
 {

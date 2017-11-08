@@ -61,7 +61,7 @@ AbstractTemplate::AbstractTemplate(const size_t start, const size_t end, const b
     if (end_ - start_ < 2) throw TemplateTooSmall();
 }
 
-AbstractTemplate::~AbstractTemplate() {}
+AbstractTemplate::~AbstractTemplate() = default;
 AbstractTemplate::operator std::string() const
 {
     std::ostringstream ss;
@@ -189,7 +189,8 @@ std::pair<double, double> AbstractTemplate::SiteNormalParameters(const size_t i)
     const auto params = (*this)[i];
     // TODO: This is a bit unsafe, we should understand context and have this conversion in one
     // place (or really just move directly to using .Idx without bit shifting
-    const auto prev = (i == 0) ? NCBI4na::FromASCII('A') : (*this)[i - 1].Idx;  // default base : A
+    const auto prev =
+        (i == 0) ? AlleleRep::FromASCII('A') : (*this)[i - 1].Idx;  // default base : A
     const auto curr = params.Idx;
 
     const double p_m = params.Match, l_m = std::log(p_m), l2_m = l_m * l_m;
@@ -330,7 +331,7 @@ std::unique_ptr<AbstractRecursor> Template::CreateRecursor(const PacBio::Data::M
 {
     return cfg_->CreateRecursor(mr, scoreDiff);
 }
-double Template::ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
+double Template::ExpectedLLForEmission(MoveType move, const AlleleRep& prev, const AlleleRep& curr,
                                        MomentType moment) const
 {
     return cfg_->ExpectedLLForEmission(move, prev, curr, moment);
@@ -427,8 +428,8 @@ std::unique_ptr<AbstractRecursor> MutatedTemplate::CreateRecursor(
     return master_.CreateRecursor(mr, scoreDiff);
 }
 
-double MutatedTemplate::ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
-                                              MomentType moment) const
+double MutatedTemplate::ExpectedLLForEmission(MoveType move, const AlleleRep& prev,
+                                              const AlleleRep& curr, MomentType moment) const
 {
     return master_.ExpectedLLForEmission(move, prev, curr, moment);
 }

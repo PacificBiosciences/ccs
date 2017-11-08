@@ -82,8 +82,8 @@ public:
     virtual std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                              double scoreDiff) const = 0;
 
-    virtual double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
-                                         MomentType moment) const = 0;
+    virtual double ExpectedLLForEmission(MoveType move, const AlleleRep& prev,
+                                         const AlleleRep& curr, MomentType moment) const = 0;
 
     std::pair<double, double> NormalParameters() const;
 
@@ -124,7 +124,7 @@ public:
     std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                      double scoreDiff) const override;
 
-    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
+    double ExpectedLLForEmission(MoveType move, const AlleleRep& prev, const AlleleRep& curr,
                                  MomentType moment) const override;
 
 protected:
@@ -158,7 +158,7 @@ public:
     std::unique_ptr<AbstractRecursor> CreateRecursor(const PacBio::Data::MappedRead& mr,
                                                      double scoreDiff) const override;
 
-    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
+    double ExpectedLLForEmission(MoveType move, const AlleleRep& prev, const AlleleRep& curr,
                                  MomentType moment) const override;
 
 protected:
@@ -179,7 +179,7 @@ protected:
     typedef ScaledMatrix M;
 
 public:
-    AbstractRecursor(const PacBio::Data::MappedRead& mr, double scoreDiff);
+    AbstractRecursor(PacBio::Data::MappedRead mr, double scoreDiff);
     virtual ~AbstractRecursor() {}
     virtual size_t FillAlphaBeta(const AbstractTemplate& tpl, M& alpha, M& beta,
                                  double tol) const = 0;

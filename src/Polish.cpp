@@ -51,7 +51,6 @@
 
 #include <pacbio/consensus/Integrator.h>
 #include <pacbio/consensus/Polish.h>
-#include <pacbio/data/internal/ConversionFunctions.h>
 #include <pacbio/exception/InvalidEvaluatorException.h>
 
 #include "MutationTracker.h"

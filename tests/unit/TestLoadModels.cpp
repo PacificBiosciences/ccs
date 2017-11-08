@@ -139,23 +139,26 @@ TEST(LoadModelsTest, Directory)
     ASSERT_TRUE(chems.find("S/P1-C1.2::PwSnr::FromFile") != chems.end());
     ASSERT_TRUE(chems.find("S/P2-C2/5.0::PwSnr::FromFile") != chems.end());
 
-// test identity between S/P1-C1/beta and S/P1-C1/beta::Marginal (loaded)
-//   disabled until S_P1C1Beta is fixed
-#if 0
+    // test identity between S/P1-C1/beta and S/P1-C1/beta::Marginal (loaded)
     {
         Integrator ai1(LoadModelsTests::longTpl, LoadModelsTests::cfg);
         EXPECT_EQ(State::VALID,
-                  ai1.AddRead(MappedRead(LoadModelsTests::MkRead(LoadModelsTests::longRead, snr, "S/P1-C1/beta::Marginal::Compiled", LoadModelsTests::longPws),
-                                         StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
+                  ai1.AddRead(MappedRead(
+                      LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                              "S/P1-C1/beta::Marginal::Compiled",
+                                              LoadModelsTests::longPws),
+                      StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
         Integrator ai2(LoadModelsTests::longTpl, LoadModelsTests::cfg);
         EXPECT_EQ(State::VALID,
-                  ai2.AddRead(MappedRead(LoadModelsTests::MkRead(LoadModelsTests::longRead, snr, "S/P1-C1/beta::Marginal::FromFile", LoadModelsTests::longPws),
-                                         StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
+                  ai2.AddRead(MappedRead(
+                      LoadModelsTests::MkRead(LoadModelsTests::longRead, LoadModelsTests::snr,
+                                              "S/P1-C1/beta::Marginal::FromFile",
+                                              LoadModelsTests::longPws),
+                      StrandType::FORWARD, 0, LoadModelsTests::longTpl.length(), true, true)));
 
         EXPECT_NEAR(ai1.LL(), ai2.LL(), 1.0e-5);
     }
-#endif
 
     // test identity between S/P1-C1.1 and S/P1-C1.1::PwSnrA (loaded)
     {

@@ -78,7 +78,7 @@ public:
     std::pair<Data::Read, std::vector<MoveType>> SimulateRead(
         std::default_random_engine* const rng, const std::string& tpl,
         const std::string& readname) const override;
-    double ExpectedLLForEmission(MoveType move, const NCBI4na prev, const NCBI4na curr,
+    double ExpectedLLForEmission(MoveType move, const AlleleRep& prev, const AlleleRep& curr,
                                  MomentType moment) const override;
 
     friend class PwSnrAInitializeModel;
@@ -100,9 +100,9 @@ public:
                    const PwSnrAModelCreator* params);
 
     static std::vector<uint8_t> EncodeRead(const MappedRead& read);
-    double EmissionPr(MoveType move, uint8_t emission, const NCBI4na prev,
-                      const NCBI4na curr) const;
-    double UndoCounterWeights(size_t nEmissions) const;
+    double EmissionPr(MoveType move, uint8_t emission, const AlleleRep& prev,
+                      const AlleleRep& curr) const;
+    double UndoCounterWeights(size_t nEmissions) const override;
 
 private:
     const PwSnrAModelCreator* params_;
@@ -121,7 +121,7 @@ class PwSnrAModelCreator : public ModelCreator
 public:
     static ModelForm Form() { return ModelForm::PWSNRA; }
     PwSnrAModelCreator(const boost::property_tree::ptree& pt);
-    virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const override
+    std::unique_ptr<ModelConfig> Create(const SNR& snr) const override
     {
         return std::unique_ptr<ModelConfig>(new PwSnrAModel(this, snr));
     };
@@ -202,19 +202,19 @@ std::vector<TemplatePosition> PwSnrAModel::Populate(const std::string& tpl) cons
 {
     auto rowFetcher = [this](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
     {
-        const auto row = (prev.Data() << 2) | curr.Data();
+        const auto row = EncodeContext16(prev, curr);
         const double(&params)[4] = ctxTrans_[row];
         return params;
     };
     return AbstractPopulater(tpl, rowFetcher);
 }
 
-double PwSnrAModel::ExpectedLLForEmission(const MoveType move, const NCBI4na prev,
-                                          const NCBI4na curr, const MomentType moment) const
+double PwSnrAModel::ExpectedLLForEmission(const MoveType move, const AlleleRep& prev,
+                                          const AlleleRep& curr, const MomentType moment) const
 {
     auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
                                         const MomentType moment) -> double {
-        const size_t row = (prev.Data() << 2) | curr.Data();
+        const auto row = EncodeContext16(prev, curr);
         return cachedEmissionExpectations_[row][static_cast<uint8_t>(move)]
                                           [static_cast<uint8_t>(moment)];
     };
@@ -242,8 +242,8 @@ std::vector<uint8_t> PwSnrARecursor::EncodeRead(const MappedRead& read)
     return result;
 }
 
-double PwSnrARecursor::EmissionPr(const MoveType move, const uint8_t emission, const NCBI4na prev,
-                                  const NCBI4na curr) const
+double PwSnrARecursor::EmissionPr(const MoveType move, const uint8_t emission,
+                                  const AlleleRep& prev, const AlleleRep& curr) const
 {
     return AbstractEmissionPr(params_->emissionPmf_, move, emission, prev, curr) * counterWeight_;
 }
@@ -296,7 +296,7 @@ public:
     PwSnrAGenerateReadData(const PwSnrAModelCreator& params) : params_(params) {}
 
     BaseData operator()(std::default_random_engine* const rng, const MoveType state,
-                        const NCBI4na prev, const NCBI4na curr)
+                        const AlleleRep& prev, const AlleleRep& curr)
     {
         // distribution is arbitrary at the moment, as
         // IPD is not a covariate of the consensus HMM

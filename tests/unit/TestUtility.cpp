@@ -54,10 +54,10 @@ bool LoadFastaSequences(std::string fastaFname, std::vector<std::string>& ids,
     readRecords(sIds, sSeqs, seqFileIn);
 
     for (auto& sId : sIds) {
-        ids.push_back(toCString(sId));
+        ids.emplace_back(toCString(sId));
     }
     for (auto& sSeq : sSeqs) {
-        seqs.push_back(toCString(sSeq));
+        seqs.emplace_back(toCString(sSeq));
     }
 
     return true;

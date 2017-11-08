@@ -28,15 +28,15 @@ struct PoaNode;
 
 // BGL is intimidating, and it *deserves* your hatred.  But it's
 // the only game in town!
-typedef property<vertex_info_t, PoaNode, property<vertex_index_t, size_t> > vertex_property_t;
-typedef adjacency_list<setS, listS, bidirectionalS, vertex_property_t> BoostGraph;
+using vertex_property_t = property<vertex_info_t, PoaNode, property<vertex_index_t, size_t> >;
+using BoostGraph = adjacency_list<setS, listS, bidirectionalS, vertex_property_t>;
 
 // Descriptor types used internally
-typedef graph_traits<BoostGraph>::edge_descriptor ED;
-typedef graph_traits<BoostGraph>::vertex_descriptor VD;
+using ED = graph_traits<BoostGraph>::edge_descriptor;
+using VD = graph_traits<BoostGraph>::vertex_descriptor;
 
-typedef property_map<BoostGraph, vertex_info_t>::type VertexInfoMap;
-typedef property_map<BoostGraph, vertex_index_t>::type index_map_t;
+using VertexInfoMap = property_map<BoostGraph, vertex_info_t>::type;
+using index_map_t = property_map<BoostGraph, vertex_index_t>::type;
 static const VD null_vertex = graph_traits<BoostGraph>::null_vertex();
 }
 }

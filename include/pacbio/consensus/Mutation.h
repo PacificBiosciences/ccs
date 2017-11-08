@@ -73,11 +73,9 @@ public:
     // named constructors
     static Mutation Deletion(size_t start, size_t length);
     static Mutation Insertion(size_t start, char base);
-    static Mutation Insertion(size_t start, const std::string& bases);
-    static Mutation Insertion(size_t start, std::string&& bases);
+    static Mutation Insertion(size_t start, std::string bases);
     static Mutation Substitution(size_t start, char base);
-    static Mutation Substitution(size_t start, const std::string& bases);
-    static Mutation Substitution(size_t start, std::string&& bases);
+    static Mutation Substitution(size_t start, std::string bases);
 
     bool IsDeletion() const { return Type() == MutationType::DELETION; };
     bool IsInsertion() const { return Type() == MutationType::INSERTION; }
@@ -146,8 +144,7 @@ private:
     boost::optional<double> pvalue_;
 
     Mutation(MutationType type, size_t start, size_t length);
-    Mutation(MutationType type, size_t start, const std::string& bases);
-    Mutation(MutationType type, size_t start, std::string&& bases);
+    Mutation(MutationType type, size_t start, std::string bases);
     Mutation(MutationType type, size_t start, char);
 };
 
