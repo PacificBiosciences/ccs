@@ -240,8 +240,7 @@ void WriteFastqRecords(ofstream& ccsFastq, Results& counts, Results&& results)
         ccsFastq << " np:i:" << ccs.NumPasses << " rq:f:" << ccs.PredictedAccuracy;
 
         if (ccs.Barcodes) {
-            int16_t first, second;
-            uint8_t quality;
+            int16_t first, second, quality;
             tie(first, second, quality) = *ccs.Barcodes;
             ccsFastq << " bc:B:S," << first << ',' << second << " bq:i:" << quality;
         }
