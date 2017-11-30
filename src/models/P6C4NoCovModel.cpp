@@ -218,8 +218,8 @@ std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(const MappedRea
 double P6C4NoCovModel::ExpectedLLForEmission(const MoveType move, const AlleleRep& prev,
                                              const AlleleRep& curr, const MomentType moment) const
 {
-    auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
-                                        const MomentType moment) -> double {
+    auto cachedEmissionVisitor = [](const MoveType move, const NCBI2na prev, const NCBI2na curr,
+                                    const MomentType moment) -> double {
         const double lgThird = -std::log(3.0);
         if (move == MoveType::MATCH) {
             static constexpr const double probMatch = kInvEps;

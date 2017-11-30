@@ -154,7 +154,7 @@ S_P1C1Beta_Model::S_P1C1Beta_Model(const SNR& snr)
 
 std::vector<TemplatePosition> S_P1C1Beta_Model::Populate(const std::string& tpl) const
 {
-    auto rowFetcher = [this](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
+    auto rowFetcher = [](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
     {
         const auto row = EncodeContext8(prev, curr);
         const double(&params)[4] = transProbs[row];
@@ -184,8 +184,8 @@ std::unique_ptr<AbstractRecursor> S_P1C1Beta_Model::CreateRecursor(const MappedR
 double S_P1C1Beta_Model::ExpectedLLForEmission(const MoveType move, const AlleleRep& prev,
                                                const AlleleRep& curr, const MomentType moment) const
 {
-    auto cachedEmissionVisitor = [this](const MoveType move, const NCBI2na prev, const NCBI2na curr,
-                                        const MomentType moment) -> double {
+    auto cachedEmissionVisitor = [](const MoveType move, const NCBI2na prev, const NCBI2na curr,
+                                    const MomentType moment) -> double {
         const auto row = EncodeContext8(prev, curr);
         double expectedLL = 0;
         for (size_t i = 0; i < 4; i++) {
