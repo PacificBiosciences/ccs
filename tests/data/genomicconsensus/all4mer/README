@@ -1,0 +1,5 @@
+How I made this lil' file (next time write a Makefile!)
+
+    $ baxSieve --whitelist hole-numbers.txt /mnt/secondary/Share/VariantCalling/CCS/P6-C4.EnzymologyTemplates/2770691/0001/Analysis_Results/m141008_060349_42194_c100704972550000001823137703241586_s1_p0.1.bax.h5  out.bas.h5
+    $ bax2bam out.bas.h5 -o out
+    $ pbalign out.subreads.bam All4mer.V2.01_Insert.fa out.aligned_subreads.bam
