@@ -145,6 +145,19 @@ if get_option('enable-build-ccs')
   cpp_args : uny_warning_flags)
 endif
 
+# arrow
+if get_option('enable-build-arrow')
+  uny_arrow = executable(
+  'arrow', [
+    'main/arrow.cpp'],
+  install : true,
+  dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep],
+  include_directories : uny_include_directories,
+  link_with : uny_cc2_lib_shared,
+  link_whole : uny_cc2_lib_static,
+  cpp_args : uny_warning_flags)
+endif
+
 # ChimeraLabeler
 if get_option('enable-build-chimera')
   executable(
