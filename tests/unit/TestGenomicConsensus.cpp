@@ -52,6 +52,8 @@
 #include <pacbio/genomicconsensus/Settings.h>
 #include <pacbio/genomicconsensus/Sorting.h>
 
+#include <pacbio/genomicconsensus/poa/Poa.h>
+
 #include "TestData.h"
 
 namespace GenomicConsensusTests {
