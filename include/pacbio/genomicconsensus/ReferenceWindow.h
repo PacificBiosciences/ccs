@@ -68,7 +68,7 @@ struct ReferenceWindow
     }
 };
 
-std::ostream& operator<<(std::ostream& os, const ReferenceWindow& window)
+inline std::ostream& operator<<(std::ostream& os, const ReferenceWindow& window)
 {
     os << window.name << ' ' << window.interval;
     return os;
