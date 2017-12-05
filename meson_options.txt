@@ -1,3 +1,4 @@
+option('enable-build-arrow',   type : 'boolean', value : true,  description : 'Build UNANMITIY\'s experimental arrow consensus & variant tool')
 option('enable-build-ccs',     type : 'boolean', value : true,  description : 'Build UNANMITIY\'s circular consensus tool')
 option('enable-build-chimera', type : 'boolean', value : true,  description : 'Build UNANMITIY\'s stand-alone chimera labeler')
 option('enable-build-sim',     type : 'boolean', value : true,  description : 'Build UNANMITIY\'s (sub)read simulator')

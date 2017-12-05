@@ -51,6 +51,7 @@
 #include <pacbio/genomicconsensus/Output.h>
 #include <pacbio/genomicconsensus/Settings.h>
 #include <pacbio/genomicconsensus/Sorting.h>
+#include <pacbio/genomicconsensus/arrow/Arrow.h>
 
 #include "TestData.h"
 
@@ -315,6 +316,69 @@ TEST(GenomicConsensusTests, no_call_consensus_with_lowercase_reference_style)
     EXPECT_EQ(expectedRefSeq, consensus.sequence);
     EXPECT_TRUE(std::equal(consensus.confidence.begin(), consensus.confidence.end(),
                            expectedConfidence.begin(), expectedConfidence.end()));
+}
+
+TEST(GenomicConsensusTests, empty_intervals_from_empty_transcript)
+{
+    using Arrow = PacBio::GenomicConsensus::Arrow;
+
+    const std::string transcript;
+    const auto intervals = Arrow::TranscriptIntervals(transcript);
+    EXPECT_TRUE(intervals.empty());
+}
+
+TEST(GenomicConsensusTests, single_interval_from_single_op_transcript)
+{
+    using Arrow = PacBio::GenomicConsensus::Arrow;
+
+    const std::string transcript = "MMM";
+    const auto intervals = Arrow::TranscriptIntervals(transcript);
+    ASSERT_EQ(1, intervals.size());
+
+    const auto& interval = intervals.at(0);
+    EXPECT_EQ(0, interval.Left());
+    EXPECT_EQ(3, interval.Right());
+    EXPECT_EQ(3, interval.Length());
+}
+
+TEST(GenomicConsensusTests, intervals_from_transcript)
+{
+    using Arrow = PacBio::GenomicConsensus::Arrow;
+
+    const std::string transcript = "MMMRRDDDD";
+    const auto intervals = Arrow::TranscriptIntervals(transcript);
+    ASSERT_EQ(3, intervals.size());
+
+    auto interval = intervals.at(0);
+    EXPECT_EQ(0, interval.Left());
+    EXPECT_EQ(3, interval.Right());
+    EXPECT_EQ(3, interval.Length());
+
+    interval = intervals.at(1);
+    EXPECT_EQ(3, interval.Left());
+    EXPECT_EQ(5, interval.Right());
+    EXPECT_EQ(2, interval.Length());
+
+    interval = intervals.at(2);
+    EXPECT_EQ(5, interval.Left());
+    EXPECT_EQ(9, interval.Right());
+    EXPECT_EQ(4, interval.Length());
+}
+
+TEST(GenomicConsensusTests, calculate_median_from_odd_size)
+{
+    std::vector<size_t> v{5, 6, 4, 3, 2, 6, 7, 9, 3};
+    // { 2, 3, 3, 4, 5, 6, 6, 7 , 9 }
+    const auto median = PacBio::GenomicConsensus::Arrow::Median(v);
+    EXPECT_EQ(5, median);  // middle
+}
+
+TEST(GenomicConsensusTests, calculate_median_from_even_size)
+{
+    std::vector<size_t> v{5, 6, 4, 3, 2, 6, 7, 3};
+    // { 2, 3, 3, 4, 5, 6, 6, 7 }
+    const auto median = PacBio::GenomicConsensus::Arrow::Median(v);
+    EXPECT_EQ(4, median);  // avg of middle two (rounds down)
 }
 
 class GenomicConsensusSorting : public ::testing::Test

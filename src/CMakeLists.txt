@@ -123,6 +123,7 @@ set(UNY_LIBRARIES
 # add executables
 if (UNY_build_bin)
     create_exe(ccs)
+    create_exe(arrow)
 endif()
 
 if (UNY_build_chimera)
