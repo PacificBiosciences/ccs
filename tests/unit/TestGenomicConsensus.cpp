@@ -53,6 +53,8 @@
 #include <pacbio/genomicconsensus/Sorting.h>
 #include <pacbio/genomicconsensus/arrow/Arrow.h>
 
+#include <pacbio/genomicconsensus/poa/Poa.h>
+
 #include "TestData.h"
 
 namespace GenomicConsensusTests {
