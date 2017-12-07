@@ -656,7 +656,7 @@ struct Arrow
         static constexpr const std::array<char, 12> ambiguousBases{
             {'M', 'm', 'R', 'r', 'W', 'w', 'S', 's', 'Y', 'y', 'K', 'k'}};
         for (const auto c : newCss) {
-            if (!FoundCode(ambiguousBases, c)) throw std::runtime_error("failed IUPAC resolving");
+            if (FoundCode(ambiguousBases, c)) throw std::runtime_error("failed IUPAC resolving");
         }
 
         return newCss;
