@@ -35,33 +35,10 @@
 
 // Author: David Seifert
 
-// This file acts as the Central Control Panel
-// to enable models. The macro LIST_OF_ENABLED_MODELS
-// triggers inclusion into unanimity.
+#pragma once
 
-#include "UnanimityInternalConfig.h"
+#ifndef UNANIMITY_BUILDING_LIBRARY
+#define UNANIMITY_BUILDING_LIBRARY 1
+#endif
 
-#include <pacbio/consensus/internal/ModelInternalInitializer.h>
-
-namespace PacBio {
-namespace Consensus {
-
-// X macro technique to load models
-// https://en.wikipedia.org/wiki/X_Macro
-#define LIST_OF_ENABLED_MODELS @ENABLED_MODELS@
-
-// step 1: forward decl per-model initializer functions
-#define X(var) UNANIMITY_PRIVATE_API void Init##var();
-LIST_OF_ENABLED_MODELS
-#undef X
-
-FactoryInit::FactoryInit()
-{
-// step 2: actually call per-model initializer functions
-#define X(var) Init##var();
-    LIST_OF_ENABLED_MODELS
-#undef X
-}
-
-}  // namespace Consensus
-}  // namespace PacBio
+#include <pacbio/UnanimityConfig.h>

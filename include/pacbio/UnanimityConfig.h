@@ -35,33 +35,33 @@
 
 // Author: David Seifert
 
-// This file acts as the Central Control Panel
-// to enable models. The macro LIST_OF_ENABLED_MODELS
-// triggers inclusion into unanimity.
+// Reduce the number of exposed symbols in order to speed up
+// DSO load times
+// https://gcc.gnu.org/wiki/Visibility
 
-#include "UnanimityInternalConfig.h"
+#pragma once
 
-#include <pacbio/consensus/internal/ModelInternalInitializer.h>
-
-namespace PacBio {
-namespace Consensus {
-
-// X macro technique to load models
-// https://en.wikipedia.org/wiki/X_Macro
-#define LIST_OF_ENABLED_MODELS @ENABLED_MODELS@
-
-// step 1: forward decl per-model initializer functions
-#define X(var) UNANIMITY_PRIVATE_API void Init##var();
-LIST_OF_ENABLED_MODELS
-#undef X
-
-FactoryInit::FactoryInit()
-{
-// step 2: actually call per-model initializer functions
-#define X(var) Init##var();
-    LIST_OF_ENABLED_MODELS
-#undef X
-}
-
-}  // namespace Consensus
-}  // namespace PacBio
+#if defined _WIN32 || defined __CYGWIN__
+#ifdef UNANIMITY_BUILDING_LIBRARY
+#ifdef __GNUC__
+#define UNANIMITY_PUBLIC_API __attribute__((dllexport))
+#else
+#define UNANIMITY_PUBLIC_API __declspec(dllexport)  // Note: gcc seems to also supports this syntax
+#endif
+#else
+#ifdef __GNUC__
+#define UNANIMITY_PUBLIC_API __attribute__((dllimport))
+#else
+#define UNANIMITY_PUBLIC_API __declspec(dllimport)  // Note: gcc seems to also supports this syntax
+#endif
+#endif
+#define UNANIMITY_PRIVATE_API
+#else
+#if __GNUC__ >= 4
+#define UNANIMITY_PUBLIC_API __attribute__((visibility("default")))
+#define UNANIMITY_PRIVATE_API __attribute__((visibility("hidden")))
+#else
+#define UNANIMITY_PUBLIC_API
+#define UNANIMITY_PRIVATE_API
+#endif
+#endif

@@ -60,6 +60,7 @@ set(UNY_INCLUDE_DIRS
     ${PacBioBAM_INCLUDE_DIRS}
     ${pbcopper_INCLUDE_DIRS}
     ${ssw_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}
     CACHE INTERNAL
     "${PROJECT_NAME}: Include Directories"
     FORCE

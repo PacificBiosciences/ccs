@@ -37,6 +37,8 @@
 
 #pragma once
 
+#include "UnanimityInternalConfig.h"
+
 #include <map>
 #include <memory>
 #include <string>
@@ -100,7 +102,7 @@ public:
 };
 
 #define REGISTER_MODELFORM_IMPL(MODEL)                                   \
-    void Init##MODEL()                                                   \
+    UNANIMITY_PRIVATE_API void Init##MODEL()                             \
     {                                                                    \
         using namespace MODEL;                                           \
         static const ModelFormCreatorImpl<MODEL##ModelCreator> creator_{ \

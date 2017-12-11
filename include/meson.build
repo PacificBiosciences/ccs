@@ -4,6 +4,7 @@
 
 # pacbio/
 install_headers([
+  'pacbio/UnanimityConfig.h',
   'pacbio/UnanimityVersion.h'],
   subdir : 'pacbio')
 

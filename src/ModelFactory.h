@@ -37,6 +37,8 @@
 
 #pragma once
 
+#include "UnanimityInternalConfig.h"
+
 #include <map>
 #include <memory>
 #include <set>
@@ -117,7 +119,7 @@ public:
 boost::optional<std::string>& ModelOverride();
 
 #define REGISTER_MODEL_IMPL(MODEL)                                                          \
-    void Init##MODEL()                                                                      \
+    UNANIMITY_PRIVATE_API void Init##MODEL()                                                \
     {                                                                                       \
         using namespace MODEL;                                                              \
         static const ModelCreatorImpl<MODEL##_Model> creator_{MODEL##_Model::Chemistries(), \

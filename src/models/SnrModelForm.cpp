@@ -35,6 +35,8 @@
 
 // Author: Lance Hepler
 
+#include "../UnanimityInternalConfig.h"
+
 #include <cassert>
 #include <cmath>
 #include <memory>
