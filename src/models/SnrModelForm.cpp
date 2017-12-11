@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -34,6 +34,8 @@
 // SUCH DAMAGE.
 
 // Author: Lance Hepler
+
+#include "../UnanimityInternalConfig.h"
 
 #include <cassert>
 #include <cmath>
@@ -106,7 +108,6 @@ private:
 
 class SnrModelCreator : public ModelCreator
 {
-    REGISTER_MODELFORM(SnrModelCreator);
     friend class SnrModel;
     friend class SnrRecursor;
     friend class SnrInitializeModel;
@@ -126,8 +127,6 @@ private:
     double transitionParams_[CONTEXT_NUMBER][3][4];
     double substitutionRate_;
 };
-
-REGISTER_MODELFORM_IMPL(SnrModelCreator);
 
 SnrModel::SnrModel(const SnrModelCreator* params, const SNR& snr) : params_{params}, snr_(snr)
 {
@@ -331,5 +330,8 @@ std::pair<Data::Read, std::vector<MoveType>> SnrModel::SimulateRead(
 
 }  // namespace anonymous
 }  // namespace Snr
+
+REGISTER_MODELFORM_IMPL(Snr);
+
 }  // namespace Consensus
 }  // namespace PacBio

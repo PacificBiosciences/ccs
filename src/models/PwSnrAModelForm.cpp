@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -34,6 +34,8 @@
 // SUCH DAMAGE.
 
 // Author: Lance Hepler
+
+#include "../UnanimityInternalConfig.h"
 
 #include <cassert>
 #include <cmath>
@@ -112,7 +114,6 @@ private:
 
 class PwSnrAModelCreator : public ModelCreator
 {
-    REGISTER_MODELFORM(PwSnrAModelCreator);
     friend class PwSnrAModel;
     friend class PwSnrARecursor;
     friend class PwSnrAInitializeModel;
@@ -131,8 +132,6 @@ private:
     double emissionPmf_[3][CONTEXT_NUMBER][OUTCOME_NUMBER];
     double transitionParams_[CONTEXT_NUMBER][3][4];
 };
-
-REGISTER_MODELFORM_IMPL(PwSnrAModelCreator);
 
 inline double PwSnrAModel::CalculateExpectedLLForEmission(const size_t move, const uint8_t row,
                                                           const size_t moment) const
@@ -332,5 +331,8 @@ std::pair<Data::Read, std::vector<MoveType>> PwSnrAModel::SimulateRead(
 
 }  // namespace anonymous
 }  // namespace PwSnrA
+
+REGISTER_MODELFORM_IMPL(PwSnrA);
+
 }  // namespace Consensus
 }  // namespace PacBio

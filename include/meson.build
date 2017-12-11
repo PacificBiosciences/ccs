@@ -4,6 +4,7 @@
 
 # pacbio/
 install_headers([
+  'pacbio/UnanimityConfig.h',
   'pacbio/UnanimityVersion.h'],
   subdir : 'pacbio')
 
@@ -68,6 +69,11 @@ install_headers([
   'pacbio/consensus/PolishResult.h',
   'pacbio/consensus/Template.h'],
   subdir : 'pacbio/consensus')
+
+# pacbio/consensus/internal
+install_headers([
+  'pacbio/consensus/internal/ModelInternalInitializer.h'],
+  subdir : 'pacbio/consensus/internal')
 
 # pacbio/data
 install_headers([

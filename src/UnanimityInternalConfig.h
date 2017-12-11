@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,28 +33,12 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Authors: David Alexander, Lance Hepler
+// Author: David Seifert
 
 #pragma once
 
-#include <utility>
-#include <vector>
+#ifndef UNANIMITY_BUILDING_LIBRARY
+#define UNANIMITY_BUILDING_LIBRARY 1
+#endif
 
-// Initialize data structures, do NOT remove
-#include <pacbio/consensus/internal/ModelInternalInitializer.h>
-
-namespace PacBio {
-namespace Consensus {
-
-// These APIs are a little more awkward than I'd have liked---see
-// "winLen" instead of winEnd.  Had to contort a bit to get SWIG
-// bindings working well.
-
-void CoverageInWindow(int tStartDim, int* tStart, int tEndDim, int* tEnd, int winStart, int winLen,
-                      int* coverage);
-
-std::vector<std::pair<int, int>> CoveredIntervals(int minCoverage, int tStartDim, int* tStart,
-                                                  int tEndDim, int* tEnd, int winStart, int winLen);
-
-}  // namespace Consensus
-}  // namespace PacBio
+#include <pacbio/UnanimityConfig.h>

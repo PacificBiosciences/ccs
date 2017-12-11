@@ -62,6 +62,5 @@ uny_consensus_core2_lib = shared_library(
   include_directories : [
     uny_numpy_include_directories,
     uny_include_directories],
-  link_with : uny_cc2_lib_shared,
-  link_whole : uny_cc2_lib_static,
+  link_with : uny_cc2_lib,
   cpp_args : uny_swig_warning_flags)

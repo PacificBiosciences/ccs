@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -34,6 +34,8 @@
 // SUCH DAMAGE.
 
 // Author: Lance Hepler
+
+#include "../UnanimityInternalConfig.h"
 
 #include <cassert>
 #include <cmath>
@@ -109,7 +111,6 @@ private:
 
 class MarginalModelCreator : public ModelCreator
 {
-    REGISTER_MODELFORM(MarginalModelCreator);
     friend class MarginalModel;
     friend class MarginalRecursor;
     friend class MarginalModelGenerateReadData;
@@ -126,8 +127,6 @@ private:
     double emissionPmf_[3][CONTEXT_NUMBER][OUTCOME_NUMBER];
     double transitionPmf_[CONTEXT_NUMBER][4];
 };
-
-REGISTER_MODELFORM_IMPL(MarginalModelCreator);
 
 MarginalModel::MarginalModel(const MarginalModelCreator* params, const SNR& snr) : params_{params}
 {
@@ -297,5 +296,8 @@ std::pair<Data::Read, std::vector<MoveType>> MarginalModel::SimulateRead(
 
 }  // namespace anonymous
 }  // namespace Marginal
+
+REGISTER_MODELFORM_IMPL(Marginal);
+
 }  // namespace Consensus
 }  // namespace PacBio

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -45,6 +45,9 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
+
+// Initialize data structures, do NOT remove
+#include <pacbio/consensus/internal/ModelInternalInitializer.h>
 
 namespace PacBio {
 namespace Consensus {

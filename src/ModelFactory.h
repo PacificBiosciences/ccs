@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2015-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -36,6 +36,8 @@
 // Author: Lance Hepler
 
 #pragma once
+
+#include "UnanimityInternalConfig.h"
 
 #include <map>
 #include <memory>
@@ -116,12 +118,13 @@ public:
 // An accessor to a global parameter for overriding the model
 boost::optional<std::string>& ModelOverride();
 
-#define REGISTER_MODEL(cls) \
-private:                    \
-    static const ModelCreatorImpl<cls> creator_
-
-#define REGISTER_MODEL_IMPL(cls) \
-    const ModelCreatorImpl<cls> cls::creator_(cls::Chemistries(), cls::Form())
+#define REGISTER_MODEL_IMPL(MODEL)                                                          \
+    UNANIMITY_PRIVATE_API void Init##MODEL()                                                \
+    {                                                                                       \
+        using namespace MODEL;                                                              \
+        static const ModelCreatorImpl<MODEL##_Model> creator_{MODEL##_Model::Chemistries(), \
+                                                              MODEL##_Model::Form()};       \
+    }
 
 }  // namespace Consensus
 }  // namespace PacBio

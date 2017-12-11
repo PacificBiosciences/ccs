@@ -44,9 +44,7 @@ target_include_directories(_ConsensusCore2
 )
 
 set(CC2_LIBRARIES
-    ${PRE_LINK}
     cc2
-    ${POST_LINK}
     CACHE INTERNAL "" FORCE)
 
 target_link_libraries(_ConsensusCore2

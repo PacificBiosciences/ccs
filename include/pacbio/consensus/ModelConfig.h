@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -44,6 +44,9 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+// Initialize data structures, do NOT remove
+#include <pacbio/consensus/internal/ModelInternalInitializer.h>
 
 #include <pacbio/data/Read.h>
 #include <pacbio/data/internal/BaseEncoding.h>

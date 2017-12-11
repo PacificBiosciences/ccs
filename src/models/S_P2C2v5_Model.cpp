@@ -35,6 +35,8 @@
 
 // Author: Lance Hepler
 
+#include "../UnanimityInternalConfig.h"
+
 #include <cassert>
 #include <cmath>
 #include <memory>
@@ -63,8 +65,6 @@ static constexpr const size_t OUTCOME_NUMBER = 12;
 
 class S_P2C2v5_Model : public ModelConfig
 {
-    REGISTER_MODEL(S_P2C2v5_Model);
-
 public:
     static std::set<std::string> Chemistries() { return {"S/P2-C2/5.0"}; }
     static ModelForm Form() { return ModelForm::PWSNR; }
@@ -84,8 +84,6 @@ private:
     double ctxTrans_[CONTEXT_NUMBER][4];
     double cachedEmissionExpectations_[CONTEXT_NUMBER][3][2];
 };
-
-REGISTER_MODEL_IMPL(S_P2C2v5_Model);
 
 // TODO(lhepler) comments regarding the CRTP
 class S_P2C2v5_Recursor : public Recursor<S_P2C2v5_Recursor>
@@ -417,5 +415,8 @@ std::pair<Data::Read, std::vector<MoveType>> S_P2C2v5_Model::SimulateRead(
 
 }  // namespace anonymous
 }  // namespace S_P2C2v5
+
+REGISTER_MODEL_IMPL(S_P2C2v5);
+
 }  // namespace Consensus
 }  // namespace PacBio

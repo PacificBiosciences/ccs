@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,28 +33,35 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Authors: David Alexander, Lance Hepler
+// Authors: David Seifert
 
 #pragma once
-
-#include <utility>
-#include <vector>
-
-// Initialize data structures, do NOT remove
-#include <pacbio/consensus/internal/ModelInternalInitializer.h>
 
 namespace PacBio {
 namespace Consensus {
 
-// These APIs are a little more awkward than I'd have liked---see
-// "winLen" instead of winEnd.  Had to contort a bit to get SWIG
-// bindings working well.
+// This is a small trick to initialize the internal data structures.
+//
+// Without this artifical dummy dependency chain of static constructors
+// into the main unanimity library, most Unix ld variants would remove
+// a bunch of internal initializers. These can be forcibly included by
+// using such constructs as `-Wl,--whole-archive` (GNU Binutils) or
+// `-force_load` (macOS ld).
+//
+// Unfortunately, the previous flags make deployment unnecessarily hard,
+// as consuming code needs to be aware of these static initializers,
+// in order to use the right flag. By using a chain of constructors
+// into the library, we can cleanly circumvent this issue, as `ld` will
+// be forced to pull in the library's static initializers without
+// requiring non-portable toolchain hacks.
+//
+// See also
+// http://www.lysium.de/blog/index.php?/archives/222-Lost-static-objects-in-static-libraries-with-GNU-linker-ld.html
 
-void CoverageInWindow(int tStartDim, int* tStart, int tEndDim, int* tEnd, int winStart, int winLen,
-                      int* coverage);
-
-std::vector<std::pair<int, int>> CoveredIntervals(int minCoverage, int tStartDim, int* tStart,
-                                                  int tEndDim, int* tEnd, int winStart, int winLen);
+static struct FactoryInit
+{
+    FactoryInit();
+} initFactory;
 
 }  // namespace Consensus
 }  // namespace PacBio

@@ -35,6 +35,9 @@
 
 #pragma once
 
+// Initialize data structures, do NOT remove
+#include <pacbio/consensus/internal/ModelInternalInitializer.h>
+
 #include <pacbio/consensus/Mutation.h>
 #include <pacbio/data/IntervalTree.h>
 

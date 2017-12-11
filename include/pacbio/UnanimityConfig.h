@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,28 +33,35 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-// Authors: David Alexander, Lance Hepler
+// Author: David Seifert
+
+// Reduce the number of exposed symbols in order to speed up
+// DSO load times
+// https://gcc.gnu.org/wiki/Visibility
 
 #pragma once
 
-#include <utility>
-#include <vector>
-
-// Initialize data structures, do NOT remove
-#include <pacbio/consensus/internal/ModelInternalInitializer.h>
-
-namespace PacBio {
-namespace Consensus {
-
-// These APIs are a little more awkward than I'd have liked---see
-// "winLen" instead of winEnd.  Had to contort a bit to get SWIG
-// bindings working well.
-
-void CoverageInWindow(int tStartDim, int* tStart, int tEndDim, int* tEnd, int winStart, int winLen,
-                      int* coverage);
-
-std::vector<std::pair<int, int>> CoveredIntervals(int minCoverage, int tStartDim, int* tStart,
-                                                  int tEndDim, int* tEnd, int winStart, int winLen);
-
-}  // namespace Consensus
-}  // namespace PacBio
+#if defined _WIN32 || defined __CYGWIN__
+#ifdef UNANIMITY_BUILDING_LIBRARY
+#ifdef __GNUC__
+#define UNANIMITY_PUBLIC_API __attribute__((dllexport))
+#else
+#define UNANIMITY_PUBLIC_API __declspec(dllexport)  // Note: gcc seems to also supports this syntax
+#endif
+#else
+#ifdef __GNUC__
+#define UNANIMITY_PUBLIC_API __attribute__((dllimport))
+#else
+#define UNANIMITY_PUBLIC_API __declspec(dllimport)  // Note: gcc seems to also supports this syntax
+#endif
+#endif
+#define UNANIMITY_PRIVATE_API
+#else
+#if __GNUC__ >= 4
+#define UNANIMITY_PUBLIC_API __attribute__((visibility("default")))
+#define UNANIMITY_PRIVATE_API __attribute__((visibility("hidden")))
+#else
+#define UNANIMITY_PUBLIC_API
+#define UNANIMITY_PRIVATE_API
+#endif
+#endif

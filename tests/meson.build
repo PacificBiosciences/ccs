@@ -22,8 +22,7 @@ uny_test = executable(
     uny_boost_dep,
     uny_seqan_dep],
   include_directories : uny_include_directories,
-  link_with : uny_cc2_lib_shared,
-  link_whole : uny_cc2_lib_static,
+  link_with : uny_cc2_lib,
   cpp_args : [uny_warning_flags],
   install : false)
 

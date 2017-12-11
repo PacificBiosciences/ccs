@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2017, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -33,68 +33,35 @@
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 
-#pragma once
+// Author: David Seifert
 
-#include <vector>
+// This file acts as the Central Control Panel
+// to enable models. The macro LIST_OF_ENABLED_MODELS
+// triggers inclusion into unanimity.
 
-#include <cstddef>
+#include "UnanimityInternalConfig.h"
 
-#include <boost/optional.hpp>
-
-// Initialize data structures, do NOT remove
 #include <pacbio/consensus/internal/ModelInternalInitializer.h>
-
-#include <pacbio/consensus/Mutation.h>
 
 namespace PacBio {
 namespace Consensus {
 
-struct DiploidSite
+// X macro technique to load models
+// https://en.wikipedia.org/wiki/X_Macro
+#define LIST_OF_ENABLED_MODELS @ENABLED_MODELS@
+
+// step 1: forward decl per-model initializer functions
+#define X(var) UNANIMITY_PRIVATE_API void Init##var();
+LIST_OF_ENABLED_MODELS
+#undef X
+
+FactoryInit::FactoryInit()
 {
-    MutationType mutType;
-    std::vector<char> mutants;
-    int64_t pos;
-    boost::optional<double> pvalue;
-
-    DiploidSite(const MutationType mutType_, const std::vector<char>& mutants_, const int64_t pos_,
-                const boost::optional<double> pvalue_ = boost::none)
-        : mutType{mutType_}, mutants{mutants_}, pos{pos_}, pvalue{pvalue_}
-    {
-    }
-
-    bool operator==(const DiploidSite& rhs) const
-    {
-        return std::tie(mutType, mutants, pos, pvalue) ==
-               std::tie(rhs.mutType, rhs.mutants, rhs.pos, rhs.pvalue);
-    }
-};
-
-/// This struct contains the results of Integrator::Polish()
-struct PolishResult
-{
-    // Did Polish() converge?
-    bool hasConverged = false;
-    // How many mutations have been tested?
-    size_t mutationsTested = 0;
-    // How many mutations have been actually applied?
-    size_t mutationsApplied = 0;
-
-    // For each iteration in Polish(), get the max of all Evaluators to
-    // diagnose the worst performing one.
-    //
-    // Maximal ratio of populated alpha cells
-    std::vector<float> maxAlphaPopulated;
-    // Maximal ratio of populated beta cells
-    std::vector<float> maxBetaPopulated;
-    // Maximal number of flip flop events
-    std::vector<int> maxNumFlipFlops;
-
-    // Diploid results
-    // The vector is sorted according to the standard
-    // unanimity Mutation class criterion
-    std::vector<DiploidSite> diploidSites;
-};
-
-PolishResult operator+(const PolishResult& lhs, const PolishResult& rhs);
+// step 2: actually call per-model initializer functions
+#define X(var) Init##var();
+    LIST_OF_ENABLED_MODELS
+#undef X
 }
-}  // ::PacBio::Consensus
+
+}  // namespace Consensus
+}  // namespace PacBio
