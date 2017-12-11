@@ -44,19 +44,6 @@ uny_cc2_cpp_sources = files([
   'matrix/ScaledMatrix.cpp',
   'matrix/SparseMatrix.cpp',
 
-  # --------
-  # models
-  # --------
-  'models/MarginalModelForm.cpp',
-  'models/P6C4NoCovModel.cpp',
-  'models/PwSnrAModelForm.cpp',
-  'models/PwSnrModelForm.cpp',
-  'models/S_P1C1Beta_Model.cpp',
-  'models/S_P1C1v1_Model.cpp',
-  'models/S_P1C1v2_Model.cpp',
-  'models/S_P2C2v5_Model.cpp',
-  'models/SnrModelForm.cpp',
-
   # -----
   # poa
   # -----
@@ -107,10 +94,40 @@ uny_cc2_cpp_sources = files([
 
   'ConsensusSettings.cpp',
   'LocalAlignment.cpp'])
+
+# models
+uny_models = [
+  # compile-time parameterized
+  ['P6C4NoCov', files('models/P6C4NoCov_Model.cpp')],
+  ['S_P1C1Beta', files('models/S_P1C1Beta_Model.cpp')],
+  ['S_P1C1v1', files('models/S_P1C1v1_Model.cpp')],
+  ['S_P1C1v2', files('models/S_P1C1v2_Model.cpp')],
+  ['S_P2C2v5', files('models/S_P2C2v5_Model.cpp')],
+
+  # run-time parameterized
+  ['Marginal', files('models/MarginalModelForm.cpp')],
+  ['PwSnrA', files('models/PwSnrAModelForm.cpp')],
+  ['PwSnr', files('models/PwSnrModelForm.cpp')],
+  ['Snr', files('models/SnrModelForm.cpp')]]
+
+uny_enabled_models_str = ''
+foreach i : uny_models
+  uny_enabled_models_str += ' X(' + i[0] + ')'
+  uny_cc2_cpp_sources += i[1]
+endforeach
+
+uny_enabled_models = configuration_data()
+uny_enabled_models.set('ENABLED_MODELS', uny_enabled_models_str)
+
+uny_cc2_cpp_sources += configure_file(
+  input : 'ModelInternalInitializer.cpp.in',
+  output : 'ModelInternalInitializer.cpp',
+  configuration : uny_enabled_models)
+
 uny_cc2_cpp_sources += uny_version_sources
 uny_cc2_cpp_sources += uny_cssw_cpp_sources
 
-uny_cc2_lib_impl = library(
+uny_cc2_lib = library(
   'unanimity',
   uny_cc2_cpp_sources,
   install : true,
@@ -119,14 +136,6 @@ uny_cc2_lib_impl = library(
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep, uny_seqan_dep],
   include_directories : [uny_include_directories, uny_cssw_header],
   cpp_args : uny_warning_flags)
-
-if get_option('default_library') == 'shared'
-  uny_cc2_lib_shared = uny_cc2_lib_impl
-  uny_cc2_lib_static = []
-else
-  uny_cc2_lib_shared = []
-  uny_cc2_lib_static = uny_cc2_lib_impl
-endif
 
 ###############
 # executables #
@@ -140,8 +149,7 @@ if get_option('enable-build-ccs')
   install : true,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep],
   include_directories : uny_include_directories,
-  link_with : uny_cc2_lib_shared,
-  link_whole : uny_cc2_lib_static,
+  link_with : uny_cc2_lib,
   cpp_args : uny_warning_flags)
 endif
 
@@ -153,8 +161,7 @@ if get_option('enable-build-arrow')
   install : true,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep],
   include_directories : uny_include_directories,
-  link_with : uny_cc2_lib_shared,
-  link_whole : uny_cc2_lib_static,
+  link_with : uny_cc2_lib,
   cpp_args : uny_warning_flags)
 endif
 
@@ -166,8 +173,7 @@ if get_option('enable-build-chimera')
   install : true,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_seqan_dep],
   include_directories : uny_include_directories,
-  link_with : uny_cc2_lib_shared,
-  link_whole : uny_cc2_lib_static,
+  link_with : uny_cc2_lib,
   cpp_args : uny_warning_flags)
 endif
 
@@ -179,8 +185,7 @@ if get_option('enable-build-sim')
   install : true,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep],
   include_directories : [uny_include_directories, uny_cssw_header],
-  link_with : uny_cc2_lib_shared,
-  link_whole : uny_cc2_lib_static,
+  link_with : uny_cc2_lib,
   cpp_args : uny_warning_flags)
 endif
 
@@ -192,7 +197,6 @@ if get_option('enable-build-sim')
   install : true,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep],
   include_directories : [uny_include_directories, uny_cssw_header],
-  link_with : uny_cc2_lib_shared,
-  link_whole : uny_cc2_lib_static,
+  link_with : uny_cc2_lib,
   cpp_args : uny_warning_flags)
 endif

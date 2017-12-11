@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -39,6 +39,9 @@
 
 #include <set>
 #include <string>
+
+// Initialize data structures, do NOT remove
+#include <pacbio/consensus/internal/ModelInternalInitializer.h>
 
 namespace PacBio {
 namespace Consensus {

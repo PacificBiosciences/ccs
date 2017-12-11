@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -61,14 +61,12 @@ static constexpr const size_t OUTCOME_NUMBER = 2;
 static constexpr const double kEps = 0.00505052456472967;
 static constexpr const double kInvEps = 1.0 - kEps;
 
-class P6C4NoCovModel : public ModelConfig
+class P6C4NoCov_Model : public ModelConfig
 {
-    REGISTER_MODEL(P6C4NoCovModel);
-
 public:
     static std::set<std::string> Chemistries() { return {"P6-C4"}; }
     static ModelForm Form() { return ModelForm::SNR; }
-    P6C4NoCovModel(const SNR& snr);
+    P6C4NoCov_Model(const SNR& snr);
     std::unique_ptr<AbstractRecursor> CreateRecursor(const MappedRead& mr,
                                                      double scoreDiff) const override;
     std::vector<TemplatePosition> Populate(const std::string& tpl) const override;
@@ -83,8 +81,6 @@ private:
     SNR snr_;
     double ctxTrans_[4][2][4];
 };
-
-REGISTER_MODEL_IMPL(P6C4NoCovModel);
 
 // TODO(lhepler) comments regarding the CRTP
 class P6C4NoCovRecursor : public Recursor<P6C4NoCovRecursor>
@@ -153,7 +149,7 @@ static constexpr const double snrRanges[2][4] = {
 // For P6-C4 we cap SNR at 20.0 (19.0 for C); as the training set only went that
 // high; extrapolation beyond this cap goes haywire because of the higher-order
 // terms in the regression model.  See bug 31423.
-P6C4NoCovModel::P6C4NoCovModel(const SNR& snr)
+P6C4NoCov_Model::P6C4NoCov_Model(const SNR& snr)
     : snr_(ClampSNR(snr, SNR{snrRanges[0]}, SNR{snrRanges[1]}))
 {
     for (size_t bp = 0; bp < 4; ++bp) {
@@ -181,7 +177,7 @@ P6C4NoCovModel::P6C4NoCovModel(const SNR& snr)
     }
 }
 
-std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) const
+std::vector<TemplatePosition> P6C4NoCov_Model::Populate(const std::string& tpl) const
 {
     auto rowFetcher = [this](const NCBI2na prev, const NCBI2na curr) -> const double(&)[4]
     {
@@ -192,8 +188,8 @@ std::vector<TemplatePosition> P6C4NoCovModel::Populate(const std::string& tpl) c
     return AbstractPopulater(tpl, rowFetcher);
 }
 
-std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(const MappedRead& mr,
-                                                                 double scoreDiff) const
+std::unique_ptr<AbstractRecursor> P6C4NoCov_Model::CreateRecursor(const MappedRead& mr,
+                                                                  double scoreDiff) const
 {
     const double counterWeight = CounterWeight(
         [this](size_t ctx, MoveType m) {
@@ -215,8 +211,8 @@ std::unique_ptr<AbstractRecursor> P6C4NoCovModel::CreateRecursor(const MappedRea
     return std::unique_ptr<AbstractRecursor>(new P6C4NoCovRecursor(mr, scoreDiff, counterWeight));
 }
 
-double P6C4NoCovModel::ExpectedLLForEmission(const MoveType move, const AlleleRep& prev,
-                                             const AlleleRep& curr, const MomentType moment) const
+double P6C4NoCov_Model::ExpectedLLForEmission(const MoveType move, const AlleleRep& prev,
+                                              const AlleleRep& curr, const MomentType moment) const
 {
     auto cachedEmissionVisitor = [](const MoveType move, const NCBI2na prev, const NCBI2na curr,
                                     const MomentType moment) -> double {
@@ -273,7 +269,7 @@ double P6C4NoCovRecursor::UndoCounterWeights(const size_t nEmissions) const
     return nLgCounterWeight_ * nEmissions;
 }
 
-inline std::pair<Data::SNR, std::vector<TemplatePosition>> P6C4NoCovModel_InitialiseModel(
+inline std::pair<Data::SNR, std::vector<TemplatePosition>> P6C4NoCov_InitialiseModel(
     std::default_random_engine* const rng, const std::string& tpl)
 {
     Data::SNR snrs{0, 0, 0, 0};
@@ -281,15 +277,14 @@ inline std::pair<Data::SNR, std::vector<TemplatePosition>> P6C4NoCovModel_Initia
         snrs[i] = std::uniform_real_distribution<double>{snrRanges[0][i], snrRanges[1][i]}(*rng);
     }
 
-    const P6C4NoCovModel model{snrs};
+    const P6C4NoCov_Model model{snrs};
     std::vector<TemplatePosition> transModel = model.Populate(tpl);
 
     return {snrs, transModel};
 }
 
-BaseData P6C4NoCovModel_GenerateReadData(std::default_random_engine* const rng,
-                                         const MoveType state, const AlleleRep& prev,
-                                         const AlleleRep& curr)
+BaseData P6C4NoCov_GenerateReadData(std::default_random_engine* const rng, const MoveType state,
+                                    const AlleleRep& prev, const AlleleRep& curr)
 {
     // distribution is arbitrary at the moment, as
     // PW and IPD are not a covariates of the consensus HMM
@@ -310,15 +305,18 @@ BaseData P6C4NoCovModel_GenerateReadData(std::default_random_engine* const rng,
     return {newBase, newPw, newIpd};
 }
 
-std::pair<Data::Read, std::vector<MoveType>> P6C4NoCovModel::SimulateRead(
+std::pair<Data::Read, std::vector<MoveType>> P6C4NoCov_Model::SimulateRead(
     std::default_random_engine* const rng, const std::string& tpl,
     const std::string& readname) const
 {
-    return SimulateReadImpl(rng, tpl, readname, P6C4NoCovModel_InitialiseModel,
-                            P6C4NoCovModel_GenerateReadData);
+    return SimulateReadImpl(rng, tpl, readname, P6C4NoCov_InitialiseModel,
+                            P6C4NoCov_GenerateReadData);
 }
 
 }  // namespace anonymous
 }  // namespace P6C4NoCov
+
+REGISTER_MODEL_IMPL(P6C4NoCov);
+
 }  // namespace Consensus
 }  // namespace PacBio

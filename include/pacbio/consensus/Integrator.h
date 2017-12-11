@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -41,6 +41,9 @@
 #include <iostream>
 #include <memory>
 #include <numeric>
+
+// Initialize data structures, do NOT remove
+#include <pacbio/consensus/internal/ModelInternalInitializer.h>
 
 #include <pacbio/consensus/Evaluator.h>
 #include <pacbio/consensus/Mutation.h>

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -60,8 +60,6 @@ static constexpr const size_t OUTCOME_NUMBER = 12;
 
 class S_P1C1v1_Model : public ModelConfig
 {
-    REGISTER_MODEL(S_P1C1v1_Model);
-
 public:
     static std::set<std::string> Chemistries() { return {"S/P1-C1.1"}; }
     static ModelForm Form() { return ModelForm::PWSNRA; }
@@ -80,8 +78,6 @@ private:
     double ctxTrans_[CONTEXT_NUMBER][4];
     double cachedEmissionExpectations_[CONTEXT_NUMBER][3][2];
 };
-
-REGISTER_MODEL_IMPL(S_P1C1v1_Model);
 
 // TODO(lhepler) comments regarding the CRTP
 class S_P1C1v1_Recursor : public Recursor<S_P1C1v1_Recursor>
@@ -433,5 +429,8 @@ std::pair<Data::Read, std::vector<MoveType>> S_P1C1v1_Model::SimulateRead(
 
 }  // namespace anonymous
 }  // namespace S_P1C1v1
+
+REGISTER_MODEL_IMPL(S_P1C1v1);
+
 }  // namespace Consensus
 }  // namespace PacBio

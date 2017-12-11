@@ -69,6 +69,11 @@ install_headers([
   'pacbio/consensus/Template.h'],
   subdir : 'pacbio/consensus')
 
+# pacbio/consensus/internal
+install_headers([
+  'pacbio/consensus/internal/ModelInternalInitializer.h'],
+  subdir : 'pacbio/consensus/internal')
+
 # pacbio/data
 install_headers([
   'pacbio/data/ChemistryMapping.h',

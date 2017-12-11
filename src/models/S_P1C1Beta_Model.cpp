@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2011-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -60,8 +60,6 @@ static constexpr const size_t OUTCOME_NUMBER = 4;
 
 class S_P1C1Beta_Model : public ModelConfig
 {
-    REGISTER_MODEL(S_P1C1Beta_Model);
-
 public:
     static std::set<std::string> Chemistries() { return {"S/P1-C1/beta"}; }
     static ModelForm Form() { return ModelForm::MARGINAL; }
@@ -78,8 +76,6 @@ public:
 private:
     SNR snr_;
 };
-
-REGISTER_MODEL_IMPL(S_P1C1Beta_Model);
 
 class S_P1C1Beta_Recursor : public Recursor<S_P1C1Beta_Recursor>
 {
@@ -278,5 +274,8 @@ std::pair<Data::Read, std::vector<MoveType>> S_P1C1Beta_Model::SimulateRead(
 
 }  // namespace anonymous
 }  // namespace S_P1C1Beta
+
+REGISTER_MODEL_IMPL(S_P1C1Beta);
+
 }  // namespace Consensus
 }  // namespace PacBio

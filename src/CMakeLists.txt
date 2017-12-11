@@ -27,6 +27,28 @@ file(GLOB UNY_MODELS_CPP "models/*.cpp")
 # get sources for src/poa
 file(GLOB UNY_POA_CPP    "poa/*.cpp")
 
+# enable models
+foreach(i
+    # compile-time parameterized
+    P6C4NoCov
+    S_P1C1Beta
+    S_P1C1v1
+    S_P1C1v2
+    S_P2C2v5
+
+    # run-time parameterized
+    Marginal
+    PwSnrA
+    PwSnr
+    Snr)
+    set(ENABLED_MODELS "${ENABLED_MODELS} X(${i})")
+endforeach()
+
+configure_file(
+    ${UNY_SourceDir}/ModelInternalInitializer.cpp.in
+    ${CMAKE_BINARY_DIR}/generated/ModelInternalInitializer.cpp
+)
+
 # includes
 set(UNY_INCLUDE_DIRS
     ${UNY_IncludeDir}
@@ -47,6 +69,7 @@ set(UNY_INCLUDE_DIRS
 add_library(cc2 STATIC
     ${CMAKE_BINARY_DIR}/generated/UnanimityGitHash.cpp
     ${CMAKE_BINARY_DIR}/generated/UnanimityVersion.cpp
+    ${CMAKE_BINARY_DIR}/generated/ModelInternalInitializer.cpp
     ${UNY_ALIGN_CPP}
     ${UNY_MATRIX_CPP}
     ${UNY_MODELS_CPP}
@@ -107,10 +130,8 @@ target_include_directories(unanimity
 )
 
 set(UNY_LIBRARIES
-    ${PRE_LINK}
-    cc2
-    ${POST_LINK}
     unanimity
+    cc2
     ${ZLIB_LDFLAGS}
     ${HTSLIB_LIBRARIES}
     ${PacBioBAM_LIBRARIES}

@@ -147,7 +147,7 @@ endif
 ###################
 
 import('pkgconfig').generate(
-  libraries : uny_cc2_lib_impl,
+  libraries : uny_cc2_lib,
   version : meson.project_version(),
   name : 'unanimity',
   filebase : 'unanimity',
@@ -155,7 +155,7 @@ import('pkgconfig').generate(
 
 uny_dep = declare_dependency(
   include_directories : uny_include_directories,
-  link_with : uny_cc2_lib_impl,
+  link_with : uny_cc2_lib,
   dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep, uny_seqan_dep],
   version : meson.project_version(),
   compile_args : uny_swig_warning_flags)

@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2015, Pacific Biosciences of California, Inc.
+// Copyright (c) 2014-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -112,7 +112,6 @@ private:
 
 class PwSnrModelCreator : public ModelCreator
 {
-    REGISTER_MODELFORM(PwSnrModelCreator);
     friend class PwSnrModel;
     friend class PwSnrRecursor;
     friend class PwSnrInitializeModel;
@@ -131,8 +130,6 @@ private:
     double emissionPmf_[3][CONTEXT_NUMBER][OUTCOME_NUMBER];
     double transitionParams_[CONTEXT_NUMBER][3][4];
 };
-
-REGISTER_MODELFORM_IMPL(PwSnrModelCreator);
 
 inline double PwSnrModel::CalculateExpectedLLForEmission(const size_t move, const uint8_t row,
                                                          const size_t moment) const
@@ -333,5 +330,8 @@ std::pair<Data::Read, std::vector<MoveType>> PwSnrModel::SimulateRead(
 
 }  // namespace anonymous
 }  // namespace PwSnr
+
+REGISTER_MODELFORM_IMPL(PwSnr);
+
 }  // namespace Consensus
 }  // namespace PacBio

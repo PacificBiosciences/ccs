@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Pacific Biosciences of California, Inc.
+// Copyright (c) 2016-2017, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -99,11 +99,13 @@ public:
     }
 };
 
-#define REGISTER_MODELFORM(cls) \
-private:                        \
-    static const ModelFormCreatorImpl<cls> creator_
-
-#define REGISTER_MODELFORM_IMPL(cls) const ModelFormCreatorImpl<cls> cls::creator_(cls::Form())
+#define REGISTER_MODELFORM_IMPL(MODEL)                                   \
+    void Init##MODEL()                                                   \
+    {                                                                    \
+        using namespace MODEL;                                           \
+        static const ModelFormCreatorImpl<MODEL##ModelCreator> creator_{ \
+            MODEL##ModelCreator::Form()};                                \
+    }
 
 }  // namespace Consensus
 }  // namespace PacBio
