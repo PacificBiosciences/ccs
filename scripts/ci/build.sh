@@ -14,7 +14,7 @@ GetBBRepo () {
 echo "#############################"
 echo "# LOAD MODULES"
 type module >& /dev/null || . /mnt/software/Modules/current/init/bash
-module load gcc/6.4.0
+module load gcc
 module load ccache
 module load boost
 module load zlib
