@@ -68,7 +68,7 @@ echo "## Install pip modules"
 $PIP install --user \
   cram==0.7
 $PIP install --user --no-index \
-  $NEXUS_WHEEL/pythonpkgs/pysam-0.9.1.4-cp27-cp27mu-linux_x86_64.whl \
+  $NEXUS_WHEEL/pythonpkgs/pysam-0.13-cp27-cp27mu-linux_x86_64.whl \
   $NEXUS_WHEEL/pythonpkgs/xmlbuilder-1.0-cp27-none-any.whl \
   $NEXUS_WHEEL/pythonpkgs/avro-1.7.7-cp27-none-any.whl \
   $NEXUS_WHEEL/pythonpkgs/iso8601-0.1.12-py2.py3-none-any.whl \
