@@ -18,7 +18,7 @@ module load gcc/6.4.0
 module load ccache/3.3.4
 module load boost/1.60
 module load zlib/1.2.8
-module load htslib/1.3.1
+module load htslib
 module load cmake/3.2.2
 module load swig/3.0.5
 module load ninja
