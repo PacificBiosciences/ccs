@@ -61,7 +61,7 @@ module load anaconda
 PYTHONUSERBASE=$PWD/unyve
 PATH=$PWD/unyve/bin:$PATH
 export PATH PYTHONUSERBASE
-NEXUS_WHEEL=http://nexus/repository/unsupported/pitchfork/gcc-4.9.2
+NEXUS_WHEEL=http://nexus/repository/unsupported/pitchfork/gcc-6.4.0
 PIP="pip --cache-dir=$PWD/.pip --disable-pip-version-check"
 
 echo "## Install pip modules"
