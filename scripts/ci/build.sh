@@ -15,12 +15,12 @@ echo "#############################"
 echo "# LOAD MODULES"
 type module >& /dev/null || . /mnt/software/Modules/current/init/bash
 module load gcc/6.4.0
-module load ccache/3.3.4
-module load boost/1.60
-module load zlib/1.2.8
+module load ccache
+module load boost
+module load zlib
 module load htslib
-module load cmake/3.2.2
-module load swig/3.0.5
+module load cmake
+module load swig
 module load ninja
 if [[ $USER == "bamboo" ]]; then
   export CCACHE_DIR=/mnt/secondary/Share/tmp/bamboo.mobs.ccachedir
@@ -110,7 +110,7 @@ cat > g++ <<EOF
 $(which g++) -static-libstdc++ \$@
 EOF
 chmod +x g++
-module load ccache/3.3.4
+module load ccache
 mv g++ unyve/bin/
 echo "## Install ConsensusCore"
 ( cd _deps/ConsensusCore \
@@ -131,7 +131,7 @@ echo "## Unanimity tests"
 ( cd build && ninja check )
 
 #echo "## Test CC2 via GC"
-#module load cram/0.7
+#module load cram
 #module add mummer/3.23
 #module add exonerate/2.0.0
 #( cd _rev_deps/GenomicConsensus && make check )
