@@ -4,12 +4,12 @@ set -euo pipefail
 echo "# DEPENDENCIES"
 echo "## Load modules"
 source /mnt/software/Modules/current/init/bash
-module load git gcc/6.4.0 python/2.7.9 cmake swig ccache virtualenv zlib ninja boost
+module load git gcc python/2 cmake swig ccache zlib ninja boost
 
 echo "## Get into virtualenv"
 if [ ! -d venv ]
 then
-    /mnt/software/v/virtualenv/13.0.1/virtualenv.py venv
+    virtualenv venv
 fi
 set +u
 source venv/bin/activate
