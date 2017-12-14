@@ -4,7 +4,7 @@ set -euo pipefail
 echo "#############################"
 echo "# LOAD MODULES"
 source /mnt/software/Modules/current/init/bash
-module load git gcc python/2.7.9 cmake cram swig ccache virtualenv zlib ninja boost lcov gcovr
+module load git gcc python/2 cmake cram swig ccache zlib ninja boost lcov gcovr
 
 echo "## Fetch submodules"
 git submodule update --init --remote
