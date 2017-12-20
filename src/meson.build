@@ -200,3 +200,16 @@ if get_option('enable-build-sim')
   link_with : uny_cc2_lib,
   cpp_args : uny_warning_flags)
 endif
+
+# variantCaller
+if get_option('enable-build-vC')
+  uny_variantCaller = executable(
+    'variantCaller', files([
+      'variantCaller/VariantCallerSettings.cpp',
+      'variantCaller/variantCaller.cpp']),
+    install : true,
+    dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep],
+    include_directories : uny_include_directories,
+    link_with : uny_cc2_lib,
+    cpp_args : uny_warning_flags)
+endif
