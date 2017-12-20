@@ -2,7 +2,9 @@ option('enable-build-arrow',   type : 'boolean', value : true,  description : 'B
 option('enable-build-ccs',     type : 'boolean', value : true,  description : 'Build UNANMITIY\'s circular consensus tool')
 option('enable-build-chimera', type : 'boolean', value : true,  description : 'Build UNANMITIY\'s stand-alone chimera labeler')
 option('enable-build-sim',     type : 'boolean', value : true,  description : 'Build UNANMITIY\'s (sub)read simulator')
+option('enable-build-vC',      type : 'boolean', value : true,  description : 'Build UNANMITIY\'s GCpp variantCaller')
 option('enable-tests',         type : 'boolean', value : true,  description : 'Enable dependencies required for testing')
+
 
 # python:
 option('enable-build-swig',    type : 'boolean', value : true,        description : 'Build UNANMITIY\'s SWIG interfacing code')
