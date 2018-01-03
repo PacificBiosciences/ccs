@@ -331,7 +331,7 @@ std::pair<Data::Read, std::vector<MoveType>> SnrModel::SimulateRead(
 }  // namespace anonymous
 }  // namespace Snr
 
-REGISTER_MODELFORM_IMPL(Snr);
+REGISTER_MODELFORM_IMPL(Snr)
 
 }  // namespace Consensus
 }  // namespace PacBio
