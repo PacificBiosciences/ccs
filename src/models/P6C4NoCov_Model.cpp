@@ -318,7 +318,7 @@ std::pair<Data::Read, std::vector<MoveType>> P6C4NoCov_Model::SimulateRead(
 }  // namespace anonymous
 }  // namespace P6C4NoCov
 
-REGISTER_MODEL_IMPL(P6C4NoCov);
+REGISTER_MODEL_IMPL(P6C4NoCov)
 
 }  // namespace Consensus
 }  // namespace PacBio

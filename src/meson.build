@@ -127,88 +127,117 @@ uny_cc2_cpp_sources += configure_file(
 uny_cc2_cpp_sources += uny_version_sources
 uny_cc2_cpp_sources += uny_cssw_cpp_sources
 
+# install library if
+# - either running as a proper project
+# - or using shared libraries
+uny_lib_install = (not meson.is_subproject()) or (get_option('default_library') == 'shared')
+
 uny_cc2_lib = library(
   'unanimity',
   uny_cc2_cpp_sources,
-  install : true,
-  soversion : 0,
+  install : uny_lib_install,
+  # use boost SONAME practice:
+  #   cause ld startup issues before
+  #   you even have the chance of running
+  #   into ABI issues.
+  soversion : meson.project_version(),
   version : meson.project_version(),
-  dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep, uny_seqan_dep],
-  include_directories : [uny_include_directories, uny_cssw_header],
+  dependencies : [
+    uny_pbcopper_dep,
+    uny_pbbam_dep,
+    uny_boost_dep,
+    uny_thread_dep,
+    uny_seqan_dep],
+  include_directories : [
+    uny_include_directories,
+    uny_cssw_header],
   cpp_args : uny_warning_flags)
 
 ###############
 # executables #
 ###############
 
-# ccs
-if get_option('enable-build-ccs')
+if not meson.is_subproject()
+  # ccs
   uny_ccs = executable(
-  'ccs', [
-    'main/ccs.cpp'],
-  install : true,
-  dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep],
-  include_directories : uny_include_directories,
-  link_with : uny_cc2_lib,
-  cpp_args : uny_warning_flags)
-endif
+    'ccs', files([
+      'main/ccs.cpp']),
+    install : true,
+    dependencies : [
+      uny_pbcopper_dep,
+      uny_pbbam_dep,
+      uny_boost_dep,
+      uny_thread_dep],
+    include_directories : uny_include_directories,
+    link_with : uny_cc2_lib,
+    cpp_args : uny_warning_flags)
 
-# arrow
-if get_option('enable-build-arrow')
+  # arrow
   uny_arrow = executable(
-  'arrow', [
-    'main/arrow.cpp'],
-  install : true,
-  dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep],
-  include_directories : uny_include_directories,
-  link_with : uny_cc2_lib,
-  cpp_args : uny_warning_flags)
-endif
+    'arrow', files([
+      'main/arrow.cpp']),
+    install : true,
+    dependencies : [
+      uny_pbcopper_dep,
+      uny_pbbam_dep,
+      uny_boost_dep,
+      uny_thread_dep],
+    include_directories : uny_include_directories,
+    link_with : uny_cc2_lib,
+    cpp_args : uny_warning_flags)
 
-# ChimeraLabeler
-if get_option('enable-build-chimera')
+  # ChimeraLabeler
   executable(
-  'ChimeraLabeler', [
-    'main/ChimeraLabeler.cpp'],
-  install : true,
-  dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_seqan_dep],
-  include_directories : uny_include_directories,
-  link_with : uny_cc2_lib,
-  cpp_args : uny_warning_flags)
-endif
+    'ChimeraLabeler', files([
+      'main/ChimeraLabeler.cpp']),
+    install : true,
+    dependencies : [
+      uny_pbcopper_dep,
+      uny_pbbam_dep,
+      uny_seqan_dep],
+    include_directories : uny_include_directories,
+    link_with : uny_cc2_lib,
+    cpp_args : uny_warning_flags)
 
-# ccs_sim
-if get_option('enable-build-sim')
+  # ccs_sim
   executable(
-  'ccs_sim', [
-    'main/ccs_sim.cpp'],
-  install : true,
-  dependencies : [uny_pbcopper_dep, uny_pbbam_dep],
-  include_directories : [uny_include_directories, uny_cssw_header],
-  link_with : uny_cc2_lib,
-  cpp_args : uny_warning_flags)
-endif
+    'ccs_sim', files([
+      'main/ccs_sim.cpp']),
+    install : true,
+    dependencies : [
+      uny_pbcopper_dep,
+      uny_pbbam_dep],
+    include_directories : [
+      uny_include_directories,
+      uny_cssw_header],
+    link_with : uny_cc2_lib,
+    cpp_args : uny_warning_flags)
 
-# genomic_sim
-if get_option('enable-build-sim')
+  # genomic_sim
   executable(
-  'genomic_sim', [
-    'main/genomic_sim.cpp'],
-  install : true,
-  dependencies : [uny_pbcopper_dep, uny_pbbam_dep],
-  include_directories : [uny_include_directories, uny_cssw_header],
-  link_with : uny_cc2_lib,
-  cpp_args : uny_warning_flags)
-endif
+    'genomic_sim', files([
+      'main/genomic_sim.cpp']),
+    install : true,
+    dependencies : [
+      uny_pbcopper_dep,
+      uny_pbbam_dep],
+    include_directories : [
+      uny_include_directories,
+      uny_cssw_header],
+    link_with : uny_cc2_lib,
+    cpp_args : uny_warning_flags)
 
-# variantCaller
-if get_option('enable-build-vC')
+  # variantCaller
   uny_variantCaller = executable(
     'variantCaller', files([
       'variantCaller/VariantCallerSettings.cpp',
       'variantCaller/variantCaller.cpp']),
     install : true,
-    dependencies : [uny_pbcopper_dep, uny_pbbam_dep, uny_boost_dep, uny_thread_dep],
+    dependencies : [
+      uny_pbcopper_dep,
+      uny_pbbam_dep,
+      uny_boost_dep,
+      uny_thread_dep],
     include_directories : uny_include_directories,
     link_with : uny_cc2_lib,
     cpp_args : uny_warning_flags)

@@ -297,7 +297,7 @@ std::pair<Data::Read, std::vector<MoveType>> MarginalModel::SimulateRead(
 }  // namespace anonymous
 }  // namespace Marginal
 
-REGISTER_MODELFORM_IMPL(Marginal);
+REGISTER_MODELFORM_IMPL(Marginal)
 
 }  // namespace Consensus
 }  // namespace PacBio

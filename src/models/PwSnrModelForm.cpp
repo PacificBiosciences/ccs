@@ -333,7 +333,7 @@ std::pair<Data::Read, std::vector<MoveType>> PwSnrModel::SimulateRead(
 }  // namespace anonymous
 }  // namespace PwSnr
 
-REGISTER_MODELFORM_IMPL(PwSnr);
+REGISTER_MODELFORM_IMPL(PwSnr)
 
 }  // namespace Consensus
 }  // namespace PacBio

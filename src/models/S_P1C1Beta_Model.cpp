@@ -277,7 +277,7 @@ std::pair<Data::Read, std::vector<MoveType>> S_P1C1Beta_Model::SimulateRead(
 }  // namespace anonymous
 }  // namespace S_P1C1Beta
 
-REGISTER_MODEL_IMPL(S_P1C1Beta);
+REGISTER_MODEL_IMPL(S_P1C1Beta)
 
 }  // namespace Consensus
 }  // namespace PacBio
