@@ -88,7 +88,7 @@ subdir('src')
 # swig #
 ########
 
-if get_option('enable-build-swig')
+if (not meson.is_subproject()) and get_option('swig')
   uny_python_interp = find_program(get_option('PYTHON'), required : true)
   uny_swig = find_program('swig', required : true)
 
@@ -124,7 +124,7 @@ endif
 # tests #
 #########
 
-if get_option('enable-tests')
+if (not meson.is_subproject()) and get_option('tests')
   uny_clang_formatter = find_program('tools/check-formatting')
   uny_cram_script = find_program('scripts/cram')
   uny_cram_test_data = files([
@@ -146,12 +146,14 @@ endif
 # dependency info #
 ###################
 
-import('pkgconfig').generate(
-  libraries : uny_cc2_lib,
-  version : meson.project_version(),
-  name : 'unanimity',
-  filebase : 'unanimity',
-  description : 'PacBio C++ library for calling circular consensus sequences')
+if (not meson.is_subproject())
+  import('pkgconfig').generate(
+    libraries : uny_cc2_lib,
+    version : meson.project_version(),
+    name : 'unanimity',
+    filebase : 'unanimity',
+    description : 'PacBio C++ library for calling circular consensus sequences')
+endif
 
 uny_dep = declare_dependency(
   include_directories : uny_include_directories,
