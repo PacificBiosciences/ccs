@@ -204,28 +204,28 @@ const PlainOption ZmwTimings{
 }  // namespace OptionNames
 
 ConsensusSettings::ConsensusSettings(const PacBio::CLI::Results& options)
-    : ByStrand(options[OptionNames::ByStrand])
-    , ForceOutput(options[OptionNames::ForceOutput])
-    , LogFile(std::forward<std::string>(options[OptionNames::LogFile]))
-    , LogLevel(options.LogLevel())
-    , MaxDropFraction(options[OptionNames::MaxDropFraction])
-    , MaxLength(options[OptionNames::MaxLength])
-    , MinLength(options[OptionNames::MinLength])
-    , MinPasses(options[OptionNames::MinPasses])
-    , MinPredictedAccuracy(options[OptionNames::MinPredictedAccuracy])
-    , MinReadScore(options[OptionNames::MinReadScore])
-    , MinSNR(options[OptionNames::MinSnr])
-    , MinIdentity(options[OptionNames::MinIdentity])
-    , MinZScore(options[OptionNames::MinZScore] == nullptr
+    : ByStrand{options[OptionNames::ByStrand]}
+    , ForceOutput{options[OptionNames::ForceOutput]}
+    , LogFile{options[OptionNames::LogFile].get<decltype(LogFile)>()}
+    , LogLevel{options.LogLevel()}
+    , MaxDropFraction{options[OptionNames::MaxDropFraction]}
+    , MaxLength{options[OptionNames::MaxLength]}
+    , MinLength{options[OptionNames::MinLength]}
+    , MinPasses{options[OptionNames::MinPasses]}
+    , MinPredictedAccuracy{options[OptionNames::MinPredictedAccuracy]}
+    , MinReadScore{options[OptionNames::MinReadScore]}
+    , MinSNR{options[OptionNames::MinSnr]}
+    , MinIdentity{options[OptionNames::MinIdentity]}
+    , MinZScore{options[OptionNames::MinZScore] == nullptr
                     ? NAN
-                    : static_cast<float>(options[OptionNames::MinZScore]))
-    , ModelPath(std::forward<std::string>(options[OptionNames::ModelPath]))
-    , ModelSpec(std::forward<std::string>(options[OptionNames::ModelSpec]))
-    , PolishRepeats(options[OptionNames::PolishRepeats])
-    , ReportFile(std::forward<std::string>(options[OptionNames::ReportFile]))
-    , RichQVs(options[OptionNames::RichQVs])
-    , WlSpec(std::forward<std::string>(options[OptionNames::Zmws]))
-    , ZmwTimings(options[OptionNames::ZmwTimings])
+                    : static_cast<float>(options[OptionNames::MinZScore])}
+    , ModelPath{options[OptionNames::ModelPath].get<decltype(ModelPath)>()}
+    , ModelSpec{options[OptionNames::ModelSpec].get<decltype(ModelSpec)>()}
+    , PolishRepeats{options[OptionNames::PolishRepeats]}
+    , ReportFile{options[OptionNames::ReportFile].get<decltype(ReportFile)>()}
+    , RichQVs{options[OptionNames::RichQVs]}
+    , WlSpec{options[OptionNames::Zmws].get<decltype(WlSpec)>()}
+    , ZmwTimings{options[OptionNames::ZmwTimings]}
 {
     // N.B. If the user somehow specifies both polish and noPolish, noPolish wins.
     // Unfortunately there's no sensible way to check for this condition and error out.
