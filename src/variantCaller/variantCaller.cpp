@@ -89,8 +89,9 @@ static int Runner(const PacBio::CLI::Results& args)
 
     const PacBio::GenomicConsensus::GenomicConsensusSettings settings(args);
 
-    const std::string outputFiles{std::forward<std::string>(args["output_filename"])};
-    const std::string referenceFilename{std::forward<std::string>(args["reference_filename"])};
+    const std::string outputFiles{args["output_filename"].get<decltype(outputFiles)>()};
+    const std::string referenceFilename{
+        args["reference_filename"].get<decltype(referenceFilename)>()};
 
     /*
     TODO: Handle dispatching to models here

@@ -399,32 +399,33 @@ const PlainOption SkipUnrecognizedContigs{
 }  // namespace OptionNames
 
 GenomicConsensusSettings::GenomicConsensusSettings(const PacBio::CLI::Results& options)
-    : LogFile(std::forward<std::string>(options[OptionNames::LogFile]))
-    , LogLevel(options.LogLevel())
-    , ReferenceFilename{std::forward<std::string>(options[OptionNames::ReferenceFilename])}
-    , OutputFilename{std::forward<std::string>(options[OptionNames::OutputFilename])}
+    : LogFile{options[OptionNames::LogFile].get<decltype(LogFile)>()}
+    , LogLevel{options.LogLevel()}
+    , ReferenceFilename{options[OptionNames::ReferenceFilename].get<decltype(ReferenceFilename)>()}
+    , OutputFilename{options[OptionNames::OutputFilename].get<decltype(OutputFilename)>()}
     , MinConfidence{options[OptionNames::MinConfidence]}
     , MinCoverage{options[OptionNames::MinCoverage]}
-    , NoEvidenceConsensusCall{std::forward<std::string>(
-          options[OptionNames::NoEvidenceConsensusCall])}
+    , NoEvidenceConsensusCall{options[OptionNames::NoEvidenceConsensusCall]
+                                  .get<decltype(NoEvidenceConsensusCall)>()}
     , Coverage{options[OptionNames::Coverage]}
     , MinMapQV{options[OptionNames::MinMapQV]}
-    , ReferenceWindows{std::forward<std::string>(options[OptionNames::ReferenceWindows])}
+    , ReferenceWindows{options[OptionNames::ReferenceWindows].get<decltype(ReferenceWindows)>()}
     , AlignmentSetRefWindows{options[OptionNames::AlignmentSetRefWindows]}
-    , ReferenceWindowsFile{std::forward<std::string>(options[OptionNames::ReferenceWindowsFile])}
-    , Barcode{std::forward<std::string>(options[OptionNames::Barcode])}
-    , ReadStratum{std::forward<std::string>(options[OptionNames::ReadStratum])}
+    , ReferenceWindowsFile{options[OptionNames::ReferenceWindowsFile]
+                               .get<decltype(ReferenceWindowsFile)>()}
+    , Barcode{options[OptionNames::Barcode].get<decltype(Barcode)>()}
+    , ReadStratum{options[OptionNames::ReadStratum].get<decltype(ReadStratum)>()}
     , MinReadScore{options[OptionNames::MinReadScore]}
     , MinSnr{options[OptionNames::MinSnr]}
     , MinZScore{options[OptionNames::MinZScore]}
     , MinAccuracy{options[OptionNames::MinAccuracy]}
-    , Algorithm{std::forward<std::string>(options[OptionNames::Algorithm])}
-    , ParametersFile{std::forward<std::string>(options[OptionNames::ParametersFile])}
-    , ParametersSpec{std::forward<std::string>(options[OptionNames::ParametersSpec])}
+    , Algorithm{options[OptionNames::Algorithm].get<decltype(Algorithm)>()}
+    , ParametersFile{options[OptionNames::ParametersFile].get<decltype(ParametersFile)>()}
+    , ParametersSpec{options[OptionNames::ParametersSpec].get<decltype(ParametersSpec)>()}
     , MaskRadius{options[OptionNames::MaskRadius]}
     , MaskErrorRate{options[OptionNames::MaskErrorRate]}
-    , DumpEvidence{std::forward<std::string>(options[OptionNames::DumpEvidence])}
-    , EvidenceDirectory{std::forward<std::string>(options[OptionNames::EvidenceDirectory])}
+    , DumpEvidence{options[OptionNames::DumpEvidence].get<decltype(DumpEvidence)>()}
+    , EvidenceDirectory{options[OptionNames::EvidenceDirectory].get<decltype(EvidenceDirectory)>()}
     , ReportEffectiveCoverage{options[OptionNames::ReportEffectiveCoverage]}
     , Diploid{options[OptionNames::Diploid]}
     , QueueSize{options[OptionNames::QueueSize]}
@@ -433,7 +434,7 @@ GenomicConsensusSettings::GenomicConsensusSettings(const PacBio::CLI::Results& o
     , SimpleChunking{options[OptionNames::SimpleChunking]}
     , ReferenceChunkOverlap{options[OptionNames::ReferenceChunkOverlap]}
     , AutoDisableHdf5ChunkCache{options[OptionNames::AutoDisableHdf5ChunkCache]}
-    , Aligner{std::forward<std::string>(options[OptionNames::Aligner])}
+    , Aligner{options[OptionNames::Aligner].get<decltype(Aligner)>()}
     , RefineDinucleotideRepeats{options[OptionNames::RefineDinucleotideRepeats]}
     , NoRefineDinucleotideRepeats{options[OptionNames::NoRefineDinucleotideRepeats]}
     , Fast{options[OptionNames::Fast]}
