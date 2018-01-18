@@ -45,6 +45,7 @@
 
 #include <algorithm>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <pbbam/BamRecord.h>
