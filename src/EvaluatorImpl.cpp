@@ -318,6 +318,7 @@ void EvaluatorImpl::MaskIntervals(const size_t radius, const double maxErrRate)
             case 'D':
             case 'R':
                 nErr += 1;
+            // fallthrough
             case 'M':
                 errsBySite.emplace_back(nErr);
                 nErr = 0;
