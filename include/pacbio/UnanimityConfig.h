@@ -65,3 +65,13 @@
 #define UNANIMITY_PRIVATE_API
 #endif
 #endif
+
+// Compatibility guard to prevent old compilers
+// choking on relaxed C++14 constexpr handling
+// https://github.com/PacificBiosciences/pitchfork/issues/417
+
+#if (__GNUC__ >= 6) || defined(__clang__)
+#define UNANIMITY_CONSTEXPR constexpr
+#else
+#define UNANIMITY_CONSTEXPR
+#endif

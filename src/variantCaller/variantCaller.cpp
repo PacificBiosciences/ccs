@@ -45,11 +45,10 @@
 
 #include "VariantCallerSettings.h"
 
-using namespace std::literals::string_literals;  // for std::operator ""s
-
 // these strings are part of the BAM header, they CANNOT contain newlines
-const auto DESCRIPTION{"Compute genomic consensus and call variants relative to the reference."s};
-const auto APPNAME{"variantCaller"s};
+const std::string DESCRIPTION{
+    "Compute genomic consensus and call variants relative to the reference."};
+const std::string APPNAME{"variantCaller"};
 
 static int Runner(const PacBio::CLI::Results& args)
 {

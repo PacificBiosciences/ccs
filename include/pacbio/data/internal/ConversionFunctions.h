@@ -43,6 +43,8 @@
 #include <stdexcept>
 #include <string>
 
+#include <pacbio/UnanimityConfig.h>
+
 using namespace std::literals::string_literals;  // for std::operator ""s
 
 namespace PacBio {
@@ -58,7 +60,7 @@ namespace {
 // been warned.
 
 // 1. ASCII <-> NCBI2na
-inline constexpr uint8_t ASCIIToNCBI2naImpl(const char base)
+inline UNANIMITY_CONSTEXPR uint8_t ASCIIToNCBI2naImpl(const char base)
 {
     // We also allow converting lowercase ASCII (a/c/g/t)
     // into their respective NCBI2na.
@@ -89,7 +91,7 @@ inline constexpr uint8_t ASCIIToNCBI2naImpl(const char base)
     return result;
 }
 
-inline constexpr char NCBI2naToASCIIImpl(const uint8_t NCBI2naBase)
+inline UNANIMITY_CONSTEXPR char NCBI2naToASCIIImpl(const uint8_t NCBI2naBase)
 {
     // 4 and higher require 3 bits, too many bits for our representation
     assert(NCBI2naBase < 4);
@@ -100,7 +102,7 @@ inline constexpr char NCBI2naToASCIIImpl(const uint8_t NCBI2naBase)
 }
 
 // 2. ASCII <-> NCBI4na
-inline constexpr uint8_t ASCIIToNCBI4naImpl(const char base, const bool checkValid)
+inline UNANIMITY_CONSTEXPR uint8_t ASCIIToNCBI4naImpl(const char base, const bool checkValid)
 {
     constexpr const std::array<uint8_t, 256> lookupTable{
         {/*   0 -  15: */ 0, 0, 0,  0, 0,  0, 0, 0, 0,  0,  0, 0,  0, 0, 0,  0,
@@ -131,7 +133,7 @@ inline constexpr uint8_t ASCIIToNCBI4naImpl(const char base, const bool checkVal
     return result;
 }
 
-inline constexpr char NCBI4naToASCIIImpl(const uint8_t NCBI4naBase)
+inline UNANIMITY_CONSTEXPR char NCBI4naToASCIIImpl(const uint8_t NCBI4naBase)
 {
     // NCBI4na 0, i.e., gaps are non-sensical for our use-cases
     assert(NCBI4naBase != 0);
@@ -146,7 +148,7 @@ inline constexpr char NCBI4naToASCIIImpl(const uint8_t NCBI4naBase)
 }
 
 // 3. NCBI2na <-> NCBI4na
-inline constexpr uint8_t NCBI2naToNCBI4naImpl(const uint8_t NCBI2naBase)
+inline UNANIMITY_CONSTEXPR uint8_t NCBI2naToNCBI4naImpl(const uint8_t NCBI2naBase)
 {
     assert(NCBI2naBase < 4);
 
@@ -154,7 +156,7 @@ inline constexpr uint8_t NCBI2naToNCBI4naImpl(const uint8_t NCBI2naBase)
     return result;
 }
 
-inline constexpr uint8_t NCBI4naToNCBI2naImpl(const uint8_t NCBI4naBase)
+inline UNANIMITY_CONSTEXPR uint8_t NCBI4naToNCBI2naImpl(const uint8_t NCBI4naBase)
 {
     assert(NCBI4naBase < 16);
 
@@ -183,7 +185,7 @@ inline constexpr uint8_t NCBI4naToNCBI2naImpl(const uint8_t NCBI4naBase)
 //      stopgap solution and will be removed in
 //      mid-term future.
 
-inline constexpr uint8_t numSetBitsImpl(const uint8_t NCBI4naBase)
+inline UNANIMITY_CONSTEXPR uint8_t numSetBitsImpl(const uint8_t NCBI4naBase)
 {
     assert(NCBI4naBase < 16);
 
@@ -194,7 +196,7 @@ inline constexpr uint8_t numSetBitsImpl(const uint8_t NCBI4naBase)
     return lookupTable[NCBI4naBase];
 }
 
-inline constexpr char createAmbiguousBase(const char firstBase, const char secondBase)
+inline UNANIMITY_CONSTEXPR char createAmbiguousBase(const char firstBase, const char secondBase)
 {
     const uint8_t firstNCBI4na = ASCIIToNCBI4naImpl(firstBase, true);
     const uint8_t secondNCBI4na = ASCIIToNCBI4naImpl(secondBase, true);
@@ -205,7 +207,8 @@ inline constexpr char createAmbiguousBase(const char firstBase, const char secon
     return result;
 }
 
-inline constexpr bool ambiguousBaseContainsPureBase(const char& ambiguousBase, const char& pureBase)
+inline UNANIMITY_CONSTEXPR bool ambiguousBaseContainsPureBase(const char& ambiguousBase,
+                                                              const char& pureBase)
 {
     const uint8_t encAmbiguousBase = ASCIIToNCBI4naImpl(ambiguousBase, false);
     const uint8_t encPureBase = ASCIIToNCBI4naImpl(pureBase, false);

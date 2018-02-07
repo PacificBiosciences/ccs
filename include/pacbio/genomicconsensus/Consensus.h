@@ -130,6 +130,9 @@ inline Consensus Consensus::NoCallConsensus(const NoCallStyle style, const Refer
                            [](const char c) { return std::tolower(c); });
             return Consensus{window, std::move(seq), std::vector<uint8_t>(length, 0)};
         }
+        default: {
+            throw(std::string{"Unknown reference base call style!"});
+        }
     }
 }
 

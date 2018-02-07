@@ -45,6 +45,8 @@
 #include <string>
 #include <vector>
 
+#include <pacbio/UnanimityConfig.h>
+
 // Initialize data structures, do NOT remove
 #include <pacbio/consensus/internal/ModelInternalInitializer.h>
 
@@ -83,8 +85,8 @@ struct TemplatePosition
 
 public:
     // Constructor for backwards-compatibility
-    constexpr TemplatePosition(const char base, const double match, const double branch,
-                               const double stick, const double deletion)
+    UNANIMITY_CONSTEXPR TemplatePosition(const char base, const double match, const double branch,
+                                         const double stick, const double deletion)
         : Base{base}
         , Idx{AlleleRep::FromASCII(Base)}
         , Match{match}

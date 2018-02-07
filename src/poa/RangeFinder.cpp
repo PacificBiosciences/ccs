@@ -72,7 +72,6 @@ static inline bool compareAnchorsOnCssPos(const SdpAnchor& a1, const SdpAnchor& 
 
 static const SdpAnchor* binarySearchAnchors(const SdpAnchorVector& anchors, size_t cssPosition)
 {
-    using iter_t = SdpAnchorVector::const_iterator;
     auto found = std::lower_bound(anchors.begin(), anchors.end(), std::make_pair(cssPosition, -1),
                                   compareAnchorsOnCssPos);
     if (found != anchors.end() && (*found).first == cssPosition) {
