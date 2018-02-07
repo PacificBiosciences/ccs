@@ -42,6 +42,8 @@
 #include <cstdint>
 #include <stdexcept>
 
+#include <pacbio/UnanimityConfig.h>
+
 #include "ConversionFunctions.h"
 
 namespace PacBio {
@@ -106,46 +108,52 @@ class NCBI4na;
 class NCBI2na
 {
 public:
-    static inline constexpr NCBI2na FromASCII(const char base) { return NCBI2na{base}; }
+    static inline UNANIMITY_CONSTEXPR NCBI2na FromASCII(const char base) { return NCBI2na{base}; }
 
-    static inline constexpr NCBI2na FromRaw(const uint8_t raw) { return NCBI2na{raw}; }
+    static inline UNANIMITY_CONSTEXPR NCBI2na FromRaw(const uint8_t raw) { return NCBI2na{raw}; }
 
 public:
     ~NCBI2na() = default;
 
-    inline constexpr NCBI2na(const NCBI2na&) = default;
-    inline constexpr NCBI2na(NCBI2na&&) = default;
+    inline UNANIMITY_CONSTEXPR NCBI2na(const NCBI2na&) = default;
+    inline UNANIMITY_CONSTEXPR NCBI2na(NCBI2na&&) = default;
 
-    inline constexpr NCBI2na& operator=(const NCBI2na&) = default;
-    inline constexpr NCBI2na& operator=(NCBI2na&&) = default;
+    inline UNANIMITY_CONSTEXPR NCBI2na& operator=(const NCBI2na&) = default;
+    inline UNANIMITY_CONSTEXPR NCBI2na& operator=(NCBI2na&&) = default;
 
     friend class NCBI4na;
 
 public:
     // Accessors
-    inline constexpr const uint8_t& Data() const { return data_; }
+    inline UNANIMITY_CONSTEXPR const uint8_t& Data() const { return data_; }
 
-    inline constexpr NCBI4na GetNCBI4na() const;
+    inline UNANIMITY_CONSTEXPR NCBI4na GetNCBI4na() const;
 
-    inline constexpr char GetASCII() const { return NCBI2naToASCIIImpl(data_); }
+    inline UNANIMITY_CONSTEXPR char GetASCII() const { return NCBI2naToASCIIImpl(data_); }
 
-    inline constexpr bool IsValid() const { return (data_ < 4); }
+    inline UNANIMITY_CONSTEXPR bool IsValid() const { return (data_ < 4); }
 
-    inline constexpr bool IsEqual(const NCBI2na& rhs) const { return (data_ == rhs.data_); }
+    inline UNANIMITY_CONSTEXPR bool IsEqual(const NCBI2na& rhs) const
+    {
+        return (data_ == rhs.data_);
+    }
 
 private:
     uint8_t data_;
 
 private:
-    explicit inline constexpr NCBI2na(const char base) : data_{ASCIIToNCBI2naImpl(base)} {}
-    explicit inline constexpr NCBI2na(const NCBI4na base);
-    explicit inline constexpr NCBI2na(const uint8_t raw) : data_{raw} {}
+    explicit inline UNANIMITY_CONSTEXPR NCBI2na(const char base) : data_{ASCIIToNCBI2naImpl(base)}
+    {
+    }
+    explicit inline UNANIMITY_CONSTEXPR NCBI2na(const NCBI4na base);
+    explicit inline UNANIMITY_CONSTEXPR NCBI2na(const uint8_t raw) : data_{raw} {}
 };
 
 class NCBI4na
 {
 public:
-    static inline constexpr NCBI4na FromASCII(const char base, const bool checkValid = true)
+    static inline UNANIMITY_CONSTEXPR NCBI4na FromASCII(const char base,
+                                                        const bool checkValid = true)
     {
         return NCBI4na{base, checkValid};
     }
@@ -153,61 +161,74 @@ public:
 public:
     ~NCBI4na() = default;
 
-    inline constexpr NCBI4na(const NCBI4na&) = default;
-    inline constexpr NCBI4na(NCBI4na&&) = default;
+    inline UNANIMITY_CONSTEXPR NCBI4na(const NCBI4na&) = default;
+    inline UNANIMITY_CONSTEXPR NCBI4na(NCBI4na&&) = default;
 
-    inline constexpr NCBI4na& operator=(const NCBI4na&) = default;
-    inline constexpr NCBI4na& operator=(NCBI4na&&) = default;
+    inline UNANIMITY_CONSTEXPR NCBI4na& operator=(const NCBI4na&) = default;
+    inline UNANIMITY_CONSTEXPR NCBI4na& operator=(NCBI4na&&) = default;
 
     friend class NCBI2na;
 
 public:
     // Accessors
-    inline constexpr const uint8_t& Data() const { return data_; }
+    inline UNANIMITY_CONSTEXPR const uint8_t& Data() const { return data_; }
 
-    inline constexpr NCBI2na GetNCBI2na() const { return NCBI2na{NCBI4naToNCBI2naImpl(data_)}; }
+    inline UNANIMITY_CONSTEXPR NCBI2na GetNCBI2na() const
+    {
+        return NCBI2na{NCBI4naToNCBI2naImpl(data_)};
+    }
 
-    inline constexpr char GetASCII() const { return NCBI4naToASCIIImpl(data_); }
+    inline UNANIMITY_CONSTEXPR char GetASCII() const { return NCBI4naToASCIIImpl(data_); }
 
-    inline constexpr bool Overlap(const NCBI4na& rhs) const { return (data_ & rhs.data_); }
+    inline UNANIMITY_CONSTEXPR bool Overlap(const NCBI4na& rhs) const
+    {
+        return (data_ & rhs.data_);
+    }
 
-    inline constexpr bool IsValid() const { return ((data_ > 0) && (data_ < 16)); }
+    inline UNANIMITY_CONSTEXPR bool IsValid() const { return ((data_ > 0) && (data_ < 16)); }
 
-    inline constexpr uint8_t NumContainedBases() const { return numSetBitsImpl(data_); }
+    inline UNANIMITY_CONSTEXPR uint8_t NumContainedBases() const { return numSetBitsImpl(data_); }
 
-    inline constexpr bool Contains(const NCBI2na& base) const
+    inline UNANIMITY_CONSTEXPR bool Contains(const NCBI2na& base) const
     {
         const NCBI4na testBase = base.GetNCBI4na();
         return Overlap(testBase);
     }
 
     // A/C/G/T are pure bases
-    inline constexpr bool IsPure() const { return (NumContainedBases() == 1); }
+    inline UNANIMITY_CONSTEXPR bool IsPure() const { return (NumContainedBases() == 1); }
 
-    inline constexpr bool IsAmbig() const { return (NumContainedBases() > 1); }
+    inline UNANIMITY_CONSTEXPR bool IsAmbig() const { return (NumContainedBases() > 1); }
 
-    inline constexpr bool IsEqual(const NCBI4na& rhs) const { return (data_ == rhs.data_); }
+    inline UNANIMITY_CONSTEXPR bool IsEqual(const NCBI4na& rhs) const
+    {
+        return (data_ == rhs.data_);
+    }
 
 private:
     uint8_t data_;
 
 private:
-    explicit inline constexpr NCBI4na(const char base, const bool checkValid)
+    explicit inline UNANIMITY_CONSTEXPR NCBI4na(const char base, const bool checkValid)
         : data_{ASCIIToNCBI4naImpl(base, checkValid)}
     {
     }
-    explicit inline constexpr NCBI4na(const NCBI2na base) : data_{NCBI2naToNCBI4naImpl(base.data_)}
+    explicit inline UNANIMITY_CONSTEXPR NCBI4na(const NCBI2na base)
+        : data_{NCBI2naToNCBI4naImpl(base.data_)}
     {
     }
-    explicit inline constexpr NCBI4na(const uint8_t raw) : data_{raw} {}
+    explicit inline UNANIMITY_CONSTEXPR NCBI4na(const uint8_t raw) : data_{raw} {}
 };
 
-inline constexpr NCBI4na NCBI2na::GetNCBI4na() const
+inline UNANIMITY_CONSTEXPR NCBI4na NCBI2na::GetNCBI4na() const
 {
     return NCBI4na{NCBI2naToNCBI4naImpl(data_)};
 }
 
-inline constexpr NCBI2na::NCBI2na(const NCBI4na base) : data_{NCBI4naToNCBI2naImpl(base.data_)} {}
+inline UNANIMITY_CONSTEXPR NCBI2na::NCBI2na(const NCBI4na base)
+    : data_{NCBI4naToNCBI2naImpl(base.data_)}
+{
+}
 
 }  // namespace detail
 }  // namespace Data

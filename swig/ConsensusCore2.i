@@ -2,6 +2,8 @@
 
 // for the 309 warning about boost::noncoypable, try to figure out %ignore
 #pragma SWIG nowarn=309
+// for the 509 warning about move constructors
+#pragma SWIG nowarn=509
 
 %{
 #define SWIG_FILE_WITH_INIT
@@ -72,6 +74,12 @@ namespace std
 %enddef
 
 // no include dependencies
+// required for UNANIMITY_CONSTEXPR
+%include "pacbio/UnanimityConfig.h"
+
+// required for NCBI2na/NCBI4na
+%include "pacbio/data/internal/BaseEncoding.h"
+
 %include "State.i"
 %include "Alignment.i"
 %include "Coverage.i"

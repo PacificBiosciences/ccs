@@ -58,7 +58,7 @@ inline std::vector<PacBio::Data::Interval> SplitInterval(const PacBio::Data::Int
         pos += span;
     }
     return result;
-};
+}
 
 inline std::vector<PacBio::Data::Interval> SplitInterval(const PacBio::Data::Interval& source,
                                                          const size_t span)

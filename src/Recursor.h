@@ -42,6 +42,8 @@
 #include <memory>
 #include <utility>
 
+#include <pacbio/UnanimityConfig.h>
+
 #include <pacbio/consensus/Template.h>
 #include <pacbio/data/Read.h>
 #include <pacbio/exception/StateError.h>
@@ -192,9 +194,10 @@ using Interval = std::pair<size_t, size_t>;
 static constexpr const int MAX_FLIP_FLOPS = 5;
 static constexpr const double REBANDING_THRESHOLD = 0.04;
 
-static constexpr const auto kDefaultBase =
+static UNANIMITY_CONSTEXPR const auto kDefaultBase =
     AlleleRep::FromASCII('A');  // corresponding to A, usually
-static constexpr const TemplatePosition kDefaultTplPos = TemplatePosition{'A', 1, 0, 0, 0};
+static UNANIMITY_CONSTEXPR const TemplatePosition kDefaultTplPos =
+    TemplatePosition{'A', 1, 0, 0, 0};
 
 inline Interval RangeUnion(const Interval& range1, const Interval& range2)
 {
