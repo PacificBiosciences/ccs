@@ -149,7 +149,7 @@ inline std::vector<PacBio::BAM::BamRecord> Input::ReadsInWindow(const ReferenceW
         };
 
         std::sort(partialHits.begin(), partialHits.end(),
-                  [&window, &partialHitLength](const BamRecord& lhs, const BamRecord& rhs) {
+                  [&partialHitLength](const BamRecord& lhs, const BamRecord& rhs) {
                       return partialHitLength(lhs) > partialHitLength(rhs);
                   });
 
