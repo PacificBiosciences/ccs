@@ -88,7 +88,7 @@ inline void Sorting::SortReadsInWindow(std::vector<PacBio::BAM::BamRecord>* read
 
             // sort (descending) by read length
             std::stable_sort(reads->begin(), reads->end(),
-                             [&window, lengthInWindow](const BamRecord& lhs, const BamRecord& rhs) {
+                             [lengthInWindow](const BamRecord& lhs, const BamRecord& rhs) {
                                  const auto lhsLength = lengthInWindow(lhs);
                                  const auto rhsLength = lengthInWindow(rhs);
                                  return lhsLength > rhsLength;
@@ -97,8 +97,8 @@ inline void Sorting::SortReadsInWindow(std::vector<PacBio::BAM::BamRecord>* read
         }
         case SortingStrategy::LONGEST: {
             std::stable_sort(reads->begin(), reads->end(),
-                             [&window, lengthInWindow](const PacBio::BAM::BamRecord& lhs,
-                                                       const PacBio::BAM::BamRecord& rhs) {
+                             [lengthInWindow](const PacBio::BAM::BamRecord& lhs,
+                                              const PacBio::BAM::BamRecord& rhs) {
                                  const auto lhsLength = lengthInWindow(lhs);
                                  const auto rhsLength = lengthInWindow(rhs);
                                  return rhsLength < lhsLength;
