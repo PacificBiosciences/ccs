@@ -37,6 +37,26 @@ uny_cc2_cpp_sources = files([
   'align/LinearAlignment.cpp',
   'align/PairwiseAlignment.cpp',
 
+  # ------------------
+  # genomicconsensus
+  # ------------------
+  'genomicconsensus/experimental/Consensus.cpp',
+  'genomicconsensus/experimental/ConsensusModelFactory.cpp',
+  'genomicconsensus/experimental/Filters.cpp',
+  'genomicconsensus/experimental/GenomicConsensus.cpp',
+  'genomicconsensus/experimental/IPoaModel.cpp',
+  'genomicconsensus/experimental/Input.cpp',
+  'genomicconsensus/experimental/Intervals.cpp',
+  'genomicconsensus/experimental/Output.cpp',
+  'genomicconsensus/experimental/Settings.cpp',
+  'genomicconsensus/experimental/SettingsOptions.h',
+  'genomicconsensus/experimental/SettingsToolContract.h',
+  'genomicconsensus/experimental/Sorting.cpp',
+  'genomicconsensus/experimental/Workflow.cpp',
+  'genomicconsensus/experimental/arrow/ArrowModel.cpp',
+  'genomicconsensus/experimental/plurality/PluralityModel.cpp',
+  'genomicconsensus/experimental/poa/PoaModel.cpp',
+
   # --------
   # matrix
   # --------
@@ -210,6 +230,20 @@ if not meson.is_subproject()
     include_directories : [
       uny_include_directories,
       uny_cssw_header],
+    link_with : uny_cc2_lib,
+    cpp_args : uny_warning_flags)
+
+  # gcpp
+  uny_gcpp = executable(
+    'gcpp', files([
+      'main/gcpp.cpp']),
+    install : true,
+    dependencies : [
+      uny_pbcopper_dep,
+      uny_pbbam_dep,
+      uny_boost_dep,
+      uny_thread_dep], 
+    include_directories : uny_include_directories,
     link_with : uny_cc2_lib,
     cpp_args : uny_warning_flags)
 
