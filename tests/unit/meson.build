@@ -12,6 +12,7 @@ uny_test_cpp_sources = files([
   'TestChemistry.cpp',
   'TestConsensus.cpp',
   'TestCoverage.cpp',
+  'TestGenomicConsensus_Experimental.cpp',
   'TestIntegrator.cpp',
   'TestInterval.cpp',
   'TestIntervalMask.cpp',

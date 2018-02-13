@@ -20,6 +20,8 @@ file(GLOB_RECURSE UNY_HEADER "${UNY_IncludeDir}/*.h")
 file(GLOB_RECURSE UNY_HIDDEN_HEADER "*.h")
 # get sources for src/align
 file(GLOB UNY_ALIGN_CPP  "align/*.cpp")
+# get sources for src/genomicconsensus
+file(GLOB_RECURSE UNY_GC_CPP  "genomicconsensus/*.cpp")
 # get sources for src/matrix
 file(GLOB UNY_MATRIX_CPP "matrix/*.cpp")
 # get sources for src/models
@@ -103,6 +105,7 @@ set(UNANIMITY_FILES
     ${UNY_HEADER}
     ${UNY_HIDDEN_HEADER}
     ${CPPOPTPARSE_CPP}
+    ${UNY_GC_CPP}
     ChemistryMapping.cpp
     ChemistryTriple.cpp
     Interval.cpp
@@ -146,6 +149,7 @@ set(UNY_LIBRARIES
 if (UNY_build_bin)
     create_exe(ccs)
     create_exe(arrow)
+    create_exe(gcpp)
 endif()
 
 if (UNY_build_chimera)
