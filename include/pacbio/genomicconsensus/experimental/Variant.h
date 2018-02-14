@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017-2018, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -109,6 +109,34 @@ inline bool operator<(const Variant& lhs, const Variant& rhs)
 {
     return std::tie(lhs.refName, lhs.refStart, lhs.refEnd, lhs.readSeq1) <
            std::tie(rhs.refName, rhs.refStart, rhs.refEnd, rhs.readSeq1);
+}
+
+inline std::string VariantType(const Variant& v)
+{
+    const auto refLen = v.refSeq.size();
+    const auto allele1Len = v.readSeq1.size();
+    const auto allele2Len{v.readSeq2 ? v.readSeq2.get().size() : std::string::npos};
+
+    // ref length is zero
+    auto isInsertion = [&]() { return refLen == 0; };
+
+    // either allele length is zero (allele 2 length will be string::npos if missing)
+    auto isDeletion = [&]() { return (allele1Len == 0 || allele2Len == 0); };
+
+    // allele1 length is same as reference, and allele2 length is the same as well, if present
+    auto isSubstitution = [&]() {
+        return ((allele1Len == refLen) &&
+                ((allele2Len == std::string::npos) || (allele2Len == refLen)));
+    };
+
+    if (isInsertion())
+        return "insertion";
+    else if (isDeletion())
+        return "deletion";
+    else if (isSubstitution())
+        return "substitution";
+    else
+        return "variant";
 }
 
 }  // namespace experimental

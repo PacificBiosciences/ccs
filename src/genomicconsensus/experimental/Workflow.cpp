@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017-2018, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -51,7 +51,6 @@
 #include <pbcopper/cli/Results.h>
 #include <pbcopper/logging/Logging.h>
 
-#include <pacbio/data/Interval.h>
 #include <pacbio/genomicconsensus/experimental/Consensus.h>
 #include <pacbio/genomicconsensus/experimental/Filters.h>
 #include <pacbio/genomicconsensus/experimental/Intervals.h>
@@ -70,18 +69,18 @@ namespace experimental {
 
 namespace {
 
-static void Consumer(PacBio::Parallel::WorkQueue<WindowResult>& queue,
-                     std::unique_ptr<Output>&& output)
+static void Consumer(PacBio::Parallel::WorkQueue<WindowResult>& queue, const Settings& settings)
 {
-    auto ResultOutput = [&](WindowResult&& result) { output->AddResult(std::move(result)); };
+    auto output = std::make_unique<Output>(settings);
 
+    auto ResultOutput = [&](WindowResult&& result) { output->AddResult(std::move(result)); };
     while (queue.ConsumeWith(ResultOutput))
         ;
 }
 
 static WindowResult Producer(const WorkChunk& chunk, const Settings& settings)
 {
-    //    PBLOG_INFO << "Processing " << chunk.window;
+    PBLOG_INFO << "Processing " << chunk.window;
 
     // actual work
     // return PacBio::GenomicConsensus::experimental::Process(chunk, settings);
@@ -195,14 +194,11 @@ int Workflow::Runner(const CLI::Results& args)
         PacBio::Logging::InstallSignalHandlers(*logger);
     }
 
-    // settings
+    // setup work queue & output thread
     const Settings settings{args};
-
-    // setup work queue w/ output handling
-    auto output = std::make_unique<Output>(settings);
     PacBio::Parallel::WorkQueue<WindowResult> workQueue{settings.numThreads};
     std::future<void> writer =
-        std::async(std::launch::async, Consumer, std::ref(workQueue), std::move(output));
+        std::async(std::launch::async, Consumer, std::ref(workQueue), std::ref(settings));
 
     // main loop: add 'work chunks' to work queue
     const auto referenceNames = ReferenceNames(settings);

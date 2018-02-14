@@ -35,74 +35,49 @@
 
 // Author: Derek Barnett
 
-#pragma once
+#include <pacbio/genomicconsensus/experimental/io/FastaWriter.h>
 
-#include <string>
+#include <stdexcept>
 #include <vector>
 
-#include <pbbam/BamRecord.h>
-#include <pbbam/IndexedFastaReader.h>
-
-#include <pacbio/genomicconsensus/experimental/ReferenceWindow.h>
-#include <pacbio/genomicconsensus/experimental/Settings.h>
+using namespace std::literals::string_literals;
 
 namespace PacBio {
 namespace GenomicConsensus {
 namespace experimental {
 
-///
-/// \brief The Input class
-///
-class Input
+namespace {
+
+std::vector<std::string> WrapToColumns(const std::string& seq, const size_t width = 70)
 {
-public:
-    explicit Input(const Settings& settings);
+    std::vector<std::string> result;
+    size_t pos = 0;
+    while (pos < seq.size()) {
+        result.push_back(seq.substr(pos, width));
+        pos += width;
+    }
+    return result;
+}
 
-    Input() = delete;
-    Input(const Input&) = delete;
-    Input(Input&&) = default;
-    Input& operator=(const Input&) = delete;
-    Input& operator=(Input&&) = default;
-    ~Input() = default;
+}  // namespace anonymous
 
-public:
-    ///
-    /// \brief ReadsInWindow
-    /// \param window
-    /// \return
-    ///
-    std::vector<PacBio::BAM::BamRecord> ReadsInWindow(const ReferenceWindow& window) const;
+FastaWriter::FastaWriter(const Settings& settings)
+    : file_{settings.fastaFilename}, out_{file_.tempFilename_}
+{
+    //  targetFilename, targetFilename + ".tmp"
+    if (!out_) {
+        throw std::runtime_error("could not open "s + file_.targetFilename_ + " for writing"s);
+    }
+}
 
-    ///
-    /// \brief ReferenceInWindow
-    /// \param window
-    /// \return
-    ///
-    std::string ReferenceInWindow(const ReferenceWindow& window) const;
+void FastaWriter::Write(const std::string& header, const std::string& sequence)
+{
+    WriteLine('>' + header);
+    for (const auto& line : WrapToColumns(sequence))
+        WriteLine(line);
+}
 
-    ///
-    /// \brief ReferenceNames
-    /// \return
-    ///
-    std::vector<std::string> ReferenceNames() const;
-
-    ///
-    /// \brief ReferenceWindows
-    /// \return FASTA references as windows
-    ///
-    std::vector<ReferenceWindow> ReferenceWindows(bool splitWindows = true) const;
-
-    ///
-    /// \brief SequenceLength
-    /// \param refName
-    /// \return
-    ///
-    size_t SequenceLength(const std::string& refName) const;
-
-private:
-    Settings settings_;
-    PacBio::BAM::IndexedFastaReader fasta_;
-};
+void FastaWriter::WriteLine(const std::string& line) { out_ << line << '\n'; }
 
 }  // namespace experimental
 }  // namespace GenomicConsensus

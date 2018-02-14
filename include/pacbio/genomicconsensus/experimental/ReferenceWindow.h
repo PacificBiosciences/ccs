@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017-2018, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -99,6 +99,17 @@ inline bool AreContiguous(const std::vector<ReferenceWindow>& windows)
 inline bool AreContiguous(const ReferenceWindow& lhs, const ReferenceWindow& rhs)
 {
     return AreContiguous({lhs, rhs});
+}
+
+///
+/// \brief Overlap
+///
+/// \return if windows on same reference, and intervals overlap
+///
+inline bool Overlap(const ReferenceWindow& lhs, const ReferenceWindow& rhs)
+{
+    if (lhs.name != rhs.name) return false;
+    return lhs.interval.Overlaps(rhs.interval);
 }
 
 inline bool operator==(const ReferenceWindow& lhs, const ReferenceWindow& rhs)
