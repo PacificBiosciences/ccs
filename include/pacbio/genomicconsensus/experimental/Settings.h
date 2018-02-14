@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017-2018, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -158,8 +158,8 @@ struct Settings
     size_t windowSpan = Defaults::WindowSpan;
     size_t windowOverhang = Defaults::WindowOverhang;
 
-    // window filters
     std::vector<ReferenceWindow> filterWindows;
+    std::string commandLine;
 
     // settings -> CLI
     static PacBio::CLI::Interface CreateInterface();

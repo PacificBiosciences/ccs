@@ -37,71 +37,44 @@
 
 #pragma once
 
+#include <cstdio>
 #include <string>
-#include <vector>
-
-#include <pbbam/BamRecord.h>
-#include <pbbam/IndexedFastaReader.h>
-
-#include <pacbio/genomicconsensus/experimental/ReferenceWindow.h>
-#include <pacbio/genomicconsensus/experimental/Settings.h>
 
 namespace PacBio {
 namespace GenomicConsensus {
 namespace experimental {
 
-///
-/// \brief The Input class
-///
-class Input
+//
+// For writers, access sink filenames through this wrapper's tempFilename.
+//
+// If producer is destructed normally (no live exception), then the temp file
+// is renamed to the target name. This provides a clean marker on files that may
+// be truncated due to program failure.
+//
+// For programs that use '-' to indicate writing to stdout, renaming will be
+// skipped.
+//
+struct FileProducer
 {
-public:
-    explicit Input(const Settings& settings);
+    std::string targetFilename_;
+    std::string tempFilename_;
 
-    Input() = delete;
-    Input(const Input&) = delete;
-    Input(Input&&) = default;
-    Input& operator=(const Input&) = delete;
-    Input& operator=(Input&&) = default;
-    ~Input() = default;
+    FileProducer(const std::string& targetFilename)
+        : FileProducer{targetFilename, targetFilename + ".tmp"}
+    {
+    }
 
-public:
-    ///
-    /// \brief ReadsInWindow
-    /// \param window
-    /// \return
-    ///
-    std::vector<PacBio::BAM::BamRecord> ReadsInWindow(const ReferenceWindow& window) const;
+    FileProducer(const std::string& targetFilename, const std::string& tempFilename)
+        : targetFilename_{targetFilename}, tempFilename_{tempFilename}
+    {
+    }
 
-    ///
-    /// \brief ReferenceInWindow
-    /// \param window
-    /// \return
-    ///
-    std::string ReferenceInWindow(const ReferenceWindow& window) const;
-
-    ///
-    /// \brief ReferenceNames
-    /// \return
-    ///
-    std::vector<std::string> ReferenceNames() const;
-
-    ///
-    /// \brief ReferenceWindows
-    /// \return FASTA references as windows
-    ///
-    std::vector<ReferenceWindow> ReferenceWindows(bool splitWindows = true) const;
-
-    ///
-    /// \brief SequenceLength
-    /// \param refName
-    /// \return
-    ///
-    size_t SequenceLength(const std::string& refName) const;
-
-private:
-    Settings settings_;
-    PacBio::BAM::IndexedFastaReader fasta_;
+    ~FileProducer(void)
+    {
+        if ((std::current_exception() == nullptr) && (targetFilename_ != "-")) {
+            std::rename(tempFilename_.c_str(), targetFilename_.c_str());
+        }
+    }
 };
 
 }  // namespace experimental

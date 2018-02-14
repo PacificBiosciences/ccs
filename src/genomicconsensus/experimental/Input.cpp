@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017-2018, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -121,6 +121,39 @@ std::string Input::ReferenceInWindow(const ReferenceWindow& window) const
 {
     return fasta_.Subsequence(window.name, static_cast<PacBio::BAM::Position>(window.Start()),
                               static_cast<PacBio::BAM::Position>(window.End()));
+}
+
+std::vector<std::string> Input::ReferenceNames() const
+{
+    std::vector<std::string> result;
+    PacBio::BAM::FastaSequenceQuery query{settings_.referenceFilename};
+    for (const auto& fasta : query)
+        result.emplace_back(fasta.Name());
+    return result;
+}
+
+std::vector<ReferenceWindow> Input::ReferenceWindows(bool splitWindows) const
+{
+    using PacBio::Data::Interval;
+    using PacBio::GenomicConsensus::experimental::SplitInterval;
+
+    std::vector<ReferenceWindow> result;
+    PacBio::BAM::FastaSequenceQuery query{settings_.referenceFilename};
+    for (const auto& fasta : query) {
+        const auto name = fasta.Name();
+        const auto length = fasta.Bases().size();
+        const auto source = Interval{0, length};
+
+        std::vector<PacBio::Data::Interval> intervals;
+        if (splitWindows)
+            intervals = SplitInterval(source, settings_.windowSpan);
+        else
+            intervals.push_back(source);
+
+        for (const auto& interval : intervals)
+            result.emplace_back(ReferenceWindow{name, interval});
+    }
+    return result;
 }
 
 size_t Input::SequenceLength(const std::string& refName) const

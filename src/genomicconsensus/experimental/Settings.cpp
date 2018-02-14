@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Pacific Biosciences of California, Inc.
+// Copyright (c) 2017-2018, Pacific Biosciences of California, Inc.
 //
 // All rights reserved.
 //
@@ -257,6 +257,7 @@ Settings::Settings(const PacBio::CLI::Results& args)
     , usingFancyChunking{!args[Options::SimpleChunking]}
     , windowSpan{args[Options::WindowSpan]}
     , windowOverhang{args[Options::WindowOverhang]}
+    , commandLine{args.InputCommandLine()}
 {
     // "complex" arg parsing
     ParseAlgorithmMode(args, this);
