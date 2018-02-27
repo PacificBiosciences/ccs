@@ -33,6 +33,29 @@ them, employing a statistical model, to produce one high quality consensus seque
 
 `juliet` identifies minor variants from aligned ccs reads; this tool has been moved to a new repository [MinorSeq](https://github.com/pacificbiosciences/minorseq)
 
+## FAQ
+
+### [Help! I am getting "Unsupported chemistries found: (...)"!](#model-data)
+
+Similar to [pbbam](https://github.com/PacificBiosciences/pbbam), Unanimity's consensus
+models require chemistry-dependent parameters. As part of ongoing development efforts,
+we might need to introduce new part numbers to identify novel reagents and/or SMRT Cells.
+If your version of Unanimity significantly predates the chemistry you have used for
+generating collections of data, you will run into issues with Unanimity not being able
+to handle your data. In such cases, download the latest version of the model parameters
+and place them in a subdirectory of `${SMRT_CHEMISTRY_BUNDLE_DIR}`:
+
+  ```sh
+  cd <some persistent dir, preferably the same as used for pbbam>
+  export SMRT_CHEMISTRY_BUNDLE_DIR="${PWD}"
+
+  mkdir -p arrow
+  cp /some/download/dir/model.json arrow/
+  ```
+
+This will cause Unanimity to try to load models from all files in `${SMRT_CHEMISTRY_BUNDLE_DIR}/arrow`
+with a `.json` suffix.
+
 ## Help
 
 Support is only provided for official and stable
