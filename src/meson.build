@@ -213,7 +213,8 @@ if not meson.is_subproject()
       uny_pbcopper_dep,
       uny_pbbam_dep,
       uny_boost_dep,
-      uny_thread_dep],
+      uny_thread_dep,
+      uny_zlib_dep],
     include_directories : uny_include_directories,
     link_with : uny_cc2_lib,
     cpp_args : uny_warning_flags)
@@ -227,7 +228,8 @@ if not meson.is_subproject()
       uny_pbcopper_dep,
       uny_pbbam_dep,
       uny_boost_dep,
-      uny_thread_dep],
+      uny_thread_dep,
+      uny_zlib_dep],
     include_directories : uny_include_directories,
     link_with : uny_cc2_lib,
     cpp_args : uny_warning_flags)
@@ -252,7 +254,9 @@ if not meson.is_subproject()
     install : true,
     dependencies : [
       uny_pbcopper_dep,
-      uny_pbbam_dep],
+      uny_pbbam_dep,
+      uny_zlib_dep,
+      uny_boost_dep],
     include_directories : [
       uny_include_directories,
       uny_cssw_header],
@@ -268,7 +272,8 @@ if not meson.is_subproject()
       uny_pbcopper_dep,
       uny_pbbam_dep,
       uny_boost_dep,
-      uny_thread_dep],
+      uny_thread_dep,
+      uny_zlib_dep],
     include_directories : uny_include_directories,
     link_with : uny_cc2_lib,
     cpp_args : uny_warning_flags)
@@ -280,7 +285,9 @@ if not meson.is_subproject()
     install : true,
     dependencies : [
       uny_pbcopper_dep,
-      uny_pbbam_dep],
+      uny_pbbam_dep,
+      uny_zlib_dep,
+      uny_boost_dep],
     include_directories : [
       uny_include_directories,
       uny_cssw_header],
@@ -297,7 +304,8 @@ if not meson.is_subproject()
       uny_pbcopper_dep,
       uny_pbbam_dep,
       uny_boost_dep,
-      uny_thread_dep],
+      uny_thread_dep,
+      uny_zlib_dep],
     include_directories : uny_include_directories,
     link_with : uny_cc2_lib,
     cpp_args : uny_warning_flags)
