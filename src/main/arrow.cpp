@@ -1,3 +1,5 @@
+// Author: Derek Barnett
+
 #include <iostream>
 
 #include <pacbio/align/PairwiseAlignment.h>

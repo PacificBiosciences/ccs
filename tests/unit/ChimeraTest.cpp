@@ -1,3 +1,5 @@
+// Author: Armin Töpfer
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

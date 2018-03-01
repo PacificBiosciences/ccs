@@ -1,3 +1,5 @@
+// Author: David Alexander
+
 #pragma once
 
 #include <boost/config.hpp>
