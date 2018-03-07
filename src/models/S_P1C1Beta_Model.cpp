@@ -143,7 +143,7 @@ std::unique_ptr<AbstractRecursor> S_P1C1Beta_Model::CreateRecursor(const MappedR
         },
         8);
 
-    return std::unique_ptr<AbstractRecursor>(new S_P1C1Beta_Recursor(mr, scoreDiff, counterWeight));
+    return std::make_unique<S_P1C1Beta_Recursor>(mr, scoreDiff, counterWeight);
 }
 
 double S_P1C1Beta_Model::ExpectedLLForEmission(const MoveType move, const AlleleRep& prev,

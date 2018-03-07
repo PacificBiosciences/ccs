@@ -62,7 +62,7 @@ public:
 
     virtual std::unique_ptr<ModelCreator> LoadParams(const boost::property_tree::ptree& pt) const
     {
-        return std::unique_ptr<ModelCreator>(new T(pt));
+        return std::make_unique<T>(pt);
     }
 };
 

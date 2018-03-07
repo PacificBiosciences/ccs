@@ -89,7 +89,7 @@ public:
     PwSnrAModelCreator(const boost::property_tree::ptree& pt);
     std::unique_ptr<ModelConfig> Create(const SNR& snr) const override
     {
-        return std::unique_ptr<ModelConfig>(new PwSnrAModel(this, snr));
+        return std::make_unique<PwSnrAModel>(this, snr);
     };
 
 private:
@@ -158,8 +158,7 @@ std::unique_ptr<AbstractRecursor> PwSnrAModel::CreateRecursor(const MappedRead& 
         },
         CONTEXT_NUMBER);
 
-    return std::unique_ptr<AbstractRecursor>(
-        new PwSnrARecursor(mr, scoreDiff, counterWeight, params_));
+    return std::make_unique<PwSnrARecursor>(mr, scoreDiff, counterWeight, params_);
 }
 
 std::vector<TemplatePosition> PwSnrAModel::Populate(const std::string& tpl) const

@@ -293,7 +293,7 @@ std::unique_ptr<AbstractRecursor> S_P1C1v2_Model::CreateRecursor(const MappedRea
         },
         CONTEXT_NUMBER);
 
-    return std::unique_ptr<AbstractRecursor>(new S_P1C1v2_Recursor(mr, scoreDiff, counterWeight));
+    return std::make_unique<S_P1C1v2_Recursor>(mr, scoreDiff, counterWeight);
 }
 
 std::vector<TemplatePosition> S_P1C1v2_Model::Populate(const std::string& tpl) const

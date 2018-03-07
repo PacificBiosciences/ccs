@@ -177,7 +177,7 @@ std::unique_ptr<AbstractRecursor> P6C4NoCov_Model::CreateRecursor(const MappedRe
         },
         8);
 
-    return std::unique_ptr<AbstractRecursor>(new P6C4NoCovRecursor(mr, scoreDiff, counterWeight));
+    return std::make_unique<P6C4NoCovRecursor>(mr, scoreDiff, counterWeight);
 }
 
 double P6C4NoCov_Model::ExpectedLLForEmission(const MoveType move, const AlleleRep& prev,

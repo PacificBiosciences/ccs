@@ -38,8 +38,8 @@ Read::Read(const std::string& name, const std::string& seq, const std::vector<ui
     : Name{name}, Seq{seq}, IPD{ipd}, PulseWidth{pw}, SignalToNoise{snr}, Model{std::move(model)}
 {
     if (ipd.size() != seq.size() || pw.size() != seq.size()) {
-        throw new std::invalid_argument("Invalid Read (name=" + name +
-                                        "): features IPD/PW/seq are of mismatched length");
+        throw std::invalid_argument("Invalid Read (name=" + name +
+                                    "): features IPD/PW/seq are of mismatched length");
     }
 }
 

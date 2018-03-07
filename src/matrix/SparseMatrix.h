@@ -91,7 +91,7 @@ private:
 //
 inline const SparseMatrix& SparseMatrix::Null()
 {
-    static SparseMatrix* nullObj = new SparseMatrix(0, 0);
+    static auto nullObj = std::make_unique<SparseMatrix>(0, 0);
     return *nullObj;
 }
 
@@ -113,7 +113,7 @@ inline void SparseMatrix::StartEditingColumn(size_t j, size_t hintBegin, size_t 
     if (columns_[j] != NULL) {
         columns_[j]->ResetForRange(hintBegin, hintEnd);
     } else {
-        columns_[j] = std::unique_ptr<SparseVector>(new SparseVector(Rows(), hintBegin, hintEnd));
+        columns_[j] = std::make_unique<SparseVector>(Rows(), hintBegin, hintEnd);
     }
 }
 

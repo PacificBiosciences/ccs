@@ -70,13 +70,13 @@ public:
     {
         for (const std::string& chemistry : chemistries)
             if (!ModelFactory::Register({chemistry, form, ModelOrigin::COMPILED},
-                                        std::unique_ptr<ModelCreator>(new ModelCreatorImpl<T>())))
+                                        std::make_unique<ModelCreatorImpl<T>>()))
                 throw PacBio::Exception::DuplicateModel(chemistry);
     }
 
     virtual std::unique_ptr<ModelConfig> Create(const SNR& snr) const
     {
-        return std::unique_ptr<ModelConfig>(new T(snr));
+        return std::make_unique<T>(snr);
     }
 };
 
