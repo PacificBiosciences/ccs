@@ -123,6 +123,12 @@ struct Plurality
     {
         std::string bases;
         size_t frequency = 0;
+
+        Allele() = default;
+        Allele(std::string bases_, size_t frequency_)
+            : bases{std::move(bases)}, frequency{frequency_}
+        {
+        }
     };
 
     struct Top2

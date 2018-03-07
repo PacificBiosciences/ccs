@@ -53,8 +53,8 @@ struct GffRecord
 
 static GffRecord FromVariant(const Variant& v)
 {
-    const auto start{v.refSeq.empty() ? v.refStart : v.refStart + 1};
-    const auto end{v.refSeq.empty() ? v.refStart : v.refEnd};
+    const auto start = v.refStart + (v.refSeq.empty() ? 0 : 1);
+    const auto end = (v.refSeq.empty() ? v.refStart : v.refEnd);
 
     GffRecord gffRecord{v.refName, start, end, VariantType(v)};
 
