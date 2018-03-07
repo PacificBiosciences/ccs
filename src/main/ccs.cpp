@@ -503,7 +503,7 @@ static int Runner(const PacBio::CLI::Results& args)
 
     auto chunk = std::make_unique<vector<Chunk>>();
     map<string, shared_ptr<string>> movieNames;
-    optional<int32_t> holeNumber(none);
+    auto holeNumber = boost::make_optional(false, int32_t{});
     bool skipZmw = false;
     optional<tuple<int16_t, int16_t, uint8_t>> barcodes(none);
 
