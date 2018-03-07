@@ -13,6 +13,8 @@
 
 #include <pbbam/BamRecord.h>
 
+#include <pacbio/UnanimityConfig.h>
+
 #include <pacbio/align/AffineAlignment.h>
 #include <pacbio/align/AlignConfig.h>
 #include <pacbio/align/PairwiseAlignment.h>
@@ -191,7 +193,7 @@ static std::vector<PacBio::Data::Interval> TranscriptIntervals(const std::string
     return result;
 }
 
-static constexpr const char* LookupIUPAC(const char c)
+static UNANIMITY_CONSTEXPR const char* LookupIUPAC(const char c)
 {
     constexpr const std::array<const char*, 16> table{{"-", "A", "C", "AC", "G", "AG", "CG", "ACG",
                                                        "T", "AT", "CT", "ACT", "GT", "AGT", "CGT",

@@ -16,6 +16,8 @@
 #include <pbbam/BamRecord.h>
 #include <boost/optional.hpp>
 
+#include <pacbio/UnanimityConfig.h>
+
 #include <pacbio/align/AffineAlignment.h>
 #include <pacbio/align/LinearAlignment.h>
 #include <pacbio/align/PairwiseAlignment.h>
@@ -419,7 +421,7 @@ struct Arrow
         return result;
     }
 
-    static constexpr const char* LookupIUPAC(const char c)
+    static UNANIMITY_CONSTEXPR const char* LookupIUPAC(const char c)
     {
         constexpr const std::array<const char*, 16> table{{"-", "A", "C", "AC", "G", "AG", "CG",
                                                            "ACG", "T", "AT", "CT", "ACT", "GT",
