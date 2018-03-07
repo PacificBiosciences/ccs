@@ -67,7 +67,6 @@ struct Arrow
     static std::unique_ptr<const PacBio::Poa::PoaConsensus> MakePoaConsensus(
         std::vector<std::string>&& fwdSequences, const Settings& settings)
     {
-        using AlignConfig = PacBio::Align::AlignConfig;
         using AlignMode = PacBio::Align::AlignMode;
         using PoaConsensus = PacBio::Poa::PoaConsensus;
 
@@ -479,8 +478,6 @@ struct Arrow
         const std::vector<uint8_t>& siteCoverage,
         const boost::optional<std::vector<uint8_t>>& effectiveSiteCoverage)
     {
-        using Interval = PacBio::Data::Interval;
-
         std::vector<Variant> variants;
 
         const auto refId = window.name;
