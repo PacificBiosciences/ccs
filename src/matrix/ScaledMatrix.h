@@ -69,7 +69,7 @@ std::ostream& operator<<(std::ostream&, const ScaledMatrix&);
 
 inline const ScaledMatrix& ScaledMatrix::Null()
 {
-    static ScaledMatrix* nullObj = new ScaledMatrix(0, 0, FORWARD);
+    static auto nullObj = std::make_unique<ScaledMatrix>(0, 0, FORWARD);
     return *nullObj;
 }
 

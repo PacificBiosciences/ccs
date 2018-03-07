@@ -85,7 +85,7 @@ public:
     MarginalModelCreator(const boost::property_tree::ptree& pt);
     std::unique_ptr<ModelConfig> Create(const SNR& snr) const override
     {
-        return std::unique_ptr<ModelConfig>(new MarginalModel(this, snr));
+        return std::make_unique<MarginalModel>(this, snr);
     };
 
 private:
@@ -114,8 +114,7 @@ std::unique_ptr<AbstractRecursor> MarginalModel::CreateRecursor(const MappedRead
         },
         CONTEXT_NUMBER);
 
-    return std::unique_ptr<AbstractRecursor>(
-        new MarginalRecursor(mr, scoreDiff, counterWeight, params_));
+    return std::make_unique<MarginalRecursor>(mr, scoreDiff, counterWeight, params_);
 }
 
 std::vector<TemplatePosition> MarginalModel::Populate(const std::string& tpl) const

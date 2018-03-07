@@ -83,7 +83,7 @@ public:
     SnrModelCreator(const boost::property_tree::ptree& pt);
     std::unique_ptr<ModelConfig> Create(const SNR& snr) const override
     {
-        return std::unique_ptr<ModelConfig>(new SnrModel(this, snr));
+        return std::make_unique<SnrModel>(this, snr);
     };
 
 private:
@@ -137,8 +137,7 @@ std::unique_ptr<AbstractRecursor> SnrModel::CreateRecursor(const MappedRead& mr,
         },
         CONTEXT_NUMBER);
 
-    return std::unique_ptr<AbstractRecursor>(
-        new SnrRecursor(mr, scoreDiff, counterWeight, params_));
+    return std::make_unique<SnrRecursor>(mr, scoreDiff, counterWeight, params_);
 }
 
 std::vector<TemplatePosition> SnrModel::Populate(const std::string& tpl) const

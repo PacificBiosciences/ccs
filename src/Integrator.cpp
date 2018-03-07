@@ -305,16 +305,14 @@ std::unique_ptr<AbstractTemplate> Integrator::GetTemplate(const PacBio::Data::Ma
         const size_t start = read.TemplateStart;
         const size_t end = read.TemplateEnd;
 
-        return std::unique_ptr<AbstractTemplate>(new Template(fwdTpl_.substr(start, len),
-                                                              ModelFactory::Create(read), start,
-                                                              end, read.PinStart, read.PinEnd));
+        return std::make_unique<Template>(fwdTpl_.substr(start, len), ModelFactory::Create(read),
+                                          start, end, read.PinStart, read.PinEnd);
     } else if (read.Strand == StrandType::REVERSE) {
         const size_t start = revTpl_.size() - read.TemplateEnd;
         const size_t end = revTpl_.size() - read.TemplateStart;
 
-        return std::unique_ptr<AbstractTemplate>(new Template(revTpl_.substr(start, len),
-                                                              ModelFactory::Create(read), start,
-                                                              end, read.PinEnd, read.PinStart));
+        return std::make_unique<Template>(revTpl_.substr(start, len), ModelFactory::Create(read),
+                                          start, end, read.PinEnd, read.PinStart);
     }
 
     throw std::invalid_argument("read is unmapped!");

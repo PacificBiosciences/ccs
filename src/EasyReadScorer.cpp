@@ -23,7 +23,7 @@ Evaluator* EasyReadScorer::MakeEvaluator(const std::string& tplString,
     std::unique_ptr<ModelConfig> cfg =
         ModelFactory::Create(mappedRead.Model, mappedRead.SignalToNoise);
     // make a "template" object
-    std::unique_ptr<AbstractTemplate> tpl(new Template(tplString, std::move(cfg)));
+    auto tpl = std::make_unique<Template>(tplString, std::move(cfg));
 
     return new Evaluator(std::move(tpl), mappedRead, minZScore, scoreDiff);
 }

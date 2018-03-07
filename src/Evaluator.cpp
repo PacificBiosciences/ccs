@@ -78,7 +78,7 @@ double Evaluator::LL(const Mutation& mut)
     else if (mut.EditDistance() > 1) {
         boost::optional<MutatedTemplate> mutTpl = impl_->tpl_->Mutate(mut);
         if (!mutTpl) return NEG_DBL_INF;
-        std::unique_ptr<AbstractTemplate> newTpl(new MutatedTemplate(std::move(*mutTpl)));
+        auto newTpl = std::make_unique<MutatedTemplate>(std::move(*mutTpl));
         EvaluatorImpl tmp(std::move(newTpl), impl_->recursor_->read_, impl_->recursor_->scoreDiff_);
         ll = tmp.LL();
     }

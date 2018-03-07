@@ -464,10 +464,10 @@ static int Runner(const PacBio::CLI::Results& args)
     if (isXml) boost::ireplace_all(outputFile, ".consensusreadset.xml", ".bam");
 
     if (isBam) {
-        unique_ptr<BamWriter> ccsBam(
-            new BamWriter(outputFile, PrepareHeader(args.InputCommandLine(), ds)));
+        auto ccsBam =
+            std::make_unique<BamWriter>(outputFile, PrepareHeader(args.InputCommandLine(), ds));
         const string pbiFileName = outputFile + ".pbi";
-        unique_ptr<PbiBuilder> ccsPbi(new PbiBuilder(pbiFileName));
+        auto ccsPbi = std::make_unique<PbiBuilder>(pbiFileName);
         writer = async(launch::async, BamWriterThread, ref(workQueue), move(ccsBam), move(ccsPbi),
                        settings);
 
@@ -501,7 +501,7 @@ static int Runner(const PacBio::CLI::Results& args)
         exit(EXIT_FAILURE);
     }
 
-    unique_ptr<vector<Chunk>> chunk(new vector<Chunk>());
+    auto chunk = std::make_unique<vector<Chunk>>();
     map<string, shared_ptr<string>> movieNames;
     optional<int32_t> holeNumber(none);
     bool skipZmw = false;
