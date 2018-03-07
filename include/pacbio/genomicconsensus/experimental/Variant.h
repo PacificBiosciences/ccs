@@ -80,7 +80,7 @@ inline std::string VariantType(const Variant& v)
 {
     const auto refLen = v.refSeq.size();
     const auto allele1Len = v.readSeq1.size();
-    const auto allele2Len{v.readSeq2 ? v.readSeq2.get().size() : std::string::npos};
+    const auto allele2Len = (v.readSeq2 ? v.readSeq2.get().size() : std::string::npos);
 
     // ref length is zero
     auto isInsertion = [&]() { return refLen == 0; };

@@ -55,6 +55,10 @@ Consensus Consensus::NoCallConsensus(const NoCallStyle style, const ReferenceWin
                            [](const char c) { return std::tolower(c); });
             return Consensus{window, std::move(seq), std::vector<uint8_t>(length, 0)};
         }
+        default: {
+            // Silence -Wreturn-type
+            throw std::runtime_error{"Unknown call style!"};
+        }
     }
 }
 

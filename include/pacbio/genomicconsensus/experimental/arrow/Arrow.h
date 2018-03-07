@@ -16,6 +16,8 @@
 #include <pbbam/BamRecord.h>
 #include <boost/optional.hpp>
 
+#include <pacbio/UnanimityConfig.h>
+
 #include <pacbio/align/AffineAlignment.h>
 #include <pacbio/align/LinearAlignment.h>
 #include <pacbio/align/PairwiseAlignment.h>
@@ -65,7 +67,6 @@ struct Arrow
     static std::unique_ptr<const PacBio::Poa::PoaConsensus> MakePoaConsensus(
         std::vector<std::string>&& fwdSequences, const Settings& settings)
     {
-        using AlignConfig = PacBio::Align::AlignConfig;
         using AlignMode = PacBio::Align::AlignMode;
         using PoaConsensus = PacBio::Poa::PoaConsensus;
 
@@ -419,7 +420,7 @@ struct Arrow
         return result;
     }
 
-    static constexpr const char* LookupIUPAC(const char c)
+    static UNANIMITY_CONSTEXPR const char* LookupIUPAC(const char c)
     {
         constexpr const std::array<const char*, 16> table{{"-", "A", "C", "AC", "G", "AG", "CG",
                                                            "ACG", "T", "AT", "CT", "ACT", "GT",
@@ -477,8 +478,6 @@ struct Arrow
         const std::vector<uint8_t>& siteCoverage,
         const boost::optional<std::vector<uint8_t>>& effectiveSiteCoverage)
     {
-        using Interval = PacBio::Data::Interval;
-
         std::vector<Variant> variants;
 
         const auto refId = window.name;
