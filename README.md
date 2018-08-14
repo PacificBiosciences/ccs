@@ -5,33 +5,28 @@
 <p align="center">C++ library and its applications to generate and process accurate consensus sequences</p>
 
 ***
-## Documentation
+## Availability
+The latest pre-release, developers-only linux binaries can be installed via [bioconda](https://bioconda.github.io/).
 
- - [Getting Started](doc/INSTALL.md)
- - Projects
-   - Available
-     - Consensus Core
-     - [Circular Consensus Calling `ccs`](doc/PBCCS.md)
-     - [Minor Variant Calling `juliet`](https://github.com/pacificbiosciences/minorseq)
-   - Planned
-     - Genomic Consensus Calling `gcpp`
- - [Developer environment](doc/DEVELOPER.md)
- - [PacBio open source license](LICENSE)
+    conda install pbccs
 
-## Quick Tools Overview
+These binaries are not ISO compliant.
+For research only.
+Not for use in diagnostics procedures.
 
-### [Circular Consensus Calling](doc/PBCCS.md)
+Official support is only provided for official and stable
+[SMRT Analysis builds](http://www.pacb.com/products-and-services/analytical-software/)
+provided by PacBio.
+No support for source builds.
+No support via mail to developers.
+
+Binaries on bioconda are newer than GitHub source code.
+
+## [Circular Consensus Calling](doc/PBCCS.md)
 
 `ccs` takes multiple reads of the same SMRTbell sequence and combines
 them, employing a statistical model, to produce one high quality consensus sequence.
-
-### Genomic Consensus Calling
-
-`gcpp` will replace the current python [GenomicConsensus](https://github.com/PacificBiosciences/GenomicConsensus), until then please use the existing solution.
-
-### [Minor variant caller](https://github.com/pacificbiosciences/minorseq)
-
-`juliet` identifies minor variants from aligned ccs reads; this tool has been moved to a new repository [MinorSeq](https://github.com/pacificbiosciences/minorseq)
+More information available [here](doc/PBCCS.md).
 
 ## FAQ
 
@@ -56,11 +51,8 @@ and place them in a subdirectory of `${SMRT_CHEMISTRY_BUNDLE_DIR}`:
 This will cause Unanimity to try to load models from all files in `${SMRT_CHEMISTRY_BUNDLE_DIR}/arrow`
 with a `.json` suffix.
 
-## Help
-
-Support is only provided for official and stable
-[SMRT Analysis builds](http://www.pacb.com/products-and-services/analytical-software/)
-provided by PacBio and not for source builds.
+## License
+[PacBio open source license](LICENSE)
 
 DISCLAIMER
 ----------
