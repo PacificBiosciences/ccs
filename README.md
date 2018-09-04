@@ -6,21 +6,10 @@
 
 ***
 ## Availability
-The latest pre-release, developers-only linux binaries can be installed via [bioconda](https://bioconda.github.io/).
+Latest `ccs` can be installed via bioconda package `pbccs`.
 
-    conda install pbccs
-
-These binaries are not ISO compliant.
-For research only.
-Not for use in diagnostics procedures.
-
-Official support is only provided for official and stable
-[SMRT Analysis builds](http://www.pacb.com/products-and-services/analytical-software/)
-provided by PacBio.
-No support for source builds.
-No support via mail to developers.
-
-Binaries on bioconda are newer than GitHub source code.
+Please refer to our [official pbbioconda page](https://github.com/PacificBiosciences/pbbioconda)
+for information on Installation, Support, License, Copyright, and Disclaimer.
 
 ## [Circular Consensus Calling](doc/PBCCS.md)
 
