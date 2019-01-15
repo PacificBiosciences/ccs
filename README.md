@@ -40,6 +40,17 @@ and place them in a subdirectory of `${SMRT_CHEMISTRY_BUNDLE_DIR}`:
 This will cause Unanimity to try to load models from all files in `${SMRT_CHEMISTRY_BUNDLE_DIR}/arrow`
 with a `.json` suffix.
 
+## Changelog
+
+ * **3.3.0**:
+   * Add a windowing approach to reduce computational complexity from quadratic to linear
+   * Improve multi-threading framework to increase throughput
+   * Enhance XML output, propagate `CollectionMetadata`
+   * Includes latest chemistry parameters
+ * 3.1.0:
+   * Add `--maxPoaCoverage` to decrease runtime for unpolished output, special parameter for IsoSeq workflow
+   * Chemistry parameters for SMRT Link v6.0
+
 ## License
 [PacBio open source license](LICENSE)
 
