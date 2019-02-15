@@ -42,7 +42,10 @@ with a `.json` suffix.
 
 ## Changelog
 
- * **3.3.0**:
+ * **3.4.0**:
+   * Fixes to unpolished mode for IsoSeq
+   * Improve runtime when `--minPredictedAccuracy` has been increased
+ * 3.3.0:
    * Add a windowing approach to reduce computational complexity from quadratic to linear
    * Improve multi-threading framework to increase throughput
    * Enhance XML output, propagate `CollectionMetadata`
