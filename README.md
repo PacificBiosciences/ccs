@@ -42,7 +42,9 @@ with a `.json` suffix.
 
 ## Changelog
 
- * **3.4.0**:
+ * **3.4.1**:
+   * Log used chemistry model to INFO level
+ * 3.4.0:
    * Fixes to unpolished mode for IsoSeq
    * Improve runtime when `--minPredictedAccuracy` has been increased
  * 3.3.0:
