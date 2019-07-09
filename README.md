@@ -55,24 +55,43 @@ Instead, we provide binaries on bioconda to ease end-user experience.
 If your project relies on outdated unanimity source code,
 please use [this commit](https://github.com/PacificBiosciences/ccs/tree/6f11a13e1472b8c00337ba8c5e94bf83bdab31d6).
 
-### I am getting "Unsupported chemistries found: (...)"!
-As part of ongoing development efforts, we might need to introduce new part
-numbers to identify novel reagents and/or SMRT Cells.
-If your version of _ccs_ significantly predates the chemistry you have used for
-generating collections of data, you will run into issues with _ccs_ not being able
-to handle your data. In such cases, download the latest version of the model parameters
-and place them in a subdirectory of `${SMRT_CHEMISTRY_BUNDLE_DIR}`:
+### Help! I am getting "Unsupported ..."!
+If you encounter the error `Unsupported chemistries found: (...)` or
+`unsupported sequencing chemistry combination`, your _ccs_ binaries predates
+the used sequencing chemistry kit.
+This is unlikely to happen with _ccs_ from SMRT Link installations, as SMRT Link
+is able to automatically update and install new chemistries.
 
-  ```sh
-  cd <some persistent dir, preferably the same as used for pbbam>
-  export SMRT_CHEMISTRY_BUNDLE_DIR="${PWD}"
+If you are not an early access user, stop here and solve it via updating your
+_ccs_ with `conda update --all`.
 
-  mkdir -p arrow
-  cp /some/download/dir/model.json arrow/
-  ```
+If you are an early access user, please create a directory that is used to
+inject new chemistry information into _ccs_:
 
-This will cause _ccs_ to try to load models from all files in `${SMRT_CHEMISTRY_BUNDLE_DIR}/arrow`
-with a `.json` suffix.
+```sh
+mkdir -p /path/to/persistent/dir/
+cd /path/to/persistent/dir/
+export SMRT_CHEMISTRY_BUNDLE_DIR="${PWD}"
+mkdir -p arrow
+```
+
+To fix `unsupported sequencing chemistry combination` please download the latest
+out-of-band `chemistry.xml`:
+
+```sh
+wget https://raw.githubusercontent.com/PacificBiosciences/pbcore/develop/pbcore/chemistry/resources/mapping.xml -O "${SMRT_CHEMISTRY_BUNDLE_DIR}"/chemistry.xml
+```
+
+To fix `Unsupported chemistries found: (...)` please get the latest consensus
+model `.json` from PacBio and copy it to:
+
+```sh
+cp /some/download/dir/model.json "${SMRT_CHEMISTRY_BUNDLE_DIR}"/arrow/
+```
+
+Afterwards, proceed using _ccs_ as you would normally do. New chemistry
+information is automatically loaded from the `${SMRT_CHEMISTRY_BUNDLE_DIR}`
+environmental variable.
 
 ## Changelog
 
