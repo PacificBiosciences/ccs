@@ -2,13 +2,13 @@
   <img src="img/ccs.png" alt="CCS logo" width="250px"/>
 </p>
 <h1 align="center">CCS</h1>
-<p align="center">Generate <span style=font-weight:bold>Hi</span>gh-<span style=font-weight:bold>Fi</span>delity Single-Molecule Consensus Reads</p>
+<p align="center">Generate Highly Accurate Single-Molecule Consensus Reads</p>
 
 ***
 
 _ccs_ takes multiple (sub)reads of the same SMRTbell molecule and combines
-them using a statistical model to produce one high-fidelity consensus sequence
-with base quality values.
+them using a statistical model to produce one highly accurate consensus sequence,
+also called HiFi or CCS read, with base quality values.
 This tool powers the _Circular Consensus Sequences_ workflow in SMRT Link.
 
 ## Availability
