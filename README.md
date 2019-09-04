@@ -289,6 +289,25 @@ In detail:
 
 If there is no `.pbi` file present, ETA will be omitted.
 
+### The binary does not work on my linux system!
+Contrary to official SMRT Link releases, binaries distributed via bioconda are
+tuned for performance while sacrificing backward compatibility.
+We are aware of following errors and limitations, if yours is not listed, please
+file an issue on our [official pbbioconda page](https://github.com/PacificBiosciences/pbbioconda).
+
+**`Illegal instruction`** Your CPU is not supported.
+A modern (post-2008) CPU with support for
+[SSE4.1 instructions](https://en.wikipedia.org/wiki/SSE4#SSE4.1) is required.
+SMRT Link also has this requirement.
+
+**`FATAL: kernel too old`** Your OS or rather your kernel version is not supported.
+So far, we were able to run _ccs_ successfully on following Google Cloud instances:
+
+ - **Centos 7** and newer
+ - **Ubuntu 14.04** and newer
+ - **Debian 9** and newer
+ - **Red Hat Enterprise Linux 7** and newer
+
 ## Licenses
 PacBio® tool _ccs_, distributed via Bioconda, is licensed under
 [BSD-3-Clause-Clear](https://spdx.org/licenses/BSD-3-Clause-Clear.html)
