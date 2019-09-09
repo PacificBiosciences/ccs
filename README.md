@@ -320,7 +320,7 @@ machine-readable work that uses glibc in object code.
  * **4.0.0**:
    * SMRT Link v8.0 release candidate
    * Speed improvements
-   * Removed support for legacy python Genomic Consensus, please use `conda install pbgcpp`
+   * Removed support for legacy python Genomic Consensus, please use [gcpp](https://github.com/PacificBiosciences/gcpp)
    * New command-line interface
    * New report file
  * 3.4.1
