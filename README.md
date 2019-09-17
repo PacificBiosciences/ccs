@@ -2,13 +2,13 @@
   <img src="img/ccs.png" alt="CCS logo" width="250px"/>
 </p>
 <h1 align="center">CCS</h1>
-<p align="center">Generate Highly Accurate Single-Molecule Consensus Reads</p>
+<p align="center">Generate Highly Accurate Single-Molecule Consensus Reads (HiFi Reads)</p>
 
 ***
 
-_ccs_ takes multiple (sub)reads of the same SMRTbell molecule and combines
+_ccs_ takes multiple subreads of the same SMRTbell molecule and combines
 them using a statistical model to produce one highly accurate consensus sequence,
-also called HiFi or CCS read, with base quality values.
+also called HiFi read, with base quality values.
 This tool powers the _Circular Consensus Sequencing_ workflow in SMRT Link.
 
 ## Availability
@@ -40,8 +40,8 @@ See [how-to chunk](#how-can-I-parallelize-on-multiple-servers).
 
 ## FAQ
 
-### What impacts the number and quality of CCS reads that are generated?
-The longer the polymerase read gets, more readouts (passes) of the SMRTbell
+### What impacts the number and quality of HiFi reads that are generated?
+The longer the polymerase read gets, more passes of the SMRTbell
 are produced and consequently more evidence is accumulated per molecule.
 This increase in evidence translates into higher consensus accuracy, as
 depicted in the following plot:
@@ -49,7 +49,7 @@ depicted in the following plot:
 <p align="center"><img width="600px" src="img/ccs-acc.png"/></p>
 
 ### How is number of passes computed?
-Each CCS read is annotated with a `np` tag that contains the number of
+Each read is annotated with a `np` tag that contains the number of
 full-length subreads used for polishing.
 Since the first version of _ccs_, number of passes has only accounted for
 full-length subreads. In version v3.3.0 windowing has been added, which
@@ -77,12 +77,12 @@ Data flow how each ZMW gets processed and filtered:
 2. Remove subreads with SNR below `--min-snr`.
 3. Stop if number of full-length subreads is fewer than `--min-passes`.
 4. Generate draft sequence and stop if draft length does not pass `--min-length` and `--max-length`.
-5. Polish consensus sequence and only emit CCS read if predicted accuracy is at least `--min-rq`.
+5. Polish consensus sequence and only emit read if predicted accuracy is at least `--min-rq`.
 
 ### How do I read the ccs_report.txt file?
-The `ccs_report.txt` file summarizes (B) how many ZMWs generated CCS reads and
+The `ccs_report.txt` file summarizes (B) how many ZMWs generated HiFi reads (CCS) and
 (C) how many failed CCS generation because of the listed causes. For (C), each ZMW
-contributes exactly to one reason of failure; percentages are with respect to (C).
+contributes to exactly one reason of failure; percentages are with respect to (C).
 
 The following comments refer to the filters that are explained in the FAQ above.
 
@@ -110,11 +110,11 @@ reverse complement of the other strand, as small as a single base `A` with a
 matching `G`. _ccs_ would polish this to one of the bases and reflect the
 ambiguity in the base QV. In our case, when one strand has more than `20`
 additional bases that the other strand does not have, _ccs_ won't be able to
-converge to a consensus sequence, consequently will remove the ZMW and
+converge to a consensus sequence, and consequently will remove the ZMW and
 increase the counter for heteroduplexes found in the `ccs_report.txt` file.
 
 ### How can I parallelize on multiple servers?
-Parallelize by chunking. Since _ccs_ v4.0.0, direct chunking via `--chunk`
+You can parallelize by chunking. Since _ccs_ v4.0.0, direct chunking via `--chunk`
 is possible. For this, the `.subreads.bam` file must accompanied by a
 `.pbi` file. To generate the index `subreads.bam.pbi`, use
 `pbindex`, which can be installed with `conda install pbbam`.
@@ -139,7 +139,7 @@ or use `samtools`
 
 ### What happened to unanimity?
 Unanimity lives on as a PacBio internal library to generate consensus sequences.
-Customer-facing documentation will be limited to _ccs_ distributed via bioconda.
+Documentation will be limited to _ccs_ distributed via bioconda.
 
 ### Where is the source code?
 We have stopped mirroring code changes to GitHub in March 2018.
@@ -149,13 +149,13 @@ please use [this commit](https://github.com/PacificBiosciences/unanimity/tree/6f
 
 ### Help! I am getting "Unsupported ..."!
 If you encounter the error `Unsupported chemistries found: (...)` or
-`unsupported sequencing chemistry combination`, your _ccs_ binaries does not
-support the used sequencing chemistry kit, from here on refered to as "chemistry".
-This may be because we removed support of an older or your binary predates
+`unsupported sequencing chemistry combination`, your _ccs_ binaries do not
+support the used sequencing chemistry kit, from here on referred to as "chemistry".
+This may be because we removed support of an older chemistry or your binary predates
 release of the used chemistry.
 This is unlikely to happen with _ccs_ from SMRT Link installations, as SMRT Link
 is able to automatically update and install new chemistries.
-Thus, easiest solution is to always use _ccs_ from the SMRT Link version that
+Thus, the easiest solution is to always use _ccs_ from the SMRT Link version that
 shipped with the release of the sequencing chemistry kit.
 
 **Old chemistries:**
@@ -163,8 +163,8 @@ With _ccs_ 4.0.0, we have removed support for the last RSII chemistry `P6-C4`.
 The only option is to downgrade _ccs_ with `conda install pbccs==3.4`.
 
 **New chemistries:**
-It might happen that your _ccs_ version predates the sequencing chemistry kit
-and there is an easy fix, install the latest version of _ccs_ with `conda update --all`.
+It might happen that your _ccs_ version predates the sequencing chemistry kit.
+To fix this, install the latest version of _ccs_ with `conda update --all`.
 If you are an early access user, follow the [monkey patch tutorial](#monkey-patch-ccs-to-support-additional-sequencing-chemistry-kits).
 
 ### Monkey patch _ccs_ to support additional sequencing chemistry kits
@@ -209,10 +209,10 @@ on a PacBio recommended HPC, according to the
 [Sequel II System Compute Requirements](https://www.pacb.com/wp-content/uploads/SMRT_Link_Installation_v701.pdf)
 with 192 physical or 384 hyper-threaded cores.
 
-1) Sequel I: 15 kb insert size, 30-hours movie, 37 GB raw yield, 2.3 GB CCS UMY
-2) Sequel II: 15 kb insert size, 30-hours movie, 340 GB raw yield, 24 GB CCS UMY
+1) Sequel System: 15 kb insert size, 30-hours movie, 37 GB raw yield, 2.3 GB HiFi UMY
+2) Sequel II System: 15 kb insert size, 30-hours movie, 340 GB raw yield, 24 GB HiFi UMY
 
-CCS version | Sequel I | Sequel II
+CCS version | Sequel System | Sequel II System
 :-: | :-: | :-:
 ≤3.0.0 | 1 day | >1 week
 3.4.1 | 3 hours | >1 day
@@ -261,7 +261,7 @@ that _ccs_ 4.0.0 introduces no regressions in CCS-only Structural Variant
 calling and has minimal impact on SNV and indel calling in DeepVariant.
 In contrast, lower DNA quality has a bigger impact on quality and yield.
 
-### Can I tune _ccs_ to get improve results?
+### Can I tune _ccs_ to get improved results?
 No, we optimized _ccs_ such that there is a good balance between speed and
 output quality.
 
@@ -292,7 +292,7 @@ If there is no `.pbi` file present, ETA will be omitted.
 ### The binary does not work on my linux system!
 Contrary to official SMRT Link releases, binaries distributed via bioconda are
 tuned for performance while sacrificing backward compatibility.
-We are aware of following errors and limitations, if yours is not listed, please
+We are aware of following errors and limitations. If yours is not listed, please
 file an issue on our [official pbbioconda page](https://github.com/PacificBiosciences/pbbioconda).
 
 **`Illegal instruction`** Your CPU is not supported.
