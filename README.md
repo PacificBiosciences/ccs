@@ -104,6 +104,9 @@ The following comments refer to the filters that are explained in the FAQ above.
     CCS below minimum RQ     : 0 (0.00%)      <- Predicted accuracy is below --min-rq (5)
     Unknown error            : 0 (0.00%)      <- Rare implementation errors
 
+If run in `--by-strand` mode, rows may contain half ZMWs, as we account
+each strand as half a ZMW.
+
 ### What is the definition of a heteroduplex?
 In general, whenever bases on one strand of the SMRTbell are not the
 reverse complement of the other strand, as small as a single base `A` with a
@@ -201,7 +204,8 @@ cp /some/download/dir/model.json "${SMRT_CHEMISTRY_BUNDLE_DIR}"/arrow/
 ### How fast is CCS?
 We tested CCS runtime using 1,000 ZMWs per length bin with exactly 10 passes.
 
-<img width="600px" src="img/runtime.png"/>
+<img width="1000px" src="img/runtime.png"/>
+
 
 #### How does that translate into time to result per SMRT Cell?
 We will measure time to result for Sequel I and II CCS sequencing collections
@@ -274,6 +278,15 @@ Read name suffix indicates strand. Example:
     m64011_190714_120746/14/ccs/rev
     m64011_190714_120746/35/ccs/fwd
 
+How does `--by-strand` work? For each ZMW:
+ * Determine orientation of reads with respect to the one closest to the mean length
+ * Sort reads into two buckets, forward and reverse strands
+ * Treat each strand as an individual entity as we do with ZMWs
+   * Apply all filters per strand individually
+   * Create a draft for each strand
+   * Polish each strand
+   * Write out each polished strand consensus
+
 ### Is there a progress report?
 Yes. With `--log-level INFO`, _ccs_ provides status to `stderr` every
 `--refresh-rate seconds` (default 30):
@@ -315,10 +328,16 @@ and statically links GNU C Library v2.29 licensed under [LGPL](https://spdx.org/
 Per LPGL 2.1 subsection 6c, you are entitled to request the complete
 machine-readable work that uses glibc in object code.
 
+
 ## Changelog
 
- * **4.0.0**:
-   * SMRT Link v8.0 release candidate
+ * **4.1.0**:
+   * Minor speed improvements
+   * Fix `--by-strand` logic, see more [here](#can-i-produce-one-consensus-sequence-for-each-strand-of-a-molecule)
+   * Allow vanilla `.xml` output without specifying dataset type
+   * Compute wall start/end for each output read (future basecaller functionality)
+ * 4.0.0:
+   * SMRT Link v8.0 release
    * Speed improvements
    * Removed support for legacy python Genomic Consensus, please use [gcpp](https://github.com/PacificBiosciences/gcpp)
    * New command-line interface
