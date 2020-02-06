@@ -18,7 +18,7 @@ Please refer to our [official pbbioconda page](https://github.com/PacificBioscie
 for information on Installation, Support, License, Copyright, and Disclaimer.
 
 ## Latest Version
-Version **4.0.0**: [Full changelog here](#changelog)
+Version **4.2.0**: [Full changelog here](#changelog)
 
 ## Schematic Workflow
 <p align="center"><img width="600px" src="img/ccs-workflow.png"/></p>
@@ -50,12 +50,20 @@ depicted in the following plot:
 
 ### How is number of passes computed?
 Each read is annotated with a `np` tag that contains the number of
-full-length subreads used for polishing.
+full-length subreads used for polishing. Full-length subreads are flanked by
+adapters and thus cover the full insert.
 Since the first version of _ccs_, number of passes has only accounted for
 full-length subreads. In version v3.3.0 windowing has been added, which
 takes the minimum number of full-length subreads across all windows.
 Starting with version v4.0.0, minimum has been replaced with mode to get a
-better representation across all windows.
+better representation across all windows. Only subreads that pass the subread
+length filter (please see next FAQ about filters) and were not dropped during
+polishing are accounted for.
+
+Similarly, tag `ec` reports effective coverage, the average subread coverage
+across all windows. This metric includes all subreads, independent of being
+full- or partial-length subreads, that pass length filters and did not fail
+during polishing. In most cases `ec` will be roughly `np + 1`.
 
 ### Which and in what order are filters applied?
 _ccs_ exposes the following filters on input subreads, draft consensus,
@@ -79,6 +87,14 @@ Data flow how each ZMW gets processed and filtered:
 4. Generate draft sequence and stop if draft length does not pass `--min-length` and `--max-length`.
 5. Polish consensus sequence and only emit read if predicted accuracy is at least `--min-rq`.
 
+**Regarding the subread length filter, why did we pick 50% and 200%?**\
+If you sequence a palindromic sequence and one of your subreads is smaller than
+50%, then it becomes a challenge to determine where exactly the subread fits
+without alignment hacks; similarly a short subread might map wrongly to a highly
+repetitive sequence.\
+Subreads that are longer than 200% the median length are likely due to missed
+adapter calls, where the initial polymerase read was wrongly split into subreads.
+
 ### How do I read the ccs_report.txt file?
 The `ccs_report.txt` file summarizes (B) how many ZMWs generated HiFi reads (CCS) and
 (C) how many failed CCS generation because of the listed causes. For (C), each ZMW
@@ -86,22 +102,25 @@ contributes to exactly one reason of failure; percentages are with respect to (C
 
 The following comments refer to the filters that are explained in the FAQ above.
 
-    ZMWs input          (A)  : 4779
-    ZMWs generating CCS (B)  : 1875 (39.23%)
-    ZMWs filtered       (C)  : 2904 (60.77%)
+    ZMWs input          (A)  : 44327
+    ZMWs generating CCS (B)  : 16304 (36.78%)
+    ZMWs filtered       (C)  : 28023 (63.22%)
 
     Exclusive ZMW counts for (C):
-    No usable subreads       : 66 (2.27%)     <- All subreads were filtered in (1)
-    Below SNR threshold      : 54 (1.86%)     <- All subreads were filtered in (2)
-    Lacking full passes      : 2779 (95.70%)  <- Less than --min-passes full-length reads (3)
-    Heteroduplexes           : 0 (0.00%)      <- Single-strand artifacts
-    Min coverage violation   : 0 (0.00%)      <- ZMW is damaged on one strand and can't be polished reliably
-    Draft generation error   : 5 (0.17%)      <- Subreads don't agree to generate a draft sequence
-    Draft above --max-length : 0 (0.00%)      <- Draft sequence is longer than --min-length (4)
+    Median length filter     : 0 (0.00%)      <- All subreads were filtered in (1)
+    Below SNR threshold      : 574 (2.05%)    <- All subreads were filtered in (2)
+    Lacking full passes      : 24706 (88.16%) <- Fewer than --min-passes full-length (FL) reads (3)
+    Heteroduplex insertions  : 422 (1.51%)    <- Single-strand artifacts
+    Coverage drops           : 29 (0.10%)     <- Coverage drops would lead to unreliable polishing results
+    Insufficient draft cov   : 282 (1.01%)    <- Not enough subreads aligned to draft end-to-end
+    Draft too different      : 0 (0.00%)      <- Fewer than --min-passes FL reads aligned to draft
+    Draft generation error   : 94 (0.34%)     <- Subreads don't agree to generate a draft sequence
+    Draft above --max-length : 21 (0.07%)     <- Draft sequence is longer than --min-length (4)
     Draft below --min-length : 0 (0.00%)      <- Draft sequence is shorter than --min-length (4)
-    Lacking usable subreads  : 0 (0.00%)      <- Too many subreads were dropped while polishing
+    Reads failed polishing   : 0 (0.00%)      <- Too many subreads were dropped while polishing
+    Low coverage windows     : 0 (0.00%)      <- Some polishing windows have fewer than --min-passes FL reads
     CCS did not converge     : 0 (0.00%)      <- Draft has too many errors that can't be polished in time
-    CCS below minimum RQ     : 0 (0.00%)      <- Predicted accuracy is below --min-rq (5)
+    CCS below minimum RQ     : 1916 (6.84%)   <- Predicted accuracy is below --min-rq (5)
     Unknown error            : 0 (0.00%)      <- Rare implementation errors
 
 If run in `--by-strand` mode, rows may contain half ZMWs, as we account
@@ -202,7 +221,7 @@ cp /some/download/dir/model.json "${SMRT_CHEMISTRY_BUNDLE_DIR}"/arrow/
 ```
 
 ### How fast is CCS?
-We tested CCS runtime using 1,000 ZMWs per length bin with exactly 10 passes.
+We tested CCS runtime using 500 ZMWs per length bin with exactly 7 passes.
 
 <img width="1000px" src="img/runtime.png"/>
 
@@ -220,7 +239,8 @@ CCS version | Sequel System | Sequel II System
 :-: | :-: | :-:
 ≤3.0.0 | 1 day | >1 week
 3.4.1 | 3 hours | >1 day
-≥4.0.0 | **40 minutes** | **6 hours**
+4.0.0 | 40 minutes | 6 hours
+≥4.2.0 | **30 minutes** | **4 hours**
 
 #### How is CCS speed affected by raw base yield?
 Raw base yield is the sum of all polymerase read lengths.
@@ -291,14 +311,19 @@ How does `--by-strand` work? For each ZMW:
 Yes. With `--log-level INFO`, _ccs_ provides status to `stderr` every
 `--refresh-rate seconds` (default 30):
 
-    #ZMWs, #CCS, #CPM, #CMT, ETA: 2689522, 1056330, 2806, 29.2, 4h 52m
+    70/420/26.3 19/114/7.1 13s
 
-In detail:
-  * `#ZMWs`, number of ZMWs processed
-  * `#CCS`, number of CCS reads generated
-  * `#CPM`, number of CCS reads generated per minute
-  * `#CMT`, number of CCS reads generated per minute per thread
-  * `ETA`, estimated processing time left
+The log output explains each field:
+
+    Logging info: Z1/Z2/Z3 C1/C2/C3 ETA [X]
+    Z1: #ZMWs processed since start
+    Z2: #ZMWs processed in the last minute
+    Z3: #ZMWs processed in the last minute per thread
+    C1: #CCSs generated since start
+    C2: #CCSs generated in the last minute
+    C3: #CCSs generated in the last minute per thread
+    ETA: Estimated remaining processing time
+    [X]: Per minute metrics are extrapolated
 
 If there is no `.pbi` file present, ETA will be omitted.
 
@@ -321,6 +346,23 @@ So far, we were able to run _ccs_ successfully on following Google Cloud instanc
  - **Debian 9** and newer
  - **Red Hat Enterprise Linux 7** and newer
 
+### Why do I get more yield if I increase `--min-passes`
+For versions newer than 3.0.0 and older than 4.2.0, we required that after
+draft generation, at least `--min-passes` subreads map back to the draft.
+Imagine the following scenario, a ZMW with 10 subreads generates a draft to which
+only a single subread aligns. This draft is of low quality and does not
+represent the ZMW, yet if you ask for `--min-passes 1`, this low quality draft
+is being used. Starting with version 4.2.0, we switch to an additional
+percentage threshold of 51% aligning subreads to avoid this problem. This fixes
+the majority of discrepencies for less than three passes.
+
+Why do we have this problem at all, shouldn't the draft stage be robust enough?
+Robustness comes with speed trade-offs. We have a cascade of different draft
+generators, from very fast and unstabler to slow and robust. If a ZMW fails
+to generate a draft for a fast generator, it falls back multiple times until it
+reaches the slower and more robust generator. This approach is still much faster
+than always relying on the robust generator.
+
 ## Licenses
 PacBio® tool _ccs_, distributed via Bioconda, is licensed under
 [BSD-3-Clause-Clear](https://spdx.org/licenses/BSD-3-Clause-Clear.html)
@@ -331,7 +373,17 @@ machine-readable work that uses glibc in object code.
 
 ## Changelog
 
- * **4.1.0**:
+ * 4.2.0:
+   * SMRT Link v9.0 release
+   * Speed improvements
+   * Minor yield improvements, by requiring a percentage of subreads mapping back to draft instead of `--min-passes`
+   * Add effective coverage `ec` tag
+   * Lowering `--min-passes` does no longer reduce yield
+   * Add `--batch-size` to better saturate machine with high core counts
+   * Simplify log output
+   * Fix bug in predicted accuracy calculation
+   * Improved `ccs_report.txt` summary
+ * 4.1.0:
    * Minor speed improvements
    * Fix `--by-strand` logic, see more [here](#can-i-produce-one-consensus-sequence-for-each-strand-of-a-molecule)
    * Allow vanilla `.xml` output without specifying dataset type
