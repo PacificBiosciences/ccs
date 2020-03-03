@@ -118,7 +118,7 @@ The following comments refer to the filters that are explained in the FAQ above.
     Draft above --max-length : 21 (0.07%)     <- Draft sequence is longer than --min-length (4)
     Draft below --min-length : 0 (0.00%)      <- Draft sequence is shorter than --min-length (4)
     Reads failed polishing   : 0 (0.00%)      <- Too many subreads were dropped while polishing
-    Low coverage windows     : 0 (0.00%)      <- Some polishing windows have fewer than --min-passes FL reads
+    Empty coverage windows   : 0 (0.00%)      <- At least one window has no coverage
     CCS did not converge     : 0 (0.00%)      <- Draft has too many errors that can't be polished in time
     CCS below minimum RQ     : 1916 (6.84%)   <- Predicted accuracy is below --min-rq (5)
     Unknown error            : 0 (0.00%)      <- Rare implementation errors
