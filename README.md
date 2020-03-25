@@ -339,12 +339,9 @@ A modern (post-2008) CPU with support for
 SMRT Link also has this requirement.
 
 **`FATAL: kernel too old`** Your OS or rather your kernel version is not supported.
-So far, we were able to run _ccs_ successfully on following Google Cloud instances:
-
- - **Centos 7** and newer
- - **Ubuntu 14.04** and newer
- - **Debian 9** and newer
- - **Red Hat Enterprise Linux 7** and newer
+Since CCS v4.2 we also ship a second binary via bioconda `ccs-alt`, which uses
+`mimalloc` as a modern allocator instead of bundling a newer `glibc`. Please use
+this alternative binary.
 
 ### Why do I get more yield if I increase `--min-passes`
 For versions newer than 3.0.0 and older than 4.2.0, we required that after
