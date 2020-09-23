@@ -1,4 +1,4 @@
-remote_theme: armintoepfer/just-the-docs
+remote_theme: pmarsceill/just-the-docs
 
 # Aux links for the upper right navigation
 aux_links:
@@ -26,3 +26,6 @@ title: "CCS Docs"
 tagline: "Generate Highly Accurate Single-Molecule Consensus Reads (HiFi Reads)"
 
 search_enabled: false
+
+ga_tracking: UA-178669997-1
+ga_tracking_anonymize_ip: true
