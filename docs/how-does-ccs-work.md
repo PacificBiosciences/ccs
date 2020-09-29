@@ -118,3 +118,5 @@ Multiple stages are connected via buffers. This approach allows dispatching
 batches of ZMWs to CPU threadpools and/or to one or more GPUs.
 Lock-free circular queues reduce the overhead of this approach to a
 minimum.
+
+The GPU implementation is work in progress and won't be available any time soon.
