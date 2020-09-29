@@ -108,15 +108,3 @@ To finalize the output, the per-window consensus template sequences and base
 qualities are concatenated and overhangs, overlaps between adjacent windows,
 are trimmed. If the predicted read accuracy is at least `--min-rq` then the
 consensus read is written to the output.
-
-# Implementation details
-The overall workflow of _ccs_ looks like this:
-
-<p align="center"><img width="1000px" src="img/ccs-impl.png"/></p>
-
-Multiple stages are connected via buffers. This approach allows dispatching
-batches of ZMWs to CPU threadpools and/or to one or more GPUs.
-Lock-free circular queues reduce the overhead of this approach to a
-minimum.
-
-The GPU implementation is work in progress and won't be available any time soon.
