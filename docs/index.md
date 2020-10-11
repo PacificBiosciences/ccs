@@ -17,6 +17,13 @@ statistical model to produce one highly accurate consensus sequence,
 also called a HiFi read, along with base quality values.
 This tool powers the _Circular Consensus Sequencing_ workflow in SMRT Link.
 
+## A New Paradigm in Sequencing with HiFi Reads
+<p align="left"><img width="400px" src="img/read-length-visual.png" style="float: left; margin:0 10px 30px 0px "/>
+Advanced scientific discoveries require sequencing data that is both accurate and complete. Single Molecule, Real-Time (SMRT) Sequencing technology has evolved to a different type of long read, known as highly accurate long reads, or HiFi reads.
+PacBio is the only sequencing technology to offer HiFi reads that provide accuracy of >99.9%, on par with short reads and Sanger sequencing. With HiFi reads you no longer have to compromise long read lengths for high accuracy sequencing to address your toughest biological questions.
+</p>
+<div style="clear: both;"/>
+
 ## Availability
 The latest `ccs` can be installed via the bioconda package `pbccs`.
 
@@ -25,6 +32,11 @@ for information on Installation, Support, License, Copyright, and Disclaimer.
 
 ## Latest Version
 Version **5.0.0**: [Full changelog here](/changelog)
+
+## What's new!
+_ccs_ is now running on the Sequel IIe instrument, transferring HiFi reads
+directly off the instrument.\
+Read how _ccs_ works on [Sequel IIe or the latest SMRT Link v10](/faq/mode-all)!
 
 ## Schematic Workflow
 <p align="center"><img width="1000px" src="img/generate-hifi.png"/></p>

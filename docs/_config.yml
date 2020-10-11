@@ -29,3 +29,6 @@ search_enabled: false
 
 ga_tracking: UA-178669997-1
 ga_tracking_anonymize_ip: true
+
+plugins:
+  - jekyll-redirect-from
