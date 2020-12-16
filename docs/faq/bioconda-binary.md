@@ -16,10 +16,10 @@ A modern (post-2008) CPU with support for
 SMRT Link also has this requirement.
 
 **`FATAL: kernel too old`** Your OS or rather your kernel version is not supported.
-Since CCS v4.2 we also ship a second binary via bioconda `ccs-alt`, which does
+Since _ccs_ v4.2 we also ship a second binary via bioconda `ccs-alt`, which does
 not bundle a newer `glibc`. Please use this alternative binary.
 
-For CCS v5.0, we offer two binaries in bioconda:
+For _ccs_, we offer two binaries in bioconda:
 
  * `ccs`, statically links `glibc` v2.32 and `mimalloc` v1.3.0.
  * `ccs-alt`, was build by dynamically linking `glibc` v2.12, but statically links `mimalloc` v1.3.0.

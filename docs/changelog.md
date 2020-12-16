@@ -6,7 +6,14 @@ nav_order: 99
 
 # Version changelog
 
-**5.0.0**
+**6.0.0**
+   * Increase number of HiFi reads
+   * Increase percentage of barcode yield
+   * Run time, CPU time, and peak RSS improvements
+   * Change main draft algorithm from pbdagcon to sparc
+   * Replace minimap2 with pancake and edlib/KSW2
+
+5.0.0
    * SMRT Link v10.0 release
    * Add `--hifi-kinetics` to average kinetic information for polished reads
    * Add `--all-kinetics` to add kinetic information for all ZMWs, except for unpolished draft consensus

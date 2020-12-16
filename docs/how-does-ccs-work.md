@@ -35,22 +35,24 @@ To avoid improper mappings, short subreads are excluded.
 The polish stage iteratively improves upon a candidate template sequence.
 Because polishing is very compute intensive, it is desirable to start with a
 template that is as close as possible to the true sequence of the molecule to
-reduce the number of iterations until convergence.
-So, the _ccs_ software does not pick a full-length subread as the initial
-template to be polished, but instead generates an approximate draft consensus
-sequence using graph algorithms like [partial-order alignment](https://academic.oup.com/bioinformatics/article/18/3/452/236691) (POA)
-[consensus](https://academic.oup.com/bioinformatics/article/19/8/999/235258),
-employing an accelerated implementation called [SPOA](https://github.com/rvaser/spoa),
-or our own alignment graph consensus caller, called pbdagcon.
+reduce the number of iterations until convergence. The _ccs_ software does
+not pick a full-length subread as the initial template to be polished, but
+instead generates an approximate draft consensus sequence using our improved
+implementation of the [Sparc graph consensus algorithm](https://doi.org/10.7717/peerj.2016).
+This algorithm depends on a subread to backbone alignment that is generated
+by our own mapper [pancake](https://github.com/PacificBiosciences/pancake)
+using [edlib](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5408825/) as the core
+aligner.
 Typically, subreads have accuracy of around 90% and the draft consensus has a
-higher accuracy, but depending on the algorithm employed is still below 99%.
+higher accuracy, but is still below 99%.
 
 <p align="center"><img width="1000px" src="img/draft.png"/></p>
 
 Stop if draft length is shorter than `--min-length` and longer than `--max-length`.
 
 ## 3. Alignment
-Align subreads to the draft consensus for downstream windowing and filtering.
+Align subreads to the draft consensus using pancake with
+[KSW2](https://github.com/lh3/ksw2) for downstream windowing and filtering.
 
 ## 4. Windowing
 Divide the the subread-to-draft alignment into overlapping windows with a target

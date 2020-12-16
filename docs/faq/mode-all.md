@@ -11,7 +11,7 @@ Similar to the CLR instrument mode, in which subreads are accompanied by
 a scraps file, _ccs_ offers a new mode to never lose a single read due to
 filtering, without massive run time increase by polishing low-pass productive ZMWs.
 
-Starting with SMRT Link v10.0 and Sequel IIe, _ccs_ v5.0 is able to generate
+Starting with SMRT Link v10.0 and Sequel IIe, _ccs_ v5.0 or newer is able to generate
 one representative sequence per productive ZMW, irrespective of quality and passes.
 This ensures no yield loss due to filtering and enables users to have maximum
 control over their data. Never fear again that SMRT Link or the Sequel IIe

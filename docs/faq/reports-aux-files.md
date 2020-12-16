@@ -41,6 +41,28 @@ The following comments refer to the filters that are explained in the FAQ above.
 If run in `--by-strand` mode, rows may contain half ZMWs, as we account
 each strand as half a ZMW.
 
+### Coverage drops
+Example for a coverage drop in a single ZMW, subreads colored by strand orientation:
+
+<p align="center">
+  <img width="500px" src="../img/coveragedrop.png" />
+</p>
+
+During sequencing of the molecule, one strand exhibits 744 more bases than its
+reverse complemented strand. What happened?
+Either there is a gain or loss of information.
+An explanation for loss of information could be that a secondary structure,
+the 744 bp forming a hairpin, could affect the replication during PCR and lead
+to loss of bases.
+Gain of information could also happen during PCR, when the polymerase gets stuck
+and incorporates the current base too often.
+In this example, there is a homopolymer of 744 `A` bases.
+While it might be obvious to a human eye what happened,
+its not the responsibility of _ccs_ to interpret and recover molecular damage.
+Even if there were a low-complexity filter for those regions, setting the
+appropriate threshold would be arbitrary;
+would a 10bp homopolymer insertion be valid, but 11bp would get discarded?
+
 ## How do I read the zmw_metrics.json file?
 Per default, each _ccs_ run generates a `<outputPrefix>.zmw_metrics.json.gz` file.
 Change file name with `--metrics-json`.

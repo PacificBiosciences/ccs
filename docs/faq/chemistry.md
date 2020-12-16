@@ -3,6 +3,32 @@ layout: default
 parent: FAQ
 title: Chemistry
 ---
+## Supported chemistries
+The latest _ccs_ v6 supports following combinations of binding and
+sequencing kit part numbers:
+
+| BindingKit  | SequencingKit |    Chemistry     |  System   |
+| :---------: | :-----------: | :--------------: | :-------: |
+| 101-500-400 |  101-427-500  | S/P3-C3/5.0      | Sequel    |
+| 101-500-400 |  101-427-800  | S/P3-C3/5.0      | Sequel    |
+| 101-500-400 |  101-646-800  | S/P3-C3/5.0      | Sequel    |
+| 101-490-800 |  101-490-900  | S/P3-C1/5.0-8M   | Sequel II |
+| 101-490-800 |  101-491-000  | S/P3-C1/5.0-8M   | Sequel II |
+| 101-490-800 |  101-644-500  | S/P3-C1/5.0-8M   | Sequel II |
+| 101-490-800 |  101-717-100  | S/P3-C1/5.0-8M   | Sequel II |
+| 101-717-300 |  101-644-500  | S/P3-C1/5.0-8M   | Sequel II |
+| 101-717-300 |  101-717-100  | S/P3-C1/5.0-8M   | Sequel II |
+| 101-717-400 |  101-644-500  | S/P3-C1/5.0-8M   | Sequel II |
+| 101-717-400 |  101-717-100  | S/P3-C1/5.0-8M   | Sequel II |
+| 101-789-500 |  101-789-300  | S/P4-C2/5.0-8M   | Sequel II |
+| 101-820-500 |  101-789-300  | S/P4.1-C2/5.0-8M | Sequel II |
+| 101-789-500 |  101-826-100  | S/P4-C2/5.0-8M   | Sequel II |
+| 101-789-500 |  101-820-300  | S/P4-C2/5.0-8M   | Sequel II |
+| 101-820-500 |  101-826-100  | S/P4.1-C2/5.0-8M | Sequel II |
+| 101-820-500 |  101-820-300  | S/P4.1-C2/5.0-8M | Sequel II |
+| 101-894-200 |  101-826-100  | S/P5-C2/5.0-8M   | Sequel II |
+| 101-894-200 |  101-789-300  | S/P5-C2/5.0-8M   | Sequel II |
+| 101-894-200 |  101-820-300  | S/P5-C2/5.0-8M   | Sequel II |
 
 ## Help! I am getting "Unsupported ..."!
 If you encounter the error `Unsupported chemistries found: (...)` or
