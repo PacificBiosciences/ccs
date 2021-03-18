@@ -30,5 +30,9 @@ search_enabled: true
 ga_tracking: UA-178669997-1
 ga_tracking_anonymize_ip: true
 
+url: "https://ccs.how"
+
 plugins:
   - jekyll-redirect-from
+  - jekyll-sitemap
+  - jekyll-seo-tag
