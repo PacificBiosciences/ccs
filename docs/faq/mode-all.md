@@ -5,43 +5,7 @@ title: Mode --all
 ---
 
 # Process _all_ reads
-Have you ever run _ccs_ with different cutoffs, e.g. tuning `--min-rq` , because
-out of the fear of missing out on yield?
-Similar to the CLR instrument mode, in which subreads are accompanied by
-a scraps file, _ccs_ offers a new mode to never lose a single read due to
-filtering, without massive run time increase by polishing low-pass productive ZMWs.
-
-Starting with SMRT Link v10.0 and Sequel IIe, _ccs_ v5.0 or newer is able to generate
-one representative sequence per productive ZMW, irrespective of quality and passes.
-This ensures no yield loss due to filtering and enables users to have maximum
-control over their data. Never fear again that SMRT Link or the Sequel IIe
-HiFi mode filtered precious data.
-
-The default command-line behavior has not changed;
-it still generates only HiFi quality reads by default.
-But the new `--all` mode has been set as default when running the
-_Circular Consensensus Sequencing_ SMRT Link application or
-selecting the on-instrument Sequel IIe capabilities:
-<p align="left"><img width="500px" src="../img/run-design-oiccs.png"/></p>
-
-Output will be a `reads.bam` that contains:
-
-- HiFi Reads (≥Q20)
-- Lower-quality but still polished consensus reads (<Q20)
-- Unpolished consensus reads (`rq = -1`)
-- 0- or 1-pass subreads unaltered (`rq = -1`)
-
-If you want to only use HiFi reads, SMRT Link automatically generates additional
-files for your convenience that only contain HiFi reads:
-
- - hifi_reads.**fastq**.gz
- - hifi_reads.**fasta**.gz
- - hifi_reads.**bam**
-
-If you work with the `reads.bam` file directly, be aware that CCS reads of all
-qualities are present. This file needs to be understood before piping
-into your typical HiFi application.
-
+Output of `--all` is a `reads.bam` file, please see the [`reads.bam` FAQ](/faq/reads-bam) for more info!
 ## How does `--all` work?
 With the special option `--all`, _ccs_ generates one representative
 sequence per ZMW, irrespective of quality and passes.

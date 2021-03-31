@@ -59,7 +59,7 @@ core [auxilliary files](/faq/reports-aux-files):
 The on-instrument _ccs_ version and also SMRT Link ≥v10 run in the `--all` mode
 by default. In this mode, _ccs_ outputs one representative sequence per
 productive ZMW, irrespective of quality and passes. More information
-[in the `--all` mode FAQ](/faq/mode-all).
+[in the `--all` mode FAQ](/faq/mode-all) and [in the `reads.bam` FAQ](/faq/reads-bam).
 
 ## Can you go back to `subreads.bam` from `reads.bam`?
 Not when operating the instrument in CCS mode. See next question.
@@ -115,4 +115,5 @@ the `reads.bam` files with your own tools.
 Yes, the SMRT Analysis pipeline "Export Reads" in SMRT Link v10.0 or newer can
 export HiFi reads to BAM/FASTA/FASTQ format; when adjusting minimum CCS
 predicted accuracy, you can include CCS reads <Q20. On the command line, tools
-can be used to filter the BAM file for the read quality `rq` tag.
+can be used to filter the BAM file for the read quality `rq` tag, please see
+the [`reads.bam` FAQ](/faq/reads-bam).

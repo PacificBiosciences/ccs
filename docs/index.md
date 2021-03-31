@@ -36,7 +36,7 @@ Version **6.0.0**: [Full changelog here](/changelog)
 ## What's new!
 _ccs_ is now running on the Sequel IIe instrument, transferring HiFi reads
 directly off the instrument.\
-Read how _ccs_ works on [Sequel IIe](/faq/sqiie)!
+Read how _ccs_ works on [Sequel IIe](/faq/sqiie) and what is in the [`reads.bam` file](/faq/reads-bam)!
 
 ## Schematic Workflow
 <p align="center"><img width="1000px" src="img/generate-hifi.png"/></p>
