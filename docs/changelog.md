@@ -7,6 +7,7 @@ nav_order: 99
 # Version changelog
 
 **6.0.0**
+   * SMRT Link v10.1 release
    * Increase number of HiFi reads
    * Increase percentage of barcode yield
    * Run time, CPU time, and peak RSS improvements
