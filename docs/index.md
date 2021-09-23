@@ -33,6 +33,12 @@ for information on Installation, Support, License, Copyright, and Disclaimer.
 ## Latest Version
 Version **6.2.0**: [Full changelog here](/changelog)
 
+## Open position
+[**Apply now!**](https://www.thegravityapp.com/shared/job?clientId=8a7882525cf735a1015d1e0affa16ff0&id=8a7887a878f52449017961e2b27a1844&u=1629497634&v=9&token=eyJ1aWQiOjMzMDQ0LCJwcm92aWRlciI6ImJvdW5jZSIsInR5cGUiOiJlbWFpbCJ9.tkiUIP-M0EtiHBfAg07lTu4Hlwc)
+We are hiring a talented bioinformatician with sequence analysis roots and modern C++ experience.
+Our global and full-time remote team will enable you to grow in this role.
+Help us to better human health through genomics!
+
 ## What's new!
 _ccs_ is now running on the Sequel IIe instrument, transferring HiFi reads
 directly off the instrument.\
