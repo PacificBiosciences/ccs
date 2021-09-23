@@ -6,7 +6,17 @@ nav_order: 99
 
 # Version changelog
 
-**6.0.0**
+**6.2.0**
+   * Upcoming SMRT Link release
+   * Improved low-complexity handling, better runtime and lower memory usage
+   * Improved BAM merge step, up to 5x faster
+   * Improved compute run time
+   * `INFO` logging if chemistry bundle is injected
+   * Enable strand splitting of ZMWs that contain large insertion heteroduplexes
+   * Use `TMPDIR` environment variable for storing temporary files
+   * New `INFO` log summary and `ccs_reports.txt`
+
+6.0.0
    * SMRT Link v10.1 release
    * Increase number of HiFi reads
    * Increase percentage of barcode yield

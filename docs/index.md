@@ -31,7 +31,7 @@ Please refer to our [official pbbioconda page](https://github.com/PacificBioscie
 for information on Installation, Support, License, Copyright, and Disclaimer.
 
 ## Latest Version
-Version **6.0.0**: [Full changelog here](/changelog)
+Version **6.2.0**: [Full changelog here](/changelog)
 
 ## What's new!
 _ccs_ is now running on the Sequel IIe instrument, transferring HiFi reads

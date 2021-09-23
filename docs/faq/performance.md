@@ -6,15 +6,15 @@ title: Performance
 
 ## How fast is _ccs_?
 ### Latest version
-The latest _ccs_ v6 can process 200 GBases HiFi yield in 24 hours for a 25 KBases
+_ccs_ v6.0 can process 200 GBases HiFi yield in 24 hours for a 25 KBases
 library on 2x64 cores at 2.4 GHz.
 To put this into perspective for actual sequencing collections:
 
-|  Sample  | Insert size | HiFi Yield  | Run Time |
-| :------: | :---------: | :---------: | :------: |
-|  HG002   |  15 KBases  | 41.1 GBases |  5h 52m  |
-|  HG002   |  18 KBases  | 34.0 GBases |  4h 36m  |
-| Readwood |  25 KBases  | 32.4 GBases |  3h 46m  |
+| Sample  | Insert size | HiFi Yield  | Run Time |
+| :-----: | :---------: | :---------: | :------: |
+|  HG002  |  15 KBases  | 41.1 GBases |  5h 52m  |
+|  HG002  |  18 KBases  | 34.0 GBases |  4h 36m  |
+| Redwood |  25 KBases  | 32.4 GBases |  3h 46m  |
 
 ### Relative performance v3.0 to v6.0
 Current _ccs_ v6 achieves a >150x speed-up for 20 KBases inserts compared to
@@ -51,6 +51,7 @@ due to toolchain improvements for generating a more optimized binary.
 |    4.2.0    | 2,806,886  | 10h 47m  |  61d 9h  |  72 GB   |  18%   |
 |    5.0.0    | 2,807,317  |  6h 44m  | 62d 22h  |  27 GB   |  37%   |
 |    6.0.0    | 2,831,192  |  5h 52m  | 44d 17h  |  20 GB   |  13%   |
+|    6.2.0    |    TBD     |   TBD    |   TBD    |   TBD    |  TBD   |
 
 #### **HG002 18kb SQII, 32 GBases HiFi yield**
 Omitting v4.0.0, due to lack of chemistry support.
@@ -60,6 +61,7 @@ Omitting v4.0.0, due to lack of chemistry support.
 |    4.2.0    |  1823016   |  8h 35m  | 47d 13h  |  80 GB   |        |
 |    5.0.0    |  1824206   |  5h 29m  | 50d 16h  |  46 GB   |  36%   |
 |    6.0.0    |  1855604   |  4h 36m  | 30d 13h  |  18 GB   |  15%   |
+|    6.2.0    |    TBD     |   TBD    |   TBD    |   TBD    |  TBD   |
 
 #### **Redwood 25kb SQII, 32 GBases HiFi yield**
 
@@ -69,6 +71,7 @@ Omitting v4.0.0, due to lack of chemistry support.
 |    4.2.0    | 1,310,775  |  6h 37m  | 43d 18h  |  74 GB   |  17%   |
 |    5.0.0    | 1,311,693  |  4h 36m  | 41d 13h  |  41 GB   |  30%   |
 |    6.0.0    | 1,335,888  |  3h 56m  | 25d 11h  |  17 GB   |  14%   |
+|    6.2.0    |    TBD     |   TBD    |   TBD    |   TBD    |  TBD   |
 
 ### How is CCS speed affected by raw base yield?
 Raw base yield is the sum of all polymerase read lengths.

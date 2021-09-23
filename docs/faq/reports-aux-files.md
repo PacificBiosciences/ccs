@@ -21,7 +21,7 @@ The following comments refer to the filters that are explained in the FAQ above.
 
     ZMWs with tandem repeats : 10 (0.60%)   <- With repeats larger than --min-tandem-repeat-length
 
-    Exclusive counts for ZMWs failing filters:
+    Exclusive failed counts
     Below SNR threshold      : 30 (28.85%)  <- SNR below --min-snr.
     Median length filter     : 0 (0.00%)    <- All subreads are <50% or >200% of the median subread length
     Lacking full passes      : 0 (0.00%)    <- Fewer than --min-passes full-length (FL) reads
@@ -38,8 +38,8 @@ The following comments refer to the filters that are explained in the FAQ above.
     CCS below minimum RQ     : 0 (0.00%)    <- Predicted accuracy is below --min-rq
     Unknown error            : 0 (0.00%)    <- Rare implementation errors
 
-If run in `--by-strand` mode, rows may contain half ZMWs, as we account
-each strand as half a ZMW.
+If run in `--by-strand` mode, please have a look at [the by-strand FAQ](/faq/mode-by-strand).\
+If run in `--split-heteroduplexes` mode, please have a look at [the strand-aware FAQ](/faq/mode-heteroduplex-filtering).
 
 ### Coverage drops
 Example for a coverage drop in a single ZMW, subreads colored by strand orientation:
