@@ -12,7 +12,7 @@ nav_order: 99
    * Improved BAM merge step, up to 5x faster
    * Improved compute run time
    * `INFO` logging if chemistry bundle is injected
-   * Enable strand splitting of ZMWs that contain large insertion heteroduplexes
+   * Enable [strand splitting](/faq/mode-heteroduplex-filtering) of ZMWs that contain large insertion heteroduplexes
    * Use `TMPDIR` environment variable for storing temporary files
    * New `INFO` log summary and `ccs_reports.txt`
 
