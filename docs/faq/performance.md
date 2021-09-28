@@ -13,7 +13,7 @@ To put this into perspective for actual sequencing collections:
 | Sample  | Insert size | HiFi Yield  | Run Time |
 | :-----: | :---------: | :---------: | :------: |
 |  HG002  |  15 KBases  | 41.1 GBases |  4h 49m  |
-|  HG002  |  18 KBases  | 34.0 GBases |  4h 36m  |
+|  HG002  |  18 KBases  | 26.1 GBases |  2h 53m  |
 | Redwood |  25 KBases  | 32.4 GBases |  3h 17m  |
 
 ### Relative performance v3.0 to v6.0
@@ -53,15 +53,15 @@ due to toolchain improvements for generating a more optimized binary.
 |    6.0.0    | 2,831,192  |  5h 52m  | 44d 17h  |  20 GB   |  13%   |
 |    6.2.0    | 2,832,543  |  4h 49m  | 50d 19h  |  26 GB   |  18%   |
 
-#### **HG002 18kb SQII, 32 GBases HiFi yield**
+#### **HG002 18kb SQII, 26 GBases HiFi yield**
 Omitting v4.0.0, due to lack of chemistry support.
 
 | CCS Version | HiFi Reads | Run Time | CPU Time | Peak RSS | Faster |
 | :---------: | :--------: | :------: | :------: | :------: | :----: |
-|    4.2.0    | 1,823,016  |  8h 35m  | 47d 13h  |  80 GB   |        |
-|    5.0.0    | 1,824,206  |  5h 29m  | 50d 16h  |  46 GB   |  36%   |
-|    6.0.0    | 1,855,604  |  4h 36m  | 30d 13h  |  18 GB   |  15%   |
-|    6.2.0    |    TBD     |   TBD    |   TBD    |   TBD    |  TBD   |
+|    4.2.0    | 1,418,685  |  5h 39m  | 54d 14h  |  28 GB   |        |
+|    5.0.0    | 1,419,372  |  4h 43m  | 42d 18h  |  48 GB   |  17%   |
+|    6.0.0    | 1,432,826  |  3h 28m  | 28d 17h  |  19 GB   |  26%   |
+|    6.2.0    | 1,433,066  |  2h 53m  |  30d 9h  |  23 GB   |  17%   |
 
 #### **Redwood 25kb SQII, 32 GBases HiFi yield**
 
