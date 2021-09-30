@@ -69,5 +69,5 @@ Alternatively use `bamtools`:
 We **strongly** advise against filtering by anything than predicted accuracy,
 BAM tag `rq`. The `rq` tag is the best predictor for read quality. Number of
 passes is not reliable enough and you might discard too much data. This `np`
-tag is an implementation detail that is guaranteed to be present in future
+tag is an implementation detail that is not guaranteed to be present in future
 _ccs_ versions.
