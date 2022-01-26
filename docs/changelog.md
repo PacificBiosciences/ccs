@@ -6,8 +6,18 @@ nav_order: 99
 
 # Version changelog
 
-**6.2.0**
+**6.3.0**
    * Upcoming SMRT Link release
+   * Heteroduplex finder
+      * Change file output, single file with multiple read groups
+      * Add HD detection for substitutions differences between strands
+   * Add missing adapter tags `ma` and `ac`
+   * Adhere to latest [PacBio BAM spec](https://pacbiofileformats.readthedocs.io/)
+   * Add `--subsample-clr-perc` and `--subsample-clr-file` to store a percentage of productive ZMWs as subreads
+   * Add `--fastq` as an additional output file
+
+6.2.0
+   * SMRT Link v10.2 release
    * Improved low-complexity handling, better runtime and lower memory usage
    * Improved BAM merge step, up to 5x faster
    * Improved compute run time

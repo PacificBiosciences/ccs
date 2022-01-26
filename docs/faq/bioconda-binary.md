@@ -21,5 +21,5 @@ not bundle a newer `glibc`. Please use this alternative binary.
 
 For _ccs_, we offer two binaries in bioconda:
 
- * `ccs`, statically links `glibc` v2.32 and `mimalloc` v1.3.0.
- * `ccs-alt`, was build by dynamically linking `glibc` v2.12, but statically links `mimalloc` v1.3.0.
+ * `ccs`, statically links `glibc` v2.33 and `mimalloc` v1.6.3.
+ * `ccs-alt`, was build by dynamically linking `glibc` v2.17, but statically links `mimalloc` v1.6.3.

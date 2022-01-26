@@ -1,30 +1,35 @@
 ---
 layout: default
 parent: FAQ
-title: Mode --split-heteroduplex
+title: Heteroduplex finder
 ---
 
 # Attention: This is an early access feature!
 
 ## What is heteroduplex filtering?
 Starting with _ccs_ v6.2.0, single-strand artifacts, such as insertions larger
-than 20 bases, do not necessarily have to be filtered out. Using `--split-heteroduplexes`,
-_ccs_ is able to split ZMW on-the-fly after detecting such heteroduplex and
+than 20 bases, do not necessarily have to be filtered out. In addition, with
+_ccs_ v6.3.0, substitution differences between strands can be detected.
+Using `--hd-finder`, _ccs_ is able to split ZMW on-the-fly after detecting such heteroduplex and
 process each strand separately. As a consequence, _ccs_ has to distinguish between
 double-stranded (DS) and single-stranded (DS) ZMWs and their consensus reads.
 Implications:
 
- * Single-strand reads are stored in an extra file
+ * The BAM output file will have three read groups instead of one
  * Summary logs report double-strand and single-strand metrics
  * `ccs_reports.txt` file contains two columns, double-strand and single-strand reads
 
-We are currently investigating how reliable we can detect indel and SNV
-heteroduplexes and might add those to strand-aware splitting in future versions.
+### Additional read groups in BAM
+The BAM file contains two different kinds of reads, single-strand and
+double-strand reads. Single-strand reads follow the by-strand scheme with `/fwd`
+and `/rev` name suffixes and _ccs_ generates up to two single-strand reads per
+ZMW. Double-strand reads have no special distinguishment. Each of the three types
+of stranded reads have their own read groups. Single-stranded reads have an
+additional field in the `DS` tag of the read group. Simplified example
 
-### Additional `*.stranded.bam` file
-The file `outputPrefix.stranded.bam` contains all single-strand reads. Read names
-follow the by-strand scheme with `/fwd` and `/rev` suffixes. There are up to two
-reads per split ZMW.
+    @RG ID:793f140b PL:PACBIO DS:READTYPE=CCS;STRAND=FORWARD  <- single-strand reads /fwd
+    @RG ID:36fc54d5 PL:PACBIO DS:READTYPE=CCS;STRAND=REVERSE  <- single-strand reads /rev
+    @RG ID:5d30364d PL:PACBIO DS:READTYPE=CCS                 <- double-strand reads
 
 ### Summary logs
 At the end of each execution, _ccs_ reports for `--log-level INFO` a summary.
@@ -62,7 +67,8 @@ HiFi Avg QV   : 30.2
 Typical content of the strand-aware `ccs_reports.txt` file. Contrary to the
 default output, this file does not report numbers in ZMWs, but actual DS and SS
 reads. Accounting in SS ZMWs is not possible, as one strand might fail and the
-other succeed.
+other succeed. The percentage of the `Inputs` is with respect to the number of
+ZMWs, all other percentages are with repect to reads in their column.
 
 ```
                            Double-Strand Reads  Single-Strand Reads
