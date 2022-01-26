@@ -18,7 +18,7 @@ Starting with _ccs_ v6.3.0, there is an algorithm to detect heteroduplexes durin
  * The BAM output file will have three read groups instead of one
  * Summary logs report double-strand and single-strand metrics
  * `ccs_reports.txt` file contains two columns, double-strand and single-strand reads
- •	`--by-strand` and `–hd-finder` are non-equivalent, results can differ for the same ZMW
+ * `--by-strand` and `–hd-finder` are non-equivalent, results can differ for the same ZMW
 
 ### Additional read groups in BAM
 The BAM file contains two different kinds of reads, single-strand and
