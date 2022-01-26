@@ -7,7 +7,7 @@ title: Heteroduplex finder
 # Attention: This is an early access feature!
 
 ## What is a heteroduplex?
-A heteroduplex is a double stranded sequence comprised of two non-complementary strands. During the annealing step of PCR, non-complementary, but highly similar, DNA strands can form heteroduplex. In other words, heteroduplexes are a byproduct of amplifying different templates in the same reaction.
+A heteroduplex is a double stranded sequence comprised of two non-complementary strands. During the annealing step of PCR, non-complementary, but highly similar, DNA strands can form a heteroduplex. In other words, heteroduplexes are a byproduct of amplifying different templates in the same reaction.
 
 *some figure*
 
