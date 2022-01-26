@@ -14,16 +14,17 @@ A heteroduplex is a double stranded sequence comprised of two non-complementary 
 What is heteroduplex splitting? 
 Starting with _ccs_ v6.3.0, there is an algorithm to detect heteroduplexes during the circular consensus process called hd-finder (`--hd-finder` flag). Substitutions and large insertions (>20bp) with a significant strand bias are detected at the sub-read level. Subreads are aligned to the draft, and a pileup is generated. Divergent substitution sites are identified, and fisher’s exact test is used to determine if a substitution has strand bias. ZMWs labeled as heteroduplex are split, on-the-fly, into single-stranded CCS reads. As a consequence, _ccs_ distinguish between double-stranded (DS) and single-stranded (DS) ZMWs and their consensus reads. Implications:
 
-
+ * Heteroduplex splitting is non-reversible 
  * The BAM output file will have three read groups instead of one
  * Summary logs report double-strand and single-strand metrics
  * `ccs_reports.txt` file contains two columns, double-strand and single-strand reads
+ •	`--by-strand` and `–hd-finder` are non-equivalent, results can differ for the same ZMW
 
 ### Additional read groups in BAM
 The BAM file contains two different kinds of reads, single-strand and
 double-strand reads. Single-strand reads follow the by-strand scheme with `/fwd`
 and `/rev` name suffixes and _ccs_ generates up to two single-strand reads per
-ZMW. Double-strand reads have no special distinguishment. Each of the three types
+ZMW. Double-strand reads have no special distinguishing factor. Each of the three types
 of stranded reads have their own read groups. Single-stranded reads have an
 additional field in the `DS` tag of the read group. Simplified example
 
