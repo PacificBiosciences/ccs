@@ -4,17 +4,35 @@ parent: FAQ
 title: Heteroduplex finder
 ---
 
-# Attention: This is an early access feature!
-
 ## What is a heteroduplex?
-A heteroduplex is a double stranded sequence comprised of two non-complementary strands. During the annealing step of PCR, non-complementary, but highly similar, DNA strands can form a heteroduplex. In other words, heteroduplexes are a byproduct of amplifying different templates in the same reaction.
+A heteroduplex is a double stranded sequence comprised of two non-complementary
+strands. During the annealing step of PCR, non-complementary, but highly
+similar, DNA strands can form a heteroduplex. In other words, heteroduplexes are
+a byproduct of amplifying different templates in the same reaction.
 
-*some figure*
+<p align="center"><img width="600px" src="../img/hd_pcr.png"/></p>
 
-What is heteroduplex splitting? 
-Starting with _ccs_ v6.3.0, there is an algorithm to detect heteroduplexes during the circular consensus process called hd-finder (`--hd-finder` flag). Substitutions and large insertions (>20bp) with a significant strand bias are detected at the sub-read level. Subreads are aligned to the draft, and a pileup is generated. Divergent substitution sites are identified, and fisher’s exact test is used to determine if a substitution has strand bias. ZMWs labeled as heteroduplex are split, on-the-fly, into single-stranded CCS reads. As a consequence, _ccs_ distinguish between double-stranded (DS) and single-stranded (DS) ZMWs and their consensus reads. Implications:
+A heteroduplex is **not** a [PCR
+chimera](https://en.wikipedia.org/wiki/Chimera_(molecular_biology)), which is
+defined on Wikipedia as
 
- * Heteroduplex splitting is non-reversible 
+> It occurs when the extension of an amplicon is aborted, and the aborted
+> product functions as a primer in the next PCR cycle. The aborted product
+> anneals to the wrong template and continues to extend, thereby synthesizing a
+> single sequence sourced from two different templates.
+
+## What is heteroduplex splitting?
+Starting with _ccs_ v6.3.0, `--hd-finder` activates algorithms to detect
+heteroduplexes during the HiFi generation. Substitutions and large insertions
+(>20bp) with a significant strand bias are detected at the subread level.
+Subreads are aligned to the draft, and a pileup is generated. Divergent
+substitution sites are identified, and fisher’s exact test is used to determine
+if a substitution has strand bias. ZMWs labeled as heteroduplex are split,
+on-the-fly, into single-stranded CCS reads. As a consequence, _ccs_ distinguish
+between double-stranded (DS) and single-stranded (DS) ZMWs and their consensus
+reads. Implications:
+
+ * Heteroduplex splitting is non-reversible
  * The BAM output file will have three read groups instead of one
  * Summary logs report double-strand and single-strand metrics
  * `ccs_reports.txt` file contains two columns, double-strand and single-strand reads
