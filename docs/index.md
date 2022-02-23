@@ -7,7 +7,7 @@ permalink: /
 ---
 
 <p align="center">
-  <img src="img/ccs63_card.png" alt="CCS logo" width="650px"/>
+  <img src="img/ccs_card_2022.png" alt="CCS logo" width="650px"/>
 </p>
 
 ***
