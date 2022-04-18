@@ -6,8 +6,11 @@ nav_order: 99
 
 # Version changelog
 
-**6.3.0**
-   * Upcoming SMRT Link release
+**6.4.0**
+   * To be announced
+
+6.3.0
+   * SMRT Link v11.0 release
    * Heteroduplex finder
       * Change file output, single file with multiple read groups
       * Add HD detection for substitutions differences between strands

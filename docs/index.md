@@ -38,7 +38,7 @@ page](https://github.com/PacificBiosciences/pbbioconda) for information on
 Installation, Support, License, Copyright, and Disclaimer.
 
 ## Latest Version
-Version **6.3.0**: [Full changelog here](/changelog)
+Version **6.4.0**: [Full changelog here](/changelog)
 
 ## What's new!
 New algo to detect [heteroduplex DNA
