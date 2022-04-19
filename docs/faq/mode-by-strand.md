@@ -87,3 +87,6 @@ CCS did not converge     :          0 (0.000%)
 CCS below minimum RQ     :       2339 (31.59%)
 Unknown error            :          0 (0.000%)
 ```
+
+## Can I call single-strand kinetics?
+Yes! Check out [kinetics FAQ](/faq/kinetics)

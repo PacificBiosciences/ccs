@@ -10,14 +10,16 @@ title: BAM output
 | :---: | :---: | ------------------------------------------------------------------------------------------ |
 | `ac`  | `B,i` | [Detected and missing adapter counts](/faq/missing-adapters)                               |
 | `ec`  |  `f`  | [Effective coverage](/faq/accuracy-vs-passes#how-is-number-of-passes-computed)             |
-| `fi`  | `B,C` | [Forward IPD (codec V1)](/faq/kinetics)                                                    |
-| `fn`  |  `i`  | [Forward number of complete passes (zero or more)](/faq/kinetics)                          |
-| `fp`  | `B,C` | [Forward PulseWidth (codec V1)](/faq/kinetics)                                             |
+| `fi`  | `B,C` | [Double-strand forward IPD (codec V1)](/faq/kinetics)                                      |
+| `fn`  |  `i`  | [Double-strand forward number of complete passes (zero or more)](/faq/kinetics)            |
+| `fp`  | `B,C` | [Double-strand forward PulseWidth (codec V1)](/faq/kinetics)                               |
+| `ip`  | `B,C` | [Single-strand IPD (codec V1)](/faq/kinetics)                                              |
 | `ma`  |  `i`  | [Missing adapters bitmask](/faq/missing-adapters)                                          |
 | `np`  |  `i`  | [Number of full-length subreads](/faq/accuracy-vs-passes#how-is-number-of-passes-computed) |
-| `ri`  | `B,C` | [Reverse IPD (codec V1)](/faq/kinetics)                                                    |
-| `rn`  |  `i`  | [Reverse number of complete passes (zero or more)](/faq/kinetics)                          |
-| `rp`  | `B,C` | [Reverse PulseWidth (codec V1)](/faq/kinetics)                                             |
+| `pw`  | `B,C` | [Single-strand PulseWidth (codec V1)](/faq/kinetics)                                       |
+| `ri`  | `B,C` | [Double-strand reverse IPD (codec V1)](/faq/kinetics)                                      |
+| `rn`  |  `i`  | [Double-strand reverse number of complete passes (zero or more)](/faq/kinetics)            |
+| `rp`  | `B,C` | [Double-strand reverse PulseWidth (codec V1)](/faq/kinetics)                               |
 | `rq`  |  `f`  | [Predicted average read accuracy](/how-does-ccs-work#9-qv-calculation)                     |
 | `sn`  | `B,f` | Signal-to-noise ratios for each nucleotide                                                 |
 | `zm`  |  `i`  | ZMW hole number                                                                            |

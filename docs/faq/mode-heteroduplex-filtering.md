@@ -115,3 +115,6 @@ CCS did not converge     :          2 (0.006%)           0 (0.000%)
 CCS below minimum RQ     :       3581 (11.57%)         188 (34.06%)
 Unknown error            :          0 (0.000%)           0 (0.000%)
 ```
+
+## Can I combine it with HiFi kinetics?
+Yes! Check out [kinetics FAQ](/faq/kinetics)

@@ -7,7 +7,9 @@ nav_order: 99
 # Version changelog
 
 **6.4.0**
-   * To be announced
+   * [Single-strand HiFi kinetics](/faq/kinetics)
+   * Faster draft generation
+   * CLR subsampling stores XML and PBI
 
 6.3.0
    * SMRT Link v11.0 release

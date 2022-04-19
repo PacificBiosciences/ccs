@@ -41,9 +41,10 @@ Installation, Support, License, Copyright, and Disclaimer.
 Version **6.4.0**: [Full changelog here](/changelog)
 
 ## What's new!
-New algo to detect [heteroduplex DNA
+ * New algo to detect [heteroduplex DNA
 molecules](/faq/mode-heteroduplex-filtering) with on-the-fly strand splitting to
 generate two HiFi reads per ZMW.
+* [Single-strand HiFi kinetics](/faq/kinetics)
 
 ## Schematic Workflow
 <p align="center"><img width="1000px" src="img/generate-hifi.png"/></p>
