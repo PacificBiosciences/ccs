@@ -11,15 +11,15 @@ longer stored, nor can be transferred, as file sizes exceed one TBytes per
 SMRT Cell 25M. Aside constant algorithmic improvements, there are few changes
 since the 6.4.0 SQIIe release.
 
-1. Arrow polishing is performed on the instrument.
-2. DeepConsensus further increases quality of lower quality windows.
+1. Arrow polishing is performed on GPU.
+2. DeepConsensus further increases accuracy of lower quality windows.
 3. Performance improvements.
 4. The customer-facing files layout changed.
 5. A new `fail_reads.bam` has been introduced.
 
 ### GPU polishing
 <p align="left"><img width="350px" src="../img/arrow-gpu.png" style="float: left; margin:0 30px 10px 0px "/>
-The polish algo in _ccs_ is an HMM, filling out matrices at its core. The nature
+The polish algo in <i>ccs</i> is an HMM, filling out matrices at its core. The nature
 of its operations makes an efficient GPU implementation challenging. We’ve
 ported it completely onto Nvidia GPUs and achieved a 10x speedup over a dual
 64c AMD EPYC, easily the fastest HMM on GPU.</p>
@@ -28,7 +28,7 @@ ported it completely onto Nvidia GPUs and achieved a 10x speedup over a dual
 ### DeepConsensus
 We have tightly integrate Google's [DeepConsensus](https://github.com/google/deepconsensus)
 into _ccs_. For this, we have implemented a C++ front-end using ONNXruntime
-and accelerate it on TensorRT cores of modern data center Nvidia GPU cards.
+and accelerated it on TensorRT cores of modern data center Nvidia GPU cards.
 HiFi read generation on the Revio system uses a multi-step process, which
 also has an impact how the predicted read quality is computed:
 
