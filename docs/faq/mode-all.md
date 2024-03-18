@@ -5,6 +5,9 @@ title: Mode --all
 ---
 
 # Process _all_ reads
+
+**This mode is not available on Revio and future platforms.**
+
 Output of `--all` is a `reads.bam` file, please see the [`reads.bam` FAQ](/faq/reads-bam) for more info!
 ## How does `--all` work?
 With the special option `--all`, _ccs_ generates one representative

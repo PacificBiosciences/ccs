@@ -4,6 +4,11 @@ parent: FAQ
 title: Bioconda binary
 ---
 
+## Where is the `ccs` binary for Revio?
+The Revio platform always generated HiFi on the instrument. CLR data is no longer
+stored, but processed directly into HiFi reads, as the BAM file size can exceed
+1 TBytes per SMRT Cell 25M, whereas the HiFi BAM file is ~20x smaller.
+
 ## The binary does not work on my linux system!
 Contrary to official SMRT Link releases, the `ccs` binary distributed via bioconda
 is tuned for performance while sacrificing backward compatibility.

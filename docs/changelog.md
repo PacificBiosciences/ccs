@@ -6,7 +6,23 @@ nav_order: 99
 
 # Version changelog
 
-**6.4.0**
+**8.0.1**
+   * SMRT Link v13.1 release
+   * No customer-facing changes
+
+8.0.0
+   * SMRT Link v13.0 release
+   * Always encode HiFi kinetics with v1 codec
+   * [Add fail flag `ff`](/faq/fail-reads)
+
+7.0.0
+   * SMRT Link v12.0 release
+   * Includes DeepConsensus polishing on the Revio platform
+   * Arrow polishing on GPU on the Revio platform
+   * New output files layout
+   * [Output BAM file compression](/faq/qv-binning)
+
+6.4.0
    * [Single-strand HiFi kinetics](/faq/kinetics)
    * Faster draft generation
    * CLR subsampling stores XML and PBI

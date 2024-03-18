@@ -5,6 +5,9 @@ title: reads.bam
 ---
 
 # What is the `reads.bam`?
+
+**This mode is not available on Revio and future platforms.**
+
 Have you ever run _ccs_ with different cutoffs, e.g. tuning `--min-rq` , because
 out of the fear of missing out on yield?
 Similar to the CLR instrument mode, in which subreads are accompanied by

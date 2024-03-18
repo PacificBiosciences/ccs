@@ -22,7 +22,6 @@ results.
 Bioconda releases are only available as developer versions. They may contain
 features and bug fixes that have not been integrated in our release software yet.
 
-
 ## Which _ccs_ options are used for on-instrument processing?
 SQIIe default: `--all`
 
