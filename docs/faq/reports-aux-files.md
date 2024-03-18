@@ -13,30 +13,63 @@ number of failed ZMWs.
 
 The following comments refer to the filters that are explained in the FAQ above.
 
-    ZMWs input               : 1671
+    ZMWs input                    : 1671
 
-    ZMWs pass filters        : 824 (49.31%)                                    ┐
-    ZMWs fail filters        : 104 (6.22%)                                     | Sum to 100%
-    ZMWs shortcut filters    : 743 (44.46%) <- Low-pass ZMWs skipped by --all  ┘
+    ZMWs pass filters             : 824 (49.31%)                                    ┐
+    ZMWs fail filters             : 104 (6.22%)                                     | Sum to 100%
+    ZMWs shortcut filters         : 743 (44.46%) <- Low-pass ZMWs skipped by --all  ┘
 
-    ZMWs with tandem repeats : 10 (0.60%)   <- With repeats larger than --min-tandem-repeat-length
+    ZMWs with tandem repeats      : 10 (0.60%)   <- With repeats larger than --min-tandem-repeat-length
 
     Exclusive failed counts
-    Below SNR threshold      : 30 (28.85%)  <- SNR below --min-snr.
-    Median length filter     : 0 (0.00%)    <- All subreads are <50% or >200% of the median subread length
-    Lacking full passes      : 0 (0.00%)    <- Fewer than --min-passes full-length (FL) reads
-    Heteroduplex insertions  : 10 (9.62%)   <- Single-strand artifacts
-    Coverage drops           : 43 (41.35%)  <- Coverage drops would lead to unreliable polishing results
-    Insufficient draft cov   : 16 (15.38%)  <- Not enough subreads aligned to draft end-to-end
-    Draft too different      : 0 (0.00%)    <- Fewer than --min-passes FL reads aligned to draft
-    Draft generation error   : 3 (2.88%)    <- Subreads don't agree to generate a draft sequence
-    Draft above --max-length : 0 (0.00%)    <- Draft sequence is longer than --max-length
-    Draft below --min-length : 0 (0.00%)    <- Draft sequence is shorter than --min-length
-    Reads failed polishing   : 0 (0.00%)    <- Too many subreads were dropped while polishing
-    Empty coverage windows   : 2 (1.92%)    <- At least one window has no coverage
-    CCS did not converge     : 0 (0.00%)    <- Draft has too many errors that can't be polished in time
-    CCS below minimum RQ     : 0 (0.00%)    <- Predicted accuracy is below --min-rq
-    Unknown error            : 0 (0.00%)    <- Rare implementation errors
+    Below SNR threshold           : 30 (28.85%)  <- SNR below --min-snr.
+    Median length filter          : 0 (0.00%)    <- All subreads are <50% or >200% of the median subread length
+    Lacking full passes           : 0 (0.00%)    <- Fewer than --min-passes full-length (FL) reads
+    Heteroduplex insertions       : 10 (9.62%)   <- Single-strand artifacts
+    Coverage drops                : 43 (41.35%)  <- Coverage drops would lead to unreliable polishing results
+    Insufficient draft cov        : 16 (15.38%)  <- Not enough subreads aligned to draft end-to-end
+    Draft too different           : 0 (0.00%)    <- Fewer than --min-passes FL reads aligned to draft
+    Draft generation error        : 3 (2.88%)    <- Subreads don't agree to generate a draft sequence
+    Draft above --max-length      : 0 (0.00%)    <- Draft sequence is longer than --max-length
+    Draft below --min-length      : 0 (0.00%)    <- Draft sequence is shorter than --min-length
+    Reads failed polishing        : 0 (0.00%)    <- Too many subreads were dropped while polishing
+    Empty coverage windows        : 2 (1.92%)    <- At least one window has no coverage
+    CCS did not converge          : 0 (0.00%)    <- Draft has too many errors that can't be polished in time
+    CCS adapter concatenation     : 0 (0.000)    <- Reads which are a concatenation of the adapter
+    CCS adapter palindrome        : 0 (0.000)    <- Miscalled adapters with reverse complemented inserts
+    CCS adapter residue           : 0 (0.000)    <- Reads that have one or more adapters close to either end
+    ZMW with full-length subread  : 0 (0.000)    <- fail_reads.bam reads that didn't generate consensus reads
+    ZMW with control failure      : 0 (0.000)    <- Reads that failed polishing and are spike-in controls
+    ZMW with control success      : 0 (0.000)    <- Reads that passed polishing and are spike-in controls
+    CCS below minimum RQ          : 0 (0.00%)    <- Predicted accuracy is below --min-rq
+    Unknown error                 : 0 (0.00%)    <- Rare implementation errors
+
+    Additional passing metrics
+    ZMWs missing adapters         : 0 (0.000%)
+
+    - - - - - - - - - - - - - - - : - - - - -
+
+    HiFi Reads                    : 6
+    HiFi Yield (bp)               : 63,881
+    HiFi Read Length (mean, bp)   : 10,646
+    HiFi Read Length (median, bp) : 10,289
+    HiFi Read Length N50 (bp)     : 10,439
+    HiFi Read Quality (median)    : 31
+    HiFi Number of Passes (mean)  : 9
+
+    <Q20 Reads                    : 2
+    <Q20 Yield (bp)               : 23,342
+    <Q20 Read Length (mean, bp)   : 11,671
+    <Q20 Read Length (median, bp) : 11,671
+    <Q20 Read Quality (median)    : 18
+
+    >=Q30 Reads                   : 5
+    >=Q30 Yield (bp)              : 54,336
+    >=Q30 Read Length (mean, bp)  : 10,867
+    >=Q30 Read Length (median, bp): 10,439
+    >=Q30 Read Quality (median)   : 31
+
+    Base quality >=Q30 (bp)       : 62,526 (97.9%)
 
 If run in `--by-strand` mode, please have a look at [the by-strand FAQ](/faq/mode-by-strand).\
 If run in `--split-heteroduplexes` mode, please have a look at [the strand-aware FAQ](/faq/mode-heteroduplex-filtering).
