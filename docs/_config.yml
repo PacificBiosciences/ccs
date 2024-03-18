@@ -1,4 +1,4 @@
-remote_theme: pmarsceill/just-the-docs
+remote_theme: just-the-docs/just-the-docs
 
 # Aux links for the upper right navigation
 aux_links:
@@ -33,6 +33,7 @@ ga_tracking_anonymize_ip: true
 url: "https://ccs.how"
 
 plugins:
+  - jekyll-default-layout
   - jekyll-redirect-from
   - jekyll-sitemap
   - jekyll-seo-tag
